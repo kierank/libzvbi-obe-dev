@@ -17,7 +17,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.20 2003/11/14 05:29:18 mschimek Exp $";
+static char rcsid[] =
+"$Id: io-v4l.c,v 1.21 2004/06/18 14:14:51 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -516,7 +517,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		scanning = 0;
 
 	printv("Try to open v4l vbi device, libzvbi interface rev.\n"
-	       "%s", rcsid);
+	       "%s\n", rcsid);
 
 	if (!(v = (vbi_capture_v4l *) calloc(1, sizeof(*v)))) {
 		vbi_asprintf(errorstr, _("Virtual memory exhausted."));
@@ -869,6 +870,9 @@ vbi_capture_v4l_new(const char *dev_name, int scanning,
 		     unsigned int *services, int strict,
 		     char **errorstr, vbi_bool trace)
 {
+	if (0) /* unused, no warning please */
+		fputs (rcsid, stderr);
+
 	pthread_once (&vbi_init_once, vbi_init);
 	vbi_asprintf(errorstr, _("V4L interface not compiled."));
 	return NULL;

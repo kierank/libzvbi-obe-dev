@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.14 2003/10/21 20:53:05 mschimek Exp $ */
+/* $Id: caption.c,v 1.15 2004/06/18 14:14:51 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -464,7 +464,11 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			for (i = 0; i < 2; i++) {
 				int l = (buffer[i] >> 3) & 7;
 				vbi_audio_mode m = mode[i][buffer[i] & 7];
-				const char *s = ((1 << l) & 0xC1) ? NULL : language[l];
+				/* should be const char *, but I got that
+				   wrong and cannot change the public
+				   pi->audio[].language type now. */
+				unsigned char *s = ((1 << l) & 0xC1) ? NULL :
+					(unsigned char *) language[l];
 
 				if (pi->audio[i].mode != m) {
 					neq = 1; pi->audio[i].mode = m;

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.25 2004/02/18 07:56:45 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2.c,v 1.26 2004/06/18 14:14:51 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -351,8 +351,9 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 		v4l2_delete (&v->capture);
 
 		/* Try api revision 2002-10 */
-		return vbi_capture_v4l2k_new (dev_name, 0, buffers,
-					      services, strict, errorstr, trace);
+		return vbi_capture_v4l2k_new (dev_name, /* fd */ -1, buffers,
+					      services, strict, errorstr,
+					      trace);
 	}
 
 	if (vcap.type != V4L2_TYPE_VBI) {

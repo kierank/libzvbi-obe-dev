@@ -1,3 +1,22 @@
+2004-06-12    <mschimek@users.sf.net>
+
+	* test/README: Updated capture and osc tool documentation.
+	* test/capture.c, test/osc.c: Added options to force use of
+	  a particular capture interface and to ignore read errors.
+	  Changed verbosity option from boolean to multi-level to
+	  enable ioctl logging.
+	* src/io-v4l2k.c: Replaced by version from proxy
+	  branch (proxy-17.bak). Interface extensions disabled for now.
+	  Added ioctl logging. Added preliminary hack to force read
+	  capture for tests.
+	* src/io-bktr.c (vbi_capture_bktr_new): No more warning about
+	  unused rcsid.
+	* src/io.c, src/io.h: Added vbi_capture_io_select and
+	  vbi_capture_io_update_timeout from proxy branch, ioctl logging
+	  from 0.3 branch.
+	* src/Makefile.am: Added ioctl logging.
+	* configure.in: Bumped version number.
+
 2004-05-12    <mschimek@users.sf.net>
 
 	* m4/autogen.sh: Fixed non-Posix-ness of head args,

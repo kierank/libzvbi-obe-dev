@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.14 2004/05/12 02:40:59 mschimek Exp $ */
+/* $Id: packet.c,v 1.15 2004/06/18 14:14:51 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2027,9 +2027,12 @@ parse_28_29(vbi_decoder *vbi, uint8_t *p,
 			return FALSE;
 
 		if (cvtp->function == PAGE_FUNCTION_UNKNOWN) {
-			memmove(cvtp->data.drcs.raw,
-				cvtp->data.unknown.raw,
-				sizeof(cvtp->data.drcs.raw));
+			/* If to prevent warning: statement with no effect
+			   when .raw unions coincidentally align. */
+			if (cvtp->data.drcs.raw != cvtp->data.unknown.raw)
+				memmove(cvtp->data.drcs.raw,
+					cvtp->data.unknown.raw,
+					sizeof(cvtp->data.drcs.raw));
 			cvtp->function = function;
 		} else if (cvtp->function != function) {
 			cvtp->function = PAGE_FUNCTION_DISCARD;
