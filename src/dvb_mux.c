@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_mux.c,v 1.2 2004/10/28 03:27:32 mschimek Exp $ */
+/* $Id: dvb_mux.c,v 1.3 2004/11/04 11:20:54 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>		/* abort() */
@@ -33,6 +33,34 @@
 #endif
 
 #define vbi_rev8(n) vbi_bit_reverse[n]
+
+static vbi_bool
+stuffing			(uint8_t *		p,
+				 unsigned int		p_left,
+				 vbi_bool		fixed_length)
+{
+	/* data_unit_id: DATA_UNIT_STUFFING (0xFF),
+	   stuffing byte: 0xFF */
+	memset (p, 0xFF, p_left);
+
+	while (p_left >= 2 + 1 + 1 + 42) {
+		p[1] = 1 + 1 + 42; /* fixed length */
+		p += 46;
+		p_left -= 46;
+	}
+
+	if (p_left > 0) {
+		if (p_left < 2)
+			return FALSE;
+
+		p[1] = p_left - 2;
+
+		if (fixed_length)
+			return FALSE;
+	}
+
+	return TRUE;
+}
 
 /**
  * @param packet *packet is the output buffer pointer and will be
@@ -54,7 +82,7 @@
  * Stores an array of vbi_sliced data in a MPEG-2 PES packet
  * as defined in EN 301 775. When *sliced_left is zero, or when
  * *packet_left becomes too small the function fills the remaining
- * space with stuffing bytes.
+ * space with stuffing units.
  *
  * The following data services can be encoded per EN 300 472:
  * @c VBI_SLICED_TELETEXT_B_625_L10 with data_unit_id 0x02. Additionally
@@ -102,10 +130,17 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 	s = *sliced;
 	s_left = *sliced_left;
 
+	fixed_length = (data_identifier >= DATA_ID_EBU_TELETEXT_BEGIN
+			&& data_identifier < DATA_ID_EBU_TELETEXT_END);
+
 	if (NULL == s || 0 == s_left) {
-		/* data_unit_id: DATA_UNIT_STUFFING (0xFF),
-		   stuffing byte: 0xFF */
-		memset (p, 0xFF, p_left);
+		if (!stuffing (p, p_left, fixed_length)) {
+			fprintf (stderr,
+				 "%s: packet_left=%u too small for "
+				 "stuffing.\n",
+				 __FUNCTION__, p_left);
+			abort ();
+		}
 
 		p += p_left;
 		p_left = 0;
@@ -114,9 +149,6 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 	}
 
 	last_line = 0;
-
-	fixed_length = (data_identifier >= DATA_ID_EBU_TELETEXT_BEGIN
-			&& data_identifier < DATA_ID_EBU_TELETEXT_END);
 
 	while (s_left > 0) {
 		unsigned int length;
@@ -166,9 +198,14 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 		if (length > p_left) {
 			/* EN 301 775 section 4.3.1: Data units
 			   cannot cross PES packet boundaries. */
-			/* data_unit_id: DATA_UNIT_STUFFING (0xFF),
-			   stuffing byte: 0xFF */
-			memset (p, 0xFF, p_left);
+
+			if (!stuffing (p, p_left, fixed_length)) {
+				fprintf (stderr,
+					 "%s: only %u bytes left for "
+					 "stuffing.\n",
+					 __FUNCTION__, p_left);
+				abort ();
+			}
 
 			p += p_left;
 			p_left = 0;
@@ -228,7 +265,7 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			p[1] = 14;
 
 			for (i = 0; i < 13; ++i)
-				p[3 + i] = vbi_rev8 (s->data[i]);
+				p[3 + i] = s->data[i];
 		} else if (s->id & VBI_SLICED_WSS_625) {
 			/* data_unit_id [8], data_unit_length [8],
 			   reserved[2], field_parity, line_offset [5],
@@ -251,9 +288,9 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			   wss_data_block[20] (msb first), reserved[4] */
 			p[0] = DATA_UNIT_ZVBI_WSS_CPR1204;
 			p[1] = 4;
-			p[3] = vbi_rev8 (s->data[0]);
-			p[4] = vbi_rev8 (s->data[1]);
-			p[5] = vbi_rev8 (s->data[2]) | 0xF;
+			p[3] = s->data[0];
+			p[4] = s->data[1];
+			p[5] = s->data[2] | 0xF;
 		} else {
 			if (DVB_MUX_LOG)
 				fprintf (stderr, "%s: Skipping sliced id "
@@ -406,9 +443,14 @@ _vbi_dvb_multiplex_samples	(uint8_t **		packet,
 		if (min_space > p_left) {
 			/* EN 301 775 section 4.3.1: Data units
 			   cannot cross PES packet boundaries. */
-			/* data_unit_id: DATA_UNIT_STUFFING (0xFF),
-			   stuffing byte: 0xFF */
-			memset (p, 0xFF, p_left);
+
+			if (!stuffing (p, p_left, min_space > 7)) {
+				fprintf (stderr,
+					 "%s: only %u bytes left for "
+					 "stuffing.\n",
+					 __FUNCTION__, p_left);
+				abort ();
+			}
 
 			p += p_left;
 			p_left = 0;
