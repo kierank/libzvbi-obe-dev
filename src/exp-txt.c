@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.11 2003/10/14 20:19:59 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.12 2003/10/16 18:16:11 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,7 +105,7 @@ color_names[] __attribute__ ((unused)) = {
 
 static const char *
 terminal[] __attribute__ ((unused)) = {
-	/* TRANSLATORS: Terminal control codes menu */
+	/* TRANSLATORS: Terminal control codes */
 	N_("None"), N_("ANSI X3.64 / VT 100"), N_("VT 200")
 };
 

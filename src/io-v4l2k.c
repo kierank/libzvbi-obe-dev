@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2k.c,v 1.13 2003/10/14 20:19:59 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2k.c,v 1.14 2003/10/16 18:16:11 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -904,7 +904,7 @@ v4l2_channel_change(vbi_capture *vc,
 		goto done;
 
 	if (p_chn_desc->type != 0) {
-		vbi_asprintf(errorstr, _("Not an analog channel descriptor type"));
+		vbi_asprintf(errorstr, "Bad channel descriptor type");
 		goto failure;
 	}
 
@@ -1191,7 +1191,7 @@ vbi_capture_v4l2k_new(const char *dev_name, int fd, int buffers,
 		      char **errorstr, vbi_bool trace)
 {
 	pthread_once (&vbi_init_once, vbi_init);
-	vbi_asprintf(errorstr, _("V4L2 interface not compiled."));
+	vbi_asprintf(errorstr, _("V4L2 driver interface not compiled."));
 	return NULL;
 }
 

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.21 2003/10/14 20:19:59 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2.c,v 1.22 2003/10/16 18:16:11 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -1085,7 +1085,7 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 		     char **errorstr, vbi_bool trace)
 {
 	pthread_once (&vbi_init_once, vbi_init);
-	vbi_asprintf(errorstr, _("V4L2 interface not compiled."));
+	vbi_asprintf(errorstr, _("V4L2 driver interface not compiled."));
 	return NULL;
 }
 

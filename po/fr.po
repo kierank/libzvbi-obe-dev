@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2003-10-14 20:00+0200\n"
-"PO-Revision-Date: 2002-09-27 14:10+0200\n"
+"POT-Creation-Date: 2003-10-16 16:13+0200\n"
+"PO-Revision-Date: 2003-10-16 16:10+0200\n"
 "Last-Translator: Christian Marillat <marillat.christian@wanadoo.fr>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -198,7 +198,7 @@ msgstr "Blanc"
 msgid "Any"
 msgstr "N'importe laquelle"
 
-#. TRANSLATORS: Terminal control codes menu
+#. TRANSLATORS: Terminal control codes
 #: src/exp-txt.c:109
 msgid "None"
 msgstr "Aucun"
@@ -244,23 +244,20 @@ msgstr "Texte"
 msgid "Export this page as text file"
 msgstr "Exporter cette page dans un fichier texte"
 
-#: src/exp-vtx.c:77
+#. TRANSLATORS: Not Closed Caption pages.
+#: src/exp-vtx.c:78
 msgid "Can only export Teletext pages."
 msgstr "Ne peut seulement exporter les pages Teletext."
 
-#: src/exp-vtx.c:85
+#: src/exp-vtx.c:86
 msgid "Page is not cached, sorry."
 msgstr "Cette page n'est pas cachée, désolé."
 
-#: src/exp-vtx.c:95
+#: src/exp-vtx.c:96
 msgid "Cannot export this page, not displayable."
 msgstr "Ne peut exporter cette page, non affichable"
 
-#: src/exp-vtx.c:130
-msgid "VTX"
-msgstr "VTX"
-
-#: src/exp-vtx.c:131
+#: src/exp-vtx.c:132
 msgid ""
 "Export this page as VTX file, the format used by VideoteXt and vbidecode"
 msgstr ""
@@ -317,11 +314,11 @@ msgstr "Plus de mémoire pour le module d'export '%s'."
 msgid "Unknown error."
 msgstr "Erreur inconnue."
 
-#: src/io-bktr.c:191
+#: src/io-bktr.c:186
 msgid "BKTR driver"
 msgstr ""
 
-#: src/io-bktr.c:202 src/io-bktr.c:280 src/io-bktr.c:298 src/io-v4l2k.c:174
+#: src/io-bktr.c:197 src/io-bktr.c:275 src/io-bktr.c:293 src/io-v4l2k.c:174
 #: src/io-v4l2k.c:468 src/io-v4l2k.c:814 src/io-v4l2k.c:1051
 #: src/io-v4l2k.c:1063 src/io-v4l2.c:159 src/io-v4l2.c:450 src/io-v4l2.c:888
 #: src/io-v4l2.c:928 src/io-v4l2.c:980 src/io-v4l.c:139 src/io-v4l.c:1149
@@ -329,26 +326,26 @@ msgstr ""
 msgid "Virtual memory exhausted."
 msgstr "Mémoire virtuelle épuisée."
 
-#: src/io-bktr.c:212 src/io-v4l2k.c:1077 src/io-v4l2.c:947 src/io-v4l.c:1205
+#: src/io-bktr.c:207 src/io-v4l2k.c:1077 src/io-v4l2.c:947 src/io-v4l.c:1205
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Ne peut ouvrir '%s' : %d, %s"
 
-#: src/io-bktr.c:268 src/io-v4l2k.c:801 src/io-v4l2.c:875 src/io-v4l.c:613
+#: src/io-bktr.c:263 src/io-v4l2k.c:801 src/io-v4l2.c:875 src/io-v4l.c:613
 #: src/io-v4l.c:1134 src/io-v4l.c:1265
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr ""
 "Désolé, %s (%s) ne peut capturer aucun des services de données demandé."
 
-#: src/io-bktr.c:309 src/io-v4l2k.c:479 src/io-v4l2.c:461 src/io-v4l.c:150
+#: src/io-bktr.c:304 src/io-v4l2k.c:479 src/io-v4l2.c:461 src/io-v4l.c:150
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Pas assez de mémoire pour allouer un tampon de capture vbi (%d Ko)."
 
-#: src/io-bktr.c:343
-msgid "bktr interface not compiled."
-msgstr "L'interface bktr n'a pas été compilée."
+#: src/io-bktr.c:359
+msgid "BKTR driver interface not compiled."
+msgstr "L'interface BKTR n'a pas été compilée."
 
 #: src/io-v4l2k.c:155 src/io-v4l2.c:140
 #, c-format
@@ -434,10 +431,6 @@ msgstr ""
 "Ne peut capturer le service de données demandé avec %s (%s), la fréquence "
 "d'échantillonnage %.2f MHz est trop basse."
 
-#: src/io-v4l2k.c:907 src/io-v4l.c:845
-msgid "Not an analog channel descriptor type"
-msgstr ""
-
 #: src/io-v4l2k.c:931
 msgid "Failed to switch video standard"
 msgstr ""
@@ -452,7 +445,7 @@ msgstr ""
 msgid "Failed to switch to channel #%d."
 msgstr ""
 
-#: src/io-v4l2k.c:967
+#: src/io-v4l2k.c:967 src/io-v4l.c:805
 msgid "Failed to set TV tuner frequency."
 msgstr ""
 
@@ -485,7 +478,7 @@ msgstr ""
 "de sortie seulement ou un bogue du pilote."
 
 #: src/io-v4l2k.c:1194 src/io-v4l2.c:1088
-msgid "V4L2 interface not compiled."
+msgid "V4L2 driver interface not compiled."
 msgstr "L'interface V4L2 n'a pas été compilée."
 
 #: src/io-v4l2.c:742
@@ -501,11 +494,7 @@ msgstr "%s (%s) ne supporte pas la fonction select()."
 
 #: src/io-v4l.c:794
 #, c-format
-msgid "Failed to configure norm on tuner #%d."
-msgstr ""
-
-#: src/io-v4l.c:805
-msgid "Failed to switch TV frequency"
+msgid "Failed to set video standard on tuner #%d."
 msgstr ""
 
 #: src/io-v4l.c:892
@@ -537,5 +526,5 @@ msgid "driver unknown"
 msgstr "pilote inconnu"
 
 #: src/io-v4l.c:1358 src/io-v4l.c:1389
-msgid "V4L interface not compiled."
+msgid "V4L driver interface not compiled."
 msgstr "L'interface V4L n'a pas été compilée."

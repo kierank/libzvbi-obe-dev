@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.17 2003/10/14 20:19:59 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l.c,v 1.18 2003/10/16 18:16:11 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -791,7 +791,7 @@ v4l_switch_channel(vbi_capture_v4l *v, int fd,
 			if (IOCTL(fd, VIDIOCSTUNER, &vtuner) != 0) {
 		                printv("ioctl CSTUNER failed for tuner #%d, mode=%d: %d (%s)\n",
 				       tuner, *p_mode, errno, strerror(errno));
-				vbi_asprintf(errorstr, _("Failed to configure norm on tuner #%d."),
+				vbi_asprintf(errorstr, _("Failed to set video standard on tuner #%d."),
 					     tuner);
 				return -1;
 			}
@@ -802,7 +802,7 @@ v4l_switch_channel(vbi_capture_v4l *v, int fd,
 		if (IOCTL(fd, VIDIOCSFREQ, &lfreq) != 0) {
 		        printv("ioctl CSFREQ for freq=%d failed: %d (%s)\n",
 			       freq, errno, strerror(errno));
-			vbi_asprintf(errorstr, _("Failed to switch TV frequency"));
+			vbi_asprintf(errorstr, _("Failed to set TV tuner frequency."));
 
 			if (old_channel != -1) {
 				/* attempt to set old channel again */
@@ -842,7 +842,7 @@ v4l_channel_change(vbi_capture *vc,
 		goto done;
 
 	if (p_chn_desc->type != 0) {
-		vbi_asprintf(errorstr, _("Not an analog channel descriptor type"));
+		vbi_asprintf(errorstr, "Bad channel descriptor type");
 		goto failure;
 	}
 
@@ -1355,7 +1355,7 @@ vbi_capture_v4l_sidecar_new(const char *dev_name, int given_fd,
 			    char **errorstr, vbi_bool trace)
 {
 	pthread_once (&vbi_init_once, vbi_init);
-	vbi_asprintf(errorstr, _("V4L interface not compiled."));
+	vbi_asprintf(errorstr, _("V4L driver interface not compiled."));
 	return NULL;
 }
 
@@ -1386,7 +1386,7 @@ vbi_capture_v4l_new(const char *dev_name, int scanning,
 		     char **errorstr, vbi_bool trace)
 {
 	pthread_once (&vbi_init_once, vbi_init);
-	vbi_asprintf(errorstr, _("V4L interface not compiled."));
+	vbi_asprintf(errorstr, _("V4L driver interface not compiled."));
 	return NULL;
 }
 

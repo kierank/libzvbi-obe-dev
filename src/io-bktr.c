@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-bktr.c,v 1.2 2002/11/30 02:37:18 mschimek Exp $";
+static char rcsid[] = "$Id: io-bktr.c,v 1.3 2003/10/16 18:16:11 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -175,11 +175,6 @@ bktr_fd(vbi_capture *vc)
 	return v->fd;
 }
 
-/*
- *  FIXME: This seems to work only when video capturing is active
- *  (tested w/xawtv). Something I overlooked or a driver feature?
- */
-
 vbi_capture *
 vbi_capture_bktr_new		(const char *		dev_name,
 				 int			scanning,
@@ -330,6 +325,27 @@ io_error:
 
 #else
 
+/**
+ * @param dev_name Name of the device to open.
+ * @param scanning The current video standard. Value is 625
+ *   (PAL/SECAM family) or 525 (NTSC family).
+ * @param services This must point to a set of @ref VBI_SLICED_
+ *   symbols describing the
+ *   data services to be decoded. On return the services actually
+ *   decodable will be stored here. See vbi_raw_decoder_add()
+ *   for details. If you want to capture raw data only, set to
+ *   @c VBI_SLICED_VBI_525, @c VBI_SLICED_VBI_625 or both.
+ * @param strict Will be passed to vbi_raw_decoder_add().
+ * @param errstr If not @c NULL this function stores a pointer to an error
+ *   description here. You must free() this string when no longer needed.
+ * @param trace If @c TRUE print progress messages on stderr.
+ * 
+ * @bug This seems to work only when video capturing is active
+ * (tested with xawtv). Something I overlooked or a driver feature?
+ *
+ * @return
+ * Initialized vbi_capture context, @c NULL on failure.
+ */
 vbi_capture *
 vbi_capture_bktr_new		(const char *		dev_name,
 				 int			scanning,
@@ -340,7 +356,7 @@ vbi_capture_bktr_new		(const char *		dev_name,
 {
 	pthread_once (&vbi_init_once, vbi_init);
 
-	vbi_asprintf(errstr, _("bktr interface not compiled."));
+	vbi_asprintf(errstr, _("BKTR driver interface not compiled."));
 
 	return NULL;
 }

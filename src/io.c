@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.7 2003/06/01 19:35:40 tomzo Exp $ */
+/* $Id: io.c,v 1.8 2003/10/16 18:16:11 mschimek Exp $ */
 
 #include <assert.h>
 
@@ -190,7 +190,7 @@ vbi_capture_pull_raw(vbi_capture *capture, vbi_capture_buffer **buffer,
  * Read a sliced vbi frame, that is an array of vbi_sliced,
  * from the capture device, returning a pointer to the array as @a buffer->data.
  * @a buffer->size is the size of the array, that is the number of lines decoded,
- * which can be zero, <u>times the size of structure vbi_sliced</u>. The data
+ * which can be zero, <i>times the size of structure vbi_sliced</i>. The data
  * remains valid until the next vbi_capture_pull_sliced() call and must be read only.
  * 
  * @return

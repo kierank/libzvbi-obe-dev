@@ -25,7 +25,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-vtx.c,v 1.6 2003/02/16 21:11:18 mschimek Exp $ */
+/* $Id: exp-vtx.c,v 1.7 2003/10/16 18:16:11 mschimek Exp $ */
 
 /*
  *  VTX is the file format used by VideoteXt. It stores Teletext pages in
@@ -74,6 +74,7 @@ export(vbi_export *e, FILE *fp, vbi_page *pg)
 	struct header h;
 
 	if (pg->pgno < 0x100 || pg->pgno > 0x8FF) {
+		/* TRANSLATORS: Not Closed Caption pages. */
 		vbi_export_error_printf(e, _("Can only export Teletext pages."));
 		return FALSE;
 	}
@@ -127,7 +128,7 @@ write_error:
 static vbi_export_info
 info_vtx = {
 	.keyword	= "vtx",
-	.label		= N_("VTX"),
+	.label		= "VTX", /* proper name */
 	.tooltip	= N_("Export this page as VTX file, the format "
 			     "used by VideoteXt and vbidecode"),
 

@@ -1,3 +1,8 @@
+2003-10-16	<mschimek@users.sf.net>
+
+	* src/bcd.h (vbi_dec2bcd, vbi_bcd2dec, vbi_add_bcd,
+	  vbi_is_bcd): Corrected documentation. 
+
 2003-10-14      <mschimek@users.sf.net>
 
 	* src/packet.c, src/trigger.c: Fixed unsafe use of strncpy.

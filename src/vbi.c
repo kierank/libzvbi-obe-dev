@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.9 2003/04/06 06:11:06 mschimek Exp $ */
+/* $Id: vbi.c,v 1.10 2003/10/16 18:16:11 mschimek Exp $ */
 
 #include "site_def.h"
 #include "../config.h"
@@ -818,8 +818,9 @@ vbi_decoder_new(void)
  * @param micro Store micro number here, can be NULL.
  *
  * Returns the library version defined in the libzvbi.h header file
- * when the library was compiled. This function is available since
- * version 0.2.5.
+ * when the library was compiled.
+ *
+ * @since 0.2.5
  */
 void
 vbi_version			(unsigned int *		major,
