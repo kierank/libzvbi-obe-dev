@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.16 2004/11/26 05:54:27 mschimek Exp $ */
+/* $Id: io.h,v 1.17 2005/01/24 00:11:43 mschimek Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -261,7 +261,7 @@ extern vbi_bool vbi_capture_force_read_mode;
  * @ingroup Devmod
  */
 struct vbi_capture {
-	vbi_bool		(* read)(vbi_capture *,
+        int		        (* read)(vbi_capture *,
 					 vbi_capture_buffer **,
 					 vbi_capture_buffer **,
 					 const struct timeval *);
