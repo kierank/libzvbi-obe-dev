@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.h,v 1.2 2004/12/13 07:15:02 mschimek Exp $ */
+/* $Id: bit_slicer.h,v 1.3 2005/01/19 04:23:52 mschimek Exp $ */
 
 #ifndef __ZVBI_BIT_SLICER_H__
 #define __ZVBI_BIT_SLICER_H__
@@ -26,8 +26,6 @@
 #include <inttypes.h>		/* uint8_t, uint16_t */
 #include "decoder.h"
 #endif
-
-#define vbi_alloc
 
 #if 0 /* in decoder.h */
 

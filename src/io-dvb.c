@@ -636,8 +636,6 @@ struct vbi_capture_dvb {
 
 /* ----------------------------------------------------------------------- */
 
-#define bitswap vbi_bit_reverse
-
 static int dvb_payload(struct vbi_capture_dvb *dvb,
 		       unsigned char *buf, unsigned int len,
 		       vbi_sliced *dest)
@@ -662,7 +660,7 @@ static int dvb_payload(struct vbi_capture_dvb *dvb,
 	    dest[slices].id   = VBI_SLICED_TELETEXT_B;
 	    dest[slices].line = line;
 	    for (j = 0; j < sizeof(dest[slices].data) && j < buf[i+1]-2; j++)
-		dest[slices].data[j] = bitswap[buf[i+j+4]];
+		dest[slices].data[j] = vbi_rev8 (buf[i+j+4]);
 	    slices++;
 	    break;
 	}

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bcd.h,v 1.12 2003/11/20 20:04:07 mschimek Exp $ */
+/* $Id: bcd.h,v 1.13 2005/01/19 04:23:52 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -104,7 +104,7 @@ typedef int vbi_subno;
  * @return
  * BCD number.
  */
-static_inline unsigned int
+vbi_inline unsigned int
 vbi_dec2bcd(unsigned int dec)
 {
 	return (dec % 10) + ((dec / 10) % 10) * 16 + ((dec / 100) % 10) * 256;
@@ -122,7 +122,7 @@ vbi_dec2bcd(unsigned int dec)
  * Decimal number. The result is undefined when the bcd number contains
  * hex digits 0xA ... 0xF.
  **/
-static_inline unsigned int
+vbi_inline unsigned int
 vbi_bcd2dec(unsigned int bcd)
 {
 	return (bcd & 15) + ((bcd >> 4) & 15) * 10 + ((bcd >> 8) & 15) * 100;
@@ -142,7 +142,7 @@ vbi_bcd2dec(unsigned int bcd)
  * Packed bcd number. The result is undefined when any of the arguments
  * contain hex digits 0xA ... 0xF.
  */
-static_inline unsigned int
+vbi_inline unsigned int
 vbi_add_bcd(unsigned int a, unsigned int b)
 {
 	unsigned int t;
@@ -166,7 +166,7 @@ vbi_add_bcd(unsigned int a, unsigned int b)
  * @return
  * @c FALSE if @a bcd contains hex digits 0xA ... 0xF.
  */
-static_inline vbi_bool
+vbi_inline vbi_bool
 vbi_is_bcd(unsigned int bcd)
 {
 	static const unsigned int x = 0x06666666;

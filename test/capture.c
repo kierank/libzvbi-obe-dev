@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.14 2005/01/09 18:06:26 mschimek Exp $ */
+/* $Id: capture.c,v 1.15 2005/01/19 04:23:53 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -37,6 +37,20 @@
 #endif
 
 #include "src/libzvbi.h"
+
+vbi_inline int
+vbi_printable			(int			c)
+{
+	if (c < 0)
+		return '?';
+
+	c &= 0x7F;
+
+	if (c < 0x20 || c >= 0x7F)
+		return '.';
+
+	return c;
+}
 
 #define TEST 1
 #include "src/dvb_mux.h"
@@ -71,27 +85,6 @@ extern vbi_bool vbi_capture_force_read_mode;
 /*
  *  Dump
  */
-
-static inline int
-odd_parity(uint8_t c)
-{
-	c ^= (c >> 4);
-	c ^= (c >> 2);
-	c ^= (c >> 1);
-
-	return c & 1;
-}
-
-extern const int8_t vbi_hamm8val[256];
-extern const uint8_t vbi_bit_reverse[256];
-
-static inline int
-vbi_hamm16(uint8_t *p)
-{
-	return vbi_hamm8val[p[0]] | (vbi_hamm8val[p[1]] << 4);
-}
-
-#define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
 
 #define PIL(day, mon, hour, min) \
 	(((day) << 15) + ((mon) << 11) + ((hour) << 6) + ((min) << 0))
@@ -135,7 +128,7 @@ decode_vps(uint8_t *buf)
 
 	printf("\nVPS:\n");
 
-	c = vbi_bit_reverse[buf[1]];
+	c = vbi_rev8 (buf[1]);
 
 	if ((int8_t) c < 0) {
 		label[l] = 0;
@@ -145,7 +138,7 @@ decode_vps(uint8_t *buf)
 
 	c &= 0x7F;
 
-	label[l] = printable(c);
+	label[l] = vbi_printable (c);
 
 	l = (l + 1) % 16;
 
@@ -175,7 +168,7 @@ decode_ttx(uint8_t *buf, int line)
 	int magazine, packet;
 	int j;
 
-	packet_address = vbi_hamm16(buf + 0);
+	packet_address = vbi_unham16p (buf + 0);
 
 	if (packet_address < 0)
 		return; /* hamming error */
@@ -187,7 +180,7 @@ decode_ttx(uint8_t *buf, int line)
 		printf("WST %x %02d %03d >", magazine, packet, line);
 
 		for (j = 0; j < 42; j++) {
-			char c = printable(buf[j]);
+			char c = vbi_printable (buf[j]);
 
 			putchar(c);
 		}
@@ -203,11 +196,11 @@ decode_xds(uint8_t *buf)
 	if (dump_xds) {
 		char c;
 
-		c = odd_parity(buf[0]) ? buf[0] & 0x7F : '?';
-		c = printable(c);
+		c = vbi_unpar8 (buf[0]);
+		c = vbi_printable (c);
 		putchar(c);
-		c = odd_parity(buf[1]) ? buf[1] & 0x7F : '?';
-		c = printable(c);
+		c = vbi_unpar8 (buf[1]);
+		c = vbi_printable (c);
 		putchar(c);
 		fflush(stdout);
 	}
@@ -221,7 +214,8 @@ decode_caption(uint8_t *buf, int line)
 
 	if (line >= 280) { /* field 2 */
 		/* 0x01xx..0x0Exx ASCII_or_NUL[0..32] 0x0Fchks */
-		if (odd_parity(buf[0]) && (c >= 0x01 && c <= 0x0F)) {
+		if (vbi_unpar8 (buf[0]) >= 0
+		    && (c >= 0x01 && c <= 0x0F)) {
 			decode_xds(buf);
 			xds_transport = (c != 0x0F);
 		} else if (xds_transport) {
@@ -232,11 +226,11 @@ decode_caption(uint8_t *buf, int line)
 	}
 
 	if (dump_cc) {
-		c = odd_parity(buf[0]) ? buf[0] & 0x7F : '?';
-		c = printable(c);
+		c = vbi_unpar8 (buf[0]);
+		c = vbi_printable (c);
 		putchar(c);
-		c = odd_parity(buf[1]) ? buf[1] & 0x7F : '?';
-		c = printable(c);
+		c = vbi_unpar8 (buf[1]);
+		c = vbi_printable (c);
 		putchar(c);
 		fflush(stdout);
 	}
@@ -328,7 +322,7 @@ decode_sliced(vbi_sliced *s, double time, int lines)
 			putchar(' ');
 
 			for (j = 0; j < sizeof(q->data); j++) {
-				char c = printable(q->data[j]);
+				char c = vbi_printable (q->data[j]);
 				putchar(c);
 			}
 

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.h,v 1.2 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: exp-gfx.h,v 1.3 2005/01/19 04:23:53 mschimek Exp $ */
 
 #ifndef EXP_GFX_H
 #define EXP_GFX_H
@@ -54,7 +54,7 @@ extern void		vbi_draw_vt_page_region(vbi_page *pg, vbi_pixfmt fmt,
  * 
  * Draw a Teletext vbi_page. In this mode one character occupies 12 x 10 pixels.
  */
-static_inline void
+vbi_inline void
 vbi_draw_vt_page(vbi_page *pg, vbi_pixfmt fmt, void *canvas,
 		 int reveal, int flash_on)
 {
@@ -77,7 +77,7 @@ extern void		vbi_draw_cc_page_region(vbi_page *pg, vbi_pixfmt fmt,
  * Draw a Closed Caption vbi_page. In this mode one character occupies
  * 16 x 26 pixels.
  */
-static_inline void
+vbi_inline void
 vbi_draw_cc_page(vbi_page *pg, vbi_pixfmt fmt, void *canvas)
 {
 	vbi_draw_cc_page_region(pg, fmt, canvas, -1, 0, 0, pg->columns, pg->rows);

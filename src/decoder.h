@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.h,v 1.7 2004/12/13 07:12:29 mschimek Exp $ */
+/* $Id: decoder.h,v 1.8 2005/01/19 04:23:53 mschimek Exp $ */
 
 #ifndef DECODER_H
 #define DECODER_H
@@ -287,7 +287,7 @@ extern void		vbi_bit_slicer_init(vbi_bit_slicer *slicer,
  * result from a too weak or noisy signal. Error correction must be
  * implemented at a higher layer.
  */
-static_inline vbi_bool
+vbi_inline vbi_bool
 vbi_bit_slice(vbi_bit_slicer *slicer, uint8_t *raw, uint8_t *buf)
 {
 	return slicer->func(slicer, raw, buf);

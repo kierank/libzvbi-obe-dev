@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.h,v 1.5 2002/10/22 04:42:40 mschimek Exp $ */
+/* $Id: exp-txt.h,v 1.6 2005/01/19 04:23:53 mschimek Exp $ */
 
 #ifndef EXP_TXT_H
 #define EXP_TXT_H
@@ -62,7 +62,7 @@ extern int		vbi_print_page_region(vbi_page *pg, char *buf, int size,
  * data. Note this function does not append a terminating null
  * character.
  **/
-static_inline int
+vbi_inline int
 vbi_print_page(vbi_page *pg, char *buf, int size,
 	       const char *format, vbi_bool table, vbi_bool ltr)
 {

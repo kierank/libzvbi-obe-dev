@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: search.c,v 1.9 2004/12/13 07:17:09 mschimek Exp $ */
+/* $Id: search.c,v 1.10 2005/01/19 04:23:53 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -241,13 +241,12 @@ search_page_fwd(void *p, vt_page *vtp, vbi_bool wrapped)
 	if (first >= hp)
 		return 0; /* try next page */
 /*
-#define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
 fprintf(stderr, "exec: %x/%x; start %d,%d; %c%c%c...\n",
 	vtp->pgno, vtp->subno,
 	s->row[0], s->col[0],
-	printable(first[0]),
-	printable(first[1]),
-	printable(first[2])
+	vbi_printable (first[0]),
+	vbi_printable (first[1]),
+	vbi_printable (first[2])
 );
 */
 	if (!ure_exec(s->ud, flags, first, hp - first, &ms, &me))
@@ -343,12 +342,11 @@ break2:
 	for (i = 0; s->haystack + me < hp; i++) {
 		unsigned long ms1, me1;
 /*
-#define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
 fprintf(stderr, "exec: %x/%x; %d, %d; '%c%c%c...'\n",
 	vtp->pgno, vtp->subno, i, me,
-	printable(s->haystack[me + 0]),
-	printable(s->haystack[me + 1]),
-	printable(s->haystack[me + 2])
+	vbi_printable (s->haystack[me + 0]),
+	vbi_printable (s->haystack[me + 1]),
+	vbi_printable (s->haystack[me + 2])
 );
 */
 		if (!ure_exec(s->ud, (me > 0) ? (flags | URE_NOTBOL) : flags,

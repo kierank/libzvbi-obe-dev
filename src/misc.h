@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.h,v 1.7 2004/12/13 07:15:39 mschimek Exp $ */
+/* $Id: misc.h,v 1.8 2005/01/19 04:23:53 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -44,9 +44,39 @@
  */
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-/* doxygen omits static objects */
-#define static_inline static __inline__
+
+#ifdef __cplusplus
+#  define VBI_BEGIN_DECLS extern "C" {
+#  define VBI_END_DECLS }
+#else
+#  define VBI_BEGIN_DECLS
+#  define VBI_END_DECLS
 #endif
+
+#if __GNUC__ >= 2
+   /* Inline this function at -O2 and higher. */
+#  define vbi_inline static __inline__
+#else
+#  define vbi_inline static
+#endif
+
+#if __GNUC__ >= 3
+   /* Function has no side effects and return value depends
+      only on parameters and non-volatile globals or
+      memory pointed to by parameters. */
+#  define vbi_pure __attribute__ ((pure))
+   /* Function has no side effects and return value depends
+      only on parameters. */
+#  define vbi_const __attribute__ ((const))
+   /* Function returns pointer which does not alias anything. */
+#  define vbi_alloc __attribute__ ((malloc))
+#else
+#  define vbi_pure
+#  define vbi_const
+#  define vbi_alloc
+#endif
+
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
 /**
  * @ingroup Basic
@@ -239,6 +269,21 @@ vbi_asprintf			(char **		dstp,
 
 #define STRCOPY(d, s) (_vbi_strlcpy (d, s, sizeof (d)) < sizeof (d))
 
+/* For debugging. */
+vbi_inline int
+vbi_printable			(int			c)
+{
+	if (c < 0)
+		return '?';
+
+	c &= 0x7F;
+
+	if (c < 0x20 || c >= 0x7F)
+		return '.';
+
+	return c;
+}
+
 /* Gettext i18n */
 
 extern const char _zvbi_intl_domainname[];
@@ -269,5 +314,8 @@ extern const char _zvbi_intl_domainname[];
 #    define N_(String) (String)
 #  endif
 #endif
+
+#define VBI_BEGIN_DECLS
+#define VBI_END_DECLS
 
 #endif /* MISC_H */

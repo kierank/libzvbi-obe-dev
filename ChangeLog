@@ -1,3 +1,18 @@
+2005-01-18    <mschimek@users.sf.net>
+
+	* Release 0.2.12.
+
+2005-01-17    <mschimek@users.sf.net>
+
+	* po/fr.po: Updated by Christian Marillat.
+	* src/hamm.c, src/hamm.h: Updated from branch 0.3, parity and
+	  Hamming routines are public now.
+	* src/Makefile.am (LIBZVBI_HDRS): Added hamm.h. Added built
+	  sources to cleanfiles.
+	* test/Makefile.am: Cleaned up. Added hamm check.
+	* test/hamm.c: New parity and Hamming routines check, ported
+	  over from branch 0.3.
+
 2005-01-15    <mschimek@users.sf.net>
 
 	* test/wss.c: New test/demo capturing a WSS signal from video images.

@@ -1,6 +1,11 @@
-libzvbi 0.2.12, 2005-
+libzvbi 0.2.12, 2005-01-18
 --------------------------
-Bttv drivers 0.9 - 0.9.15 report wrong PAL/SECAM field 2 line numbers.
+Various error correction functions, generator and bit reversal
+functions useful for VBI decoding are public now.  A new test app
+has been added to capture WSS data from video images.  French
+translation update by Christian Marillat.
+
+Bttv drivers 0.9.0 - 0.9.15 report wrong PAL/SECAM field 2 line numbers.
 A work-around has been added, and a bug compatible Teletext data
 service table entry has been corrected.
 
@@ -8,8 +13,8 @@ If you encounter problems using similarly broken drivers please try a
 fuzzy match of driver capabilities and data service parameters (e.g.
 vbi_capture_v4l2_new(strict <= 1)) and notify mschimek@users.sf.net.
 
-The test/capture and osc apps did not capture PAL/SECAM line 23 (WSS),
-this has been fixed.
+The test/capture and test/osc apps did not capture PAL/SECAM line 23
+(WSS), this has been fixed.
 
 libzvbi 0.2.11, 2004-12-31
 --------------------------

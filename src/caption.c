@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.15 2004/06/18 14:14:51 mschimek Exp $ */
+/* $Id: caption.c,v 1.16 2005/01/19 04:23:52 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +33,6 @@
 #include "tables.h"
 #include "vbi.h"
 
-#define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
 #define elements(array) (sizeof(array) / sizeof(array[0]))
 
 #define XDS_DEBUG(x) /* x */
@@ -308,7 +307,7 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			XDS_DEBUG(
 				printf("program title: '");
 				for (i = 0; i < length; i++)
-					putchar(printable(buffer[i]));
+					putchar(vbi_printable (buffer[i]));
 				printf("'\n");
 			)
 
@@ -585,7 +584,7 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			XDS_DEBUG(
 				printf("program descr. line %d: >", line + 1);
 				for (i = 0; i < length; i++)
-					putchar(printable(buffer[i]));
+					putchar(vbi_printable (buffer[i]));
 				printf("<\n");
 			)
 
@@ -651,7 +650,7 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			XDS_DEBUG(
 				printf("Network name: '");
 				for (i = 0; i < length; i++)
-					putchar(printable(buffer[i]));
+					putchar(vbi_printable (buffer[i]));
 				printf("'\n");
 			)
 
@@ -668,7 +667,7 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			XDS_DEBUG(
 				printf("Network call letters: '");
 				for (i = 0; i < length; i++)
-					putchar(printable(buffer[i]));
+					putchar(vbi_printable (buffer[i]));
 				printf("'\n");
 			)
 
@@ -775,8 +774,8 @@ xds_separator(vbi_decoder *vbi, uint8_t *buf)
 {
 	struct caption *cc = &vbi->cc;
 	xds_sub_packet *sp = cc->curr_sp;
-	int c1 = vbi_parity(buf[0]);
-	int c2 = vbi_parity(buf[1]);
+	int c1 = vbi_unpar8 (buf[0]);
+	int c2 = vbi_unpar8 (buf[1]);
 	unsigned int class, type;
 
 	XDS_SEP_DEBUG(printf("XDS %02x %02x\n", buf[0], buf[1]));
@@ -836,7 +835,7 @@ xds_separator(vbi_decoder *vbi, uint8_t *buf)
 
 			XDS_SEP_DUMP(
 				for (i = 0; i < sp->count - 2; i++)
-					printf("%c", printable(sp->buffer[i]));
+					printf("%c", vbi_printable (sp->buffer[i]));
 				printf(" %d/0x%02x\n", class, type);
 			)
 		}
@@ -1440,12 +1439,12 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 
 	case 284:	/* NTSC */
 		CC_DUMP(
-			putchar(printable(buf[0]));
-			putchar(printable(buf[1]));
+			putchar(vbi_printable (buf[0]));
+			putchar(vbi_printable (buf[1]));
 			fflush(stdout);
 		)
 
-		if (vbi_parity(buf[0]) >= 0) {
+		if (vbi_unpar8 (buf[0]) >= 0) {
 			if (c1 == 0) {
 				goto finish;
 			} else if (c1 <= 0x0F) {
@@ -1469,15 +1468,15 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 		goto finish;
 	}
 
-	if (vbi_parity(buf[0]) < 0) {
+	if (vbi_unpar8 (buf[0]) < 0) {
 		c1 = 127;
 		buf[0] = c1; /* traditional 'bad' glyph, ccfont has */
 		buf[1] = c1; /*  room, design a special glyph? */
 	}
 
 	CC_DUMP(
-		putchar(printable(buf[0]));
-		putchar(printable(buf[1]));
+		putchar(vbi_printable (buf[0]));
+		putchar(vbi_printable (buf[1]));
 		fflush(stdout);
 	)
 
@@ -1491,7 +1490,7 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 		break; /* XDS field 1?? */
 
 	case 0x10 ... 0x1F:
-		if (vbi_parity(buf[1]) >= 0) {
+		if (vbi_unpar8 (buf[1]) >= 0) {
 			if (!field2
 			    && buf[0] == cc->last[0]
 			    && buf[1] == cc->last[1]) {
@@ -1513,8 +1512,8 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 
 	default:
 		CC_TEXT_DUMP(
-			putchar(printable(buf[0]));
-			putchar(printable(buf[1]));
+			putchar(vbi_printable (buf[0]));
+			putchar(vbi_printable (buf[1]));
 			fflush(stdout);
 		)
 
@@ -1543,7 +1542,7 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 		c = ch->attr;
 
 		for (i = 0; i < 2; i++) {
-			char ci = vbi_parity(buf[i]) & 0x7F; /* 127 if bad */
+			char ci = vbi_unpar8 (buf[i]) & 0x7F; /* 127 if bad */
 
 			if (ci <= 0x1F) /* 0x00 no char, 0x01 ... 0x1F invalid */
 				continue;

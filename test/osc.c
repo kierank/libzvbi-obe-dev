@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.17 2005/01/10 15:49:41 mschimek Exp $ */
+/* $Id: osc.c,v 1.18 2005/01/19 04:23:53 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -81,28 +81,6 @@ vbi_capture_set_log_fp		(vbi_capture *		capture,
 				 FILE *			fp);
 extern vbi_bool vbi_capture_force_read_mode;
 
-/* From capture.c */
-static inline int
-odd_parity(uint8_t c)
-{
-	c ^= (c >> 4);
-	c ^= (c >> 2);
-	c ^= (c >> 1);
-
-	return c & 1;
-}
-
-extern const int8_t vbi_hamm8val[256];
-extern const uint8_t vbi_bit_reverse[256];
-
-static inline int
-vbi_hamm16(uint8_t *p)
-{
-	return vbi_hamm8val[p[0]] | (vbi_hamm8val[p[1]] << 4);
-}
-
-#define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
-
 #define PIL(day, mon, hour, min) \
 	(((day) << 15) + ((mon) << 11) + ((hour) << 6) + ((min) << 0))
 
@@ -128,7 +106,7 @@ decode_ttx(uint8_t *buf, int line)
         text += sprintf(text, "pg %x%02d ln %03d >", magazine, packet, line);
 
         for (j = 0; j < 42; j++) {
-	   char c = printable(buf[j]);
+	   char c = vbi_printable (buf[j]);
 	   
 	   *text = c;
 	   text++;
@@ -194,7 +172,7 @@ decode_vps(uint8_t *buf)
 
 	c &= 0x7F;
 
-	label[l] = printable(c);
+	label[l] = vbi_printable (c);
 
 	l = (l + 1) % 16;
 

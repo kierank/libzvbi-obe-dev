@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.7 2004/12/31 06:05:20 mschimek Exp $ */
+/* $Id: caption.c,v 1.8 2005/01/19 04:23:53 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -39,8 +39,6 @@
 #include <X11/Xutil.h>
 
 #include "src/libzvbi.h"
-
-#define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
 
 vbi_decoder *		vbi;
 vbi_pgno		pgno = -1;
@@ -446,7 +444,7 @@ sample_stream(void)
 			if (index == 1 || index == 7) {
 				printf(" %3d %02x %02x %c%c\n", s->line,
 				       s->data[0] & 0x7F, s->data[1] & 0x7F,
-				       printable(s->data[0]), printable(s->data[1]));
+				       vbi_printable (s->data[0]), vbi_printable (s->data[1]));
 			} else {
 				printf(" %3d %d ignored\n", s->line, index);
 				s--;

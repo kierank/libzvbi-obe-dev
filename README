@@ -64,8 +64,9 @@
   configuration and make files.
 
   To build and install type "./configure", "make", "make check" if you
-  want to run some tests, and "make install". For additional
-  instructions see the INSTALL file.
+  want to run some tests, and "make install".
+
+  For additional instructions see the INSTALL file.
 
   The library has been tested on Linux and FreeBSD.
 
