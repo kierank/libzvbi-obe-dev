@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.3 2002/05/23 03:59:46 mschimek Exp $ */
+/* $Id: packet.c,v 1.4 2002/05/29 02:02:17 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1419,8 +1419,6 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 	return TRUE;
 }
 
-#define FPC 0
-
 #define FPC_BLOCK_SEPARATOR	0xC
 #define FPC_FILLER_BYTE		0x3
 
@@ -2245,7 +2243,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			} else if (page == 0xFE) {
 				cvtp->function = PAGE_FUNCTION_MOT;
 				pi->code = VBI_SYSTEM_PAGE;
-#ifdef FPC
+#if FPC
 			} else if (pi->code == VBI_EPG_DATA) {
 				int stream = (cvtp->subno >> 8) & 15;
 
@@ -2339,7 +2337,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			case VBI_TRIGGER_DATA:
 				function = PAGE_FUNCTION_TRIGGER;
 				break;
-#ifdef FPC
+#if FPC
 			case VBI_EPG_DATA:
 				function = PAGE_FUNCTION_EPG;
 				break;
@@ -2418,7 +2416,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			if (!(parse_mpt_ex(&vbi->vt, p, packet)))
 				return FALSE;
 			break;
-#ifdef FPC
+#if FPC
 		case PAGE_FUNCTION_EPG:
 			parse_page_clear(vbi->epg_pc + ((cvtp->subno >> 8) & 1), p, packet);
 			break;
