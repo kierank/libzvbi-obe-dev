@@ -1,3 +1,16 @@
+2004-11-03    <mschimek@users.sf.net>
+
+	* po/de.po, po/fr.po, po/es.po, po/nl.po, po/pl.po, po/sv.po:
+	  Converted to UTF-8.
+
+2004-10-31    <mschimek@users.sf.net>
+
+	* src/chains.c: Compile only for V4L/V4L2.
+	* configure.in: Added FreeBSD ioctl request type.
+	* src/proxy-client.c (proxy_client_check_msg): s/EPROTO/EMSGSIZE
+	  for FreeBSD.
+	  (proxy_client_wait_select): FreeBSD FD_ISSET return type mismatch.
+
 2004-10-27    <mschimek@users.sf.net>
 
 	* src/dvb_mux.c (_vbi_dvb_mux_delete): NULL and CLEAR fix.
