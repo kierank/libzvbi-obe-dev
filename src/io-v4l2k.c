@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2k.c,v 1.10 2003/05/17 12:59:57 tomzo Exp $";
+static char rcsid[] = "$Id: io-v4l2k.c,v 1.11 2003/05/24 12:18:04 tomzo Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -87,7 +87,7 @@ typedef struct vbi_capture_v4l2 {
 	signed char		has_try_fmt;
 	int			enqueue;
 	struct v4l2_capability  vcap;
-        char                  * p_dev_name;
+	char                  * p_dev_name;
 
 	vbi_raw_decoder		dec;
 
@@ -250,7 +250,7 @@ v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
 	        printv("stream-read: ERROR: streaming is suspended\n");
 		errno = ESRCH;
 		return -1;
-        }
+	}
 
 	if (v->enqueue == ENQUEUE_STREAM_OFF) {
 		if (IOCTL(v->fd, VIDIOC_STREAMON, &v->btype) == -1)
@@ -291,7 +291,7 @@ v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
 	if (IOCTL(v->fd, VIDIOC_DQBUF, &vbuf) == -1) {
 	        printv("stream-read: ioctl DQBUF: %d (%s)\n", errno, strerror(errno));
 		return -1;
-        }
+	}
 
 	time = vbuf.timestamp.tv_sec
 		+ vbuf.timestamp.tv_usec * (1 / 1e6);
@@ -331,7 +331,7 @@ v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
 		if (IOCTL(v->fd, VIDIOC_QBUF, &vbuf) == -1) {
 	                printv("stream-read: ioctl QBUF: %d (%s)\n", errno, strerror(errno));
 			return -1;
-                }
+	        }
 	}
 
 	return 1;
@@ -348,7 +348,7 @@ static void v4l2_stream_flush(vbi_capture *vc)
 
 	/* stream not enabled yet -> nothing to flush */
 	if ( (v->enqueue == ENQUEUE_SUSPENDED) ||
-             (v->enqueue == ENQUEUE_STREAM_OFF) )
+	     (v->enqueue == ENQUEUE_STREAM_OFF) )
 		return;
 
 	if (ENQUEUE_IS_UNQUEUED(v->enqueue)) {
@@ -358,7 +358,7 @@ static void v4l2_stream_flush(vbi_capture *vc)
 		if (IOCTL(v->fd, VIDIOC_QBUF, &vbuf) == -1) {
 	                printv("stream-flush: ioctl QBUF: %d (%s)\n", errno, strerror(errno));
 			return;
-                }
+	        }
 	}
 	v->enqueue = ENQUEUE_BUFS_QUEUED;
 
@@ -434,7 +434,7 @@ v4l2_suspend(vbi_capture_v4l2 *v)
 			dup2(fd, v->fd);
 			close(fd);
 
-                	v->read_active = FALSE;
+	        	v->read_active = FALSE;
 		}
 	}
 	return 0;
@@ -485,6 +485,12 @@ v4l2_read(vbi_capture *vc, vbi_capture_buffer **raw,
 	struct timeval tv;
 	int r;
 
+	if (my_raw == NULL) {
+		printv("read buffer not allocated (must add services first)\n");
+	        errno = EINVAL;
+	        return -1;
+	}
+
 	while (1) {
 		fd_set fds;
 
@@ -504,9 +510,9 @@ v4l2_read(vbi_capture *vc, vbi_capture_buffer **raw,
 		break;
 	}
 
-	if (!raw)
+	if (raw == NULL)
 		raw = &my_raw;
-	if (!*raw)
+	if (*raw == NULL)
 		*raw = v->raw_buffer;
 	else
 		(*raw)->size = v->raw_buffer[0].size;
@@ -596,8 +602,9 @@ print_vfmt(const char *s, struct v4l2_format *vfmt)
 		vfmt->fmt.vbi.flags);
 }
 
-static unsigned int
-v4l2_add_services(vbi_capture *vc, vbi_bool commit,
+static int
+v4l2_add_services(vbi_capture *vc,
+		  vbi_bool reset, vbi_bool commit,
 		  unsigned int services, int strict,
 		  char ** errorstr)
 {
@@ -610,6 +617,9 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 
 	/* suspend capturing, or driver will return EBUSY */
 	v4l2_suspend(v);
+
+	if (reset)
+		vbi_raw_decoder_reset(&v->dec);
 
 	memset(&vfmt, 0, sizeof(vfmt));
 
@@ -646,7 +656,7 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 	if (strict >= 0) {
 		struct v4l2_format vfmt_temp = vfmt;
 		vbi_raw_decoder dec_temp;
-                unsigned int sup_services;
+	        unsigned int sup_services;
 
 		printv("Attempt to set vbi capture parameters\n");
 
@@ -657,11 +667,11 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 		if ((sup_services & services) == 0) {
 			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of the "
 					       "requested data services with scanning %d."),
-                                               v->p_dev_name, v->vcap.card, v->dec.scanning);
+	                                       v->p_dev_name, v->vcap.card, v->dec.scanning);
 			goto failure;
 		}
 
-                services &= sup_services;
+	        services &= sup_services;
 
 		vfmt.fmt.vbi.sample_format	= V4L2_PIX_FMT_GREY;
 		vfmt.fmt.vbi.sampling_rate	= dec_temp.sampling_rate;
@@ -711,14 +721,14 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 
 		} else {
 			printv("Successfully %s vbi capture parameters\n",
-                               ((s_fmt == VIDIOC_S_FMT) ? "set" : "tried"));
+	                       ((s_fmt == VIDIOC_S_FMT) ? "set" : "tried"));
 		}
 	}
 
 	if (v->do_trace)
 		print_vfmt("VBI capture parameters granted: ", &vfmt);
 
-        /* grow pattern array if necessary
+	/* grow pattern array if necessary
 	** note: must do this even if service add fails later, to stay in sync with driver */
 	vbi_raw_decoder_resize(&v->dec, vfmt.fmt.vbi.start, vfmt.fmt.vbi.count);
 
@@ -756,7 +766,7 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 
 		printv("Nyquist check passed\n");
 
-		printv("Request decoding of services 0x%08x\n", services);
+		printv("Request decoding of services 0x%08x, strict level %d\n", services, strict);
 
 		/* those services which are already set must be checked for strictness */
 		if ( (strict > 0) && ((services & v->dec.services) != 0) ) {
@@ -767,9 +777,11 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 		}
 
 		if ( (services & ~v->dec.services) != 0 )
-			vbi_raw_decoder_add_services(&v->dec, services & ~ v->dec.services, strict);
+	                services &= vbi_raw_decoder_add_services(&v->dec,
+	                                                         services & ~ v->dec.services,
+	                                                         strict);
 
-		if ((v->dec.services & services) == 0) {
+		if (services == 0) {
 			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of "
 					       "the requested data services."),
 				     v->p_dev_name, v->vcap.card);
@@ -801,7 +813,7 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 		}
 	}
 
-	return v->dec.services;
+	return services;
 
 io_error:
 failure:
@@ -826,6 +838,8 @@ v4l2_delete(vbi_capture *vc)
 	else
 		v4l2_read_stop(v);
 
+	vbi_raw_decoder_destroy(&v->dec);
+
 	if (v->sliced_buffer.data)
 		free(v->sliced_buffer.data);
 
@@ -839,9 +853,12 @@ v4l2_delete(vbi_capture *vc)
 }
 
 static int
-v4l2_fd(vbi_capture *vc)
+v4l2_get_fd(vbi_capture *vc)
 {
 	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
+
+	/* v4l2 devices always support select (since 2002-10 revision),
+	** hence no separate get_fd() function is required for get_poll_fd queries */
 
 	return v->fd;
 }
@@ -908,7 +925,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		return NULL;
 	}
 
-        v->do_trace = trace;
+	v->do_trace = trace;
 	printv("Try to open v4l2 (2002-10) vbi device, libzvbi interface rev.\n"
 	       "%s", rcsid);
 
@@ -922,7 +939,8 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 
 	v->capture.parameters = v4l2_parameters;
 	v->capture._delete = v4l2_delete;
-	v->capture.get_fd = v4l2_fd;
+	v->capture.get_fd = v4l2_get_fd;
+	v->capture.get_poll_fd = v4l2_get_fd;
 	v->capture.add_services = v4l2_add_services;
 
 	if (fd == -1) {
@@ -981,7 +999,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		v->capture.read = v4l2_read;
 		v->capture.flush = v4l2_read_flush;
 
-                v->read_active = FALSE;
+	        v->read_active = FALSE;
 
 	} else {
 		vbi_asprintf(errorstr, _("%s (%s) lacks a vbi read interface, "
@@ -990,7 +1008,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		goto failure;
 	}
 
-	*services = v4l2_add_services(&v->capture, TRUE,
+	*services = v4l2_add_services(&v->capture, FALSE, TRUE,
 		                      *services, strict, errorstr);
 	if (*services == 0)
 		goto failure;

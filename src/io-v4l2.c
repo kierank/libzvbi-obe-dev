@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.18 2003/05/17 12:59:57 tomzo Exp $";
+static char rcsid[] = "$Id: io-v4l2.c,v 1.19 2003/05/24 12:18:04 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -477,6 +477,12 @@ v4l2_read(vbi_capture *vc, vbi_capture_buffer **raw,
 	struct timeval tv;
 	int r;
 
+	if (my_raw == NULL) {
+		printv("read buffer not allocated (must add services first)\n");
+		errno = EINVAL;
+		return -1;
+	}
+
 	while (v->has_select) {
 		fd_set fds;
 
@@ -496,9 +502,9 @@ v4l2_read(vbi_capture *vc, vbi_capture_buffer **raw,
 		break;
 	}
 
-	if (!raw)
+	if (raw == NULL)
 		raw = &my_raw;
-	if (!*raw)
+	if (*raw == NULL)
 		*raw = v->raw_buffer;
 	else
 		(*raw)->size = v->raw_buffer[0].size;
@@ -606,6 +612,8 @@ v4l2_delete(vbi_capture *vc)
 	else
 		v4l2_read_stop(v);
 
+	vbi_raw_decoder_destroy(&v->dec);
+
 	if (v->sliced_buffer.data)
 		free(v->sliced_buffer.data);
 
@@ -619,11 +627,22 @@ v4l2_delete(vbi_capture *vc)
 }
 
 static int
-v4l2_fd(vbi_capture *vc)
+v4l2_get_read_fd(vbi_capture *vc)
 {
 	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
 
 	return v->fd;
+}
+
+static int
+v4l2_get_poll_fd(vbi_capture *vc)
+{
+	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
+
+	if (v->has_select)
+		return v->fd;
+	else
+		return -1;
 }
 
 static void
@@ -644,7 +663,8 @@ print_vfmt(char *s, struct v4l2_format *vfmt)
 }
 
 static unsigned int
-v4l2_add_services(vbi_capture *vc, vbi_bool commit,
+v4l2_add_services(vbi_capture *vc,
+		  vbi_bool reset, vbi_bool commit,
 		  unsigned int services, int strict,
 		  char ** errorstr)
 {
@@ -655,6 +675,9 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 
 	/* suspend capturing, or driver will return EBUSY */
 	v4l2_suspend(v);
+
+	if (reset)
+		vbi_raw_decoder_reset(&v->dec);
 
 	memset(&vfmt, 0, sizeof(vfmt));
 
@@ -680,7 +703,7 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 	if (strict >= 0) {
 		struct v4l2_format vfmt_temp = vfmt;
 		vbi_raw_decoder dec_temp;
-                unsigned int sup_services;
+		unsigned int sup_services;
 
 		printv("Attempt to set vbi capture parameters\n");
 
@@ -691,11 +714,11 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 		if ((sup_services & services) == 0) {
 			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of the "
 					       "requested data services %d."),
-                                               v->p_dev_name, v->vcap.name, v->dec.scanning);
+				                v->p_dev_name, v->vcap.name, v->dec.scanning);
 			goto failure;
 		}
 
-                services &= sup_services;
+		services &= sup_services;
 
 		vfmt.fmt.vbi.sample_format	= V4L2_VBI_SF_UBYTE;
 		vfmt.fmt.vbi.sampling_rate	= dec_temp.sampling_rate;
@@ -806,7 +829,7 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 
 		printv("Nyquist check passed\n");
 
-		printv("Request decoding of services 0x%08x\n", services);
+		printv("Request decoding of services 0x%08x, strict level %d\n", services, strict);
 
 		/* those services which are already set must be checked for strictness */
 		if ( (strict > 0) && ((services & v->dec.services) != 0) ) {
@@ -817,9 +840,11 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 		}
 
 		if ( (services & ~v->dec.services) != 0 )
-			vbi_raw_decoder_add_services(&v->dec, services & ~ v->dec.services, strict);
+			services &= vbi_raw_decoder_add_services(&v->dec,
+								 services & ~ v->dec.services,
+								 strict);
 
-		if ((v->dec.services & services) == 0) {
+		if (services == 0) {
 			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of "
 					       "the requested data services."),
 				     v->p_dev_name, v->vcap.name);
@@ -851,7 +876,7 @@ v4l2_add_services(vbi_capture *vc, vbi_bool commit,
 		}
 	}
 
-	return v->dec.services;
+	return services;
 
 io_error:
 failure:
@@ -884,7 +909,8 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 
 	v->capture.parameters = v4l2_parameters;
 	v->capture._delete = v4l2_delete;
-	v->capture.get_fd = v4l2_fd;
+	v->capture.get_fd = v4l2_get_read_fd;
+	v->capture.get_poll_fd = v4l2_get_poll_fd;
 	v->capture.add_services = v4l2_add_services;
 
 	/* O_RDWR required for PROT_WRITE */
@@ -989,7 +1015,7 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 		goto failure;
 	}
 
-	*services = v4l2_add_services(&v->capture, TRUE,
+	*services = v4l2_add_services(&v->capture, FALSE, TRUE,
 		                      *services, strict, errorstr);
 	if (*services == 0)
 		goto failure;
