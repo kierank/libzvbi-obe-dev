@@ -1,0 +1,24 @@
+Contributions
+
+x11font by Gerd Knorr
+
+Transcodes the libzvbi internal fonts into X11 fonts:
+teletext.bdf	teletexti.bdf
+caption.bdf	captioni.bdf
+
+You can install like this (may need to replace /usr/lib/X11/fonts):
+
+for f in *.bdf; do bdftopcf $f | \
+  gzip >`echo /usr/lib/X11/fonts/misc/$f | sed s/bdf/pcf.gz/g`; done
+mkfontdir /usr/lib/X11/fonts/misc
+
+# may not be necessary:
+xset fp rehash
+/etc/rc.d/xfs restart
+
+# check:
+xlsfonts | grep -ets-
+
+After you installed you can for example start an
+xterm with "xterm -u8 -font <font>" and see the output
+of test/unicode printed in libzvbi fonts.

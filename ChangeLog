@@ -1,3 +1,10 @@
+2002-04-18	<mschimek@users.sf.net>
+
+	* src/io.c, src/io.h, src/io-v4l.c, src/io-v4l2.c: Added function
+	  to retrieve fd.
+	* contrib: Added x11font by Gerd Knorr.
+	* configure.in: Added contrib/Makefile.
+
 2002-04-16	<mschimek@users.sf.net>
 
 	* src/caption.c: Corrected string length assertion in xds_decoder.

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.6 2002/04/16 05:49:57 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2.c,v 1.7 2002/04/18 13:37:17 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -276,6 +276,14 @@ v4l2_delete(vbi_capture *vc)
 	free(v);
 }
 
+static int
+v4l2_fd(vbi_capture *vc)
+{
+	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
+
+	return v->fd;
+}
+
 static void
 print_vfmt(char *s, struct v4l2_format *vfmt)
 {
@@ -336,6 +344,7 @@ vbi_capture_v4l2_new(char *dev_name, int buffers,
 
 	v->capture.parameters = v4l2_parameters;
 	v->capture.delete = v4l2_delete;
+	v->capture.get_fd = v4l2_fd;
 
 	/* O_RDWR required for PROT_WRITE */
 	if ((v->fd = open(dev_name, O_RDWR)) == -1) {

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.2 2002/01/15 03:20:25 mschimek Exp $ */
+/* $Id: io.h,v 1.3 2002/04/18 13:37:17 mschimek Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -66,6 +66,8 @@ extern int		vbi_capture_pull_sliced(vbi_capture *capture, vbi_capture_buffer **b
 extern int		vbi_capture_pull(vbi_capture *capture, vbi_capture_buffer **raw_buffer,
 					 vbi_capture_buffer **sliced_buffer, struct timeval *timeout);
 extern vbi_raw_decoder *vbi_capture_parameters(vbi_capture *capture);
+extern int		vbi_capture_fd(vbi_capture *capture);
+
 extern void		vbi_capture_delete(vbi_capture *capture);
 
 /* Private */
@@ -95,6 +97,7 @@ struct vbi_capture {
 	vbi_bool		(* read)(vbi_capture *, vbi_capture_buffer **,
 					 vbi_capture_buffer **, struct timeval *);
 	vbi_raw_decoder *	(* parameters)(vbi_capture *);
+	int			(* get_fd)(vbi_capture *);
 	void			(* delete)(vbi_capture *);
 };
 

@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.6\n"
-"POT-Creation-Date: 2002-04-01 00:18+0200\n"
+"POT-Creation-Date: 2002-04-18 14:22+0200\n"
 "PO-Revision-Date: 2002-01-08 14:43+0100\n"
 "Last-Translator: <snout@ctrl-c.liu.se>\n"
 "Language-Team: Swedish <sv@li.org>\n"
@@ -320,150 +320,80 @@ msgstr ""
 msgid "Unknown error."
 msgstr ""
 
-#: src/io-v4l.c:511 src/io-v4l.c:774 src/io-v4l.c:792 src/io-v4l2.c:332
-#: src/io-v4l2.c:530 src/io-v4l2.c:578 src/io-v4l2.c:659
+#: src/io-v4l.c:519 src/io-v4l.c:783 src/io-v4l.c:801 src/io-v4l2.c:340
+#: src/io-v4l2.c:549 src/io-v4l2.c:597 src/io-v4l2.c:678
 msgid "Virtual memory exhausted."
 msgstr "Slut på virtuellt minne."
 
-#: src/io-v4l.c:520 src/io-v4l2.c:341
+#: src/io-v4l.c:529 src/io-v4l2.c:352
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Kan inte öppna enheten '%s': %d, %s."
 
-#: src/io-v4l2.c:349
+#: src/io-v4l2.c:361
 #, fuzzy, c-format
 msgid "Cannot identify '%s': %d, %s."
 msgstr "Kan inte öppna enheten '%s': %d, %s."
 
-#: src/io-v4l2.c:351
+#: src/io-v4l2.c:363
 msgid "Probably not a v4l2 device."
 msgstr ""
 
-#: src/io-v4l.c:545 src/io-v4l2.c:356
+#: src/io-v4l.c:554 src/io-v4l2.c:368
 #, fuzzy, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) är inge rå VBI-enhet.\n"
 
 #. Mandatory; dequeue buffer is non-blocking.
-#: src/io-v4l.c:696 src/io-v4l2.c:367 src/io-v4l2.c:543
+#: src/io-v4l.c:705 src/io-v4l2.c:379 src/io-v4l2.c:562
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr ""
 
-#. mandatory, http://www.thedirks.org/v4l2/v4l2dsi.htm
-#: src/io-v4l2.c:375
+#: src/io-v4l2.c:387
 #, fuzzy, c-format
 msgid "Cannot query current videostandard of %s (%s): %d, %s."
 msgstr "Kan inte få VBI-parametrar från 5s (%s): %d, %s.\n"
 
-#: src/io-v4l2.c:377 src/io-v4l2.c:642
+#: src/io-v4l2.c:389 src/io-v4l2.c:661
 msgid "Probably a driver bug."
 msgstr ""
 
-#: src/io-v4l2.c:397
+#: src/io-v4l2.c:409
 #, fuzzy, c-format
 msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr "Kan inte få VBI-parametrar från 5s (%s): %d, %s.\n"
 
-#: src/io-v4l.c:413 src/io-v4l.c:704 src/io-v4l.c:762 src/io-v4l2.c:414
-#: src/io-v4l2.c:520
+#: src/io-v4l.c:413 src/io-v4l.c:713 src/io-v4l.c:771 src/io-v4l2.c:426
+#: src/io-v4l2.c:539
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "Tyvärr, %s (%s) kan inte spela in någon av de begärda tjänsterna."
 
-#: src/io-v4l.c:450 src/io-v4l2.c:451
+#: src/io-v4l.c:450 src/io-v4l2.c:463
 #, fuzzy, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "%s (%s) används redan.\n"
 
-#: src/io-v4l.c:456 src/io-v4l2.c:467
+#: src/io-v4l.c:456 src/io-v4l2.c:479
 #, fuzzy, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr ""
 "Kunde inte ställa in VBI-parametrarna för %s (%s), möjligtvis ett drivarfel. "
 "%s\n"
 
-#: src/io-v4l2.c:470 src/io-v4l2.c:562
+#: src/io-v4l2.c:482 src/io-v4l2.c:581
 msgid "Possibly a driver bug."
 msgstr ""
 
-#: src/io-v4l.c:584 src/io-v4l2.c:499
+#: src/io-v4l.c:593 src/io-v4l2.c:511
 #, fuzzy, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
 msgstr "%s (%s) har ett okänt VBI-hämtningsformat nr. %d. %s"
 
-#: src/io-v4l2.c:559
-#, c-format
-msgid "Cannot request streaming i/o buffers from %s (%s): %d, %s."
-msgstr "Kan inte få strömmande i/o-buffrar från %s (%s): %d, %s."
-
-#: src/io-v4l2.c:567
-#, fuzzy, c-format
-msgid ""
-"%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
-"exhausted."
-msgstr "%s (%s) gav inga stömmande i/o-buffrar, slut på fysiskt minne?"
-
-#: src/io-v4l2.c:592
-#, c-format
-msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %d, %s."
-msgstr ""
-"Fråga till strömmande i/o-buffer nr. %d från %s (%s) misslyckades: %d, %s."
-
-#: src/io-v4l2.c:614
-#, c-format
-msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
-msgstr ""
-"Minnesmappning av strömmande i/o-buffer nr. %d från %s (%s) misslyckades: %"
-"d, %s."
-
-#: src/io-v4l2.c:638
-#, c-format
-msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
-msgstr "Kan inte köa strömmande i/o-buffer nr. %d till %s (%s): %d, %s."
-
-#: src/io-v4l.c:803 src/io-v4l2.c:670
-#, c-format
-msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
-msgstr "Inte nog minne för att skapa VBI-inspelningsbuffer (%d KB)."
-
-#: src/io-v4l2.c:680
-#, c-format
-msgid ""
-"%s (%s) lacks a vbi read interface, possibly an output only device or a "
-"driver bug."
-msgstr ""
-"%s (%s) har inget läsgränssnitt för VBI, möjligen är det en endast skrivbar "
-"enhet eller ett drivarfel."
-
-#: src/io-v4l2.c:710
-msgid "V4L2 interface not compiled."
-msgstr ""
-
-#: src/io-v4l.c:499
-msgid "driver unknown"
-msgstr "okänd drivare"
-
-#: src/io-v4l.c:627
-#, c-format
-msgid "Cannot capture with %s (%s), has no standard vbi interface."
-msgstr "Kan inte läsa med %s (%s), den har inget standard VBI-gränssnitt."
-
-#: src/io-v4l.c:645
-#, c-format
-msgid ""
-"Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
-"driver."
-msgstr ""
-
-#: src/io-v4l.c:661 src/io-v4l.c:721
-#, fuzzy, c-format
-msgid "Cannot set or determine current videostandard of %s (%s)."
-msgstr "Kan inte ställa in eller avgöra nuvarande videostandard av %s (%s).\n"
-
-#: src/io-v4l.c:748
+#: src/io-v4l.c:757 src/io-v4l2.c:523
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -472,7 +402,76 @@ msgstr ""
 "Kan inte spela in de begärda datatjänsterna med %s (%s), "
 "inspelningsfrekvensen %.2f är för låg."
 
-#: src/io-v4l.c:850 src/io-v4l.c:859
+#: src/io-v4l2.c:578
+#, c-format
+msgid "Cannot request streaming i/o buffers from %s (%s): %d, %s."
+msgstr "Kan inte få strömmande i/o-buffrar från %s (%s): %d, %s."
+
+#: src/io-v4l2.c:586
+#, fuzzy, c-format
+msgid ""
+"%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
+"exhausted."
+msgstr "%s (%s) gav inga stömmande i/o-buffrar, slut på fysiskt minne?"
+
+#: src/io-v4l2.c:611
+#, c-format
+msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %d, %s."
+msgstr ""
+"Fråga till strömmande i/o-buffer nr. %d från %s (%s) misslyckades: %d, %s."
+
+#: src/io-v4l2.c:633
+#, c-format
+msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
+msgstr ""
+"Minnesmappning av strömmande i/o-buffer nr. %d från %s (%s) misslyckades: %"
+"d, %s."
+
+#: src/io-v4l2.c:657
+#, c-format
+msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
+msgstr "Kan inte köa strömmande i/o-buffer nr. %d till %s (%s): %d, %s."
+
+#: src/io-v4l.c:812 src/io-v4l2.c:689
+#, c-format
+msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
+msgstr "Inte nog minne för att skapa VBI-inspelningsbuffer (%d KB)."
+
+#: src/io-v4l2.c:699
+#, c-format
+msgid ""
+"%s (%s) lacks a vbi read interface, possibly an output only device or a "
+"driver bug."
+msgstr ""
+"%s (%s) har inget läsgränssnitt för VBI, möjligen är det en endast skrivbar "
+"enhet eller ett drivarfel."
+
+#: src/io-v4l2.c:729
+msgid "V4L2 interface not compiled."
+msgstr ""
+
+#: src/io-v4l.c:507
+msgid "driver unknown"
+msgstr "okänd drivare"
+
+#: src/io-v4l.c:636
+#, c-format
+msgid "Cannot capture with %s (%s), has no standard vbi interface."
+msgstr "Kan inte läsa med %s (%s), den har inget standard VBI-gränssnitt."
+
+#: src/io-v4l.c:654
+#, c-format
+msgid ""
+"Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
+"driver."
+msgstr ""
+
+#: src/io-v4l.c:670 src/io-v4l.c:730
+#, fuzzy, c-format
+msgid "Cannot set or determine current videostandard of %s (%s)."
+msgstr "Kan inte ställa in eller avgöra nuvarande videostandard av %s (%s).\n"
+
+#: src/io-v4l.c:859 src/io-v4l.c:868
 msgid "V4L interface not compiled."
 msgstr ""
 

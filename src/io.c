@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.2 2002/01/21 07:34:59 mschimek Exp $ */
+/* $Id: io.c,v 1.3 2002/04/18 13:37:17 mschimek Exp $ */
 
 #include <assert.h>
 
@@ -250,6 +250,24 @@ vbi_capture_parameters(vbi_capture *capture)
 	assert (capture != NULL);
 
 	return capture->parameters(capture);
+}
+
+/**
+ * vbi_capture_fd:
+ * @capture: Initialized vbi capture context, can be %NULL.
+ * 
+ * Return value: 
+ * The file descriptor associated used to read from the device.
+ * If not applicable or the @capture object is invalid -1
+ * will be returned.
+ **/
+int
+vbi_capture_fd(vbi_capture *capture)
+{
+	if (capture)
+		return capture->get_fd(capture);
+	else
+		return -1;
 }
 
 /**

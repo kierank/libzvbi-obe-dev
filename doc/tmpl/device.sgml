@@ -20,6 +20,20 @@ Device interface
 </para>
 
 
+<!-- ##### FUNCTION vbi_capture_v4l_new ##### -->
+<para>
+
+</para>
+
+@dev_name: 
+@scanning: 
+@services: 
+@strict: 
+@errorstr: 
+@trace: 
+@Returns: 
+
+
 <!-- ##### FUNCTION vbi_capture_v4l2_new ##### -->
 <para>
 
@@ -45,6 +59,15 @@ Device interface
 
 
 <!-- ##### FUNCTION vbi_capture_parameters ##### -->
+<para>
+
+</para>
+
+@capture: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_capture_fd ##### -->
 <para>
 
 </para>

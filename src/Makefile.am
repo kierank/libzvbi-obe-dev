@@ -29,7 +29,7 @@ libzvbiincludedir = $(includedir)
 libzvbiinclude_HEADERS = libzvbi.h
 
 libzvbi_la_LIBADD = -lpthread $(PNG_LIB)
-libzvbi_la_LDFLAGS = -version-info 0:2:0
+libzvbi_la_LDFLAGS = -version-info 1:0:1
 # -release @VERSION@
 
 # Concat the header files in this order and filter out all lines

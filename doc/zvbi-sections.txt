@@ -54,9 +54,11 @@ vbi_raw_decode
 <TITLE>Device interface</TITLE>
 <FILE>device</FILE>
 vbi_capture_buffer
+vbi_capture_v4l_new
 vbi_capture_v4l2_new
 vbi_capture_delete
 vbi_capture_parameters
+vbi_capture_fd
 vbi_capture_pull_raw
 vbi_capture_pull_sliced
 vbi_capture_pull
