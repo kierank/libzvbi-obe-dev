@@ -128,12 +128,11 @@ struct v4l2_fract {
  */
 struct v4l2_capability
 {
-__u8 driver[16];
-__u8 card[32];
-__u8 bus_info[32];
-	__u32   version;        /* use KERNEL_VERSION() macro here */
+	__u8	driver[16];	/* i.e. "bttv" */
+	__u8	card[32];	/* i.e. "Hauppauge WinTV" */
+	__u8	bus_info[32];	/* "PCI:" + pci_dev->slot_name */
+	__u32   version;        /* should use KERNEL_VERSION() */
 	__u32	capabilities;	/* Device capabilities */
-	__u32	flags;		/* Feature flags, see below */
 	__u32	reserved[4];
 };
 
@@ -637,8 +636,8 @@ struct v4l2_tuner
 	__u32			rangehigh;
 	__u32			rxsubchans;
 	__u32			audmode;
-	__u32			signal;
-	__u32			afc;
+	__s32			signal;
+	__s32			afc;
 	__u32			reserved[4];
 };
 
@@ -695,18 +694,11 @@ struct v4l2_audio
 	__u32	reserved[2];
 };
 /*  Flags for the 'capability' field */
-#define V4L2_AUDCAP_EFFECTS		0x0020
-#define V4L2_AUDCAP_LOUDNESS		0x0040
-#define V4L2_AUDCAP_AVL			0x0080
+#define V4L2_AUDCAP_STEREO		0x00001
+#define V4L2_AUDCAP_AVL			0x00002
 
 /*  Flags for the 'mode' field */
-#define V4L2_AUDMODE_LOUDNESS		0x00002
-#define V4L2_AUDMODE_AVL		0x00004
-#define V4L2_AUDMODE_STEREO_field	0x0FF00
-#define V4L2_AUDMODE_STEREO_LINEAR	0x00100
-#define V4L2_AUDMODE_STEREO_PSEUDO	0x00200
-#define V4L2_AUDMODE_STEREO_SPATIAL30	0x00300
-#define V4L2_AUDMODE_STEREO_SPATIAL50	0x00400
+#define V4L2_AUDMODE_AVL		0x00001
 
 struct v4l2_audioout
 {
@@ -827,7 +819,7 @@ struct v4l2_streamparm
 #define VIDIOC_G_JPEGCOMP	_IOR  ('V', 61, struct v4l2_jpegcompression)
 #define VIDIOC_S_JPEGCOMP	_IOW  ('V', 62, struct v4l2_jpegcompression)
 #define VIDIOC_QUERYSTD      	_IOR  ('V', 63, v4l2_std_id)
-#define VIDIOC_TRY_FMT      	_IOWR ('V', 63, struct v4l2_format)
+#define VIDIOC_TRY_FMT      	_IOWR ('V', 64, struct v4l2_format)
 
 #define BASE_VIDIOC_PRIVATE	192		/* 192-255 are private */
 
