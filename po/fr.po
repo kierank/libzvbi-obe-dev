@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-04-04 11:14+0200\n"
+"POT-Creation-Date: 2004-04-09 08:29+0200\n"
 "PO-Revision-Date: 2003-10-16 16:10+0200\n"
 "Last-Translator: Christian Marillat <marillat.christian@wanadoo.fr>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -318,26 +318,26 @@ msgstr "Erreur inconnue."
 msgid "BKTR driver"
 msgstr ""
 
-#: src/io-bktr.c:197 src/io-bktr.c:275 src/io-bktr.c:293 src/io-v4l2k.c:334
-#: src/io-v4l2k.c:556 src/io-v4l2k.c:605 src/io-v4l2k.c:687 src/io-v4l2.c:323
+#: src/io-bktr.c:197 src/io-bktr.c:275 src/io-bktr.c:293 src/io-v4l2k.c:338
+#: src/io-v4l2k.c:560 src/io-v4l2k.c:612 src/io-v4l2k.c:695 src/io-v4l2.c:323
 #: src/io-v4l2.c:540 src/io-v4l2.c:588 src/io-v4l2.c:669 src/io-v4l.c:522
 #: src/io-v4l.c:786 src/io-v4l.c:804
 msgid "Virtual memory exhausted."
 msgstr "Mémoire virtuelle épuisée."
 
-#: src/io-bktr.c:207 src/io-v4l2k.c:345 src/io-v4l2.c:335 src/io-v4l.c:532
+#: src/io-bktr.c:207 src/io-v4l2k.c:349 src/io-v4l2.c:335 src/io-v4l.c:532
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Ne peut ouvrir '%s' : %d, %s"
 
-#: src/io-bktr.c:263 src/io-v4l2k.c:441 src/io-v4l2k.c:546 src/io-v4l2.c:417
+#: src/io-bktr.c:263 src/io-v4l2k.c:445 src/io-v4l2k.c:550 src/io-v4l2.c:417
 #: src/io-v4l2.c:530 src/io-v4l.c:414 src/io-v4l.c:716 src/io-v4l.c:774
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr ""
 "Désolé, %s (%s) ne peut capturer aucun des services de données demandé."
 
-#: src/io-bktr.c:304 src/io-v4l2k.c:698 src/io-v4l2.c:680 src/io-v4l.c:815
+#: src/io-bktr.c:304 src/io-v4l2k.c:706 src/io-v4l2.c:680 src/io-v4l.c:815
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Pas assez de mémoire pour allouer un tampon de capture vbi (%d Ko)."
@@ -346,57 +346,57 @@ msgstr "Pas assez de mémoire pour allouer un tampon de capture vbi (%d Ko)."
 msgid "BKTR driver interface not compiled."
 msgstr "L'interface BKTR n'a pas été compilée."
 
-#: src/io-v4l2k.c:361
+#: src/io-v4l2k.c:365
 #, c-format
 msgid "Cannot identify '%s': %d, %s."
 msgstr "Ne peut identifier '%s' : %d, %s."
 
-#: src/io-v4l2k.c:363
+#: src/io-v4l2k.c:367
 msgid "Probably not a v4l2 device."
 msgstr "Probablement pas un périphérique v4l2."
 
-#: src/io-v4l2k.c:368 src/io-v4l2.c:359 src/io-v4l.c:557
+#: src/io-v4l2k.c:372 src/io-v4l2.c:359 src/io-v4l.c:557
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) n'est pas une entrée VBI brute."
 
-#: src/io-v4l2k.c:380 src/io-v4l2k.c:570 src/io-v4l2.c:370 src/io-v4l2.c:553
+#: src/io-v4l2k.c:384 src/io-v4l2k.c:574 src/io-v4l2.c:370 src/io-v4l2.c:553
 #: src/io-v4l.c:708
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) ne supporte pas la fonction select()."
 
-#: src/io-v4l2k.c:387 src/io-v4l2k.c:402 src/io-v4l2.c:378
+#: src/io-v4l2k.c:391 src/io-v4l2k.c:406 src/io-v4l2.c:378
 #, c-format
 msgid "Cannot query current videostandard of %s (%s): %d, %s."
 msgstr "Impossible d'obtenir le standard vidéo courant de %s (%s) : %d, %s."
 
-#: src/io-v4l2k.c:389 src/io-v4l2k.c:404 src/io-v4l2k.c:669 src/io-v4l2.c:380
+#: src/io-v4l2k.c:393 src/io-v4l2k.c:408 src/io-v4l2k.c:677 src/io-v4l2.c:380
 #: src/io-v4l2.c:652
 msgid "Probably a driver bug."
 msgstr "Probablement un bogue du pilote."
 
-#: src/io-v4l2k.c:424 src/io-v4l2.c:400
+#: src/io-v4l2k.c:428 src/io-v4l2.c:400
 #, c-format
 msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr "Impossible d'obtenir les paramètres vbi courant de %s (%s) : %d, %s."
 
-#: src/io-v4l2k.c:478 src/io-v4l2.c:454 src/io-v4l.c:451
+#: src/io-v4l2k.c:482 src/io-v4l2.c:454 src/io-v4l.c:451
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "Ne peut initialiser %s (%s), le périphérique est déjà utilisé."
 
-#: src/io-v4l2k.c:486 src/io-v4l2.c:470 src/io-v4l.c:457
+#: src/io-v4l2k.c:490 src/io-v4l2.c:470 src/io-v4l.c:457
 #, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr ""
 "Ne peut sélectionner les paramètres de capture vbi pour %s (%s) : %d, %s."
 
-#: src/io-v4l2k.c:489 src/io-v4l2k.c:589 src/io-v4l2.c:473 src/io-v4l2.c:572
+#: src/io-v4l2k.c:493 src/io-v4l2k.c:596 src/io-v4l2.c:473 src/io-v4l2.c:572
 msgid "Possibly a driver bug."
 msgstr "Possibilité d'un bogue du pilote."
 
-#: src/io-v4l2k.c:518 src/io-v4l2.c:502 src/io-v4l.c:596
+#: src/io-v4l2k.c:522 src/io-v4l2.c:502 src/io-v4l.c:596
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -405,7 +405,7 @@ msgstr ""
 "%s (%s) présente un format inconnu d'échantillon vbi #%d. Ceci peut-être un "
 "bogue du pilote ou une librairies libzvbi trop vieille."
 
-#: src/io-v4l2k.c:530 src/io-v4l2.c:514 src/io-v4l.c:760
+#: src/io-v4l2k.c:534 src/io-v4l2.c:514 src/io-v4l.c:760
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -414,12 +414,12 @@ msgstr ""
 "Ne peut capturer le service de données demandé avec %s (%s), la fréquence "
 "d'échantillonnage %.2f MHz est trop basse."
 
-#: src/io-v4l2k.c:586 src/io-v4l2.c:569
+#: src/io-v4l2k.c:593 src/io-v4l2.c:569
 #, c-format
 msgid "Cannot request streaming i/o buffers from %s (%s): %d, %s."
 msgstr "Ne peut requérir le flux e/s des tampons depuis %s (%s) : %d, %s."
 
-#: src/io-v4l2k.c:594 src/io-v4l2.c:577
+#: src/io-v4l2k.c:601 src/io-v4l2.c:577
 #, c-format
 msgid ""
 "%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
@@ -428,26 +428,26 @@ msgstr ""
 "%s (%s) concède plus de flux pour les tampons e/s, peut-être que la mémoire "
 "physique épuisée."
 
-#: src/io-v4l2k.c:619 src/io-v4l2.c:602
+#: src/io-v4l2k.c:627 src/io-v4l2.c:602
 #, c-format
 msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %d, %s."
 msgstr "Demande de flux des tampons e/s #%d de %s (%s) à échoué : %d, %s."
 
-#: src/io-v4l2k.c:641 src/io-v4l2.c:624
+#: src/io-v4l2k.c:649 src/io-v4l2.c:624
 #, c-format
 msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
 msgstr ""
 "Organisation de la mémoire pour le flux des tampons e/s #%d de %s (%s) à "
 "échoué : %d, %s."
 
-#: src/io-v4l2k.c:665 src/io-v4l2.c:648
+#: src/io-v4l2k.c:673 src/io-v4l2.c:648
 #, c-format
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
 msgstr ""
 "Ne peut mettre dans la queue le flux des tampons e/s #%d vers %s (%s) : %d, %"
 "s."
 
-#: src/io-v4l2k.c:708 src/io-v4l2.c:690
+#: src/io-v4l2k.c:716 src/io-v4l2.c:690
 #, c-format
 msgid ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "
@@ -456,7 +456,7 @@ msgstr ""
 "%s (%s) manque la lecture de l'interface vbi, possibilité d'un périphérique "
 "de sortie seulement ou un bogue du pilote."
 
-#: src/io-v4l2k.c:759 src/io-v4l2.c:741
+#: src/io-v4l2k.c:767 src/io-v4l2.c:741
 #, fuzzy
 msgid "V4L2 interface not compiled."
 msgstr "L'interface V4L2 n'a pas été compilée."
