@@ -1,6 +1,8 @@
-2002-06-17  gettextize  <bug-gnu-gettext@gnu.org>
+2002-06-17	<mschimek@users.sf.net>
 
-	* Makefile.am (ACLOCAL_AMFLAGS): New variable.
+	* m4, po, config.rpath: Added because cannot use autogen.sh
+	  gettextize --force since gettext 0.11. The fine hack insists
+	  on updating already updated Makefile.am's and configure.in.
 
 2002-06-17  gettextize  <bug-gnu-gettext@gnu.org>
 

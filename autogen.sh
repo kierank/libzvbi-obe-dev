@@ -5,6 +5,7 @@ srcdir=`dirname $0`
 test -z "$srcdir" && srcdir=.
 
 PACKAGE=libzvbi
+GETTEXTIZE_FLAGS="--copy --no-changelog"
 
 (test -f $srcdir/configure.in) || {
     echo -n "**Error**: Directory "\`$srcdir\'" does not look like the"
@@ -12,4 +13,4 @@ PACKAGE=libzvbi
     exit 1
 }
 
-. $srcdir/macros/autogen.sh
+. $srcdir/m4/autogen.sh
