@@ -9,73 +9,64 @@ if [ -n "$GNOME2_PATH" ]; then
 	export PATH
 fi
 
-test -n "`autoconf --version </dev/null | grep 2.53`" || {
+test -n "`autoconf --version </dev/null | \
+  grep "\(2.53\|2.57\)"`" || {
   echo
-  echo "**Error**: You must have 'autoconf 2.53' installed to compile $PACKAGE."
-  echo "Download the appropriate package for your distribution,"
-  echo "or get the source tarball at ftp://ftp.gnu.org/pub/gnu/"
-  echo "(a newer version may work but is not tested)"
+  echo "**Error**: You must have 'autoconf' version 2.53 or 2.57"
+  echo "installed to compile $PACKAGE. Other versions may work"
+  echo "but have not been tested. Download the appropriate package"
+  echo "for your distribution, or get the source tarball at"
+  echo "ftp://ftp.gnu.org/pub/gnu/"
   DIE=1
-}
-
-(grep "^AM_PROG_XML_I18N_TOOLS" $srcdir/configure.in >/dev/null) && {
-  (xml-i18n-toolize --version) < /dev/null > /dev/null 2>&1 || {
-    echo 
-    echo "**Error**: You must have 'xml-i18n-toolize' installed to compile $PACKAGE."
-    echo "Get ftp://ftp.gnome.org/pub/GNOME/stable/sources/xml-i18n-tools/xml-i18n-tools-0.6.tar.gz"
-    echo "(or a newer version if it is available)"
-    DIE=1
-  }
 }
 
 (grep "^AM_PROG_LIBTOOL" $srcdir/configure.in >/dev/null) && {
   test -n "`libtool --version </dev/null | grep 1.4`" || {
     echo
-    echo "**Error**: You must have 'libtool 1.4.2' installed to compile $PACKAGE."
-    echo "Get ftp://ftp.gnu.org/pub/gnu/libtool/libtool-1.4.2.tar.gz"
-    echo "(a newer version may work but is not tested)"
+    echo "**Error**: You must have 'libtool' version 1.4 installed"
+    echo "to compile $PACKAGE. Other versions may work"
+    echo "but have not been tested. Download the appropriate package"
+    echo "for your distribution, or get the source tarball at"
+    echo "ftp://ftp.gnu.org/pub/gnu/"
     DIE=1
   }
 }
 
 grep "^AM_GNU_GETTEXT" $srcdir/configure.in >/dev/null && {
   grep "sed.*POTFILES" $srcdir/configure.in >/dev/null || \
-  test -n "`gettext --version </dev/null | grep 0.11`" || {
+  test -n "`gettext --version </dev/null | \
+  grep "\(0.11\|0.12\)"`" || {
     # Since 0.11.2 most of the gettext stuff is included,
     # no need to insist anymore.
     echo
-    echo "**Warning**: You should have 'gettext 0.11.2' installed to compile $PACKAGE."
-    echo "Get ftp://ftp.gnu.org/pub/gnu/gettext/gettext-0.11.2.tar.gz"
+    echo "**Warning**: You should have 'gettext' version 0.11 or"
+    echo "0.12 installed to compile $PACKAGE. Other versions may work"
+    echo "but have not been tested. Download the appropriate package"
+    echo "for your distribution, or get the source tarball at"
+    echo "ftp://ftp.gnu.org/pub/gnu/"
   }
 }
 
-grep "^AM_GNOME_GETTEXT" $srcdir/configure.in >/dev/null && {
-  grep "sed.*POTFILES" $srcdir/configure.in >/dev/null || \
-  test -n "`gettext --version </dev/null | grep 0.11`" || {
-    echo
-    echo "**Error**: You must have 'gettext 0.11.2' installed to compile $PACKAGE."
-    echo "Get ftp://ftp.gnu.org/pub/gnu/gettext/gettext-0.11.2.tar.gz"
-    echo "(a newer version may work, but is not tested)"
-    DIE=1
-  }
-}
-
-test -n "`automake --version </dev/null | grep 1.6`" || {
+test -n "`automake --version </dev/null | \
+  grep "\(1.6\|1.7\)"`" || {
   echo
-  echo "**Error**: You must have 'automake 1.6' installed to compile $PACKAGE."
-  echo "Get ftp://ftp.gnu.org/pub/gnu/automake/automake-1.6.tar.gz"
-  echo "(a newer version may work, but is not tested)"
+  echo "**Error**: You must have 'automake' version 1.6 or 1.7"
+  echo "installed to compile $PACKAGE. Other versions may work"
+  echo "but have not been tested. Download the appropriate package"
+  echo "for your distribution, or get the source tarball at"
+  echo "ftp://ftp.gnu.org/pub/gnu/"
   DIE=1
   NO_AUTOMAKE=yes
 }
 
 # if no automake, don't bother testing for aclocal
-test -n "$NO_AUTOMAKE" || (aclocal --version) < /dev/null > /dev/null 2>&1 || {
+test -n "$NO_AUTOMAKE" || \
+  (aclocal --version) < /dev/null > /dev/null 2>&1 || {
   echo
   echo "**Error**: Missing 'aclocal'.  The version of 'automake'"
-  echo "installed doesn't appear recent enough."
-  echo "Get ftp://ftp.gnu.org/pub/gnu/automake/automake-1.6.tar.gz"
-  echo "(a newer version may work, but is not tested)"
+  echo "installed doesn't appear recent enough. Download the"
+  echo "appropriate package for your distribution, or get the"
+  echo "source tarball at ftp://ftp.gnu.org/pub/gnu/"
   DIE=1
 }
 

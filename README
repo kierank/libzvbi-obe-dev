@@ -3,7 +3,6 @@
 
   Copyright (C) 2000-2003 Michael H. Schimek <mschimek@users.sf.net>
   Copyright (C) 2000, 2001 Iñaki García Etxebarria
-  Copyright (C) 2003 Tom Zoerner
 	
   Based on AleVT 1.5.1
   Copyright (C) 1998, 1999 Edgar Toernig
@@ -51,6 +50,9 @@
 
   Installation
   ============
+
+  If you checked out the source from CVS, run "./autogen.sh" to create
+  configuration and make files.
 
   To build and install type "./configure" and "make install". For additional
   instructions see the INSTALL file.

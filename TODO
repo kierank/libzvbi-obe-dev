@@ -1,10 +1,12 @@
-$Id: TODO,v 1.13 2003/10/14 20:19:59 mschimek Exp $
+$Id: TODO,v 1.14 2003/10/20 22:51:31 mschimek Exp $
 
 Version 0.3
 
 (Note some of these objectives have been accomplished or work
  is in progress. For details see branch-0-3 in our CVS repository
- cvs.sourceforge.net:/cvsroot/zapping, module vbi.)
+ cvs.sourceforge.net:/cvsroot/zapping, module vbi. Tom Zoerner
+ contributed a proxy daemon, also work in progress, see the
+ proxy branch.)
 
 * Events suck badly. Change to query functions (fetch page, station
   name, aspect ratio, ...) and just notify apps of changes.

@@ -3,6 +3,7 @@
 	* configure.in, Makefile.am, src/Makefile.am, daemon:
 	  Proxy code is not ready for release, moved to a separate
 	  branch.
+	* Cleanup.
 
 2003-10-16	<mschimek@users.sf.net>
 

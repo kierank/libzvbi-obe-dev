@@ -2,11 +2,11 @@
 
 TESTS = exoptest cpptest
 
-if ENABLE_PROXY
-proxy_programs=proxy-test
-else
+## if ENABLE_PROXY
+## proxy_programs=proxy-test
+## else
 proxy_programs=
-endif
+## endif
 
 noinst_PROGRAMS = \
     unicode \

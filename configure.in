@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.27 2003/10/20 21:51:01 mschimek Exp $
+dnl $Id: configure.in,v 1.28 2003/10/20 22:51:31 mschimek Exp $
 
 AC_INIT(configure.in)
 AM_INIT_AUTOMAKE(zvbi, 0.2.5)
@@ -107,9 +107,10 @@ dnl
 AC_CHECK_FUNCS(getopt_long)
 
 dnl
-dnl getaddrinfo (proxy service via TCP/IP)
+dnl getaddrinfo
+dnl (Proxy service via TCP/IP)
 dnl
-AC_CHECK_FUNCS(getaddrinfo)
+dnl AC_CHECK_FUNCS()
 
 dnl
 dnl Enable OS dependent device interfaces.
@@ -153,17 +154,17 @@ fi
 dnl
 dnl Enable vbi proxy
 dnl
-AC_MSG_CHECKING([whether to build the vbi proxy daemon and interface])
-AC_ARG_ENABLE(proxy,
-  AC_HELP_STRING([--enable-proxy],
-  [Build the vbi proxy daemon and interface (yes)]),,
-  enable_proxy=yes)
-AC_MSG_RESULT($enable_proxy)
-if test "$enable_proxy" = yes; then
-  AC_DEFINE(ENABLE_PROXY, 1,
-  [Define to build proxy daemon and and interface])
-fi
-AM_CONDITIONAL(ENABLE_PROXY, [test "$enable_proxy" = yes])
+dnl AC_MSG_CHECKING([whether to build the vbi proxy daemon and interface])
+dnl AC_ARG_ENABLE(proxy,
+dnl   AC_HELP_STRING([--enable-proxy],
+dnl   [Build the vbi proxy daemon and interface (yes)]),,
+dnl   enable_proxy=yes)
+dnl AC_MSG_RESULT($enable_proxy)
+dnl if test "$enable_proxy" = yes; then
+dnl   AC_DEFINE(ENABLE_PROXY, 1,
+dnl   [Define to build proxy daemon and and interface])
+dnl fi
+dnl AM_CONDITIONAL(ENABLE_PROXY, [test "$enable_proxy" = yes])
 
 dnl
 dnl Native language support.
