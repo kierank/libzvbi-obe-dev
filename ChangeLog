@@ -1,6 +1,7 @@
 2003-05-02	<mschimek@users.sf.net>
 
 	* src/io-v4l2k.c: Missed one of Tom's fixes.
+	* src/io-v4l2.c: Ported io-v4l2k.c fixes.
 
 2003-04-26	<mschimek@users.sf.net>
 
