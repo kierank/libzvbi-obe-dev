@@ -34,6 +34,7 @@ endif
 
 noinst_PROGRAMS = \
 	capture \
+	decode \
 	explist \
 	export \
 	glyph \
