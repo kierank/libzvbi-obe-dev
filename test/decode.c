@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.2 2005/02/17 10:19:22 mschimek Exp $ */
+/* $Id: decode.c,v 1.3 2005/02/25 18:32:19 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -58,9 +58,14 @@ static unsigned int		pfc_stream	= 0;
 static unsigned int		idl_channel	= 0;
 static unsigned int		idl_address	= 0;
 
-/* static vbi_pfc_demux *		pfc; */
+static vbi_pfc_demux *		pfc;
 static vbi_dvb_demux *		dvb;
 static vbi_idl_demux *		idl;
+
+extern void
+_vbi_pfc_block_dump		(const vbi_pfc_block *	pb,
+				 FILE *			fp,
+				 vbi_bool		binary);
 
 vbi_inline int
 vbi_printable			(int			c)
@@ -193,6 +198,8 @@ packet_8302			(const uint8_t		buffer[42],
 		dump_cni (pi.cni_type, pi.cni);
 }
 
+#endif
+
 static vbi_bool
 page_function_clear		(vbi_pfc_demux *	pfc,
 		                 const vbi_pfc_block *	block,
@@ -202,8 +209,6 @@ page_function_clear		(vbi_pfc_demux *	pfc,
 
 	return TRUE;
 }
-
-#endif
 
 static vbi_bool
 idl_format_a			(vbi_idl_demux *	idl,
@@ -334,14 +339,13 @@ teletext			(const uint8_t		buffer[42],
 	unsigned int magazine;
 	unsigned int packet;
 
-#if 0
 	if (pfc) {
 		if (!vbi_pfc_demux_feed (pfc, buffer)) {
 			printf ("Hamming error in PFC packet\n");
 			return;
 		}
 	}
-#endif
+
 	if (idl) {
 		if (!vbi_idl_demux_feed (idl, buffer)) {
 			printf ("Hamming or CRC error in IDL packet\n");
@@ -732,12 +736,12 @@ usage				(FILE *			fp,
 		 "               -a -i  everything except IDL\n"
 #if 0
 		 "-r | --vps-r   VPS data unrelated to PDC\n"
+#endif
 		 "-p | --pfc-pgno NNN\n"
 		 "-s | --pfc-stream NN\n"
 		 "               Decode Teletext Page Function Clear data\n"
 		 "               from page NNN (for example 1DF), stream NN\n"
 		 "               (optional, default is 0)\n"
-#endif
 		 "\n"
 		 "Modifying options:\n"
 		 "-x | --hex     With -t dump packets in hex and ASCII,\n"
@@ -858,13 +862,12 @@ main				(int			argc,
 		exit (EXIT_FAILURE);
 	}
 
-#if 0
 	if (0 != pfc_pgno) {
 		pfc = vbi_pfc_demux_new (pfc_pgno, pfc_stream,
 					 page_function_clear, NULL);
 		assert (NULL != pfc);
 	}
-#endif
+
 	if (0 != idl_channel) {
 		idl = vbi_idl_a_demux_new (idl_channel, idl_address,
 					   idl_format_a, NULL);
@@ -883,10 +886,8 @@ main				(int			argc,
 		old_mainloop ();
 	}
 
-#if 0
-	vbi_pfc_demux_delete (pfc);
-#endif
 	vbi_dvb_demux_delete (dvb);
+	vbi_pfc_demux_delete (pfc);
 	vbi_idl_demux_delete (idl);
 
 	exit (EXIT_SUCCESS);
