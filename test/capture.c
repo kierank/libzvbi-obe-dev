@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.11 2004/10/25 16:53:38 mschimek Exp $ */
+/* $Id: capture.c,v 1.12 2004/10/28 03:28:05 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -426,8 +426,6 @@ mainloop(void)
 
 	assert(raw && sliced);
 
-	pts = 0;
-
 	for (quit = FALSE; !quit;) {
 		int r;
 
@@ -479,10 +477,11 @@ mainloop(void)
 			decode_sliced(sliced, timestamp, lines);
 		if (bin_sliced)
 			binary_sliced(sliced, timestamp, lines);
-		if (bin_pes || bin_ts)
+		if (bin_pes || bin_ts) {
+			/* XXX shouldn't use system time. */
+			pts = timestamp * 90000;
 			_vbi_dvb_mux_mux(mx, pts, sliced, lines, -1);
-
-		pts += 90000 / 25; /* XXX */
+		}
 	}
 }
 
