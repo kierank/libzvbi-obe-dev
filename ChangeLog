@@ -1,3 +1,10 @@
+2005-01-19    <mschimek@users.sf.net>
+
+	* src/lang.c: s/is(blank|full)/is_ due to gcc 4.0 built-in name
+	  conflict.
+	* daemon, src, test, contrib: gcc 4.0 char pointer signedness
+	  warnings. 
+
 2005-01-18    <mschimek@users.sf.net>
 
 	* Release 0.2.12.

@@ -1,5 +1,6 @@
-$Id: BUGS,v 1.18 2004/11/11 05:34:33 mschimek Exp $
+$Id: BUGS,v 1.19 2005/01/20 01:41:26 mschimek Exp $
 
 * v4l and v4l2 i/o can ignore timeout parameter
   > maybe a sleep() loop works, but what about timestamping?
 * vbi_page.text[1056] < 26 * 41. D'oh! (fixed in 0.3)
+* uname in configure.in
