@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.12 2004/01/02 07:45:52 mschimek Exp $ */
+/* $Id: teletext.c,v 1.13 2004/02/19 04:04:24 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -71,12 +71,16 @@ extern const char _zvbi_intl_domainname[];
 
 #define DEBUG 0
 
-#if DEBUG
 #define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? \
                       '.' : ((c) & 0x7F))
+#if DEBUG
 #define printv(templ, args...) fprintf(stderr, templ ,##args)
 #else
-#define printv(templ, args...)
+#define printv(templ, args...)						\
+do {									\
+	if (0)								\
+		fprintf(stderr, templ ,##args);				\
+} while (0)
 #endif
 
 #define ROWS			25
@@ -2030,9 +2034,9 @@ enhance(vbi_decoder *vbi, vt_magazine *mag, vt_extension *ext,
 					unicode = vbi_teletext_composed_unicode(
 						p->mode - 0x10, p->data);
 			store:
-					printv("enh row %d col %d print 0x%02x/0x%02x -> 0x%04x %c\n",
+					printv("enh row %d col %d print 0x%02x/0x%02x -> 0x%04x\n",
 						active_row, active_column, p->mode, p->data,
-						gl, unicode & 0xFF);
+						unicode);
 
 					ac.unicode = unicode;
 					mac.unicode = ~0;
