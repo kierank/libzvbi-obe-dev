@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.26 2003/10/14 20:19:59 mschimek Exp $
+dnl $Id: configure.in,v 1.27 2003/10/20 21:51:01 mschimek Exp $
 
 AC_INIT(configure.in)
 AM_INIT_AUTOMAKE(zvbi, 0.2.5)
@@ -184,13 +184,15 @@ dnl
 AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, yes, no)
 AM_CONDITIONAL(HAVE_DOXYGEN, [test "$HAVE_DOXYGEN" = yes])
 
+dnl See proxy branch
+dnl daemon/Makefile
+dnl daemon/zvbid.init
+
 AC_OUTPUT([
   Makefile
   po/Makefile.in
   src/Makefile
   test/Makefile
-  daemon/Makefile
-  daemon/zvbid.init
   doc/Makefile
   doc/Doxyfile
   contrib/Makefile
