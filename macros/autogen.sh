@@ -1,8 +1,13 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
-PACKAGE=libzvbi
 DIE=0
+
+if [ -n "$GNOME2_PATH" ]; then
+	ACLOCAL_FLAGS="-I $GNOME2_PATH/share/aclocal $ACLOCAL_FLAGS"
+	PATH="$GNOME2_PATH/bin:$PATH"
+	export PATH
+fi
 
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
   echo
@@ -10,6 +15,16 @@ DIE=0
   echo "Download the appropriate package for your distribution,"
   echo "or get the source tarball at ftp://ftp.gnu.org/pub/gnu/"
   DIE=1
+}
+
+(grep "^AM_PROG_XML_I18N_TOOLS" $srcdir/configure.in >/dev/null) && {
+  (xml-i18n-toolize --version) < /dev/null > /dev/null 2>&1 || {
+    echo 
+    echo "**Error**: You must have 'xml-i18n-toolize' installed to compile $PACKAGE."
+    echo "Get ftp://ftp.gnome.org/pub/GNOME/stable/sources/xml-i18n-tools/xml-i18n-tools-0.6.tar.gz"
+    echo "(or a newer version if it is available)"
+    DIE=1
+  }
 }
 
 (grep "^AM_PROG_LIBTOOL" $srcdir/configure.in >/dev/null) && {
@@ -143,7 +158,8 @@ do
 	fi
       fi
       echo "Running aclocal $aclocalinclude ..."
-      aclocal $aclocalinclude || {
+      aclocalmsg=`aclocal $aclocalinclude 2>&1 || echo .`
+      if test ! -z "$aclocalmsg" ; then
 	echo
 	echo "**Error**: aclocal failed. This may mean that you have not"
 	echo "installed all of the packages you need, or you may need to"
@@ -151,7 +167,7 @@ do
 	echo "for the prefix where you installed the packages whose"
 	echo "macros were not found"
 	exit 1
-      }
+      fi
 
       if grep "^AM_CONFIG_HEADER" configure.in >/dev/null; then
 	echo "Running autoheader..."
