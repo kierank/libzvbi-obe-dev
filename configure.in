@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.11 2002/06/18 04:25:07 mschimek Exp $
+dnl $Id: configure.in,v 1.12 2002/06/24 03:25:33 mschimek Exp $
 
 AC_INIT(configure.in)
 AM_INIT_AUTOMAKE(zvbi, 0.2.1)
@@ -50,8 +50,6 @@ AC_EGREP_CPP([Lucky GNU user],[
     AC_SUBST(UNICODE_LIBS)
   else
     AC_MSG_RESULT([not present - Teletext search disabled])
-dnl AC_MSG_ERROR([libunicode is required:
-dnl ftp://ftp.gnome.org/pub/GNOME/unstable/sources])
   fi
 ])
 
@@ -69,7 +67,7 @@ PNG_LIB=""
 HAVE_PNG="yes"
 AC_CHECK_LIB(png, png_destroy_write_struct, PNG_LIB="-lpng -lz -lm", HAVE_PNG="no", -lz -lm)
 if test "x$HAVE_PNG" = "xyes"; then
-AC_DEFINE(HAVE_LIBPNG, 1, [Define if you have libpng])
+  AC_DEFINE(HAVE_LIBPNG, 1, [Define if you have libpng])
 fi
 AC_SUBST(PNG_LIB)
 
@@ -79,49 +77,46 @@ dnl (Linux videodev.h, videodev2.h dependencies)
 dnl
 AC_MSG_CHECKING(whether to build the Video4Linux interface)
 AC_ARG_ENABLE(v4l,
-	[  --enable-v4l            Include the V4L and V4L2 interface],
-	enable_vl4="$enableval", enable_v4l="auto")
+  AC_HELP_STRING([--enable-v4l], [Include the V4L and V4L2 interface]),
+  enable_vl4="$enableval", enable_v4l="auto")
 
 if test "x$enable_v4l" = "xauto"; then
-	if test "x`uname`" = "xLinux"; then
-		enable_v4l=yes
-	else
-		enable_v4l=no
-	fi
+  if test "x`uname`" = "xLinux"; then
+    enable_v4l=yes
+  else
+    enable_v4l=no
+  fi
 fi
 
 AC_MSG_RESULT($enable_v4l)
 if test "x$enable_v4l" = "xyes"; then
-	AC_DEFINE(ENABLE_V4L, 1, [Define to build V4L interface])
-	AC_DEFINE(ENABLE_V4L2, 1, [Define to build V4L2 interface])
+  AC_DEFINE(ENABLE_V4L, 1, [Define to build V4L interface])
+  AC_DEFINE(ENABLE_V4L2, 1, [Define to build V4L2 interface])
 fi
 
 dnl
-dnl X libraries
+dnl X libraries.
 dnl (Test windows)
 dnl
 AC_PATH_XTRA
 
 dnl
-dnl Native language support
+dnl Native language support.
 dnl
 AM_GNU_GETTEXT([external], [need-ngettext])
 
 dnl
-dnl Check for gtk-doc
+dnl Check for gtk-doc.
 dnl
 GTK_DOC_CHECK
 
-dnl
-dnl Output
-dnl
 AC_OUTPUT([
-Makefile
-m4/Makefile
-po/Makefile.in
-src/Makefile
-test/Makefile
-doc/Makefile
-contrib/Makefile
-zvbi.spec
+  Makefile
+  m4/Makefile
+  po/Makefile.in
+  src/Makefile
+  test/Makefile
+  doc/Makefile
+  contrib/Makefile
+  zvbi.spec
 ])
