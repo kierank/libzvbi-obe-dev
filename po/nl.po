@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.6.1\n"
-"POT-Creation-Date: 2002-08-04 21:31+0200\n"
+"POT-Creation-Date: 2002-09-26 22:07+0200\n"
 "PO-Revision-Date: 2002-01-08 14:34+0100\n"
 "Last-Translator: Ime Smits <ime@iae.nl>\n"
 "Language-Team: Dutch <ime@iae.nl>\n"
@@ -261,125 +261,125 @@ msgstr ""
 "Deze pagina als VTX-bestand exporteren, het formaat dat gebruikt wordt door "
 "VideoteXt en vbidecode"
 
-#: src/export.c:456
+#: src/export.c:458
 #, c-format
 msgid "Invalid option string \"%s\"."
 msgstr ""
 
-#: src/export.c:544
+#: src/export.c:546
 #, c-format
 msgid "Unknown export module '%s'."
 msgstr ""
 
-#: src/export.c:554
+#: src/export.c:556
 #, c-format
 msgid "Cannot initialize export module '%s', probably lack of memory."
 msgstr ""
 
-#: src/export.c:981
+#: src/export.c:983
 #, c-format
 msgid "Cannot create file '%s': Error %d, %s."
 msgstr "Kan bestand '%s' niet aanmaken: %d, %s."
 
-#: src/export.c:1053
+#: src/export.c:1055
 #, c-format
 msgid "Error while writing file '%s'"
 msgstr ""
 
-#: src/export.c:1055
+#: src/export.c:1057
 msgid "Error while writing file"
 msgstr ""
 
-#: src/export.c:1085
+#: src/export.c:1087
 #, c-format
 msgid "Export module '%s' has no option '%s'."
 msgstr ""
 
-#: src/export.c:1135
+#: src/export.c:1137
 #, c-format
 msgid "Invalid argument %s for option %s of export module %s."
 msgstr ""
 
-#: src/export.c:1159
+#: src/export.c:1161
 #, c-format
 msgid "Out of memory in export module '%s'."
 msgstr ""
 
-#: src/export.c:1186
+#: src/export.c:1188
 msgid "Unknown error."
 msgstr ""
 
-#: src/io-v4l2.c:320 src/io-v4l2.c:529 src/io-v4l2.c:577 src/io-v4l2.c:658
-#: src/io-v4l.c:519 src/io-v4l.c:783 src/io-v4l.c:801
+#: src/io-v4l2.c:323 src/io-v4l2.c:532 src/io-v4l2.c:580 src/io-v4l2.c:661
+#: src/io-v4l.c:522 src/io-v4l.c:786 src/io-v4l.c:804
 msgid "Virtual memory exhausted."
 msgstr "Geen virtueel geheugen beschikbaar."
 
-#: src/io-v4l2.c:332 src/io-v4l.c:529
+#: src/io-v4l2.c:335 src/io-v4l.c:532
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Kan apparaat '%s' niet openen: %d, %s."
 
-#: src/io-v4l2.c:341
+#: src/io-v4l2.c:344
 #, c-format
 msgid "Cannot identify '%s': %d, %s."
 msgstr "Kan apparaat '%s' niet openen: %d, %s."
 
-#: src/io-v4l2.c:343
+#: src/io-v4l2.c:346
 msgid "Probably not a v4l2 device."
 msgstr ""
 
-#: src/io-v4l2.c:348 src/io-v4l.c:554
+#: src/io-v4l2.c:351 src/io-v4l.c:557
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) is geen VBI-apparaat."
 
-#: src/io-v4l2.c:359 src/io-v4l2.c:542 src/io-v4l.c:705
+#: src/io-v4l2.c:362 src/io-v4l2.c:545 src/io-v4l.c:708
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr ""
 
-#: src/io-v4l2.c:367
+#: src/io-v4l2.c:370
 #, c-format
 msgid "Cannot query current videostandard of %s (%s): %d, %s."
 msgstr ""
 
-#: src/io-v4l2.c:369 src/io-v4l2.c:641
+#: src/io-v4l2.c:372 src/io-v4l2.c:644
 msgid "Probably a driver bug."
 msgstr ""
 
-#: src/io-v4l2.c:389
+#: src/io-v4l2.c:392
 #, c-format
 msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr "Kan de huidige VBI-parameters van %s (%s) niet uitlezen: %d, %s."
 
-#: src/io-v4l2.c:406 src/io-v4l2.c:519 src/io-v4l.c:413 src/io-v4l.c:713
-#: src/io-v4l.c:771
+#: src/io-v4l2.c:409 src/io-v4l2.c:522 src/io-v4l.c:414 src/io-v4l.c:716
+#: src/io-v4l.c:774
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "%s (%s) kan de gewenste datadienst helaas niet ontvangen."
 
-#: src/io-v4l2.c:443 src/io-v4l.c:450
+#: src/io-v4l2.c:446 src/io-v4l.c:451
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "%s (%s) is al in gebruik."
 
-#: src/io-v4l2.c:459 src/io-v4l.c:456
+#: src/io-v4l2.c:462 src/io-v4l.c:457
 #, fuzzy, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr "Kan de VBI-parameters voor %s (%s) niet activeren: %d, %s."
 
-#: src/io-v4l2.c:462 src/io-v4l2.c:561
+#: src/io-v4l2.c:465 src/io-v4l2.c:564
 msgid "Possibly a driver bug."
 msgstr "Mogelijk een bug in de drivers."
 
-#: src/io-v4l2.c:491 src/io-v4l.c:593
+#: src/io-v4l2.c:494 src/io-v4l.c:596
 #, fuzzy, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
 msgstr "%s (%s) biedt een onbekend VBI-formaat #%d aan."
 
-#: src/io-v4l2.c:503 src/io-v4l.c:757
+#: src/io-v4l2.c:506 src/io-v4l.c:760
 #, fuzzy, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -388,12 +388,12 @@ msgstr ""
 "Kan de gewenste datadienst niet ontvangen met %s (%s), de samplingfrequentie "
 "%.2f MHz is te laag."
 
-#: src/io-v4l2.c:558
+#: src/io-v4l2.c:561
 #, c-format
 msgid "Cannot request streaming i/o buffers from %s (%s): %d, %s."
 msgstr "Fout bij opvragen van de streaming I/O-buffers van %s (%s): %d, %s."
 
-#: src/io-v4l2.c:566
+#: src/io-v4l2.c:569
 #, c-format
 msgid ""
 "%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
@@ -402,29 +402,29 @@ msgstr ""
 "%s (%s) stelde geen streaming I/O-buffers ter beschikking, geen fysiek "
 "geheugenmeer?"
 
-#: src/io-v4l2.c:591
+#: src/io-v4l2.c:594
 #, c-format
 msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %d, %s."
 msgstr "Fout bij opvragen van streaming I/O-buffer #%d van %s (%s): %d, %s."
 
-#: src/io-v4l2.c:613
+#: src/io-v4l2.c:616
 #, c-format
 msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
 msgstr "mmap() van streaming I/O buffer #%d van %s (%s) mislukt: %d, %s."
 
-#: src/io-v4l2.c:637
+#: src/io-v4l2.c:640
 #, c-format
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
 msgstr ""
 "Kan streaming I/O buffer #%d van %s (%s) niet in de wachtrij plaatsen: %d, %"
 "s."
 
-#: src/io-v4l2.c:669 src/io-v4l.c:812
+#: src/io-v4l2.c:672 src/io-v4l.c:815
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Niet genoeg geheugen om VBI-capturebuffer (%d kB) te reserveren."
 
-#: src/io-v4l2.c:679
+#: src/io-v4l2.c:682
 #, c-format
 msgid ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "
@@ -433,33 +433,33 @@ msgstr ""
 "%s (%s) ontbeert een VBI-leesinterface, driver bug of apparaat is "
 "mogelijkalleen geschikt voor output."
 
-#: src/io-v4l2.c:729
+#: src/io-v4l2.c:733
 msgid "V4L2 interface not compiled."
 msgstr ""
 
-#: src/io-v4l.c:507
+#: src/io-v4l.c:508
 msgid "driver unknown"
 msgstr "Onbekende driver"
 
-#: src/io-v4l.c:636
+#: src/io-v4l.c:639
 #, c-format
 msgid "Cannot capture with %s (%s), has no standard vbi interface."
 msgstr ""
 "Kan geen gebruik maken van %s (%s) omdat standaard VBI-interface ontbreekt."
 
-#: src/io-v4l.c:654
+#: src/io-v4l.c:657
 #, c-format
 msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
 msgstr ""
 
-#: src/io-v4l.c:670 src/io-v4l.c:730
+#: src/io-v4l.c:673 src/io-v4l.c:733
 #, fuzzy, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr "Kan de huidige videostandaard van %s (%s) niet uitlezen ofactiveren.\n"
 
-#: src/io-v4l.c:859 src/io-v4l.c:868
+#: src/io-v4l.c:863 src/io-v4l.c:873
 msgid "V4L interface not compiled."
 msgstr ""
 
