@@ -18,6 +18,10 @@
  *
  *
  *  $Log: io-proxy.c,v $
+ *  Revision 1.9  2003/06/07 09:42:32  tomzo
+ *  Optimized client I/O in proxy-msg.c/.h: keep message header and body in one
+ *  struct VBIPROXY_MSG to be able to write it to the pipe in one syscall.
+ *
  *  Revision 1.8  2003/06/01 19:34:24  tomzo
  *  Redesigned message I/O handling: from async to synchronous design
  *  - previous design was still derived from nxtvepg client, where I/O is event
@@ -56,7 +60,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: io-proxy.c,v 1.8 2003/06/01 19:34:24 tomzo Exp $";
+static const char rcsid[] = "$Id: io-proxy.c,v 1.9 2003/06/07 09:42:32 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -130,7 +134,7 @@ typedef struct vbi_capture_proxy
         PROXY_CLIENT_STATE      state;
         VBIPROXY_CHN_PROFILE    chn_profile;
         VBIPROXY_MSG_STATE      io;
-        VBIPROXY_MSG_BODY     * p_client_msg;
+        VBIPROXY_MSG          * p_client_msg;
         int                     max_client_msg_size;
         vbi_bool                endianSwap;
         unsigned long           rxTotal;
@@ -204,14 +208,14 @@ static void proxy_client_alloc_msg_buf( vbi_capture_proxy *v )
    else
       msg_size = sizeof(VBIPROXY_MSG_BODY);
 
-   msg_size += 1000;
+   msg_size += sizeof(VBIPROXY_MSG_HEADER);
 
    if ((msg_size != v->max_client_msg_size) || (v->p_client_msg == NULL))
    {
       if (v->p_client_msg != NULL)
          free(v->p_client_msg);
 
-      dprintf1("alloc_msg_buf: allocate buffer for max. %d bytes\n", msg_size);
+      dprintf2("alloc_msg_buf: allocate buffer for max. %d bytes\n", msg_size);
       v->p_client_msg = malloc(msg_size);
       v->max_client_msg_size = msg_size;
    }
@@ -221,12 +225,14 @@ static void proxy_client_alloc_msg_buf( vbi_capture_proxy *v )
 ** Checks the size of a message from server to client
 */
 static vbi_bool proxy_client_check_msg( vbi_capture_proxy *v, uint len,
-                                        VBIPROXY_MSG_HEADER * pHead, VBIPROXY_MSG_BODY * pBody )
+                                        VBIPROXY_MSG * pMsg )
 {
+   VBIPROXY_MSG_HEADER * pHead = &pMsg->head;
+   VBIPROXY_MSG_BODY * pBody = &pMsg->body;
    vbi_bool result = FALSE;
 
-   /*if (v->io.readHeader.type != MSG_TYPE_SLICED_IND) */
-   dprintf2("check_msg: recv msg type %d, len %d\n", v->io.readHeader.type, v->io.readHeader.len);
+   /*if (v->p_client_msg->head.type != MSG_TYPE_SLICED_IND) */
+   dprintf2("check_msg: recv msg type %d, len %d\n", pHead->type, pHead->len);
 
    switch (pHead->type)
    {
@@ -304,19 +310,20 @@ static vbi_bool proxy_client_check_msg( vbi_capture_proxy *v, uint len,
 */
 static vbi_bool proxy_client_take_message( vbi_capture_proxy *v )
 {
-   VBIPROXY_MSG_BODY * pMsg = v->p_client_msg;
+   VBIPROXY_MSG_BODY * pMsg = &v->p_client_msg->body;
    vbi_bool result = FALSE;
 
-   switch (v->io.readHeader.type)
+   switch (v->p_client_msg->head.type)
    {
       case MSG_TYPE_CONNECT_CNF:
          if (v->state == CLNT_STATE_WAIT_CON_CNF)
          {
-            dprintf2("take_message: CONNECT_CNF: reply version %x, protocol %x\n", pMsg->connect_cnf.magics.protocol_version, pMsg->connect_cnf.magics.protocol_compat_version);
             /* first server message received: contains version info */
             /* note: nxtvepg and endian magics are already checked */
             if (pMsg->connect_cnf.magics.protocol_compat_version != VBIPROXY_COMPAT_VERSION)
             {
+               dprintf1("take_message: CONNECT_CNF: reply version %x, protocol %x\n", pMsg->connect_cnf.magics.protocol_version, pMsg->connect_cnf.magics.protocol_compat_version);
+
                vbi_asprintf(&v->p_errorstr, "%s: %d.%d.%d", _("Incompatible server version"),
                                          ((pMsg->connect_cnf.magics.protocol_compat_version >> 16) & 0xff),
                                          ((pMsg->connect_cnf.magics.protocol_compat_version >>  8) & 0xff),
@@ -328,6 +335,7 @@ static vbi_bool proxy_client_take_message( vbi_capture_proxy *v )
             }
             else
             {  /* version ok -> request block forwarding */
+               dprintf1("Successfully connected to proxy (version %x, protocol %x)\n", pMsg->connect_cnf.magics.protocol_version, pMsg->connect_cnf.magics.protocol_compat_version);
                memcpy(&v->dec, &pMsg->connect_cnf.dec, sizeof(v->dec));
 
                v->state = CLNT_STATE_RECEIVE;
@@ -429,7 +437,7 @@ static vbi_bool proxy_client_take_message( vbi_capture_proxy *v )
 
    if ((result == FALSE) && (v->p_errorstr == NULL))
    {
-      dprintf1("take_message: message type %d (len %d) not expected in state %d\n", v->io.readHeader.type, v->io.readHeader.len, v->state);
+      dprintf1("take_message: message type %d (len %d) not expected in state %d\n", v->p_client_msg->head.type, v->p_client_msg->head.len, v->state);
       vbi_asprintf(&v->p_errorstr, "%s", _("Proxy protocol error (unecpected message)"));
    }
 
@@ -590,16 +598,16 @@ static vbi_bool proxy_client_rpc( vbi_capture_proxy *v, long tv_sec, long tv_use
    } while (v->io.waitRead || (v->io.readOff < v->io.readLen));
 
    /* perform security checks on received message */
-   if (proxy_client_check_msg(v, v->io.readLen, &v->io.readHeader, v->p_client_msg) == FALSE)
+   if (proxy_client_check_msg(v, v->io.readLen, v->p_client_msg) == FALSE)
       goto failure;
 
-   v->rxTotal += v->io.readHeader.len;
+   v->rxTotal += v->p_client_msg->head.len;
    v->io.readLen = 0;
 
    return TRUE;
 
 failure:
-   vbi_asprintf(&v->p_errorstr, "%s", _("Lost connection (I/O error)"));
+   vbi_asprintf(&v->p_errorstr, "%s", _("Lost connection to proxy (I/O error)"));
    return FALSE;
 }
 
@@ -639,10 +647,10 @@ static int proxy_client_read_message( vbi_capture_proxy *v, struct timeval * p_t
    } while (v->io.waitRead || (v->io.readOff < v->io.readLen));
 
    /* perform security checks on received message */
-   if (proxy_client_check_msg(v, v->io.readLen, &v->io.readHeader, v->p_client_msg) == FALSE)
+   if (proxy_client_check_msg(v, v->io.readLen, v->p_client_msg) == FALSE)
       goto failure;
 
-   v->rxTotal += v->io.readHeader.len;
+   v->rxTotal += v->p_client_msg->head.len;
    v->io.readLen = 0;
 
    /* process the message - frees the buffer if neccessary */
@@ -685,7 +693,7 @@ static vbi_bool proxy_client_wait_idle( vbi_capture_proxy *v )
       }
 
       /* perform security checks on received message */
-      if (proxy_client_check_msg(v, v->io.readLen, &v->io.readHeader, v->p_client_msg) == FALSE)
+      if (proxy_client_check_msg(v, v->io.readLen, v->p_client_msg) == FALSE)
          goto failure;
 
       old_state = v->state;
@@ -732,19 +740,19 @@ static vbi_bool proxy_client_start_acq( vbi_capture_proxy *v )
    proxy_client_alloc_msg_buf(v);
 
    /* write service request parameters */
-   vbi_proxy_msg_fill_magics(&v->p_client_msg->connect_req.magics);
+   vbi_proxy_msg_fill_magics(&v->p_client_msg->body.connect_req.magics);
 
-   strncpy(v->p_client_msg->connect_req.client_name, CLNT_NAME_STR, VBIPROXY_CLIENT_NAME_MAX_LENGTH);
-   v->p_client_msg->connect_req.client_name[VBIPROXY_CLIENT_NAME_MAX_LENGTH - 1] = 0;
+   strncpy(v->p_client_msg->body.connect_req.client_name, CLNT_NAME_STR, VBIPROXY_CLIENT_NAME_MAX_LENGTH);
+   v->p_client_msg->body.connect_req.client_name[VBIPROXY_CLIENT_NAME_MAX_LENGTH - 1] = 0;
 
-   v->p_client_msg->connect_req.scanning     = v->scanning;
-   v->p_client_msg->connect_req.services     = v->services;
-   v->p_client_msg->connect_req.strict       = v->strict;
-   v->p_client_msg->connect_req.buffer_count = v->buffer_count;
+   v->p_client_msg->body.connect_req.scanning     = v->scanning;
+   v->p_client_msg->body.connect_req.services     = v->services;
+   v->p_client_msg->body.connect_req.strict       = v->strict;
+   v->p_client_msg->body.connect_req.buffer_count = v->buffer_count;
 
    /* send the connect request message to the proxy server */
-   vbi_proxy_msg_write(&v->io, MSG_TYPE_CONNECT_REQ, sizeof(v->p_client_msg->connect_req),
-                       &v->p_client_msg->connect_req, FALSE);
+   vbi_proxy_msg_write(&v->io, MSG_TYPE_CONNECT_REQ, sizeof(v->p_client_msg->body.connect_req),
+                       v->p_client_msg, FALSE);
 
    if (proxy_client_rpc(v, 5, 0) == FALSE)
       goto failure;
@@ -847,20 +855,20 @@ proxy_read( vbi_capture *vc, vbi_capture_buffer **raw,
         }
 
         if (v->sliced_ind != FALSE) {
-                int lines = v->p_client_msg->sliced_ind.line_count;
+                int lines = v->p_client_msg->body.sliced_ind.line_count;
 
                 if (*sliced) {
                         /* XXX optimization possible: read sliced msg into buffer to avoid memcpy */
                         memcpy( (vbi_sliced *)(*sliced)->data,
-                                v->p_client_msg->sliced_ind.sliced,
+                                v->p_client_msg->body.sliced_ind.sliced,
                                 lines * sizeof(vbi_sliced) );
 
-                        (*sliced)->timestamp = v->p_client_msg->sliced_ind.timestamp;
+                        (*sliced)->timestamp = v->p_client_msg->body.sliced_ind.timestamp;
                         (*sliced)->size      = lines * sizeof(vbi_sliced);
                 } else {
                         *sliced = &v->sliced_buffer;
-                        (*sliced)->data      = v->p_client_msg->sliced_ind.sliced;
-                        (*sliced)->timestamp = v->p_client_msg->sliced_ind.timestamp;
+                        (*sliced)->data      = v->p_client_msg->body.sliced_ind.sliced;
+                        (*sliced)->timestamp = v->p_client_msg->body.sliced_ind.timestamp;
                         (*sliced)->size      = lines * sizeof(vbi_sliced);
                 }
                 return 1;
@@ -933,13 +941,13 @@ proxy_channel_change(vbi_capture *vc, int chn_flags, int chn_prio,
         dprintf1("channel_change: req chn %d, freq %d\n", p_chn_desc->u.analog.channel, p_chn_desc->u.analog.freq);
 
         /* send service request to proxy daemon */
-        v->p_client_msg->chn_change_req.chn_flags   = chn_flags;
-        v->p_client_msg->chn_change_req.chn_desc    = *p_chn_desc;
-        v->p_client_msg->chn_change_req.chn_profile = v->chn_profile;
-        v->p_client_msg->chn_change_req.serial      = v->rxTotal;
+        v->p_client_msg->body.chn_change_req.chn_flags   = chn_flags;
+        v->p_client_msg->body.chn_change_req.chn_desc    = *p_chn_desc;
+        v->p_client_msg->body.chn_change_req.chn_profile = v->chn_profile;
+        v->p_client_msg->body.chn_change_req.serial      = v->rxTotal;
 
-        vbi_proxy_msg_write(&v->io, MSG_TYPE_CHN_CHANGE_REQ, sizeof(v->p_client_msg->chn_change_req),
-                            &v->p_client_msg->chn_change_req, FALSE);
+        vbi_proxy_msg_write(&v->io, MSG_TYPE_CHN_CHANGE_REQ, sizeof(v->p_client_msg->body.chn_change_req),
+                            v->p_client_msg, FALSE);
 
         if (proxy_client_rpc(v, 5, 0) == FALSE)
                 goto failure;
@@ -951,15 +959,15 @@ proxy_channel_change(vbi_capture *vc, int chn_flags, int chn_prio,
         /* XXX TODO check serial? (not mandatory b/c we wait for reply before next req.) */
 
         *errorstr = NULL;
-        if (v->io.readHeader.type == MSG_TYPE_CHN_CHANGE_CNF) {
-                *p_scanning  = v->p_client_msg->chn_change_cnf.scanning;
-                *p_has_tuner = v->p_client_msg->chn_change_cnf.has_tuner;
+        if (v->p_client_msg->head.type == MSG_TYPE_CHN_CHANGE_CNF) {
+                *p_scanning  = v->p_client_msg->body.chn_change_cnf.scanning;
+                *p_has_tuner = v->p_client_msg->body.chn_change_cnf.has_tuner;
                 result = 0;
         }
         else {
-                if (v->p_client_msg->chn_change_rej.errorstr[0] != 0)
-                        *errorstr = strdup(v->p_client_msg->chn_change_rej.errorstr);
-                errno = v->p_client_msg->chn_change_rej.dev_errno;
+                if (v->p_client_msg->body.chn_change_rej.errorstr[0] != 0)
+                        *errorstr = strdup(v->p_client_msg->body.chn_change_rej.errorstr);
+                errno = v->p_client_msg->body.chn_change_rej.dev_errno;
                 result = -1;
         }
 
@@ -967,7 +975,7 @@ proxy_channel_change(vbi_capture *vc, int chn_flags, int chn_prio,
 
 failure:
         proxy_client_close(v);
-        return result;
+        return -1;
 }
 
 static int
@@ -1009,12 +1017,12 @@ proxy_add_services(vbi_capture *vc, vbi_bool reset, vbi_bool commit,
         dprintf1("add_services: send service req: srv %d, strict %d\n", services, strict);
 
         /* send service request to proxy daemon */
-        v->p_client_msg->service_req.commit       = reset;
-        v->p_client_msg->service_req.commit       = commit;
-        v->p_client_msg->service_req.services     = services;
-        v->p_client_msg->service_req.strict       = strict;
-        vbi_proxy_msg_write(&v->io, MSG_TYPE_SERVICE_REQ, sizeof(v->p_client_msg->service_req),
-                            &v->p_client_msg->service_req, FALSE);
+        v->p_client_msg->body.service_req.commit       = reset;
+        v->p_client_msg->body.service_req.commit       = commit;
+        v->p_client_msg->body.service_req.services     = services;
+        v->p_client_msg->body.service_req.strict       = strict;
+        vbi_proxy_msg_write(&v->io, MSG_TYPE_SERVICE_REQ, sizeof(v->p_client_msg->body.service_req),
+                            v->p_client_msg, FALSE);
 
         if (proxy_client_rpc(v, 5, 0) == FALSE)
                 goto failure;
