@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.15 2004/06/18 14:14:51 mschimek Exp $ */
+/* $Id: packet.c,v 1.16 2004/10/14 07:55:18 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2622,9 +2622,8 @@ vbi_teletext_set_default_region(vbi_decoder *vbi, int default_region)
 	for (i = 0; i < 9; i++) {
 		vt_extension *ext = &vbi->vt.magazine[i].extension;
 
-		ext->char_set[0] =
-		ext->char_set[1] =
-			default_region;
+		ext->char_set[0] = default_region;
+		ext->char_set[1] = 0;
 	}
 }
 
