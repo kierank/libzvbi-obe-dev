@@ -20,22 +20,18 @@ EXTRA_DIST = \
 CLEANFILES = \
 	$(BUILT_SOURCES)
 
-INCLUDES  = \
-	-Wall \
-	-Wunused \
-	-Wmissing-prototypes \
-	-Wmissing-declarations
-# INCLUDES += -D_GNU_SOURCE to declare pthread_rwlocks and asprintf, if any.
-INCLUDES += \
+# -D_GNU_SOURCE to declare pthread_rwlocks,
+#   and asprintf if available.
+AM_CPPFLAGS = \
+	-I$(top_srcdir) \
+	$(UNICODE_CFLAGS) \
 	-D_REENTRANT \
 	-D_GNU_SOURCE
-INCLUDES += \
-	$(X_CFLAGS) \
-	$(UNICODE_CFLAGS)
 
 if ENABLE_PROXY
 proxy_sources = \
-	proxy-msg.c proxy-msg.h
+	proxy-msg.c \
+	proxy-msg.h
 proxy_libs = \
 	libzvbi-chains.la
 else
@@ -43,7 +39,9 @@ proxy_sources =
 proxy_libs =
 endif
 
-lib_LTLIBRARIES = libzvbi.la $(proxy_libs)
+lib_LTLIBRARIES = \
+	libzvbi.la \
+	$(proxy_libs)
 
 libzvbi_la_SOURCES = \
 	bcd.h \
