@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-24 00:01+0100\n"
-"PO-Revision-Date: 2004-10-25 12:32+0200\n"
+"PO-Revision-Date: 2005-02-07 04:11+0100\n"
 "Last-Translator: Guus Bonnema <abonnema@xs4all.nl>\n"
 "Language-Team: Dutch <ime@iae.nl>\n"
 "MIME-Version: 1.0\n"
@@ -314,7 +314,7 @@ msgstr "Onbekende fout."
 
 #: src/io-bktr.c:187
 msgid "BKTR driver"
-msgstr ""
+msgstr "BKTR driver"
 
 #: src/io-bktr.c:202 src/io-bktr.c:283 src/io-bktr.c:301 src/io-v4l.c:164
 #: src/io-v4l.c:1086 src/io-v4l.c:1124 src/io-v4l.c:1152 src/io-v4l2.c:105
@@ -411,14 +411,12 @@ msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) ondersteunt de select() functie niet."
 
 #: src/io-v4l.c:1346 src/io-v4l.c:1386
-#, fuzzy
 msgid "V4L driver interface not compiled."
-msgstr "BKTR interface niet gecompileerd."
+msgstr "V4L driver interface niet gecompileerd."
 
 #: src/io-v4l2.c:207 src/io-v4l2k.c:1295
-#, fuzzy
 msgid "V4L2 driver interface not compiled."
-msgstr "V4L2 interface niet gecompileerd."
+msgstr "V4L2 driver interface niet gecompileerd."
 
 #: src/io-v4l2k.c:161
 #, c-format
@@ -469,11 +467,11 @@ msgid "Cannot query current vbi parameters of %s (%s): %s."
 msgstr "Kan de huidige VBI-parameters van %s (%s) niet uitlezen: %s."
 
 #: src/io-v4l2k.c:842
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Sorry, %s (%s) cannot capture any of the requested data services with "
 "scanning %d."
-msgstr "%s (%s) kan de gewenste datadienst helaas niet ontvangen."
+msgstr "%s (%s) kan de gewenste datadienst niet ontvangen met scanning %d."
 
 #: src/io-v4l2k.c:890
 #, c-format
@@ -500,67 +498,66 @@ msgstr ""
 
 #: src/proxy-client.c:152
 msgid "Server hostname not configured."
-msgstr ""
+msgstr "Server hostnaam niet ingesteld"
 
 #: src/proxy-client.c:154
 msgid "Server port not configured."
-msgstr ""
+msgstr "Server poort niet ingesteld"
 
 #: src/proxy-client.c:421
 msgid "Protocol error (unexpected message)."
-msgstr ""
+msgstr "Protocol fout (onverwachte message)"
 
 #: src/proxy-client.c:582 src/proxy-client.c:634
 msgid "Connection lost due to I/O error."
-msgstr ""
+msgstr "Verbinding verbroken door I/O error"
 
 #: src/proxy-client.c:755
 #, c-format
 msgid "Incompatible server version %u.%u.%u."
-msgstr ""
+msgstr "Incompatibele server versie %u.%u.%u."
 
 #: src/proxy-client.c:763
 msgid "Incompatible server architecture (endianess mismatch)."
-msgstr ""
+msgstr "Server architectuur komt niet overeen (endianness)"
 
 #: src/proxy-client.c:1861 src/proxy-client.c:1909
-#, fuzzy
 msgid "Proxy client interface not compiled."
-msgstr "bktr interface niet gecompileerd."
+msgstr "proxy client interface niet gecompileerd."
 
 #: src/proxy-msg.c:1197
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot create socket: %s."
-msgstr "Kan bestand '%s' niet aanmaken: %s."
+msgstr "Kan socket niet aanmaken: %s."
 
 #: src/proxy-msg.c:1205
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid hostname or port: %s."
-msgstr "Ongeldige optie string \"%s\"."
+msgstr "Ongeldige hostnaam of poort: %s."
 
 #: src/proxy-msg.c:1225
 msgid "Connection via TCP/IP failed, server not running or unreachable."
-msgstr ""
+msgstr "TCP/IP verbinding mislukt, server down of niet bereikbaar"
 
 #: src/proxy-msg.c:1227
 msgid "Connection via socket failed, server not running."
-msgstr ""
+msgstr "Socket verbinding mislukt, server is niet up"
 
 #: src/proxy-msg.c:1236 src/proxy-msg.c:1278
 #, c-format
 msgid "Socket I/O error: %s."
-msgstr ""
+msgstr "Socket I/O fout: %s."
 
 #: src/proxy-msg.c:1271
 #, c-format
 msgid "Cannot connect to server: %s."
-msgstr ""
+msgstr "Kan server niet bereiken: %s."
 
 #. TRANSLATORS: Title of TOP Index page,
 #. for now please Latin-1 or ASCII only
 #: src/teletext.c:407
 msgid "TOP Index"
-msgstr ""
+msgstr "TOP index"
 
 #~ msgid "Cannot identify '%s': %s."
 #~ msgstr "Kan apparaat '%s' niet openen: %s."
