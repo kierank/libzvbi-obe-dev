@@ -1,6 +1,26 @@
 /*
- * (C) Tom Zoerner
+ *  VBI proxy test client
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation. You find a copy of this
+ *  license in the file COPYRIGHT in the root directory of this release.
+ *
+ *  THIS PROGRAM IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
+ *  BUT WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF
+ *  MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *
+ *  Description:
+ *
+ *    TODO
+ *
+ *  Author:
+ *          Tom Zoerner
  */
+
+static const char rcsid[] = "$Id: proxy-test.c,v 1.2 2003/04/29 17:12:31 mschimek Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,21 +31,34 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include "../src/libzvbi.h"
+#include "libzvbi.h" /* local copy */
 
-// proxy routines are not yet part of the public libzvbi interface
-#include "../src/proxy-msg.h"
 
-// ----------------------------------------------------------------------------
-// Resolve parity on an array in-place
-// - errors are ignored, the character just replaced by a blank
-//
+#define DEVICE_PATH   "/dev/vbi0"
+#define BUFFER_COUNT  5
+#define USAGE_STR     "Usage: %s [-trace] [-dev path] [-api v4l|v4l2|proxy] {ttx|vps|wss} ...\n"
+
+typedef enum
+{
+   TEST_API_V4L,
+   TEST_API_V4L2,
+   TEST_API_PROXY,
+} PROXY_TEST_API;
+
+static char * p_dev_name = DEVICE_PATH;
+static PROXY_TEST_API opt_api = TEST_API_PROXY;
+
+/* ----------------------------------------------------------------------------
+** Resolve parity on an array in-place
+** - errors are ignored, the character just replaced by a blank
+** - non-printable characters are replaced by blanks
+*/
 static const signed char parityTab[256] =
 {
-   //0x80, 0x01, 0x02, 0x83, 0x04, 0x85, 0x86, 0x07,
-   //0x08, 0x89, 0x8a, 0x0b, 0x8c, 0x0d, 0x0e, 0x8f,
-   //0x10, 0x91, 0x92, 0x13, 0x94, 0x15, 0x16, 0x97,
-   //0x98, 0x19, 0x1a, 0x9b, 0x1c, 0x9d, 0x9e, 0x1f,
+   //0x80, 0x01, 0x02, 0x83, 0x04, 0x85, 0x86, 0x07,  // non-printable
+   //0x08, 0x89, 0x8a, 0x0b, 0x8c, 0x0d, 0x0e, 0x8f,  // non-printable
+   //0x10, 0x91, 0x92, 0x13, 0x94, 0x15, 0x16, 0x97,  // non-printable
+   //0x98, 0x19, 0x1a, 0x9b, 0x1c, 0x9d, 0x9e, 0x1f,  // non-printable
    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
    0x20, 0xa1, 0xa2, 0x23, 0xa4, 0x25, 0x26, 0xa7,
@@ -41,10 +74,10 @@ static const signed char parityTab[256] =
    0x70, 0xf1, 0xf2, 0x73, 0xf4, 0x75, 0x76, 0xf7,
    0xf8, 0x79, 0x7a, 0xfb, 0x7c, 0xfd, 0xfe, 0x7f,
 
-   //0x00, 0x81, 0x82, 0x03, 0x84, 0x05, 0x06, 0x87,
-   //0x88, 0x09, 0x0a, 0x8b, 0x0c, 0x8d, 0x8e, 0x0f,
-   //0x90, 0x11, 0x12, 0x93, 0x14, 0x95, 0x96, 0x17,
-   //0x18, 0x99, 0x9a, 0x1b, 0x9c, 0x1d, 0x1e, 0x9f,
+   //0x00, 0x81, 0x82, 0x03, 0x84, 0x05, 0x06, 0x87,  // non-printable
+   //0x88, 0x09, 0x0a, 0x8b, 0x0c, 0x8d, 0x8e, 0x0f,  // non-printable
+   //0x90, 0x11, 0x12, 0x93, 0x14, 0x95, 0x96, 0x17,  // non-printable
+   //0x18, 0x99, 0x9a, 0x1b, 0x9c, 0x1d, 0x1e, 0x9f,  // non-printable
    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
 
@@ -76,7 +109,7 @@ static int UnHamParityArray( const unsigned char *pin, char *pout, int byteCount
       }
       else
       {
-         *(pout++) = 0xA0;  // Latin-1 space character
+         *(pout++) = 0xA0;  /* Latin-1 space character */
          errCount += 1;
       }
    }
@@ -84,11 +117,11 @@ static int UnHamParityArray( const unsigned char *pin, char *pout, int byteCount
    return errCount;
 }
 
-// ---------------------------------------------------------------------------
-// Decode a VPS data line
-// - bit fields are defined in "VPS Richtlinie 8R2" from August 1995
-// - called by the VBI decoder for every received VPS line
-//
+/* ---------------------------------------------------------------------------
+** Decode a VPS data line
+** - bit fields are defined in "VPS Richtlinie 8R2" from August 1995
+** - called by the VBI decoder for every received VPS line
+*/
 static void TtxDecode_AddVpsData( const unsigned char * data )
 {
    uint mday, month, hour, minute;
@@ -102,11 +135,11 @@ static void TtxDecode_AddVpsData( const unsigned char * data )
    if ((cni != 0) && (cni != 0xfff))
    {
       if (cni == 0xDC3)
-      {  // special case: "ARD/ZDF Gemeinsames Vormittagsprogramm"
+      {  /* special case: "ARD/ZDF Gemeinsames Vormittagsprogramm" */
          cni = (data[VPSOFF+5] & 0x20) ? 0xDC1 : 0xDC2;
       }
 
-      // decode VPS PIL
+      /* decode VPS PIL */
       mday   =  (data[VPSOFF+11] & 0x3e) >> 1;
       month  = ((data[VPSOFF+12] & 0xe0) >> 5) | ((data[VPSOFF+11] & 1) << 3);
       hour   =  (data[VPSOFF+12] & 0x1f);
@@ -116,25 +149,9 @@ static void TtxDecode_AddVpsData( const unsigned char * data )
    }
 }
 
-extern vbi_capture *
-vbi_capture_proxy_new(const char *dev_name, int scanning,
-                      unsigned int *services, int strict,
-                      char **errorstr, vbi_bool trace);
-
-#define DEVICE_PATH   "/dev/vbi0"
-#define BUFFER_COUNT  5
-#define USAGE_STR     "Usage: %s [-trace] [-dev path] [-api v4l|v4l2|proxy] {ttx|vps|wss} ...\n"
-
-typedef enum
-{
-   TEST_API_V4L,
-   TEST_API_V4L2,
-   TEST_API_PROXY,
-} PROXY_TEST_API;
-
-static char * p_dev_name = DEVICE_PATH;
-static PROXY_TEST_API opt_api = TEST_API_PROXY;
-
+/* ----------------------------------------------------------------------------
+** Main entry point
+*/
 int main ( int argc, char ** argv )
 {
    vbi_capture      *  pVbiCapt;
@@ -142,10 +159,12 @@ int main ( int argc, char ** argv )
    char             *  pErr;
    int                 arg_idx;
    unsigned int        services;
+   int                 strict;
    int                 trace;
 
    trace = FALSE;
    services = 0;
+   strict = 0;
    arg_idx = 1;
 
    while (arg_idx < argc)
@@ -193,7 +212,7 @@ int main ( int argc, char ** argv )
          else
          {
             fprintf(stderr, "Invalid API type '%s'\n" USAGE_STR, argv[arg_idx + 1], argv[0]);
-         exit(1);
+            exit(1);
          }
          arg_idx += 2;
       }
@@ -201,6 +220,21 @@ int main ( int argc, char ** argv )
       {
          trace = TRUE;
          arg_idx += 1;
+      }
+      else if (strcasecmp(argv[arg_idx], "-strict") == 0)
+      {
+         char * p_num_end;
+         if ((arg_idx + 1 < argc) && (strlen(argv[arg_idx + 1]) > 0) &&
+             ((strict = strtol(argv[arg_idx + 1], &p_num_end, 0)) >= 0) &&
+             (*p_num_end == 0) )
+         {
+            arg_idx += 2;
+         }
+         else
+         {
+            fprintf(stderr, "-strict requires value 0..2\n" USAGE_STR, argv[0]);
+            exit(1);
+         }
       }
       else if (strcasecmp(argv[arg_idx], "-help") == 0)
       {
@@ -221,11 +255,11 @@ int main ( int argc, char ** argv )
 
    pVbiCapt = NULL;
    if (opt_api == TEST_API_V4L2)
-      pVbiCapt = vbi_capture_v4l2_new(p_dev_name, BUFFER_COUNT, &services, 0, &pErr, trace);
+      pVbiCapt = vbi_capture_v4l2_new(p_dev_name, BUFFER_COUNT, &services, strict, &pErr, trace);
    if (opt_api == TEST_API_V4L)
-      pVbiCapt = vbi_capture_v4l_new(p_dev_name, BUFFER_COUNT, &services, 0, &pErr, trace);
+      pVbiCapt = vbi_capture_v4l_new(p_dev_name, 0, &services, strict, &pErr, trace);
    if (opt_api == TEST_API_PROXY)
-      pVbiCapt = vbi_capture_proxy_new(p_dev_name, BUFFER_COUNT, &services, 0, &pErr, trace);
+      pVbiCapt = vbi_capture_proxy_new(p_dev_name, BUFFER_COUNT, 0, &services, strict, &pErr, trace);
 
    if (pVbiCapt != NULL)
    {
@@ -263,8 +297,7 @@ int main ( int argc, char ** argv )
             }
 
             for (line=0; line < lineCount; line++)
-            {  // dump all TTX packets, even non-EPG ones
-               #if 1
+            {
                if ((pVbiData[line].id & VBI_SLICED_TELETEXT_B) != 0)
                {
                   char tmparr[46];
@@ -276,9 +309,7 @@ int main ( int argc, char ** argv )
                {
                   TtxDecode_AddVpsData(pVbiData[line].data);
                }
-               else
-               #endif
-               if (pVbiData[line].id == VBI_SLICED_WSS_625)
+               else if (pVbiData[line].id == VBI_SLICED_WSS_625)
                {
                   printf("WSS 0x%02X%02X%02X\n", pVbiData[line].data[0], pVbiData[line].data[1], pVbiData[line].data[2]);
                }
