@@ -29,9 +29,17 @@
  *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
  *    the latter ones are currently not officially supported.
  *
- *  $Id: proxy-msg.c,v 1.6 2003/06/01 19:36:09 tomzo Exp $
+ *  $Id: proxy-msg.c,v 1.7 2003/06/07 09:42:53 tomzo Exp $
  *
  *  $Log: proxy-msg.c,v $
+ *  Revision 1.7  2003/06/07 09:42:53  tomzo
+ *  Optimized message writing to socket in vbi_proxy_msg_handle_io():
+ *  - keep message header and body in one struct VBIPROXY_MSG (for both read and
+ *    write) to be able to write it in complete to the pipe in one syscall
+ *  - before, the client usually was woken up after only the header was sent, i.e.
+ *    only a partial message was available for reading; this was problematic for
+ *    clients which polled the socket with a zero timeout, and is solved now.
+ *
  *  Revision 1.6  2003/06/01 19:36:09  tomzo
  *  Optimization of read message handling:
  *  - use static buffer to read messages instead of dynamic malloc()
@@ -287,7 +295,7 @@ vbi_bool vbi_proxy_msg_check_timeout( VBIPROXY_MSG_STATE * pIO, time_t now )
 */
 vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO,
                                   vbi_bool * pBlocked, vbi_bool closeOnZeroRead,
-                                  void * pReadBuf, int max_read_len )
+                                  VBIPROXY_MSG * pReadBuf, int max_read_len )
 {
    time_t   now;
    ssize_t  len;
@@ -298,24 +306,12 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO,
    now = time(NULL);
    if (pIO->writeLen > 0)
    {
-      /* write the message header */
+      /* write a message */
       assert(pIO->writeLen >= sizeof(VBIPROXY_MSG_HEADER));
-      if (pIO->writeOff < sizeof(VBIPROXY_MSG_HEADER))
-      {  /* write message header */
-         len = send(pIO->sock_fd, ((char *)&pIO->writeHeader) + pIO->writeOff, sizeof(VBIPROXY_MSG_HEADER) - pIO->writeOff, 0);
-         if (len >= 0)
-         {
-            pIO->lastIoTime = now;
-            pIO->writeOff += len;
-         }
-         else
-            err = TRUE;
-      }
-
-      /* write the message body, if the header is written */
-      if ((err == FALSE) && (pIO->writeOff >= sizeof(VBIPROXY_MSG_HEADER)) && (pIO->writeOff < pIO->writeLen))
+      if ((err == FALSE) && (pIO->writeOff < pIO->writeLen))
       {
-         len = send(pIO->sock_fd, ((char *)pIO->pWriteBuf) + pIO->writeOff - sizeof(VBIPROXY_MSG_HEADER), pIO->writeLen - pIO->writeOff, 0);
+         len = send(pIO->sock_fd, ((char *)pIO->pWriteBuf) + pIO->writeOff,
+                                  pIO->writeLen - pIO->writeOff, 0);
          if (len > 0)
          {
             pIO->lastIoTime = now;
@@ -350,21 +346,22 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO,
       len = 0;  /* compiler dummy */
       if (pIO->waitRead)
       {  /* in read phase one: read the message length */
-         assert(pIO->readOff < sizeof(pIO->readHeader));
-         len = recv(pIO->sock_fd, (char *)&pIO->readHeader + pIO->readOff,
-                                  sizeof(pIO->readHeader) - pIO->readOff, 0);
+         assert(pIO->readOff < sizeof(VBIPROXY_MSG_HEADER));
+         len = recv(pIO->sock_fd, (char *)pReadBuf + pIO->readOff,
+                                  sizeof(VBIPROXY_MSG_HEADER) - pIO->readOff, 0);
          if (len > 0)
          {
             closeOnZeroRead = FALSE;
             pIO->lastIoTime = now;
             pIO->readOff += len;
-            if (pIO->readOff >= sizeof(pIO->readHeader))
+            if (pIO->readOff >= sizeof(VBIPROXY_MSG_HEADER))
             {  /* message length variable has been read completely */
                /* convert from network byte order (big endian) to host byte order */
-               pIO->readLen = ntohs(pIO->readHeader.len);
-               pIO->readHeader.len = pIO->readLen;
+               pIO->readLen = ntohs(pReadBuf->head.len);
+               pReadBuf->head.len  = pIO->readLen;
+               pReadBuf->head.type = ntohs(pReadBuf->head.type);
                /* dprintf1("handle_io: fd %d: new block: size %d\n", pIO->sock_fd, pIO->readLen); */
-               if ((pIO->readLen <= max_read_len + sizeof(VBIPROXY_MSG_HEADER)) &&
+               if ((pIO->readLen <= max_read_len) &&
                    (pIO->readLen >= sizeof(VBIPROXY_MSG_HEADER)))
                {  /* message size acceptable -> enter the second phase of the read process */
                   pIO->waitRead = FALSE;
@@ -384,7 +381,7 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO,
 
       if ((err == FALSE) && (pIO->waitRead == FALSE) && (pIO->readLen > sizeof(VBIPROXY_MSG_HEADER)))
       {  /* in read phase two: read the complete message into the allocated buffer */
-         len = recv(pIO->sock_fd, (char*)pReadBuf + pIO->readOff - sizeof(VBIPROXY_MSG_HEADER),
+         len = recv(pIO->sock_fd, (char*)pReadBuf + pIO->readOff,
                                   pIO->readLen - pIO->readOff, 0);
          if (len > 0)
          {
@@ -457,10 +454,10 @@ void vbi_proxy_msg_fill_magics( VBIPROXY_MAGICS * p_magic )
 ** - length and pointer of the body may be zero (no payload)
 */
 void vbi_proxy_msg_write( VBIPROXY_MSG_STATE * p_io, VBIPROXY_MSG_TYPE type,
-                          uint32_t msgLen, void * pMsg, vbi_bool freeBuf )
+                          uint32_t msgLen, VBIPROXY_MSG * pMsg, vbi_bool freeBuf )
 {
    assert((p_io->waitRead == FALSE) && (p_io->readLen == 0));  /* I/O must be idle */
-   assert((p_io->writeLen == 0) && (p_io->pWriteBuf == NULL));
+   assert(p_io->writeLen == 0);
    assert((msgLen == 0) || (pMsg != NULL));
 
    dprintf2("write: msg type %d, len %d\n", type, sizeof(VBIPROXY_MSG_HEADER) + msgLen);
@@ -472,8 +469,8 @@ void vbi_proxy_msg_write( VBIPROXY_MSG_STATE * p_io, VBIPROXY_MSG_TYPE type,
    p_io->lastIoTime   = time(NULL);
 
    /* message header: length is coded in network byte order (i.e. big endian) */
-   p_io->writeHeader.len  = htons(p_io->writeLen);
-   p_io->writeHeader.type = type;
+   pMsg->head.len     = htons(p_io->writeLen);
+   pMsg->head.type    = htons(type);
 }
 
 /* ----------------------------------------------------------------------------
@@ -489,44 +486,39 @@ vbi_bool vbi_proxy_msg_write_queue( VBIPROXY_MSG_STATE * p_io, vbi_bool * p_bloc
                                     vbi_sliced * p_lines, unsigned int line_count,
                                     double timestamp )
 {
-   VBIPROXY_SLICED_IND * p_sliced_ind;
-   uint32_t  body_size;
+   VBIPROXY_MSG * p_msg;
+   uint32_t  msg_size;
    vbi_bool  result = TRUE;
    int idx;
-   #ifdef linux
-   int val;
-   #endif
 
    if ((p_io != NULL) && (p_blocked != NULL) && (p_lines != NULL))
    {
-      body_size = VBIPROXY_SLICED_IND_SIZE(line_count);
-      p_sliced_ind = malloc(body_size);
-      p_sliced_ind->timestamp  = timestamp;
+      msg_size = sizeof(VBIPROXY_MSG_HEADER) + VBIPROXY_SLICED_IND_SIZE(line_count);
+      p_msg = malloc(msg_size);
 
       /* filter for services requested by this client */
-      p_sliced_ind->line_count = 0;
+      p_msg->body.sliced_ind.line_count = 0;
       for (idx = 0; (idx < line_count) && (idx < max_lines); idx++)
       {
          if ((p_lines[idx].id & services) != 0)
          {
-            memcpy(p_sliced_ind->sliced + p_sliced_ind->line_count, p_lines + idx, sizeof(vbi_sliced));
-            p_sliced_ind->line_count += 1;
+            memcpy(p_msg->body.sliced_ind.sliced + p_msg->body.sliced_ind.line_count,
+                   p_lines + idx, sizeof(vbi_sliced));
+            p_msg->body.sliced_ind.line_count += 1;
          }
       }
-      body_size = VBIPROXY_SLICED_IND_SIZE(p_sliced_ind->line_count);
+      msg_size = sizeof(VBIPROXY_MSG_HEADER) +
+                 VBIPROXY_SLICED_IND_SIZE(p_msg->body.sliced_ind.line_count);
 
-      dprintf2("msg_write_queue: fd %d: msg body size %d\n", p_io->sock_fd, body_size);
-      p_io->pWriteBuf        = p_sliced_ind;
+      p_msg->body.sliced_ind.timestamp = timestamp;
+      p_msg->head.len        = htons(msg_size);
+      p_msg->head.type       = htons(MSG_TYPE_SLICED_IND);
+
+      dprintf2("msg_write_queue: fd %d: msg size %d\n", p_io->sock_fd, msg_size);
+      p_io->pWriteBuf        = p_msg;
       p_io->freeWriteBuf     = TRUE;
-      p_io->writeLen         = sizeof(VBIPROXY_MSG_HEADER) + body_size;
+      p_io->writeLen         = msg_size;
       p_io->writeOff         = 0;
-      p_io->writeHeader.len  = htons(p_io->writeLen);
-      p_io->writeHeader.type = MSG_TYPE_SLICED_IND;
-
-      #ifdef linux
-      val = 1;  /* "kork" the socket so that only one TCP packet is sent for the message, if possible */
-      setsockopt(p_io->sock_fd, SOL_TCP, TCP_CORK, &val, sizeof(val));
-      #endif
 
       if (vbi_proxy_msg_handle_io(p_io, p_blocked, FALSE, NULL, 0))
       {
@@ -539,11 +531,6 @@ vbi_bool vbi_proxy_msg_write_queue( VBIPROXY_MSG_STATE * p_io, vbi_bool * p_bloc
       }
       else
          result = FALSE;
-
-      #ifdef linux
-      val = 0;  /* unkork the socket */
-      setsockopt(p_io->sock_fd, SOL_TCP, TCP_CORK, &val, sizeof(val));
-      #endif
    }
    else
       dprintf1("msg_write_queue: illegal NULL ptr params\n");
@@ -1067,7 +1054,7 @@ vbi_bool vbi_proxy_msg_check_connect( const char * p_sock_path )
       if (connect(fd, (struct sockaddr *) &saddr, sizeof(saddr)) != -1)
       {
          msgCloseInd.len  = htons(sizeof(VBIPROXY_MSG_HEADER));
-         msgCloseInd.type = MSG_TYPE_CLOSE_REQ;
+         msgCloseInd.type = htons(MSG_TYPE_CLOSE_REQ);
          if (write(fd, &msgCloseInd, sizeof(msgCloseInd)) == sizeof(msgCloseInd))
          {
             result = TRUE;
