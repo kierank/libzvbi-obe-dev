@@ -1,3 +1,11 @@
+2004-11-07    <mschimek@users.sf.net>
+
+	* daemon/proxyd.c (dprintf): s/proxyd/zvbid.
+	* src/decoder.c: Include site_def.h.
+	* src/io-v4l.c (v4l_update_services): bttv has_select fix.
+	  Workaround for bttv 0.9.5 VIDIOCGVBIFMT not initializing flags.
+	  VIDIOCGVBIFMT scanning guess fix.
+
 2004-11-03    <mschimek@users.sf.net>
 
 	* src/dvb_mux.c (_vbi_dvb_multiplex_sliced,

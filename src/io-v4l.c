@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l.c,v 1.24 2004/10/25 16:56:29 mschimek Exp $";
+"$Id: io-v4l.c,v 1.25 2004/11/07 10:52:46 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -354,6 +354,8 @@ reverse_lookup(vbi_capture_v4l *v, int fd, struct stat *vbi_stat)
 	struct video_capability vcap;
 	struct video_unit vunit;
 
+	CLEAR (vcap);
+
 	if (-1 == xioctl_fd (v, fd, VIDIOCGCAP, &vcap)) {
 		printv ("Driver doesn't support VIDIOCGCAP, "
 			"probably not V4L API\n");
@@ -364,6 +366,8 @@ reverse_lookup(vbi_capture_v4l *v, int fd, struct stat *vbi_stat)
 		printv("Driver is no video capture device\n");
 		return FALSE;
 	}
+
+	CLEAR (vunit);
 
 	if (-1 == xioctl_fd (v, fd, VIDIOCGUNIT, &vunit)) {
 		printv ("Driver doesn't support VIDIOCGUNIT\n");
@@ -413,8 +417,8 @@ get_videostd(vbi_capture_v4l *v, int fd, int *mode)
 	struct video_tuner vtuner;
 	struct video_channel vchan;
 
-	memset(&vtuner, 0, sizeof(vtuner));
-	memset(&vchan, 0, sizeof(vchan));
+	CLEAR (vtuner);
+	CLEAR (vchan);
 
 	if (0 == xioctl_fd (v, fd, VIDIOCGTUNER, &vtuner)) {
 		printv ("Driver supports VIDIOCGTUNER: "
@@ -880,9 +884,11 @@ v4l_update_services(vbi_capture *vc,
                 v->services = 0;
         }
 
+	CLEAR (vfmt);
+
 	if (0 == xioctl (v, VIDIOCGVBIFMT, &vfmt)) {
-		if (v->dec.start[1] > 0 && v->dec.count[1]) {
-			if (v->dec.start[1] >= 286)
+		if (vfmt.start[1] > 0 && vfmt.count[1]) {
+			if (vfmt.start[1] >= 286)
 				v->dec.scanning = 625;
 			else
 				v->dec.scanning = 525;
@@ -935,6 +941,9 @@ v4l_update_services(vbi_capture *vc,
 		v->dec.synchronous		= !(vfmt.flags & VBI_UNSYNC);
 		v->time_per_frame 		= (v->dec.scanning == 625) ?
 						  1.0 / 25 : 1001.0 / 30000;
+
+		/* Unknown. */
+		v->has_select = FALSE;
 	} else { 
 		int size;
 
@@ -950,7 +959,8 @@ v4l_update_services(vbi_capture *vc,
 		printv("Driver doesn't support VIDIOCGVBIFMT (errno %d), "
 		       "will assume bttv interface\n", errno);
 
-		v->has_select = TRUE; /* it does */
+		/* bttv 0.7.x has no select. 0.8+ supports VIDIOCGVBIFMT. */
+		v->has_select = FALSE;
 
 		if (0 && !strstr(v->vcap.name, "bttv")
 		      && !strstr(v->vcap.name, "BTTV")) {
@@ -1124,6 +1134,9 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 	v->capture.get_scanning = v4l_get_scanning;
 	v->capture.flush = v4l_flush;
 	v->capture.set_video_path = v4l_set_video_path;
+
+	if (0)
+		v->capture.sys_log_fp = stderr;
 
 	v->p_dev_name = strdup(dev_name);
 
