@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: event.h,v 1.9 2005/02/17 10:21:16 mschimek Exp $ */
+/* $Id: event.h,v 1.10 2005/02/25 18:33:23 mschimek Exp $ */
 
 #ifndef EVENT_H
 #define EVENT_H
@@ -496,15 +496,6 @@ typedef struct vbi_program_info {
  */
 extern void		vbi_reset_prog_info(vbi_program_info *pi);
 /** @} */
-
-/* Future */
-typedef struct pfc_block {
-	vbi_pgno		pgno;
-	int			stream;
-	int			application_id;
-	int			block_size;
-	uint8_t			block[2048];
-} pfc_block;
 
 /**
  * @ingroup Event
