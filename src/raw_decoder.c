@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.2 2004/12/13 07:10:03 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.3 2005/01/15 10:24:09 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -71,8 +71,8 @@ _vbi_service_table [] = {
 		VBI_SLICED_TELETEXT_B_L10_625,
 		"Teletext System B 625 Level 1.5",
 		VBI_VIDEOSTD_SET_625_50,
-		{ 7, 319 },
-		{ 22, 334 },
+		{ 7, 320 },
+		{ 22, 335 },
 		10300, 6937500, 6937500, /* 444 x FH */
 		0x00AAAAE4, 0xFFFF, 18, 6, 42 * 8, VBI_MODULATION_NRZ_LSB
 	}, {
@@ -644,10 +644,11 @@ _vbi_sampling_par_verify	(const vbi_sampling_par *sp)
 	return FALSE;
 }
 
+/* Attn: strict must be int for compatibility with libzvbi 0.2 (-1 == 0) */
 static vbi_bool
 _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 				 const _vbi_service_par *par,
-				 unsigned int		strict)
+				 int			strict)
 {
 	double signal;
 	unsigned int field;
@@ -808,10 +809,11 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 	return TRUE;
 }
 
+/* Attn: strict must be int for compatibility with libzvbi 0.2 (-1 == 0) */
 vbi_service_set
 vbi_sampling_par_check_services	(const vbi_sampling_par *sp,
 				 vbi_service_set	services,
-				 unsigned int		strict)
+				 int			strict)
 {
 	const _vbi_service_par *par;
 	vbi_service_set rservices;
@@ -1173,10 +1175,11 @@ add_job_to_pattern		(vbi3_raw_decoder *	rd,
  * eliminates services which cannot be decoded with the current
  * sampling parameters, or when they exceed the decoder capacity.
  */
+/* Attn: strict must be int for compatibility with libzvbi 0.2 (-1 == 0) */
 vbi_service_set
 vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 				 vbi_service_set	services,
-				 unsigned int		strict)
+				 int			strict)
 {
 	const _vbi_service_par *par;
 	double min_offset;
@@ -1371,11 +1374,12 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
  * Can be zero if the sampling parameters are invalid or some
  * other error occured.
  */
+/* Attn: strict must be int for compatibility with libzvbi 0.2 (-1 == 0) */
 vbi_service_set
 vbi3_raw_decoder_set_sampling_par
 				(vbi3_raw_decoder *	rd,
 				 const vbi_sampling_par *sp,
-				 unsigned int		strict)
+				 int			strict)
 {
 	unsigned int services;
 
