@@ -17,7 +17,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.1 2002/01/12 16:19:08 mschimek Exp $ */
+/* $Id: io.c,v 1.2 2002/01/21 07:34:59 mschimek Exp $ */
+
+#include <assert.h>
 
 #include "io.h"
 
@@ -42,6 +44,10 @@ vbi_capture_read_raw(vbi_capture *capture, void *data,
 {
 	vbi_capture_buffer buffer, *bp = &buffer;
 	int r;
+
+	assert (capture != NULL);
+	assert (timestamp != NULL);
+	assert (timeout != NULL);
 
 	buffer.data = data;
 
@@ -74,6 +80,11 @@ vbi_capture_read_sliced(vbi_capture *capture, vbi_sliced *data, int *lines,
 {
 	vbi_capture_buffer buffer, *bp = &buffer;
 	int r;
+
+	assert (capture != NULL);
+	assert (lines != NULL);
+	assert (timestamp != NULL);
+	assert (timeout != NULL);
 
 	buffer.data = data;
 
@@ -115,6 +126,11 @@ vbi_capture_read(vbi_capture *capture, void *raw_data,
 	vbi_capture_buffer sbuffer, *sbp = &sbuffer;
 	int r;
 
+	assert (capture != NULL);
+	assert (lines != NULL);
+	assert (timestamp != NULL);
+	assert (timeout != NULL);
+
 	rbuffer.data = raw_data;
 	sbuffer.data = sliced_data;
 
@@ -144,6 +160,10 @@ int
 vbi_capture_pull_raw(vbi_capture *capture, vbi_capture_buffer **buffer,
 		     struct timeval *timeout)
 {
+	assert (capture != NULL);
+	assert (buffer != NULL);
+	assert (timeout != NULL);
+
 	*buffer = NULL;
 
 	return capture->read(capture, buffer, NULL, timeout);
@@ -168,6 +188,10 @@ int
 vbi_capture_pull_sliced(vbi_capture *capture, vbi_capture_buffer **buffer,
 			struct timeval *timeout)
 {
+	assert (capture != NULL);
+	assert (buffer != NULL);
+	assert (timeout != NULL);
+
 	*buffer = NULL;
 
 	return capture->read(capture, NULL, buffer, timeout);
@@ -195,6 +219,9 @@ int
 vbi_capture_pull(vbi_capture *capture, vbi_capture_buffer **raw_buffer,
 		 vbi_capture_buffer **sliced_buffer, struct timeval *timeout)
 {
+	assert (capture != NULL);
+	assert (timeout != NULL);
+
 	if (raw_buffer)
 		*raw_buffer = NULL;
 	if (sliced_buffer)
@@ -220,17 +247,20 @@ vbi_capture_pull(vbi_capture *capture, vbi_capture_buffer **raw_buffer,
 vbi_raw_decoder *
 vbi_capture_parameters(vbi_capture *capture)
 {
+	assert (capture != NULL);
+
 	return capture->parameters(capture);
 }
 
 /**
  * vbi_capture_delete:
- * @capture: Initialized vbi capture context.
+ * @capture: Initialized vbi capture context, can be %NULL.
  * 
  * Free all resources associated with the capture context.
  **/
 void
 vbi_capture_delete(vbi_capture *capture)
 {
-	capture->delete(capture);
+	if (capture)
+		capture->delete(capture);
 }
