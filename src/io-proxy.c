@@ -18,6 +18,9 @@
  *
  *
  *  $Log: io-proxy.c,v $
+ *  Revision 1.6  2003/05/17 13:02:57  tomzo
+ *  Fixed definition of dprintf2() macro: print only for (v->trace >= 2)
+ *
  *  Revision 1.5  2003/05/10 13:30:24  tomzo
  *  - bugfix proxy_read(): loop around select() until a complete VBI frame was
  *    received or timeout expired; before the func returned 0 when a partial
@@ -32,7 +35,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: io-proxy.c,v 1.5 2003/05/10 13:30:24 tomzo Exp $";
+static const char rcsid[] = "$Id: io-proxy.c,v 1.6 2003/05/17 13:02:57 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -60,8 +63,8 @@ static const char rcsid[] = "$Id: io-proxy.c,v 1.5 2003/05/10 13:30:24 tomzo Exp
 #include "proxy-msg.h"
 #include "bcd.h"
 
-#define dprintf1(fmt, arg...)    if (v->trace) printf("WARN  io-proxy: " fmt, ## arg)
-#define dprintf2(fmt, arg...)    if (v->trace) printf("TRACE io-proxy: " fmt, ## arg)
+#define dprintf1(fmt, arg...)    if (v->trace >= 1) printf("WARN  io-proxy: " fmt, ## arg)
+#define dprintf2(fmt, arg...)    if (v->trace >= 2) printf("TRACE io-proxy: " fmt, ## arg)
 
 /* ----------------------------------------------------------------------------
 ** Declaration of types of internal state variables
