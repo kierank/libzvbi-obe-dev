@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.12 2002/10/11 12:31:48 mschimek Exp $ */
+/* $Id: export.c,v 1.13 2002/10/22 04:40:56 mschimek Exp $ */
 
 #include "../config.h"
 
@@ -155,12 +155,14 @@ initialize(void)
 
 /**
  * Helper function for export modules, since iconv seems
- * to be undecided what it really wants.
+ * undecided what it really wants (not every iconv supports
+ * UCS-2LE/BE).
  * 
  * @return 
  * 1 if iconv "UCS-2" is BE on this machine, 0 if LE,
  * -1 if unknown.
  */
+/* XXX provide a vbi_iconv wrapper. */
 int
 vbi_ucs2be(void)
 {
@@ -170,7 +172,7 @@ vbi_ucs2be(void)
 	size_t in = sizeof(c), out = sizeof(uc);
 	int endianess = -1;
 
-	if ((cd = iconv_open("UCS2", /* from */ "iso-8859-1")) != (iconv_t) -1) {
+	if ((cd = iconv_open("UCS-2", /* from */ "ISO-8859-1")) != (iconv_t) -1) {
 		iconv(cd, (void *) &cp, &in, (void *) &up, &out);
 
 		if (uc[0] == 0 && uc[1] == 'b')
