@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.19 2003/05/24 12:18:04 tomzo Exp $";
+static char rcsid[] = "$Id: io-v4l2.c,v 1.20 2003/06/01 19:35:06 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -102,8 +102,12 @@ typedef struct vbi_capture_v4l2 {
 static void
 v4l2_stream_stop(vbi_capture_v4l2 *v)
 {
-	if (v->enqueue >= ENQUEUE_BUFS_QUEUED)
-		IOCTL(v->fd, VIDIOC_STREAMOFF, &v->btype);
+	if (v->enqueue >= ENQUEUE_BUFS_QUEUED) {
+		printv("Suspending stream...\n");
+
+		if (IOCTL(v->fd, VIDIOC_STREAMOFF, &v->btype) != 0)
+		        printv("VIDIOC_STREAMOFF failed: %d (%s)\n", errno, strerror(errno));
+        }
 
 	v->enqueue = ENQUEUE_SUSPENDED;
 
@@ -111,8 +115,10 @@ v4l2_stream_stop(vbi_capture_v4l2 *v)
 		munmap(v->raw_buffer[v->num_raw_buffers - 1].data,
 		       v->raw_buffer[v->num_raw_buffers - 1].size);
 
-	free(v->raw_buffer);
-	v->raw_buffer = NULL;
+	if (v->raw_buffer != NULL) {
+	        free(v->raw_buffer);
+	        v->raw_buffer = NULL;
+        }
 }
 
 
@@ -406,7 +412,6 @@ v4l2_suspend(vbi_capture_v4l2 *v)
 	int    fd;
 
 	if (v->streaming) {
-		printv("Suspending stream...\n");
 		v4l2_stream_stop(v);
 	}
 	else {
@@ -643,6 +648,28 @@ v4l2_get_poll_fd(vbi_capture *vc)
 		return v->fd;
 	else
 		return -1;
+}
+
+static int
+v4l2_channel_change(vbi_capture *vc,
+		    int chn_flags, int chn_prio,
+		    vbi_channel_desc * p_chn_desc,
+		    vbi_bool * p_has_tuner, int * p_scanning,
+		    char ** errorstr)
+{
+	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
+
+	/*
+	if (chn_flags & VBI_CHN_FLUSH_ONLY)
+		return 1;
+	*/
+
+	if (v->streaming)
+		v4l2_stream_flush(vc);
+	else
+		v4l2_read_flush(vc);
+
+	return -1;
 }
 
 static void
@@ -905,13 +932,14 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 
 	v->do_trace = trace;
 	printv("Try to open v4l2 vbi device, libzvbi interface rev.\n"
-	       "%s", rcsid);
+	       "%s\n", rcsid);
 
 	v->capture.parameters = v4l2_parameters;
 	v->capture._delete = v4l2_delete;
 	v->capture.get_fd = v4l2_get_read_fd;
 	v->capture.get_poll_fd = v4l2_get_poll_fd;
 	v->capture.add_services = v4l2_add_services;
+	v->capture.channel_change = v4l2_channel_change;
 
 	/* O_RDWR required for PROT_WRITE */
 	if ((v->fd = open(dev_name, O_RDWR)) == -1) {
@@ -995,7 +1023,6 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 		v->enqueue = ENQUEUE_SUSPENDED;
 
 		v->capture.read = v4l2_stream;
-		v->capture.flush = v4l2_stream_flush;
 
 	} else if (v->vcap.flags & V4L2_FLAG_READ) {
 		printv("Using read interface\n");
@@ -1004,7 +1031,6 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 			printv("Warning: no read select, reading will block\n");
 
 		v->capture.read = v4l2_read;
-		v->capture.flush = v4l2_read_flush;
 
                 v->read_active = FALSE;
 
