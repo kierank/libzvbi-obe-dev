@@ -1,3 +1,16 @@
+2002-07-30	<mschimek@users.sf.net>
+
+	* src/cache.c: Fixed buffer overflow (SRTL bug).
+	* src/exp-txt.c: Fixed double spaces and double height
+	  row bug in vbi_print_page_region().
+	* src/lang.c: Prime Hebrew won't fix, they transmit language
+	  code 0x00 English. Suggest per page language menu, for now
+	  added 0x80 entry in vbi_font_descriptors.
+	* Prime CNI won't fix, they registered one but don't transmit.
+	  Another candidate for TODO #011.
+	* src/decoder.c: Increased MAX_WAYS to fix ./osc --sim --pal
+	  identification of CC-625.
+
 2002-07-04	<mschimek@users.sf.net>
 
 	* doc, src: Switched to Doxygen.

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.5 2002/07/16 00:13:57 mschimek Exp $ */
+/* $Id: osc.c,v 1.6 2002/08/07 19:29:03 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -390,6 +390,7 @@ long_options[] = {
 	{ "pal",	no_argument,		NULL,		'p' },
 	{ "sim",	no_argument,		&do_sim,	TRUE },
 	{ "verbose",	no_argument,		NULL,		'v' },
+	{ 0, 0, 0, 0 }
 };
 
 int

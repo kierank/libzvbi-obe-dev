@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: explist.c,v 1.3 2002/02/10 11:47:10 mschimek Exp $ */
+/* $Id: explist.c,v 1.4 2002/08/07 19:29:03 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -494,6 +494,7 @@ list_modules(void)
 static const struct option
 long_options[] = {
 	{ "check", no_argument, NULL, 'c' },
+	{ 0, 0, 0, 0 }
 };
 
 int
