@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *  $Id: proxy-client.h,v 1.1 2004/10/04 20:50:24 mschimek Exp $
+ *  $Id: proxy-client.h,v 1.2 2004/10/24 18:26:12 tomzo Exp $
  */
 
 #ifndef PROXY_CLIENT_H
@@ -52,17 +52,22 @@ typedef enum
     */
    VBI_PROXY_EV_CHN_GRANTED   = 1<<0,
    /**
-    * Channel and/or norm was changed by another client.  When the norm was
-    * changed the client must update it's services, else no data will be
-    * forwarded by the proxy until the norm is changed back.
+    * Channel (e.g. TV tuner frequency) was changed by another client.
     */
    VBI_PROXY_EV_CHN_CHANGED   = 1<<1,
+   /**
+    * Norm was changed by another client (in a way which affects VBI,
+    * e.g. changes between PAL/SECAM are ignored.)  The client must update
+    * its services, else no data will be forwarded by the proxy until
+    * the norm is changed back.
+    */
+   VBI_PROXY_EV_NORM_CHANGED  = 1<<2,
    /**
     * Proxy requests to return the channel control token.  The client is no
     * longer allowed to switch the channel and must immediately reply with
     * a channel notification with flag @c VBI_PROXY_CHN_TOKEN
     */
-   VBI_PROXY_EV_CHN_RECLAIMED = 1<<2,
+   VBI_PROXY_EV_CHN_RECLAIMED = 1<<3,
    /**
     * Empty event mask
     */
