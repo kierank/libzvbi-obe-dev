@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.18 2005/01/15 10:23:05 mschimek Exp $ */
+/* $Id: teletext.c,v 1.19 2005/01/19 04:22:40 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -71,8 +71,6 @@ extern const char _zvbi_intl_domainname[];
 
 #define DEBUG 0
 
-#define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? \
-                      '.' : ((c) & 0x7F))
 #if DEBUG
 #define printv(templ, args...) fprintf(stderr, templ ,##args)
 #else
@@ -1286,7 +1284,7 @@ enhance(vbi_decoder *vbi, vt_magazine *mag, vt_extension *ext,
 				int raw;
 
 				raw = (row == 0 && i < 9) ?
-					0x20 : vbi_parity(vtp->data.lop.raw[row][i - 1]);
+					0x20 : vbi_unpar8 (vtp->data.lop.raw[row][i - 1]);
 
 				/* set-after spacing attributes cancelling non-spacing */
 
@@ -1304,7 +1302,7 @@ enhance(vbi_decoder *vbi, vt_magazine *mag, vt_extension *ext,
 
 				case 0x0A:		/* end box */
 				case 0x0B:		/* start box */
-					if (i < COLUMNS && vbi_parity(vtp->data.lop.raw[row][i]) == raw) {
+					if (i < COLUMNS && vbi_unpar8 (vtp->data.lop.raw[row][i]) == raw) {
 						printv("... boxed term %d %02x\n", i, raw);
 						mac.opacity = 0;
 					}
@@ -1323,7 +1321,7 @@ enhance(vbi_decoder *vbi, vt_magazine *mag, vt_extension *ext,
 					break;
 
 				raw = (row == 0 && i < 8) ?
-					0x20 : vbi_parity(vtp->data.lop.raw[row][i]);
+					0x20 : vbi_unpar8 (vtp->data.lop.raw[row][i]);
 
 				/* set-at spacing attributes cancelling non-spacing */
 
@@ -2088,7 +2086,7 @@ post_enhance(vbi_page *pg, int display_rows)
 	for (row = 0; row <= last_row; row++) {
 		for (column = 0; column < COLUMNS; acp++, column++) {
 			if (1)
-				printv("%c", printable(acp->unicode));
+				printv("%c", vbi_printable (acp->unicode));
 			else
 				printv("%04xF%dB%dS%dO%d ", acp->unicode,
 				       acp->foreground, acp->background,
@@ -2344,7 +2342,7 @@ vbi_format_vt_page(vbi_decoder *vbi,
 			if (row == 0 && column < 8) {
 				raw = buf[column];
 				i++;
-			} else if ((raw = vbi_parity(vtp->data.lop.raw[0][i++])) < 0)
+			} else if ((raw = vbi_unpar8 (vtp->data.lop.raw[0][i++])) < 0)
 				raw = ' ';
 
 			/* set-at spacing attributes */
@@ -2420,13 +2418,13 @@ vbi_format_vt_page(vbi_decoder *vbi,
 
 			case 0x0A:		/* end box */
 				if (column < (COLUMNS - 1)
-				    && vbi_parity(vtp->data.lop.raw[0][i]) == 0x0a)
+				    && vbi_unpar8 (vtp->data.lop.raw[0][i]) == 0x0a)
 					ac.opacity = pg->page_opacity[row > 0];
 				break;
 
 			case 0x0B:		/* start box */
 				if (column < (COLUMNS - 1)
-				    && vbi_parity(vtp->data.lop.raw[0][i]) == 0x0b)
+				    && vbi_unpar8 (vtp->data.lop.raw[0][i]) == 0x0b)
 					ac.opacity = pg->boxed_opacity[row > 0];
 				break;
 

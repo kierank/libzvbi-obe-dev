@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.17 2005/01/15 10:23:37 mschimek Exp $ */
+/* $Id: packet.c,v 1.18 2005/01/19 04:23:07 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,8 +40,6 @@
 #define FPC 0
 #endif
 
-#define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
-
 static vbi_bool convert_drcs(vt_page *vtp, uint8_t *raw);
 
 static inline void
@@ -60,12 +58,12 @@ dump_raw(vt_page *vtp, vbi_bool unham)
 	for (j = 0; j < 25; j++) {
 		if (unham)
 			for (i = 0; i < 40; i++)
-				printf("%01x ", vbi_hamm8(vtp->data.lop.raw[j][i]) & 0xF);
+				printf("%01x ", vbi_unham8 (vtp->data.lop.raw[j][i]) & 0xF);
 		else
 			for (i = 0; i < 40; i++)
 				printf("%02x ", vtp->data.lop.raw[j][i]);
 		for (i = 0; i < 40; i++)
-			putchar(printable(vtp->data.lop.raw[j][i]));
+			putchar(vbi_printable (vtp->data.lop.raw[j][i]));
 		putchar('\n');
 	}
 }
@@ -147,9 +145,9 @@ hamm8_page_number(pagenum *p, uint8_t *raw, int magazine)
 {
 	int b1, b2, b3, err, m;
 
-	err = b1 = vbi_hamm16(raw + 0);
-	err |= b2 = vbi_hamm16(raw + 2);
-	err |= b3 = vbi_hamm16(raw + 4);
+	err = b1 = vbi_unham16p (raw + 0);
+	err |= b2 = vbi_unham16p (raw + 2);
+	err |= b3 = vbi_unham16p (raw + 4);
 
 	if (err < 0)
 		return FALSE;
@@ -177,8 +175,8 @@ parse_mot(vt_magazine *mag, uint8_t *raw, int packet)
 			if (i == 10)
 				index += 6;
 
-			n0 = vbi_hamm8(*raw++);
-			n1 = vbi_hamm8(*raw++);
+			n0 = vbi_unham8 (*raw++);
+			n1 = vbi_unham8 (*raw++);
 
 			if ((n0 | n1) < 0)
 				continue;
@@ -204,8 +202,8 @@ parse_mot(vt_magazine *mag, uint8_t *raw, int packet)
 					index += 10;
 			}
 
-			n0 = vbi_hamm8(*raw++);
-			n1 = vbi_hamm8(*raw++);
+			n0 = vbi_unham8 (*raw++);
+			n1 = vbi_unham8 (*raw++);
 
 			if ((n0 | n1) < 0)
 				continue;
@@ -231,7 +229,7 @@ parse_mot(vt_magazine *mag, uint8_t *raw, int packet)
 			int n[10];
 
 			for (err = j = 0; j < 10; j++)
-				err |= n[j] = vbi_hamm8(raw[j]);
+				err |= n[j] = vbi_unham8 (raw[j]);
 
 			if (err < 0) /* XXX unused bytes poss. not hammed (^ N3) */
 				continue;
@@ -268,7 +266,7 @@ parse_mot(vt_magazine *mag, uint8_t *raw, int packet)
 
 		for (i = 0; i < 8; raw += 4, index++, i++) {
 			for (err = j = 0; j < 4; j++)
-				err |= n[j] = vbi_hamm8(raw[j]);
+				err |= n[j] = vbi_unham8 (raw[j]);
 
 			if (err < 0)
 				continue;
@@ -292,11 +290,11 @@ parse_pop(vt_page *vtp, uint8_t *raw, int packet)
 	vt_triplet *trip;
 	int i;
 
-	if ((designation = vbi_hamm8(raw[0])) < 0)
+	if ((designation = vbi_unham8 (raw[0])) < 0)
 		return FALSE;
 
 	for (raw++, i = 0; i < 13; raw += 3, i++)
-		triplet[i] = vbi_hamm24(raw);
+		triplet[i] = vbi_unham24p (raw);
 
 	if (packet == 26)
 		packet += designation;
@@ -364,12 +362,12 @@ convert_drcs(vt_page *vtp, uint8_t *raw)
 	for (i = 0; i < 24; p += 40, i++)
 		if (vtp->lop_lines & (2 << i)) {
 			for (j = 0; j < 20; j++)
-				if (vbi_parity(p[j]) < 0x40) {
+				if (vbi_unpar8 (p[j]) < 0x40) {
 					vtp->data.drcs.invalid |= 1ULL << (i * 2);
 					break;
 				}
 			for (j = 20; j < 40; j++)
-				if (vbi_parity(p[j]) < 0x40) {
+				if (vbi_unpar8 (p[j]) < 0x40) {
 					vtp->data.drcs.invalid |= 1ULL << (i * 2 + 1);
 					break;
 				}
@@ -536,7 +534,8 @@ parse_mip_page(vbi_decoder *vbi, vt_page *vtp,
 				    [(*subp_index % 13) * 3 + 1];
 		(*subp_index)++;
 
-		if ((subc = vbi_hamm16(raw) | (vbi_hamm8(raw[2]) << 8)) < 0)
+		if ((subc = vbi_unham16p (raw)
+		     | (vbi_unham8 (raw[2]) << 8)) < 0)
 			return FALSE;
 
 		if ((code & 15) == 1)
@@ -587,10 +586,10 @@ parse_mip(vbi_decoder *vbi, vt_page *vtp)
 			uint8_t *raw = vtp->data.unknown.raw[packet];
 
 			for (i = 0x00; i <= 0x09; raw += 2, i++)
-				if (!parse_mip_page(vbi, vtp, pgno + i, vbi_hamm16(raw), &spi))
+				if (!parse_mip_page(vbi, vtp, pgno + i, vbi_unham16p (raw), &spi))
 					return FALSE;
 			for (i = 0x10; i <= 0x19; raw += 2, i++)
-				if (!parse_mip_page(vbi, vtp, pgno + i, vbi_hamm16(raw), &spi))
+				if (!parse_mip_page(vbi, vtp, pgno + i, vbi_unham16p (raw), &spi))
 					return FALSE;
 		}
 
@@ -600,17 +599,17 @@ parse_mip(vbi_decoder *vbi, vt_page *vtp)
 
 			for (i = 0x0A; i <= 0x0F; raw += 2, i++)
 				if (!parse_mip_page(vbi, vtp, pgno + i,
-						    vbi_hamm16(raw), &spi))
+						    vbi_unham16p (raw), &spi))
 					return FALSE;
 			if (packet == 14) /* 0xFA ... 0xFF */
 				break;
 			for (i = 0x1A; i <= 0x1F; raw += 2, i++)
 				if (!parse_mip_page(vbi, vtp, pgno + i,
-						    vbi_hamm16(raw), &spi))
+						    vbi_unham16p (raw), &spi))
 					return FALSE;
 			for (i = 0x2A; i <= 0x2F; raw += 2, i++)
 				if (!parse_mip_page(vbi, vtp, pgno + i,
-						    vbi_hamm16(raw), &spi))
+						    vbi_unham16p (raw), &spi))
 					return FALSE;
 		}
 
@@ -664,7 +663,7 @@ top_page_number(pagenum *p, uint8_t *raw)
 	int pgno, err, i;
 
 	for (err = i = 0; i < 8; i++)
-		err |= n[i] = vbi_hamm8(raw[i]);
+		err |= n[i] = vbi_unham8 (raw[i]);
 
 	pgno = n[0] * 256 + n[1] * 16 + n[2];
 
@@ -692,7 +691,7 @@ parse_btt(vbi_decoder *vbi, uint8_t *raw, int packet)
 			for (j = 0; j < 10; index++, j++) {
 				struct page_info *pi = vbi->vt.page_info + index;
 
-				if ((code = vbi_hamm8(*raw++)) < 0)
+				if ((code = vbi_unham8 (*raw++)) < 0)
 					break;
 
 				switch (code) {
@@ -796,13 +795,13 @@ parse_ait(vt_page *vtp, uint8_t *raw, int packet)
 
 	if (top_page_number(&ait[0].page, raw + 0)) {
 		for (i = 0; i < 12; i++)
-			if ((n = vbi_parity(raw[i + 8])) >= 0)
+			if ((n = vbi_unpar8 (raw[i + 8])) >= 0)
 				ait[0].text[i] = n;
 	}
 
 	if (top_page_number(&ait[1].page, raw + 20)) {
 		for (i = 0; i < 12; i++)
-			if ((n = vbi_parity(raw[i + 28])) >= 0)
+			if ((n = vbi_unpar8 (raw[i + 28])) >= 0)
 				ait[1].text[i] = n;
 	}
 
@@ -821,7 +820,7 @@ parse_mpt(struct teletext *vt, uint8_t *raw, int packet)
 
 		for (i = 0; i < 4; i++) {
 			for (j = 0; j < 10; index++, j++)
-				if ((n = vbi_hamm8(*raw++)) >= 0) {
+				if ((n = vbi_unham8 (*raw++)) >= 0) {
 					int code = vt->page_info[index].code;
 					int subc = vt->page_info[index].subcode;
 
@@ -1179,7 +1178,7 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 
 		printf("\nVPS:\n");
 
-		c = vbi_bit_reverse[buf[1]];
+		c = vbi_rev8 (buf[1]);
 
 		if ((int8_t) c < 0) {
 			label[l] = 0;
@@ -1189,7 +1188,7 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 
 		c &= 0x7F;
 
-		label[l] = printable(c);
+		label[l] = vbi_printable (c);
 
 		l = (l + 1) % 16;
 
@@ -1247,8 +1246,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 #if BSDATA_TEST
 			printf("\nPacket 8/30/%d:\n", designation);
 #endif
-			cni = vbi_bit_reverse[raw[7]] * 256
-				+ vbi_bit_reverse[raw[8]];
+			cni = vbi_rev16p (raw + 7);
 
 			if (cni != n->cni_8301) {
 				n->cni_8301 = cni;
@@ -1320,8 +1318,8 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 			printf("\nPacket 8/30/%d:\n", designation);
 #endif
 			for (err = i = 0; i < 7; i++) {
-				err |= t = vbi_hamm16(raw + i * 2 + 6);
-				b[i] = vbi_bit_reverse[t];
+				err |= t = vbi_unham16p (raw + i * 2 + 6);
+				b[i] = vbi_rev8 (t);
 			}
 
 			if (err < 0)
@@ -1414,7 +1412,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 			for (i = 20; i < 40; i++) {
 				int c = vbi_parity(raw[i]);
 
-				c = (c < 0) ? '?' : printable(c);
+				c = (c < 0) ? '?' : vbi_printable (c);
 				putchar(c);
 			}
 
@@ -1451,7 +1449,7 @@ parse_page_clear(struct page_clear *pc, uint8_t *p, int packet)
 
 	pc->packet = packet;
 
-	if ((bp = vbi_hamm8(p[0]) * 3) < 0 || bp > 39)
+	if ((bp = vbi_unham8 (p[0]) * 3) < 0 || bp > 39)
 		goto desync;
 
 	for (col = 1; col < 40;) {
@@ -1471,8 +1469,8 @@ parse_page_clear(struct page_clear *pc, uint8_t *p, int packet)
 			col += size;
 
 			if (pc->pfc.application_id < 0) {
-				int sh = vbi_hamm16(pc->pfc.block)
-					+ vbi_hamm16(pc->pfc.block + 2) * 256;
+				int sh = vbi_unham16p (pc->pfc.block)
+					+ vbi_unham16p (pc->pfc.block + 2) * 256;
 
 				pc->pfc.application_id = sh & 0x1F;
 				pc->pfc.block_size =
@@ -1488,7 +1486,7 @@ parse_page_clear(struct page_clear *pc, uint8_t *p, int packet)
 					pc->pfc.block_size);
 
 				for (i = 0; i < pc->pfc.block_size; i++) {
-					fputc(printable(pc->pfc.block[i]), stderr);
+					fputc(vbi_printable (pc->pfc.block[i]), stderr);
 
 					if ((i % 75) == 75)
 						fputc('\n', stderr);
@@ -1502,9 +1500,9 @@ parse_page_clear(struct page_clear *pc, uint8_t *p, int packet)
 			if (bp >= 39)
 				return; /* no SH in this packet */
 			col = bp + 2;
-			bs = vbi_hamm8(p[col - 1]);
+			bs = vbi_unham8 (p[col - 1]);
 		} else
-			while ((bs = vbi_hamm8(p[col++])) == FPC_FILLER_BYTE) {
+			while ((bs = vbi_unham8 (p[col++])) == FPC_FILLER_BYTE) {
 				if (col >= 40)
 					return; /* packet done */
 			}
@@ -1537,7 +1535,7 @@ same_header(int cur_pgno, uint8_t *cur,
 	buf[1] = ((cur_pgno >> 4) & 15) + '0';
 	buf[0] = (cur_pgno >> 8) + '0';
 
-	vbi_set_parity(buf, 3);
+	vbi_par (buf, 3);
 
 	for (i = 8; i < 32; cur++, ref++, i++) {
 		/* Skip page number */
@@ -1552,8 +1550,8 @@ same_header(int cur_pgno, uint8_t *cur,
 			continue;
 		}
 
-		err |= vbi_parity(*cur);
-		err |= vbi_parity(*ref);
+		err |= vbi_unpar8 (*cur);
+		err |= vbi_unpar8 (*ref);
 
 		neq |= *cur - *ref;
 	}
@@ -1587,7 +1585,7 @@ same_clock(uint8_t *cur, uint8_t *ref)
 
 	for (i = 32; i < 40; cur++, ref++, i++)
 	       	if (*cur != *ref
-		    && (vbi_parity(*cur) | vbi_parity(*ref)) >= 0)
+		    && (vbi_unpar8 (*cur) | vbi_unpar8 (*ref)) >= 0)
 			return FALSE;
 	return TRUE;
 }
@@ -1708,7 +1706,7 @@ store_lop(vbi_decoder *vbi, vt_page *vtp)
 			int i;
 
 			for (i = 0; i < 40; i++)
-				putchar(printable(vtp->data.unknown.raw[0][i]));
+				putchar(vbi_printable (vtp->data.unknown.raw[0][i]));
 			putchar('\r');
 			fflush(stdout);
 		}
@@ -1756,14 +1754,14 @@ parse_27(vbi_decoder *vbi, uint8_t *p,
 	if (cvtp->function == PAGE_FUNCTION_DISCARD)
 		return TRUE;
 
-	if ((designation = vbi_hamm8(*p)) < 0)
+	if ((designation = vbi_unham8 (*p)) < 0)
 		return FALSE;
 
 //	printf("Packet X/27/%d page %x\n", designation, cvtp->pgno);
 
 	switch (designation) {
 	case 0:
-		if ((control = vbi_hamm8(p[37])) < 0)
+		if ((control = vbi_unham8 (p[37])) < 0)
 			return FALSE;
 
 		/* printf("%x.%x X/27/%d %02x\n",
@@ -1802,8 +1800,8 @@ parse_27(vbi_decoder *vbi, uint8_t *p,
 		for (p++, i = 0; i <= 5; p += 6, i++) {
 			int t1, t2;
 
-			t1 = vbi_hamm24(p + 0);
-			t2 = vbi_hamm24(p + 3);
+			t1 = vbi_unham24p (p + 0);
+			t2 = vbi_unham24p (p + 3);
 
 			if ((t1 | t2) < 0)
 				return FALSE;
@@ -1858,7 +1856,7 @@ parse_28_29(vbi_decoder *vbi, uint8_t *p,
 		return r & ((1UL << count) - 1);
 	}
 
-	if ((designation = vbi_hamm8(*p)) < 0)
+	if ((designation = vbi_unham8 (*p)) < 0)
 		return FALSE;
 
 	if (0)
@@ -1866,7 +1864,7 @@ parse_28_29(vbi_decoder *vbi, uint8_t *p,
 			mag8, packet, designation, cvtp->pgno);
 
 	for (p++, i = 0; i < 13; p += 3, i++)
-		err |= triplet[i] = vbi_hamm24(p);
+		err |= triplet[i] = vbi_unham24p (p);
 
 	switch (designation) {
 	case 0: /* X/28/0, M/29/0 Level 2.5 */
@@ -1922,7 +1920,7 @@ parse_28_29(vbi_decoder *vbi, uint8_t *p,
 			bits(1); /* panel status: level 2.5/3.5 */
 
 			ext->fallback.left_panel_columns =
-				vbi_bit_reverse[bits(4)] >> 4;
+				vbi_rev8 (bits (4)) >> 4;
 
 			if (ext->fallback.left_side_panel
 			    | ext->fallback.right_side_panel)
@@ -2000,10 +1998,10 @@ parse_28_29(vbi_decoder *vbi, uint8_t *p,
 		triplet++;
 
 		for (i = 0; i < 8; i++)
-			ext->drcs_clut[i + 2] = vbi_bit_reverse[bits(5)] >> 3;
+			ext->drcs_clut[i + 2] = vbi_rev8 (bits(5)) >> 3;
 
 		for (i = 0; i < 32; i++)
-			ext->drcs_clut[i + 10] = vbi_bit_reverse[bits(5)] >> 3;
+			ext->drcs_clut[i + 10] = vbi_rev8 (bits(5)) >> 3;
 
 		ext->designations |= 1 << 1;
 
@@ -2059,7 +2057,7 @@ parse_8_30(vbi_decoder *vbi, uint8_t *p, int packet)
 {
 	int designation;
 
-	if ((designation = vbi_hamm8(*p)) < 0)
+	if ((designation = vbi_unham8 (*p)) < 0)
 		return FALSE;
 
 //	printf("Packet 8/30/%d\n", designation);
@@ -2102,7 +2100,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 	int pmag, mag0, mag8, packet;
 	vt_magazine *mag;
 
-	if ((pmag = vbi_hamm16(p)) < 0)
+	if ((pmag = vbi_unham16p (p)) < 0)
 		return FALSE;
 
 	mag0 = pmag & 7;
@@ -2124,7 +2122,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 
 		fprintf(stderr, "packet 0x%x %d >", mag8 * 0x100, packet);
 		for (i = 0; i < 40; i++)
-			fputc(printable(p[i]), stderr);
+			fputc(vbi_printable (p[i]), stderr);
 		fprintf(stderr, "<\n");
 	}
 
@@ -2136,7 +2134,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 		vt_page *vtp;
 		int i;
 
-		if ((page = vbi_hamm16(p)) < 0) {
+		if ((page = vbi_unham16p (p)) < 0) {
 			vbi_teletext_desync(vbi);
 //			printf("Hamming error in packet 0 page number\n");
 			return FALSE;
@@ -2201,8 +2199,8 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 		cvtp->pgno = pgno;
 		vbi->vt.current = rvtp;
 
-		subpage = vbi_hamm16(p + 2) + vbi_hamm16(p + 4) * 256;
-		flags = vbi_hamm16(p + 6);
+		subpage = vbi_unham16p (p + 2) + vbi_unham16p (p + 4) * 256;
+		flags = vbi_unham16p (p + 6);
 
 		if (page == 0xFF || (subpage | flags) < 0) {
 			cvtp->function = PAGE_FUNCTION_DISCARD;
@@ -2210,7 +2208,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 		}
 
 		cvtp->subno = subpage & 0x3F7F;
-		cvtp->national = vbi_bit_reverse[flags] & 7;
+		cvtp->national = vbi_rev8 (flags) & 7;
 		cvtp->flags = (flags << 16) + subpage;
 
 		if (0 && ((page & 15) > 9 || page > 0x99))
@@ -2447,7 +2445,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 		case PAGE_FUNCTION_LOP:
 		case PAGE_FUNCTION_TRIGGER:
 			for (n = i = 0; i < 40; i++)
-				n |= vbi_parity(p[i]);
+				n |= vbi_unpar8 (p[i]);
 			if (n < 0)
 				return FALSE;
 
@@ -2497,7 +2495,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			break;
 		}
 
-		if ((designation = vbi_hamm8(*p)) < 0)
+		if ((designation = vbi_unham8 (*p)) < 0)
 			return FALSE;
 
 		if (rvtp->num_triplets >= 16 * 13
@@ -2507,7 +2505,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 		}
 
 		for (p++, i = 0; i < 13; p += 3, i++) {
-			int t = vbi_hamm24(p);
+			int t = vbi_unham24p (p);
 
 			if (t < 0)
 				break; /* XXX */
