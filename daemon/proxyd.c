@@ -35,6 +35,10 @@
  *
  *
  *  $Log: proxyd.c,v $
+ *  Revision 1.3  2003/05/10 13:29:43  tomzo
+ *  - bugfix: busy loop until the first client connect (unless -nodetach was used)
+ *  - copy group and permissions from VBI device onto socket path
+ *
  *  Revision 1.2  2003/05/03 12:06:36  tomzo
  *  - removed swap32 inline function from proxyd.c and io-proxy.c: use new macro
  *    VBIPROXY_ENDIAN_MISMATCH instead (contains swapped value of endian magic)
@@ -42,7 +46,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxyd.c,v 1.2 2003/05/03 12:06:36 tomzo Exp $";
+static const char rcsid[] = "$Id: proxyd.c,v 1.3 2003/05/10 13:29:43 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -719,7 +723,7 @@ static vbi_bool vbi_proxyd_take_message( PROXY_CLNT *req, VBIPROXY_MSG_BODY * pM
 static uint vbi_proxyd_get_fd_set( fd_set * rd, fd_set * wr )
 {
    PROXY_CLNT    *req;
-   uint              max;
+   uint           max;
 
    /* add TCP/IP and UNIX-domain listening sockets */
    max = 0;
@@ -960,6 +964,26 @@ static void vbi_proxyd_set_address( vbi_bool do_tcp_ip, const char * pIpStr, con
 }
 
 /* ----------------------------------------------------------------------------
+** Emulate device permissions on the socket file
+*/
+static void proxy_set_perm( void )
+{
+   struct stat st;
+
+   if (stat(p_dev_name, &st) != -1)
+   {
+      if ( (chown(proxy.p_sock_path, st.st_uid, st.st_gid) != 0) &&
+           (chown(proxy.p_sock_path, geteuid(), st.st_gid) != 0) )
+         dprintf1("set_perm: failed to set socket owner %d.%d: %s\n", st.st_uid, st.st_gid, strerror(errno));
+
+      if (chmod(proxy.p_sock_path, st.st_mode) != 0)
+         dprintf1("set_perm: failed to set socket permission %o: %s\n", st.st_mode, strerror(errno));
+   }
+   else
+      dprintf1("set_perm: failed to stat VBI device %s\n", p_dev_name);
+}
+
+/* ----------------------------------------------------------------------------
 ** Stop the server, close all connections, free resources
 */
 static void vbi_proxyd_destroy( void )
@@ -1034,6 +1058,7 @@ static void vbi_proxyd_init( void )
    memset(&proxy, 0, sizeof(proxy));
    proxy.pipe_fd = -1;
    proxy.tcp_ip_fd = -1;
+   proxy.vbi_fd = -1;
 
    proxy.p_sock_path = vbi_proxy_msg_get_socket_name(p_dev_name);
 }
@@ -1289,6 +1314,8 @@ int main( int argc, char ** argv )
    /* start listening for client connections (at least on the named socket in /tmp) */
    if (vbi_proxyd_listen())
    {
+      proxy_set_perm();
+
       proxy_main_loop();
    }
    vbi_proxyd_destroy();
