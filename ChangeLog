@@ -1,3 +1,7 @@
+2003-11-13    <mschimek@users.sf.net>
+
+	* src: New misc.h from 0.3 branch.
+
 2003-10-30	<mschimek@users.sf.net>
 
 	* autogen.sh, m4/autogen.sh: Updated.
