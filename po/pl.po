@@ -11,20 +11,17 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n==1? 0: n%10>=2 && n%10<=4 && n/10%10!=1? "
-"1: 2\n"
 
 #: src/exp-gfx.c:733
 msgid "Correct aspect ratio"
 msgstr "Popraw proporcje ekranu"
 
 #: src/exp-gfx.c:734
-#, fuzzy
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
 msgstr ""
-"Zbli¿a proporcje obrazu do prawdziwej TV, doda to nadmiarowe informacje"
+"Zbli¿a proporcje obrazu do prawdziwej TV. Podwoi to rozmiar obrazu."
 
 #: src/exp-gfx.c:807 src/exp-gfx.c:1103
 #, c-format
@@ -107,7 +104,7 @@ msgstr "Konwersja znaków Unicode (UCS-2) -> %s nie obs³ugiwana"
 
 #: src/exp-html.c:431
 msgid "Character conversion failed."
-msgstr ""
+msgstr "Konwersja znaków nie powiod³a siê."
 
 #: src/exp-html.c:720
 msgid "HTML"
@@ -123,43 +120,43 @@ msgstr "ASCII"
 
 #: src/exp-txt.c:80
 msgid "ISO-8859-1 (Latin-1 Western languages)"
-msgstr ""
+msgstr "ISO-8859-1 (Latin-1 Jêzyki zachodnie)"
 
 #: src/exp-txt.c:81
 msgid "ISO-8859-2 (Latin-2 Central and Eastern Europe languages)"
-msgstr ""
+msgstr "ISO-8859-2 (Latin-2 Jêzyki europy ¶rodkowej i wschodniej)"
 
 #: src/exp-txt.c:82
 msgid "ISO-8859-4 (Latin-3 Baltic languages)"
-msgstr ""
+msgstr "ISO-8859-4 (Latin-3 Jêzyki ba³tyckie)"
 
 #: src/exp-txt.c:83
 msgid "ISO-8859-5 (Cyrillic)"
-msgstr ""
+msgstr "ISO-8859-5 (Cyrylica)"
 
 #: src/exp-txt.c:84
 msgid "ISO-8859-7 (Greek)"
-msgstr ""
+msgstr "ISO-8859-7 (Greka)"
 
 #: src/exp-txt.c:85
 msgid "ISO-8859-8 (Hebrew)"
-msgstr ""
+msgstr "ISO-8859-8 (Hebrajski)"
 
 #: src/exp-txt.c:86
 msgid "ISO-8859-9 (Turkish)"
-msgstr ""
+msgstr "ISO-8859-9 (Turecki)"
 
 #: src/exp-txt.c:87
 msgid "KOI8-R (Russian and Bulgarian)"
-msgstr ""
+msgstr "KOI8-R (Rosyjski i bu³garski)"
 
 #: src/exp-txt.c:88
 msgid "KOI8-U (Ukranian)"
-msgstr ""
+msgstr "KOI8-U (Ukraiñski)"
 
 #: src/exp-txt.c:89
 msgid "ISO-10646/UTF-8 (Unicode)"
-msgstr ""
+msgstr "ISO-10646/UTF-8 (Unicode)"
 
 #: src/exp-txt.c:101
 msgid "Black"
@@ -200,24 +197,24 @@ msgstr "Dowolny"
 #. NLS: Insert terminal control codes
 #: src/exp-txt.c:109
 msgid "None"
-msgstr ""
+msgstr "Brak"
 
 #: src/exp-txt.c:109
 msgid "ANSI X3.64 / VT 100"
-msgstr ""
+msgstr "ANSI X3.64 / VT 100"
 
 #: src/exp-txt.c:109
 msgid "VT 200"
-msgstr ""
+msgstr "VT 200"
 
 #. NLS: Text export format menu
 #: src/exp-txt.c:116
 msgid "Format"
-msgstr ""
+msgstr "Format"
 
 #: src/exp-txt.c:126
 msgid "Control codes"
-msgstr ""
+msgstr "Kody kontrolne"
 
 #: src/exp-txt.c:130
 msgid "Foreground"
@@ -239,12 +236,11 @@ msgstr "Przypuszczalny kolor t³a terminala"
 
 #: src/exp-txt.c:600
 msgid "Text"
-msgstr ""
+msgstr "Tekst"
 
 #: src/exp-txt.c:601
-#, fuzzy
 msgid "Export this page as text file"
-msgstr "Eksportuj tê stronê jako tekst ANSI"
+msgstr "Eksportuj tê stronê jako plik tekstowy"
 
 #: src/exp-vtx.c:77
 msgid "Can only export Teletext pages."
@@ -272,50 +268,51 @@ msgstr ""
 #: src/export.c:400
 #, c-format
 msgid "Invalid option string \"%s\"."
-msgstr ""
+msgstr "Niew³a¶ciwa opcja \"%s\"."
 
 #: src/export.c:489
 #, c-format
 msgid "Unknown export module '%s'."
-msgstr ""
+msgstr "Nieznany modu³ eksportu '%s'."
 
 #: src/export.c:499
 #, c-format
 msgid "Cannot initialize export module '%s', probably lack of memory."
 msgstr ""
+"Nie mogê zainicjalizowaæ modu³u eksportu '%s', prawdopodobnie brak pamiêci."
 
 #: src/export.c:935
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot create file '%s': Error %d, %s."
-msgstr "Nie mogê utworzyæ pliku '%s': %d, %s."
+msgstr "Nie mogê utworzyæ pliku '%s': B³±d %d, %s."
 
 #: src/export.c:1010
 #, c-format
 msgid "Error while writing file '%s'"
-msgstr ""
+msgstr "B³±d podczas zapisu do pliku '%s'"
 
 #: src/export.c:1012
 msgid "Error while writing file"
-msgstr ""
+msgstr "B³±d podczas zapisu do pliku"
 
 #: src/export.c:1025
 #, c-format
 msgid "Export module '%s' has no option '%s'."
-msgstr ""
+msgstr "Modu³ eksportu '%s' nie posiada opcji '%s'."
 
 #: src/export.c:1070
 #, c-format
 msgid "Invalid argument %s for option %s of export module %s."
-msgstr ""
+msgstr "Niew³a¶ciwy argument %s dla opcji %s modu³u eksportu %s."
 
 #: src/export.c:1081
 #, c-format
 msgid "Out of memory in export module '%s'."
-msgstr ""
+msgstr "Brak pamiêci w module eksportu '%s'."
 
 #: src/export.c:1111
 msgid "Unknown error."
-msgstr ""
+msgstr "Nieznany b³±d."
 
 #: src/io-v4l.c:511 src/io-v4l.c:774 src/io-v4l.c:792 src/io-v4l2.c:332
 #: src/io-v4l2.c:530 src/io-v4l2.c:578 src/io-v4l2.c:659
@@ -334,7 +331,7 @@ msgstr "Nie mogê otworzyæ '%s': %d, %s."
 
 #: src/io-v4l2.c:351
 msgid "Probably not a v4l2 device."
-msgstr ""
+msgstr "Prawdopodobnie nie jest urz±dzeniem V4L2."
 
 #: src/io-v4l.c:545 src/io-v4l2.c:356
 #, c-format
@@ -345,17 +342,17 @@ msgstr "%s (%s) nie jest surowym urz±dzeniem VBI."
 #: src/io-v4l.c:696 src/io-v4l2.c:367 src/io-v4l2.c:543
 #, c-format
 msgid "%s (%s) does not support the select() function."
-msgstr ""
+msgstr "%s (%s) nie obs³uguje funkcji select()."
 
 #. mandatory, http://www.thedirks.org/v4l2/v4l2dsi.htm
 #: src/io-v4l2.c:375
 #, c-format
 msgid "Cannot query current videostandard of %s (%s): %d, %s."
-msgstr ""
+msgstr "Nie mogê uzyskaæ aktualnego standardu wideo %s (%s): %d, %s."
 
 #: src/io-v4l2.c:377 src/io-v4l2.c:642
 msgid "Probably a driver bug."
-msgstr ""
+msgstr "Prawdopodobnie b³±d sterownika."
 
 #: src/io-v4l2.c:397
 #, c-format
@@ -384,11 +381,13 @@ msgid "Possibly a driver bug."
 msgstr "Prawdopodobnie b³±d sterownika."
 
 #: src/io-v4l.c:584 src/io-v4l2.c:499
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
-msgstr "%s (%s) oferuje nieznany format próbkowania vbi #%d."
+msgstr ""
+"%s (%s) oferuje nieznany format próbkowania vbi #%d. Mo¿e to byæ b³±d "
+"urz±dzenia albo libzvbi jest zbyt stare."
 
 #: src/io-v4l2.c:559
 #, c-format
@@ -437,17 +436,18 @@ msgstr ""
 
 #: src/io-v4l2.c:710
 msgid "V4L2 interface not compiled."
-msgstr ""
+msgstr "Interfejs V4L2 nie wkompilowany."
 
 #: src/io-v4l.c:499
 msgid "driver unknown"
 msgstr "sterownik nieznany"
 
 #: src/io-v4l.c:627
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot capture with %s (%s), has no standard vbi interface."
 msgstr ""
-"Nie mogê przechwytywaæ z %s (%s), nie ma standardowego interfejsu vbi.\n"
+"Nie mogê przechwytywaæ u¿ywaj±c %s (%s), nie ma standardowego interfejsu "
+"VBI."
 
 #: src/io-v4l.c:645
 #, c-format
@@ -455,76 +455,23 @@ msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
 msgstr ""
+"Nie mogê zidentyfikowaæ %s (%s), zg³oszony rozmiar ramki VBI sugeruje, ¿e "
+"nie jest to sterownik BTTV."
 
 #: src/io-v4l.c:661 src/io-v4l.c:721
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
-msgstr "Nie mogê ustawiæ ani okre¶liæ aktualnego standardu wideo %s (%s).\n"
+msgstr "Nie mogê ustawiæ ani okre¶liæ aktualnego standardu wideo %s (%s)."
 
 #: src/io-v4l.c:748
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
 "frequency %.2f MHz is too low."
 msgstr ""
-"Nie mogê przechwytywaæ ¿±danych us³ug danych z %s (%s), czêstotliwo¶æ "
-"próbkowania %.2f MHz jest za niska."
+"Nie mogê przechwytywaæ ¿±danych us³ug danych u¿ywaj±c %s (%s), "
+"czêstotliwo¶æ próbkowania %.2f MHz jest za niska."
 
 #: src/io-v4l.c:850 src/io-v4l.c:859
 msgid "V4L interface not compiled."
-msgstr ""
-
-#~ msgid "Character conversion Unicode -> %s not supported"
-#~ msgstr "Konwersja znaków Unicode -> %s nie obs³ugiwana"
-
-#~ msgid "ANSI colors"
-#~ msgstr "Kolory ANSI"
-
-#~ msgid "Insert ANSI color escape codes"
-#~ msgstr "Wstaw kody kolorów ANSI"
-
-#~ msgid "Export this page as ASCII text"
-#~ msgstr "Eksporuj tê stronê jako tekst ASCII"
-
-#~ msgid "ANSI"
-#~ msgstr "ANSI"
-
-#~ msgid "Please contact the Zapzilla maintainers at <http://zapping.sf.net>."
-#~ msgstr "Skontaktuj siê z autorami Zapzilli pod <http://zapping.sf.net>."
-
-#~ msgid "V4L/V4L2 VBI interface: Failed to read from the device"
-#~ msgstr "Interfejs VBI V4L/V4L2: Nie mogê czytaæ z urz±dzenia"
-
-#~ msgid "Sorry, %s (%s) cannot capture the requested data services.\n"
-#~ msgstr "Niestety, %s (%s) nie mo¿e przechwytywaæ ¿±danych us³ug danych.\n"
-
-#~ msgid "%s (%s) reports improbable vbi frame size. %s\n"
-#~ msgstr "%s (%s) zg³asza nieprawdopodobny rozmiar ramki vbi. %s\n"
-
-#~ msgid "Not enough memory to allocate vbi data buffers (%d KB).\n"
-#~ msgstr "Brakuje pamiêci dla zaallokowania buforów danych vbi (%d kB).\n"
-
-#~ msgid "V4L2 VBI interface: Capture stalled, no station tuned in?"
-#~ msgstr "Interfejs VBI V4L2: Przechwytywanie stoi, brak ustawionej stacji?"
-
-#~ msgid "V4L2 VBI interface: Failed to read from the device"
-#~ msgstr "Interfejs VBI V4L2: Nie mogê czytaæ z urz±dzenia"
-
-#~ msgid ""
-#~ "V4L2 VBI interface: Cannot dequeue buffer, driver or application bug?"
-#~ msgstr ""
-#~ "Interfejs VBI V4L2: Nie mogê odkolejkowaæ bufora, b³±d sterownika albo "
-#~ "aplikacji?"
-
-#~ msgid ""
-#~ "V4L2 VBI interface: Cannot enqueue buffer, driver or application bug?"
-#~ msgstr ""
-#~ "Interfejs VBI V4L2: Nie mogê zakolejkowaæ bufora, b³±d sterownika albo "
-#~ "aplikacji?"
-
-#~ msgid ""
-#~ "Cannot query current videostandard of %s (%s): %d, %s. Probably a driver "
-#~ "bug.\n"
-#~ msgstr ""
-#~ "Nie mogê uzyskaæ aktualnego standardu wideo %s (%s): %d, %s. "
-#~ "Prawdopodobnie b³±d urz±dzenia.\n"
+msgstr "Interfejs V4L nie wkompilowany."
