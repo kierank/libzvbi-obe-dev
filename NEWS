@@ -1,3 +1,22 @@
+libzvbi 0.2.10, 2004-12-30
+--------------------------
+The bit slicer and raw VBI decoder have been replaced by improved and
+better tested versions. Developers note memory will leak if you do not
+call vbi_raw_decoder_destroy().
+
+The raw decoder now supports Teletext system A, C and D and pseudo-VPS
+on the second field. Blank line detection has been disabled. As a result
+the decoder will run a bit slower but Robin Imrie pointed out that
+caption / subtitles may be lost if the signal inserter is disabled
+during longer periods of silence.
+
+The DVB demultiplexer added in 0.2.9 is now public.
+
+Other fixes:
+- In 0.2.9 i/o routines may crash if passed NULL errorstr.
+- Replaced uname call in configure.in by AC_CANONICAL_HOST.
+- Missing documentation.
+
 0.2.9
 -----
 This version contains the VBI proxy code by Tom Zoerner. With the proxy

@@ -1,3 +1,25 @@
+2004-12-30    <mschimek@users.sf.net>
+
+	* Release 0.2.10
+
+2004-12-28    <mschimek@users.sf.net>
+
+	* src/Makefile.am (LIBZVBI_HDRS): Added dvb_demux.h.
+	* src/dvb_demux.c, src/dvb_demux.h: Renamed a few funcs, added
+	  missing vbi_dvb_demux_reset(), added documentation, made the
+	  interface public.
+	* doc/Doxyfile.in (FILE_PATTERNS): Added dvb_demux.h.
+	
+2004-12-23    <mschimek@users.sf.net>
+
+	* src/io-bktr.c, src/io-dvb.c, src/io-v4l.c, src/io-v4l2.c,
+	  src/io-v4l2k.c: errorstr fix, 0.2.9 may crash if NULL.
+	* configure.in: Replaced uname call by AC_CANONICAL_HOST for
+	  proper cross-compiling. Added HAVE_X conditional.
+	* test/Makefile.am: Compile X programs only if we HAVE_X.
+	* src/structpr.pl: fourcc fix.
+	* src/proxy-msg.c, daemon/proxyd.c: printf ptrdiff_t fixes.
+
 2004-12-12    <mschimek@users.sf.net>
 
 	* src/raw_decoder.c (decode_pattern): Disabled blank line
