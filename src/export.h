@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.h,v 1.4 2002/06/18 02:27:34 mschimek Exp $ */
+/* $Id: export.h,v 1.5 2002/06/25 04:37:10 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -190,24 +190,24 @@ typedef struct vbi_option_info {
 
 extern vbi_export_info *	vbi_export_info_enum(int index);
 extern vbi_export_info *	vbi_export_info_keyword(const char *keyword);
-extern vbi_export_info *	vbi_export_info_export(vbi_export *export);
+extern vbi_export_info *	vbi_export_info_export(vbi_export *);
 
 extern vbi_export *		vbi_export_new(const char *keyword, char **errstr);
-extern void			vbi_export_delete(vbi_export *export);
+extern void			vbi_export_delete(vbi_export *);
 
-extern vbi_option_info *	vbi_export_option_info_enum(vbi_export *export, int index);
-extern vbi_option_info *	vbi_export_option_info_keyword(vbi_export *export, const char *keyword);
+extern vbi_option_info *	vbi_export_option_info_enum(vbi_export *, int index);
+extern vbi_option_info *	vbi_export_option_info_keyword(vbi_export *, const char *keyword);
 
-extern vbi_bool			vbi_export_option_set(vbi_export *export, const char *keyword, ...);
-extern vbi_bool			vbi_export_option_get(vbi_export *export, const char *keyword,
+extern vbi_bool			vbi_export_option_set(vbi_export *, const char *keyword, ...);
+extern vbi_bool			vbi_export_option_get(vbi_export *, const char *keyword,
 						      vbi_option_value *value);
-extern vbi_bool			vbi_export_option_menu_set(vbi_export *export, const char *keyword, int entry);
-extern vbi_bool			vbi_export_option_menu_get(vbi_export *export, const char *keyword, int *entry);
+extern vbi_bool			vbi_export_option_menu_set(vbi_export *, const char *keyword, int entry);
+extern vbi_bool			vbi_export_option_menu_get(vbi_export *, const char *keyword, int *entry);
 
-extern vbi_bool			vbi_export_stdio(vbi_export *export, FILE *fp, vbi_page *pg);
-extern vbi_bool			vbi_export_file(vbi_export *export, const char *name, vbi_page *pg);
+extern vbi_bool			vbi_export_stdio(vbi_export *, FILE *fp, vbi_page *pg);
+extern vbi_bool			vbi_export_file(vbi_export *, const char *name, vbi_page *pg);
 
-extern char *			vbi_export_errstr(vbi_export *export);
+extern char *			vbi_export_errstr(vbi_export *);
 
 /* Private */
 
@@ -276,26 +276,26 @@ struct vbi_export_class {
 	vbi_export_info		public;
 
 	vbi_export *		(* new)(void);
-	void			(* delete)(vbi_export *export);
+	void			(* delete)(vbi_export *);
 
-	vbi_option_info *	(* option_enum)(vbi_export *export, int index);
-	vbi_bool		(* option_set)(vbi_export *export, const char *keyword,
+	vbi_option_info *	(* option_enum)(vbi_export *, int index);
+	vbi_bool		(* option_set)(vbi_export *, const char *keyword,
 					       va_list);
-	vbi_bool		(* option_get)(vbi_export *export, const char *keyword,
+	vbi_bool		(* option_get)(vbi_export *, const char *keyword,
 					       vbi_option_value *value);
 
-	vbi_bool		(* export)(vbi_export *export, FILE *fp, vbi_page *pg);
+	vbi_bool		(* export)(vbi_export *, FILE *fp, vbi_page *pg);
 };
 
 /*
  *  Helper functions
  */
 
-extern void			vbi_export_write_error(vbi_export *export);
-extern void			vbi_export_unknown_option(vbi_export *export, const char *keyword);
-extern void			vbi_export_invalid_option(vbi_export *export, const char *keyword, ...);
-extern char *			vbi_export_strdup(vbi_export *export, char **d, const char *s);
-extern void			vbi_export_error_printf(vbi_export *export, const char *templ, ...);
+extern void			vbi_export_write_error(vbi_export *);
+extern void			vbi_export_unknown_option(vbi_export *, const char *keyword);
+extern void			vbi_export_invalid_option(vbi_export *, const char *keyword, ...);
+extern char *			vbi_export_strdup(vbi_export *, char **d, const char *s);
+extern void			vbi_export_error_printf(vbi_export *, const char *templ, ...);
 
 extern void			vbi_register_export_module(vbi_export_class *);
 
