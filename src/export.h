@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.h,v 1.10 2003/02/16 21:11:22 mschimek Exp $ */
+/* $Id: export.h,v 1.11 2004/11/26 05:54:55 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -258,7 +258,7 @@ extern char *			vbi_export_errstr(vbi_export *);
 
 /* Private */
 
-#ifndef DOXYGEN_SHOULD_IGNORE_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -292,7 +292,7 @@ extern const char _zvbi_intl_domainname[];
 #  endif
 #endif
 
-#endif /* !DOXYGEN_SHOULD_IGNORE_THIS */
+#endif /* !DOXYGEN_SHOULD_SKIP_THIS */
 
 typedef struct vbi_export_class vbi_export_class;
 

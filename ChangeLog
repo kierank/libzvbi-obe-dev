@@ -1,3 +1,20 @@
+2004-11-26    <mschimek@users.sf.net>
+
+	* src/misc.h (CONST_PARENT): Added.
+	* src/proxy-client.c (vbi_proxy_client_read),
+	  src/io-v4l2k.c (v4l2_stream), src/io-v4l.c (v4l_read),
+	  src/io-dvb.c (dvb_read), src/io.h: Internal vbi_capture->read()
+	  takes const *timeout.
+	* src/io-dvb.c:
+	(vbi_capture_dvb_filter): perror only if dvb->debug.
+	(vbi_capture_dvb_new, vbi_capture_dvb_filter): Doxified.
+	(vbi_capture_dvb_new2): Replacement for buggy vbi_capture_dvb_new.
+	  Removed useless scanning, services, strict parameter, added pid.
+	(vbi_capture_dvb_last_pts): Added to pass out decoded PTS until we
+	  have stream_time in the I/O interface.
+	(dvb_read): Handle EINTR, EAGAIN. Skip select() if timeout is zero
+	  for efficiency.
+
 2004-11-25    <mschimek@users.sf.net>
 
 	* src/io-dvb.c (dvb_read): Must subtract time waited in select

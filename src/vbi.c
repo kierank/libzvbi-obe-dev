@@ -22,10 +22,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.13 2004/10/25 16:54:59 mschimek Exp $ */
+/* $Id: vbi.c,v 1.14 2004/11/26 05:54:55 mschimek Exp $ */
 
 #include "site_def.h"
-#include "../config.h"
+
+#ifdef HAVE_CONFIG_H
+#  include "../config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
