@@ -38,7 +38,7 @@ libzvbi_la_SOURCES = \
 	hamm.c hamm.h \
 	lang.c lang.h \
 	tables.c tables.h \
-	bcd.h \
+	bcd.h misc.h \
 	$(proxy_sources)
 
 libzvbiincludedir = $(includedir)
@@ -54,7 +54,7 @@ version.h:
 	 | sed "s/\./\\\\\n#define VBI_VERSION_MINOR /" \
 	 | sed "s/\./\\\\\n#define VBI_VERSION_MICRO /"` >> $@
 
-LIBZVBI_HDRS = bcd.h event.h format.h lang.h export.h cache.h search.h \
+LIBZVBI_HDRS = misc.h bcd.h event.h format.h lang.h export.h cache.h search.h \
 	   sliced.h decoder.h io.h exp-gfx.h exp-txt.h cc.h vt.h tables.h \
 	   vbi.h
 

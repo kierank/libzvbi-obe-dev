@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2k.c,v 1.15 2003/10/21 20:53:05 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2k.c,v 1.16 2003/11/14 05:29:18 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -31,6 +31,7 @@ static char rcsid[] = "$Id: io-v4l2k.c,v 1.15 2003/10/21 20:53:05 mschimek Exp $
 #  include "../config.h"
 #endif
 
+#include "misc.h"
 #include "vbi.h"
 #include "io.h"
 

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.12 2003/10/14 20:18:42 mschimek Exp $ */
+/* $Id: packet.c,v 1.13 2003/11/14 05:29:18 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 
+#include "misc.h"
 #include "hamm.h"
 #include "lang.h"
 #include "export.h"

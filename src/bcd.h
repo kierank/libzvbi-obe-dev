@@ -18,10 +18,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bcd.h,v 1.10 2003/10/16 18:15:34 mschimek Exp $ */
+/* $Id: bcd.h,v 1.11 2003/11/14 05:29:18 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
+
+#include "misc.h"
 
 /**
  * @addtogroup BCD BCD arithmetic for Teletext page numbers
@@ -35,24 +37,6 @@
  */
 
 /* Public */
-
-#ifndef DOXYGEN_SHOULD_IGNORE_THIS
-/* doxygen omits static objects */
-#define static_inline static inline
-#endif
-
-/**
- * @ingroup Basic
- * @name Boolean type
- * @{
- */
-#undef TRUE
-#undef FALSE
-#define TRUE 1
-#define FALSE 0
-
-typedef int vbi_bool;
-/** @} */
 
 /**
  * @ingroup Service
@@ -189,49 +173,5 @@ vbi_is_bcd(unsigned int bcd)
 
 	return (((bcd + x) ^ (bcd ^ x)) & 0x11111110) == 0;
 }
-
-/* Private */
-
-#undef ABS
-#define ABS(n)								\
-({									\
-	register int _n = n, _t = _n;					\
-									\
-	_t >>= sizeof(_t) * 8 - 1;					\
-	_n ^= _t;							\
-	_n -= _t;							\
-})
-
-#undef MIN
-#define MIN(x, y)							\
-({									\
-	typeof(x) _x = x;						\
-	typeof(y) _y = y;						\
-									\
-	(void)(&_x == &_y); /* alert when type mismatch */		\
-	(_x < _y) ? _x : _y;						\
-})
-
-#undef MAX
-#define MAX(x, y)							\
-({									\
-	typeof(x) _x = x;						\
-	typeof(y) _y = y;						\
-									\
-	(void)(&_x == &_y); /* alert when type mismatch */		\
-	(_x > _y) ? _x : _y;						\
-})
-
-#undef SATURATE
-#define SATURATE(n, min, max) MIN(MAX(n, min), max)
-
-/*
- *  Return a pointer to a structure of @a type from
- *  a @a ptr to one of its @a members.
- */
-#define PARENT(_ptr, _type, _member)					\
-	({ char *_p = (char *)(_ptr); (_p != 0) ?			\
-	  (_type *)(_p - offsetof (_type, _member)) : (_type *) 0; })
-/* XXX gcc specific, see zvbi-0.3 for better solution */
 
 #endif /* BCD_H */

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.12 2003/05/17 13:02:04 tomzo Exp $ */
+/* $Id: decoder.c,v 1.13 2003/11/14 05:29:18 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <pthread.h>
 
+#include "misc.h"
 #include "decoder.h"
 
 /**

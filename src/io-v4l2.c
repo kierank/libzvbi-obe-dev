@@ -17,12 +17,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.23 2003/10/21 20:53:05 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2.c,v 1.24 2003/11/14 05:29:18 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
 #endif
 
+#include "misc.h"
 #include "vbi.h"
 #include "io.h"
 
