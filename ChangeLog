@@ -1,3 +1,8 @@
+2002-09-28	<mschimek@users.sf.net>
+
+	* test/Makefile.am: No automatic tests.
+	* po/fr.po: Updated by Christian Marillat.
+
 2002-09-26	<mschimek@users.sf.net>
 
 	* src/export.c, src/export.h, src/io.h, src/teletext.c: gettext()

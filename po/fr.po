@@ -1,11 +1,11 @@
-# French translation for Zapping. -*- coding: latin-1 -*-
-# Christian Marillat <marillat.christian@wanadoo.fr>, 2000, 2001.
+# French translation for vbi
+# Christian Marillat <marillat.christian@wanadoo.fr>, 2001, 2002.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: zapping 0.1\n"
+"Project-Id-Version: vbi 0.2.2\n"
 "POT-Creation-Date: 2002-09-26 22:07+0200\n"
-"PO-Revision-Date: 2002-01-08 14:34+0100\n"
+"PO-Revision-Date: 2002-09-27 14:10+0200\n"
 "Last-Translator: Christian Marillat <marillat.christian@wanadoo.fr>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
