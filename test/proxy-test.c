@@ -24,7 +24,10 @@
  *    and dump requested services' data to standard output.  See below
  *    for a list of possible options.
  *
- *  =Log: proxy-test.c,v =
+ *  $Log: proxy-test.c,v $
+ *  Revision 1.12  2004/10/24 18:20:00  tomzo
+ *  Added test support for norm change handling
+ *
  *  Revision 1.7  2003/06/07 09:43:23  tomzo
  *  Added test for proxy with select() and zero timeout (#if 0'ed)
  *
@@ -50,7 +53,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxy-test.c,v 1.11 2004/10/05 23:46:28 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-test.c,v 1.12 2004/10/24 18:20:00 tomzo Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +67,7 @@ static const char rcsid[] = "$Id: proxy-test.c,v 1.11 2004/10/05 23:46:28 mschim
 #include <fcntl.h>
 #include <inttypes.h>
 
+#define USE_LIBZVBI
 #include "libzvbi.h"
 
 #include "../config.h"
@@ -84,9 +88,9 @@ typedef enum
 
 typedef enum
 {
-   TEST_SCANNING_BOTH,
-   TEST_SCANNING_625,
-   TEST_SCANNING_525,
+   TEST_SCANNING_BOTH  = 0,
+   TEST_SCANNING_625   = 625,
+   TEST_SCANNING_525   = 525,
 } PROXY_TEST_SCANNING;
 
 static char         * p_dev_name = DEVICE_PATH;
@@ -99,6 +103,8 @@ static int            opt_channel;
 static int            opt_frequency;
 static int            opt_chnprio;
 static int            opt_subprio;
+
+static int            update_services;
 
 
 #define ALL_SERVICES_625 ( VBI_SLICED_TELETEXT_B | \
@@ -126,11 +132,16 @@ static vbi_bool SwitchTvChannel( vbi_proxy_client * vpc, int channel, int freq )
    // get current config of the selected chanel
    if (channel != -1)
    {
-      memset(&vchan, 0, sizeof(vchan));
-      vchan.channel = channel;
       result = FALSE;
 
-      if (vbi_proxy_client_device_ioctl(vpc, VIDIOCGCHAN, &vchan))
+      memset(&vchan, 0, sizeof(vchan));
+      vchan.channel = channel;
+      if (opt_scanning == TEST_SCANNING_625)
+         vchan.norm = VIDEO_MODE_PAL;
+      else if (opt_scanning == TEST_SCANNING_525)
+         vchan.norm = VIDEO_MODE_NTSC;
+
+      if (vbi_proxy_client_device_ioctl(vpc, VIDIOCGCHAN, &vchan) == 0)
       {
          vchan.channel = channel;
 
@@ -149,7 +160,8 @@ static vbi_bool SwitchTvChannel( vbi_proxy_client * vpc, int channel, int freq )
    {
       result = FALSE;
 
-      if ((vchan.type & VIDEO_TYPE_TV) && (vchan.flags & VIDEO_VC_TUNER))
+      if ( (channel == -1) ||
+           ((vchan.type & VIDEO_TYPE_TV) && (vchan.flags & VIDEO_VC_TUNER)) )
       {
          lfreq = freq;
          if (vbi_proxy_client_device_ioctl(vpc, VIDIOCSFREQ, &lfreq) == 0)
@@ -181,21 +193,35 @@ static void ProxyEventCallback( void * p_client_data, VBI_PROXY_EV_TYPE ev_mask 
       pProxyClient = *(vbi_proxy_client **) p_client_data;
       if (pProxyClient != NULL)
       {
-         if (ev_mask & VBI_PROXY_EV_CHN_GRANTED)
-         {
-            fprintf(stderr, "ProxyEventCallback: token granted\n");
-            if (SwitchTvChannel(pProxyClient, opt_channel, opt_frequency))
-               flags = VBI_PROXY_CHN_TOKEN | VBI_PROXY_CHN_FLUSH;
-            else
-               flags = VBI_PROXY_CHN_RELEASE | VBI_PROXY_CHN_FAIL | VBI_PROXY_CHN_FLUSH;
-
-            vbi_proxy_client_channel_notify(pProxyClient, flags, 0);
-         }
          if (ev_mask & VBI_PROXY_EV_CHN_RECLAIMED)
          {
             fprintf(stderr, "ProxyEventCallback: token was reclaimed\n");
 
             vbi_proxy_client_channel_notify(pProxyClient, VBI_PROXY_CHN_TOKEN, 0);
+         }
+         else if (ev_mask & VBI_PROXY_EV_CHN_GRANTED)
+         {
+            fprintf(stderr, "ProxyEventCallback: token granted\n");
+
+            if ((opt_channel != -1) || (opt_frequency != -1))
+            {
+               if (SwitchTvChannel(pProxyClient, opt_channel, opt_frequency))
+                  flags = VBI_PROXY_CHN_TOKEN | VBI_PROXY_CHN_FLUSH;
+               else
+                  flags = VBI_PROXY_CHN_RELEASE | VBI_PROXY_CHN_FAIL | VBI_PROXY_CHN_FLUSH;
+
+               if (opt_scanning != TEST_SCANNING_BOTH)
+                  flags |= VBI_PROXY_CHN_NORM;
+            }
+            else
+               flags = VBI_PROXY_CHN_RELEASE;
+
+            vbi_proxy_client_channel_notify(pProxyClient, flags, opt_scanning);
+         }
+         if (ev_mask & VBI_PROXY_EV_NORM_CHANGED)
+         {
+            fprintf(stderr, "ProxyEventCallback: TV norm changed\n");
+            update_services = TRUE;
          }
       }
    }
@@ -462,12 +488,15 @@ static unsigned int read_service_string( void )
                p_inp += 1;
          }
       }
-      else if (ret < 0)
-         perror("read_service_string: read");
+      else if ((ret < 0) && (errno != EINTR) && (errno != EAGAIN))
+      {
+         fprintf(stderr, "read_service_string: read: %d (%s)\n", errno, strerror(errno));
+      }
    }
-   else if (ret < 0)
-      perror("read_service_string: select");
-
+   else if ((ret < 0) && (errno != EINTR) && (errno != EAGAIN))
+   {
+      fprintf(stderr, "read_service_string: select: %d (%s)\n", errno, strerror(errno));
+   }
    return services;
 }
 
@@ -527,7 +556,7 @@ static void parse_argv( int argc, char * argv[] )
    opt_strict = 0;
    opt_channel = -1;
    opt_frequency = -1;
-   opt_chnprio = 0;
+   opt_chnprio = VBI_CHN_PRIO_INTERACTIVE;
    opt_subprio = 0;
 
    while (arg_idx < argc)
@@ -714,6 +743,7 @@ int main ( int argc, char ** argv )
    char               * pErr;
    struct timeval       timeout;
    unsigned int         new_services;
+   unsigned int         cur_services;
    unsigned int       * p_services;
    uint    lineCount;
    uint    lastLineCount;
@@ -724,10 +754,16 @@ int main ( int argc, char ** argv )
 
    fcntl(0, F_SETFL, O_NONBLOCK);
 
-   if (opt_services != 0)
-      p_services = &opt_services;
+   if ((opt_services != 0) && (opt_scanning == 0))
+   {
+      cur_services = opt_services;
+      p_services = &cur_services;
+   }
    else
+   {
+      cur_services = 0;
       p_services = NULL;
+   }
 
    pProxyClient = NULL;
    pVbiCapt = NULL;
@@ -745,6 +781,7 @@ int main ( int argc, char ** argv )
       {
          pVbiCapt = vbi_capture_proxy_new(pProxyClient, BUFFER_COUNT, 0, p_services, opt_strict, &pErr );
       }
+      vbi_proxy_client_set_callback(pProxyClient, ProxyEventCallback, &pProxyClient);
    }
 
    if (pVbiCapt != NULL)
@@ -752,21 +789,22 @@ int main ( int argc, char ** argv )
       lastLineCount = -1;
 
       /* switch to the requested channel */
-      if ( (opt_channel != -1) || (opt_frequency != -1) )
+      if ( (opt_channel != -1) || (opt_frequency != -1) ||
+           (opt_chnprio != VBI_CHN_PRIO_INTERACTIVE) )
       {
          vbi_channel_profile  chn_profile;
-
-         vbi_proxy_client_set_callback(pProxyClient, ProxyEventCallback, &pProxyClient);
 
          memset(&chn_profile, 0, sizeof(chn_profile));
          if (opt_chnprio == VBI_CHN_PRIO_BACKGROUND)
          {
-            chn_profile.is_valid      = TRUE;
+            chn_profile.is_valid      = (opt_channel != -1) || (opt_frequency != -1);
             chn_profile.sub_prio      = opt_subprio;
             chn_profile.min_duration  = 10;
          }
          vbi_proxy_client_channel_request(pProxyClient, opt_chnprio, &chn_profile);
       }
+
+      update_services = (opt_scanning != 0);
 
       while(1)
       {
@@ -790,11 +828,20 @@ int main ( int argc, char ** argv )
             if (new_services != opt_services)
             {
                fprintf(stderr, "switching service from 0x%X to 0x%X...\n", opt_services, new_services);
-               opt_services = vbi_capture_update_services(pVbiCapt, TRUE, TRUE,
-                                                          new_services, opt_strict, NULL);
-               fprintf(stderr, "...got granted services 0x%X.\n", opt_services);
-               lastLineCount = 0;
+               opt_services = new_services;
+               update_services = TRUE;
             }
+         }
+         if (update_services)
+         {
+            cur_services = vbi_capture_update_services(pVbiCapt, TRUE, TRUE,
+                                                       opt_services, opt_strict, &pErr);
+            if ((cur_services != 0) || (opt_services == 0))
+               fprintf(stderr, "...got granted services 0x%X.\n", cur_services);
+            else
+               fprintf(stderr, "...failed: %s\n", ((pErr != NULL) ? pErr : ""));
+            lastLineCount = 0;
+            update_services = FALSE;
          }
 
          if (FD_ISSET(vbi_fd, &rd))
