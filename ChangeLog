@@ -1,3 +1,18 @@
+2003-06-01      <tomzo@users.sf.net>
+
+        Periodic check-in for ongoing proxy implementation:
+        * src/io-proxy.c: Redesigned internal message handling, i.e. switched
+          from an event-driven model to a synchronous, RPC-like model. Also
+          added TV channel change RPC.
+        * daemon/proxyd.c: Started implementation of server-side TV channel
+          switching (still incomplete: switching works, but scheduling and
+          notifications are missing.)
+        * src/io-v4l.c, io-v4l2k.c, io.c, io.h: Implemented TV channel switch.
+        * io-v4l2k.c: Added optional support for preliminary ioctl S_CHNPRIO
+          (with #ifdef USE_V4L2K_CHNPRIO)
+        * test/proxy-test.c: Added tests for TV channel switching: new command
+          line options -channel, -freq, -chnprio
+
 2003-05-24      <tomzo@users.sf.net>
 
         Periodic check-in for ongoing proxy implementation:
@@ -10,8 +25,8 @@
           and added get_poll_fd(), prepared flush()
         * src/io.c, src/io-v4l.c, io-v4l2.c, io-v4l2k.c: Added v4l_get_poll_fd()
           to return file handle only if driver supports poll() and select()
-        * test/proxy-test.c: added dynamic service switch to test add_service() interface: new function;
-          added new service closed caption
+        * test/proxy-test.c: Added dynamic service switch to test add_service()
+          interface: new function; added new service closed caption.
 
 2003-05-17      <tomzo@users.sf.net>
 
