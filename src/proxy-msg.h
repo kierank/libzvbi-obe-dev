@@ -17,9 +17,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-msg.h,v 1.3 2003/05/03 12:04:52 tomzo Exp $
+ *  $Id: proxy-msg.h,v 1.4 2003/05/24 12:19:29 tomzo Exp $
  *
  *  $Log: proxy-msg.h,v $
+ *  Revision 1.4  2003/05/24 12:19:29  tomzo
+ *  - added VBIPROXY_SERVICE_REQ/_CNF/_REJ messages
+ *  - prepared channel change request and profile request
+ *  - renamed MSG_TYPE_DATA_IND into _SLICED_IND in preparation for raw data
+ *
  *  Revision 1.3  2003/05/03 12:04:52  tomzo
  *  - added new macro VBIPROXY_ENDIAN_MISMATCH to replace use of swap32()
  *  - added declaration for new func vbi_proxy_msg_set_debug_level()
@@ -41,18 +46,22 @@ typedef enum
    MSG_TYPE_CONNECT_CNF,
    MSG_TYPE_CONNECT_REJ,
    MSG_TYPE_CLOSE_REQ,
-   MSG_TYPE_DATA_IND,
-   /*
+   MSG_TYPE_SLICED_IND,
+
    MSG_TYPE_SERVICE_REQ,
+   MSG_TYPE_SERVICE_REJ,
    MSG_TYPE_SERVICE_CNF,
-   MSG_TYPE_CHN_CHANGE_REQ,       // also resets VBI buffer
-   MSG_TYPE_CHN_CHANGE_IND,
+#if 0
+   MSG_TYPE_CHN_CHANGE_REQ,
    MSG_TYPE_CHN_CHANGE_CNF,
-   MSG_TYPE_CHN_LOCK_REQ,
-   MSG_TYPE_CHN_LOCK_CNF,
-   MSG_TYPE_CHANTAB_REQ,
-   MSG_TYPE_CHANTAB_CNF,
-   */
+   MSG_TYPE_CHN_CHANGE_REJ,
+   MSG_TYPE_CHN_CHANGE_IND,
+#endif
+   MSG_TYPE_CHN_PROFILE_REQ,
+   MSG_TYPE_CHN_PROFILE_CNF,
+
+   MSG_TYPE_COUNT
+
 } VBIPROXY_MSG_TYPE;
 
 #define VBIPROXY_MSG_MAXSIZE  65536
@@ -111,16 +120,88 @@ typedef struct
         double                  timestamp;
         uint32_t                line_count;
         vbi_sliced              sliced[1];
-} VBIPROXY_DATA_IND;
+} VBIPROXY_SLICED_IND;
 
-#define VBIPROXY_DATA_IND_SIZE(C)  (sizeof(VBIPROXY_DATA_IND) + (sizeof(vbi_sliced) * ((C) - 1)))
+#define VBIPROXY_SLICED_IND_SIZE(C)  (sizeof(VBIPROXY_SLICED_IND) + (sizeof(vbi_sliced) * ((C) - 1)))
+
+typedef struct
+{
+        uint8_t                 reset;
+        uint8_t                 commit;
+        uint8_t                 strict;
+        uint32_t                services;
+} VBIPROXY_SERVICE_REQ;
+
+typedef struct
+{
+        vbi_raw_decoder         dec;            /* req. e.g. for VBI line counts */
+} VBIPROXY_SERVICE_CNF;
+
+typedef struct
+{
+        uint8_t                 errorstr[VBIPROXY_ERROR_STR_MAX_LENGTH];
+} VBIPROXY_SERVICE_REJ;
+
+#if 0
+typedef struct
+{
+        uint32_t                channel;
+        uint32_t                freq;
+        uint32_t                tuner;
+        uint32_t                scanning;
+} VBIPROXY_CHN_CHANGE_REQ;
+
+typedef struct
+{
+        uint32_t                dummy;          /* XXX may include info from scheduler */
+} VBIPROXY_CHN_CHANGE_CNF;
+
+typedef struct
+{
+        uint32_t                cause;          /* device error, drv-prio, busy (v4l1) */
+} VBIPROXY_CHN_CHANGE_REJ;
+
+typedef struct
+{                                               /* note: sent both by client and daemon */
+        uint32_t                channel;
+        uint32_t                freq;
+        uint32_t                tuner;
+        uint32_t                scanning;
+} VBIPROXY_CHN_CHANGE_IND;
+
+typedef struct
+{
+        uint32_t                prio;           /* driver prio: record,interact,background */
+        uint32_t                sub_prio;       /* background prio: initial load, update, check */
+        uint32_t                duration;       /* max. duration */
+        uint32_t                allow_suspend;  /* boolean: suspend allowed for checks by other aps */
+} VBIPROXY_CHN_PROFILE_REQ;
+
+typedef struct
+{
+        uint32_t                cur_max_prio;
+} VBIPROXY_CHN_PROFILE_CNF;
+#endif
 
 typedef union
 {
-        VBIPROXY_CONNECT_REQ    connect_req;
-        VBIPROXY_CONNECT_CNF    connect_cnf;
-        VBIPROXY_CONNECT_REJ    connect_rej;
-        VBIPROXY_DATA_IND       data_ind;
+        VBIPROXY_CONNECT_REQ            connect_req;
+        VBIPROXY_CONNECT_CNF            connect_cnf;
+        VBIPROXY_CONNECT_REJ            connect_rej;
+
+        VBIPROXY_SLICED_IND             sliced_ind;
+
+        VBIPROXY_SERVICE_REQ            service_req;
+        VBIPROXY_SERVICE_CNF            service_cnf;
+        VBIPROXY_SERVICE_REJ            service_rej;
+#if 0
+        VBIPROXY_CHN_CHANGE_REQ         chn_change_req;
+        VBIPROXY_CHN_CHANGE_CNF         chn_change_cnf;
+        VBIPROXY_CHN_CHANGE_REJ         chn_change_rej;
+        VBIPROXY_CHN_CHANGE_IND         chn_change_ind;
+        VBIPROXY_CHN_PROFILE_REQ        chn_profile_req;
+        VBIPROXY_CHN_PROFILE_CNF        chn_profile_cnf;
+#endif
 } VBIPROXY_MSG_BODY;
 
 /* ----------------------------------------------------------------------------
