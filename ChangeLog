@@ -1,3 +1,12 @@
+2002-06-14	<mschimek@users.sf.net>
+
+	* doc/zdoc-scan: Fix re zapping-Bugs-568052. 
+
+2002-06-13	<mschimek@users.sf.net>
+
+	* src/export.c: vbi_export_info_keyword() cuts option string off the
+	  keyword, a convenience.
+
 2002-06-08	<mschimek@users.sf.net>
 
 	* src/packet.c: #if fix.
@@ -175,3 +184,7 @@
 
 	* Extracted libvbi from Zapping <http://zapping.sf.net>, added
 	  Makefiles and stuff.
+
+;; Local Variables:
+;; coding: utf-8
+;; End:

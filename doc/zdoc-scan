@@ -48,8 +48,6 @@
 use strict;
 use Getopt::Long;
 
-unshift @INC, "/usr/local/share/gtk-doc";
-require "gtkdoc-common.pl";
 
 # Options
 
@@ -122,6 +120,61 @@ close (DECL);
 my $sections_file = "${OUTPUT_DIR}/$MODULE-sections.txt";
 if (! -e $sections_file) {
   `cp $old_decl_list $sections_file`;
+}
+
+
+#############################################################################
+# Function    : UpdateFileIfChanged
+# Description : Compares the old version of the file with the new version and
+#		if the file has changed it moves the new version into the old
+#		versions place. This is used so we only change files if
+#		needed, so we can do proper dependency tracking and we don't
+#		needlessly check files into CVS that haven't changed.
+#		It returns 0 if the file hasn't changed, and 1 if it has.
+# Arguments   : $old_file - the pathname of the old file.
+#		$new_file - the pathname of the new version of the file.
+#		$make_backup - 1 if a backup of the old file should be kept.
+#			It will have the .bak suffix added to the file name.
+#############################################################################
+
+sub UpdateFileIfChanged {
+    my ($old_file, $new_file, $make_backup) = @_;
+
+#    print "Comparing $old_file with $new_file...\n";
+
+    # If the old file doesn't exist we want this to default to 1.
+    my $exit_code = 1;
+
+    if (-e $old_file) {
+	`cmp -s $old_file $new_file`;
+	$exit_code = $? >> 8;
+#	print "   cmp exit code: $exit_code ($?)\n";
+    }
+
+    if ($exit_code > 1) {
+	die "Error running 'cmp $old_file $new_file'";
+    }
+
+    if ($exit_code == 1) {
+#	print "   files changed - replacing old version with new version.\n";
+
+	if ($make_backup && -e $old_file) {
+	    rename ($old_file, "$old_file.bak")
+		|| die "Can't move $old_file to $old_file.bak: $!";
+	}
+
+	rename ($new_file, $old_file)
+	    || die "Can't move $new_file to $old_file: $!";
+
+	return 1;
+    } else {
+#	print "   files the same - deleting new version.\n";
+
+	unlink ("$new_file")
+	    || die "Can't delete file: $new_file: $!";
+
+	return 0;
+    }
 }
 
 
