@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.4 2002/03/06 00:54:51 mschimek Exp $
+dnl $Id: configure.in,v 1.5 2002/03/27 00:58:51 mschimek Exp $
 
 AC_INIT(configure.in)
 AM_INIT_AUTOMAKE(zvbi, 0.1)
@@ -45,6 +45,11 @@ else
 dnl	AC_MSG_ERROR([libunicode is required:
 dnl	ftp://ftp.gnome.org/pub/GNOME/unstable/sources])
 fi
+
+dnl
+dnl Check for iconv library if not included in libc.
+dnl
+AC_SEARCH_LIBS(iconv_open, iconv)
 
 dnl
 dnl Check for png library.
