@@ -47,6 +47,8 @@
  * @ingroup Service
  */
 
+#define CACHED_MAXSUB1(pgno) vbi->vt.cached[((pgno) - 0x100) & 0x7FF]
+
 static inline int
 hash(int pgno)
 {
@@ -294,13 +296,17 @@ vbi_cache_get(vbi_decoder *vbi, int pgno, int subno, int subno_mask)
 		subno_mask = 0;
 	}
 
-	for_all_nodes (cp, ca->hash + h, node)
+	for_all_nodes (cp, ca->hash + h, node) {
+		if (0)
+			fprintf(stderr, "cache_get %x.%x\n",
+				cp->page.pgno, cp->page.subno);
 		if (cp->page.pgno == pgno
 		    && (cp->page.subno & subno_mask) == subno) {
 			/* found, move to front (make it 'new') */
 			add_head(ca->hash + h, unlink_node(ca->hash + h, &cp->node));
 			return &cp->page;
 		}
+	}
 
 	return NULL;
 }
@@ -353,6 +359,10 @@ vbi_cache_put(vbi_decoder *vbi, vt_page *vtp)
 	int h = hash(vtp->pgno);
 	int size = vtp_size(vtp);
 
+	if (0)
+		fprintf(stderr, "cache_put %x.%x\n",
+			vtp->pgno, vtp->subno);
+
 	for_all_nodes (cp, ca->hash + h, node)
 		if (cp->page.pgno == vtp->pgno
 		    && cp->page.subno == vtp->subno)
@@ -378,8 +388,8 @@ vbi_cache_put(vbi_decoder *vbi, vt_page *vtp)
 		if (!(cp = malloc(sizeof(*cp) - sizeof(cp->page) + size)))
 			return 0;
 
-		if (vtp->subno >= vbi->vt.cached[vtp->pgno])
-			vbi->vt.cached[vtp->pgno] = vtp->subno + 1;
+		if (vtp->subno >= CACHED_MAXSUB1(vtp->pgno))
+			CACHED_MAXSUB1(vtp->pgno) = vtp->subno + 1;
 
 		ca->npages++;
 
@@ -433,7 +443,7 @@ vbi_cache_foreach(vbi_decoder *vbi, int pgno, int subno,
 
 		subno += dir;
 
-		while (subno < 0 || subno >= vbi->vt.cached[pgno]) {
+		while (subno < 0 || subno >= CACHED_MAXSUB1(pgno)) {
 			pgno += dir;
 
 			if (pgno < 0x100) {
@@ -446,7 +456,7 @@ vbi_cache_foreach(vbi_decoder *vbi, int pgno, int subno,
 				wrapped = 1;
 			}
 
-			subno = dir < 0 ? vbi->vt.cached[pgno] - 1 : 0;
+			subno = dir < 0 ? CACHED_MAXSUB1(pgno) - 1 : 0;
 		}
 	}
 }
@@ -462,7 +472,7 @@ vbi_cache_foreach(vbi_decoder *vbi, int pgno, int subno,
 int
 vbi_cache_hi_subno(vbi_decoder *vbi, int pgno)
 {
-	return vbi->vt.cached[pgno];
+	return CACHED_MAXSUB1(pgno);
 }
 
 void
