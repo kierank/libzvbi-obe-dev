@@ -1,6 +1,6 @@
 # Zapping (a Gnome TV viewer) / Zapping (TV para Gnome) -*- coding: latin-1 -*-
 # Copyright (C) 2000 Joseba García Etxebarria <josebag@mixmail.com>
-# Copyright (C) 2000-2001 Iñaki García Etxebarria <garetxe@users.sourceforge.net>
+# Copyright (C) 2000-2001 Iñaki García Etxebarria <garetxe@users.sf.net>
 #
 msgid ""
 msgstr ""
@@ -18,7 +18,7 @@ msgstr ""
 #. for now please Latin-1 or ASCII only
 #: src/teletext.c:417
 msgid "TOP Index"
-msgstr ""
+msgstr "Indice TOP"
 
 #: src/exp-gfx.c:733
 msgid "Correct aspect ratio"
@@ -320,7 +320,7 @@ msgstr "Error desconocido."
 
 #: src/io-bktr.c:191
 msgid "BKTR driver"
-msgstr ""
+msgstr "Controlador BKTR"
 
 #: src/io-bktr.c:202 src/io-bktr.c:280 src/io-bktr.c:298 src/io-v4l2k.c:331
 #: src/io-v4l2k.c:539 src/io-v4l2k.c:588 src/io-v4l2k.c:670 src/io-v4l2.c:322

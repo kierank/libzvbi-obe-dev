@@ -1,29 +1,28 @@
-# zvbi Italian translation -*- coding: latin-15 -*-
+# zvbi Italian translation
 # Pino Toscano <toscano.pino@tiscali.it>, 2002.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: zvbi\n"
 "POT-Creation-Date: 2002-09-27 23:13+0200\n"
-"PO-Revision-Date: 2002-12-06 17:07+0100\n"
+"PO-Revision-Date: 2002-12-23 14:14+0100\n"
 "Last-Translator: Pino Toscano <toscano.pino@tiscali.it>\n"
 "Language-Team: Italian <it@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-15\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1\n"
 
 #: src/exp-gfx.c:731
 msgid "Correct aspect ratio"
-msgstr "Correggi tasso dell'aspetto"
+msgstr "Correggi proporzioni"
 
 #: src/exp-gfx.c:732
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
 msgstr ""
-"Si avvicina ad un tasso di aspetto dell'immagine simile ad una reale TV. "
-"Questo raddoppier‡ la dimensione dell'immagine."
+"Si avvicina alle proporzioni dell'immagine simile ad una reale TV. Questo "
+"raddoppier√† la dimensione dell'immagine."
 
 #: src/exp-gfx.c:805 src/exp-gfx.c:1101
 #, c-format
@@ -240,7 +239,7 @@ msgstr "Possibile solo l'esportazione di pagine del Televideo."
 
 #: src/exp-vtx.c:85
 msgid "Page is not cached, sorry."
-msgstr "La pagina non Ë in cache, spiacente."
+msgstr "La pagina non √® in cache, spiacente."
 
 #: src/exp-vtx.c:95
 msgid "Cannot export this page, not displayable."
@@ -329,7 +328,7 @@ msgstr "Probabilmente non un dispositivo v4l2."
 #: src/io-v4l.c:557 src/io-v4l2.c:351
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
-msgstr "%s (%s) non Ë un grezzo dispositivo vbi."
+msgstr "%s (%s) non √® un grezzo dispositivo vbi."
 
 #: src/io-v4l.c:708 src/io-v4l2.c:362 src/io-v4l2.c:545
 #, c-format
@@ -354,13 +353,14 @@ msgstr "Impossibile interrogare i parametri vbi correnti di %s (%s): %d, %s."
 #: src/io-v4l2.c:522
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
-msgstr "Spiacente, %s (%s) impossibile catturare ognuno dei servizi di dati "
+msgstr ""
+"Spiacente, %s (%s) impossibile catturare ognuno dei servizi di dati "
 "richiesto."
 
 #: src/io-v4l.c:451 src/io-v4l2.c:446
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
-msgstr "Impossibile inizializzare %s (%s), il dispositivo Ë gi‡ in uso."
+msgstr "Impossibile inizializzare %s (%s), il dispositivo √® gi√† in uso."
 
 #: src/io-v4l.c:457 src/io-v4l2.c:462
 #, c-format
@@ -378,7 +378,7 @@ msgid ""
 "libzvbi is too old."
 msgstr ""
 "%s (%s) offre un formato sconosciuto di campionamento vbi #%d. Questo "
-"potrebbe essere un bug del driver o libzvbi Ë troppo vecchia."
+"potrebbe essere un bug del driver o libzvbi √® troppo vecchia."
 
 #: src/io-v4l.c:760 src/io-v4l2.c:506
 #, c-format
@@ -387,7 +387,7 @@ msgid ""
 "frequency %.2f MHz is too low."
 msgstr ""
 "Impossibile catturare il servizio di dati richiesto con %s (%s), la "
-"frequenza di campionamento %.2f MHz Ë troppo bassa."
+"frequenza di campionamento %.2f MHz √® troppo bassa."
 
 #: src/io-v4l2.c:561
 #, c-format
@@ -400,26 +400,26 @@ msgid ""
 "%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
 "exhausted."
 msgstr ""
-"%s (%s) non ha concesso buffer di streaming i/o, puÚ darsi che la memoria "
+"%s (%s) non ha concesso buffer di streaming i/o, pu√≤ darsi che la memoria "
 "fisica sia esaurita."
 
 #: src/io-v4l2.c:594
 #, c-format
 msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %d, %s."
-msgstr "Interrogazione del buffer di streaming i/o #%d da %s (%s) falita: "
-"%d, %s."
+msgstr ""
+"Interrogazione del buffer di streaming i/o #%d da %s (%s) falita: %d, %s."
 
 #: src/io-v4l2.c:616
 #, c-format
 msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
-msgstr "Mappatura della memoria del buffer di streaming i/o #%d da %s (%s) "
-"falita: %d, %s."
+msgstr ""
+"Mappatura della memoria del buffer di streaming i/o #%d da %s (%s) falita: %"
+"d, %s."
 
 #: src/io-v4l2.c:640
 #, c-format
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
-msgstr "Impossibile accodare il buffer di streaming i/o #%d a %s (%s): "
-"%d, %s."
+msgstr "Impossibile accodare il buffer di streaming i/o #%d a %s (%s): %d, %s."
 
 #: src/io-v4l.c:815 src/io-v4l2.c:672
 #, c-format
@@ -455,13 +455,13 @@ msgid ""
 "driver."
 msgstr ""
 "Impossibile identificare %s (%s), la dimensione del frame vbi riportata "
-"suggerisce che questo non Ë un driver bttv."
+"suggerisce che questo non √® un driver bttv."
 
 #: src/io-v4l.c:673 src/io-v4l.c:733
 #, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
-msgstr "Impossibile impostare o determinare lo standard video corrente di %s "
-"(%s)."
+msgstr ""
+"Impossibile impostare o determinare lo standard video corrente di %s (%s)."
 
 #: src/io-v4l.c:863 src/io-v4l.c:873
 msgid "V4L interface not compiled."

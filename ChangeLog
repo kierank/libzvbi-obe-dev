@@ -1,3 +1,8 @@
+2003-01-05	<garetxe@users.sf.net>
+
+	* po/it.po: Update by Pino Toscano.
+	* po/es.po: Update.
+
 2002-12-14	<mschimek@users.sf.net>
 
 	* src/event.h: Wrong assumption on char signedness.
