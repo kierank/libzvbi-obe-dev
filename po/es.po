@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-02-18 08:25+0100\n"
+"POT-Creation-Date: 2004-04-03 03:13+0200\n"
 "PO-Revision-Date: 2003-10-16 16:10+0200\n"
 "Last-Translator: Iñaki García Etxebarria <garetxe@users.sourceforge.net>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 
 #. TRANSLATORS: Title of TOP Index page,
 #. for now please Latin-1 or ASCII only
-#: src/teletext.c:405
+#: src/teletext.c:409
 msgid "TOP Index"
 msgstr "Indice TOP"
 

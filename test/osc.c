@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.11 2004/02/18 07:56:45 mschimek Exp $ */
+/* $Id: osc.c,v 1.12 2004/04/03 00:09:37 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -241,6 +241,7 @@ draw(unsigned char *raw)
 	unsigned char *data = raw;
 	int i, v, h0, field, end, line;
         XTextItem xti;
+	int x;
 
 	if (draw_count == 0)
 		return;
@@ -358,7 +359,7 @@ draw(unsigned char *raw)
 		       src_h, 1, dst_h);
         /* 50% grey */
         XSetForeground(display, gc, 0xAAAAAAAA);  
-        int x=draw_offset;
+        x=draw_offset;
         while (x<src_w && (x-draw_offset)<dst_w) {
 	   XFillRectangle(display, window, gc,
 			  x-draw_offset, /* x,y, w,h */

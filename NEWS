@@ -1,3 +1,10 @@
+0.2.6
+-----
+Libzvbi goes digital! Gerd Knorr contributed a Linux DVB interface. You
+can try it by running:
+test/capture --device /dev/dvb/adapter<n>/demux<n> --pid 123 --dump-ttx
+James Mastros improved test/osc.
+
 0.2.5
 -----
 New this time is a vbi_version() function to query the version

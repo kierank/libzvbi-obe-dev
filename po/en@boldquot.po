@@ -31,8 +31,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-02-18 08:25+0100\n"
-"PO-Revision-Date: 2004-02-18 08:25+0100\n"
+"POT-Creation-Date: 2004-04-03 03:13+0200\n"
+"PO-Revision-Date: 2004-04-03 03:13+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -42,7 +42,7 @@ msgstr ""
 
 #. TRANSLATORS: Title of TOP Index page,
 #. for now please Latin-1 or ASCII only
-#: src/teletext.c:405
+#: src/teletext.c:409
 msgid "TOP Index"
 msgstr "TOP Index"
 

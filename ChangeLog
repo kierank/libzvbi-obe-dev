@@ -1,5 +1,10 @@
+2004-04-03    <mschimek@users.sf.net>
+
+	* Release 0.2.6.
+
 2004-02-19    <mschimek@users.sf.net>
 
+	* test/capture.c: Don't assert raw vbi data from DVB.
 
 2004-02-18    <mschimek@users.sf.net>
 

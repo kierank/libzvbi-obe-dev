@@ -70,8 +70,7 @@ FILE_PATTERNS          = *.c \
                          search.h \
                          sliced.h \
                          tables.h \
-                         trigger.h \	{ "device",	required_argument,	NULL,		'd' },
-
+                         trigger.h \
                          ure.h \
                          vbi.h \
                          vt.h \

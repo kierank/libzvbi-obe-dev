@@ -35,31 +35,14 @@
 
 #include <sys/select.h>
 #include <sys/ioctl.h>
-#if 0
-#include <linux/dvb/frontend.h>
-#include <linux/dvb/dmx.h>
-
-#include <libzvbi.h>
-#include "vbi-dvb.h"
-#else
 #include "dvb/frontend.h"
 #include "dvb/dmx.h"
 #include "hamm.h"
 #include "io.h"
-#endif
+#include "vbi.h"
 
 /* ----------------------------------------------------------------------- */
 
-#if 0
-/* WARNING: not public -- from zvbi-0.2.5/src/io.h */
-struct vbi_capture {
-    vbi_bool		(* read)(vbi_capture *, vbi_capture_buffer **,
-				 vbi_capture_buffer **, struct timeval *);
-    vbi_raw_decoder *	(* parameters)(vbi_capture *);
-    int			(* get_fd)(vbi_capture *);
-    void	       	(* _delete)(vbi_capture *);
-};
-#endif
 
 struct vbi_capture_dvb {
     vbi_capture	   cap;
@@ -73,21 +56,7 @@ struct vbi_capture_dvb {
 
 /* ----------------------------------------------------------------------- */
 
-#if 0
-static unsigned char bitswap[256];
-
-static void __attribute__ ((constructor)) init_bitswap(void)
-{
-    int i,bit;
-
-    for (i = 0; i < 256; i++)
-	for (bit = 0; bit < 8; bit++)
-	    if (i & (1 << bit))
-		bitswap[i] |= (1 << (7-bit));
-}
-#else
 #define bitswap vbi_bit_reverse
-#endif
 
 static int dvb_payload(struct vbi_capture_dvb *dvb,
 		       unsigned char *buf, unsigned int len,
@@ -262,7 +231,7 @@ static int dvb_read(vbi_capture *cap,
 static vbi_raw_decoder* dvb_parameters(vbi_capture *cap)
 {
     static vbi_raw_decoder raw = {
-	.count[0] = 128,
+	.count = { 128, 128 },
     };
     return &raw;
 }
@@ -333,6 +302,7 @@ vbi_capture_dvb_new(char *dev, int scanning,
 #else /* !ENABLE_DVB */
 
 #include "io.h"
+#include "vbi.h"
 
 int vbi_capture_dvb_filter(vbi_capture *cap, int pid)
 {
@@ -348,4 +318,4 @@ vbi_capture_dvb_new(char *dev, int scanning,
 	return NULL;
 }
 
-#endif
+#endif /* !ENABLE_DVB */
