@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vt.h,v 1.6 2003/02/16 21:11:32 mschimek Exp $ */
+/* $Id: vt.h,v 1.7 2005/02/17 10:21:17 mschimek Exp $ */
 
 #ifndef VT_H
 #define VT_H
@@ -351,7 +351,7 @@ struct raw_page {
 /* Public */
 
 /**
- * @ingroup Service
+ * @ingroup HiDec
  * @brief Teletext implementation level.
  */
 typedef enum {

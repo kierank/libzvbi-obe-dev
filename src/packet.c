@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.19 2005/01/20 01:40:14 mschimek Exp $ */
+/* $Id: packet.c,v 1.20 2005/02/17 10:21:16 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2551,9 +2551,6 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			break;
 
 		default:
-#if libzvbi_IDL_ALERT /* no 6.8 ??? */
-			fprintf(stderr, "IDL: %d\n", pmag & 0x0F);
-#endif
 			break;
 		}
 

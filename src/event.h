@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: event.h,v 1.8 2003/02/16 21:11:17 mschimek Exp $ */
+/* $Id: event.h,v 1.9 2005/02/17 10:21:16 mschimek Exp $ */
 
 #ifndef EVENT_H
 #define EVENT_H
@@ -39,7 +39,7 @@ typedef struct vbi_decoder vbi_decoder;
 
 /**
  * @addtogroup Event Events
- * @ingroup Service
+ * @ingroup HiDec
  *
  * Typically the transmission of VBI data like a Teletext or Closed
  * Caption page spans several VBI lines or even video frames. So internally

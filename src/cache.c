@@ -48,7 +48,7 @@
 
 /**
  * @addtogroup Cache Page cache
- * @ingroup Service
+ * @ingroup HiDec
  */
 
 #define CACHED_MAXSUB1(pgno) vbi->vt.cached[((pgno) - 0x100) & 0x7FF]

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.15 2004/12/13 07:11:12 mschimek Exp $ */
+/* $Id: vbi.c,v 1.16 2005/02/17 10:21:17 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -63,20 +63,30 @@
  * @section intro Introduction
  *
  * The ZVBI library provides routines to access raw VBI sampling devices
- * (currently the Linux <a href="http://roadrunner.swansea.uk.linux.org/v4l.shtml">V4L</a>
- * and <a href="http://www.thedirks.org/v4l2/">V4L2</a> API and the
- * FreeBSD, OpenBSD, NetBSD and BSDi
+ * (currently the Linux <a href="http://linux.bytesex.org/v4l2/">V4L and
+ * and V4L2</a> API and the FreeBSD, OpenBSD, NetBSD and BSDi
  * <a href="http://telepresence.dmem.strath.ac.uk/bt848/">bktr driver</a> API
  * are supported), a versatile raw VBI bit slicer,
  * decoders for various data services and basic search,
  * render and export functions for text pages. The library was written for
  * the <a href="http://zapping.sourceforge.net">Zapping TV viewer and
  * Zapzilla Teletext browser</a>.
+ *
+ * @section feedback Feedback
+ *
+ * If you have any ideas, questions, patches or bug reports please see
+ * the README file included with the source code or visit our home page at
+ * <a href="http://zapping.sourceforge.net">http://zapping.sourceforge.net</a>.
  */
 
 /** @defgroup Basic Basic types */
 /** @defgroup Raw Raw VBI */
-/** @defgroup Service Data Service Decoder */
+/** @defgroup LowDec Low Level Decoding */
+/** @defgroup HiDec High Level Decoding */
+/**
+ * @defgroup Service Data Service Decoder
+ * @ingroup HiDec
+ */
 
 pthread_once_t vbi_init_once = PTHREAD_ONCE_INIT;
 
@@ -823,6 +833,8 @@ vbi_decoder_new(void)
 }
 
 /**
+ * @ingroup Basic
+ *
  * @param major Store major number here, can be NULL.
  * @param minor Store minor number here, can be NULL.
  * @param micro Store micro number here, can be NULL.

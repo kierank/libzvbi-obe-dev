@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: hamm.h,v 1.7 2005/01/24 00:13:06 mschimek Exp $ */
+/* $Id: hamm.h,v 1.8 2005/02/17 10:21:16 mschimek Exp $ */
 
 #ifndef __ZVBI_HAMM_H__
 #define __ZVBI_HAMM_H__
@@ -41,7 +41,7 @@ extern const int8_t		_vbi_hamm24_inv_par [3][256];
 
 /**
  * @addtogroup Error Error correction functions
- * @ingroup Raw
+ * @ingroup LowDec
  * @brief Helper functions to decode sliced VBI data.
  * @{
  */
@@ -65,7 +65,7 @@ vbi_rev8			(unsigned int		c)
 /**
  * @param c Unsigned 16 bit word.
  * 
- * Reverses the bits of the argument.
+ * Reverses (or "reflects") the bits of the argument.
  * 
  * @returns
  * Data bits 0 [msb] ... 15 [lsb].
@@ -83,7 +83,7 @@ vbi_rev16			(unsigned int		c)
  * @param p Pointer to a 16 bit word, last significant
  *   byte first.
  * 
- * Reverses the bits of the argument.
+ * Reverses (or "reflects") the bits of the argument.
  * 
  * @returns
  * Data bits 0 [msb] ... 15 [lsb].

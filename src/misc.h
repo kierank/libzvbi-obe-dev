@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.h,v 1.8 2005/01/19 04:23:53 mschimek Exp $ */
+/* $Id: misc.h,v 1.9 2005/02/17 10:21:16 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -33,15 +33,6 @@
 #include <assert.h>
 
 /* Public */
-
-/**
- * @addtogroup Basic Types
- *
- * Apart of redefining TRUE and FALSE libzvbi reserves all
- * preprocessor symbols and all type, function, variable and
- * constant names starting with vbi_ or VBI_, and the C++
- * namespace vbi.
- */
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 

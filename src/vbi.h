@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.h,v 1.9 2004/10/25 16:55:10 mschimek Exp $ */
+/* $Id: vbi.h,v 1.10 2005/02/17 10:21:17 mschimek Exp $ */
 
 #ifndef VBI_H
 #define VBI_H
@@ -108,7 +108,7 @@ struct vbi_decoder {
 #ifndef VBI_DECODER
 #define VBI_DECODER
 /**
- * @ingroup Service
+ * @ingroup HiDec
  * @brief Opaque VBI data service decoder object.
  *
  * Allocate with vbi_decoder_new().
@@ -147,7 +147,7 @@ typedef struct vbi_decoder vbi_decoder;
 /* Public */
 
 /**
- * @ingroup Service
+ * @ingroup HiDec
  * @brief Page classification.
  *
  * See vbi_classify_page().

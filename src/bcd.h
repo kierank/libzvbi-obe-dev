@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bcd.h,v 1.13 2005/01/19 04:23:52 mschimek Exp $ */
+/* $Id: bcd.h,v 1.14 2005/02/17 10:21:06 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -27,7 +27,7 @@
 
 /**
  * @addtogroup BCD BCD arithmetic for Teletext page numbers
- * @ingroup Service
+ * @ingroup HiDec
  *
  * Teletext page numbers are expressed as packed binary coded decimal
  * numbers in range 0x100 to 0x8FF. The bcd format encodes one decimal
@@ -39,7 +39,7 @@
 /* Public */
 
 /**
- * @ingroup Service
+ * @ingroup HiDec
  * 
  * Teletext or Closed Caption page number. For Teletext pages
  * this is a packed bcd number in range 0x100 ... 0x8FF. Page
@@ -74,7 +74,7 @@
 typedef int vbi_pgno;
 
 /**
- * @ingroup Service
+ * @ingroup HiDec
  *
  * This is the subpage number only applicable to Teletext pages,
  * a packed bcd number in range 0x00 ... 0x99. On special 'clock' pages
@@ -85,11 +85,11 @@ typedef int vbi_pgno;
 typedef int vbi_subno;
 
 /**
- * @ingroup Service
+ * @ingroup HiDec
  */
 #define VBI_ANY_SUBNO 0x3F7F
 /**
- * @ingroup Service
+ * @ingroup HiDec
  */
 #define VBI_NO_SUBNO 0x3F7F
 

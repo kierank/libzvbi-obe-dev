@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: format.h,v 1.7 2003/02/16 21:11:23 mschimek Exp $ */
+/* $Id: format.h,v 1.8 2005/02/17 10:21:16 mschimek Exp $ */
 
 #ifndef FORMAT_H
 #define FORMAT_H
@@ -35,7 +35,7 @@ typedef struct vbi_decoder vbi_decoder;
 
 /**
  * @addtogroup Page Formatted text page
- * @ingroup Service
+ * @ingroup HiDec
  */
 
 /**

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.21 2005/01/20 01:40:14 mschimek Exp $ */
+/* $Id: export.c,v 1.22 2005/02/17 10:21:16 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -43,7 +43,7 @@ extern const char _zvbi_intl_domainname[];
 
 /**
  * @addtogroup Export Exporting formatted Teletext and Closed Caption pages
- * @ingroup Service
+ * @ingroup HiDec
  * 
  * Once libzvbi received, decoded and formatted a Teletext or Closed
  * Caption page you will want to render it on screen, print it as

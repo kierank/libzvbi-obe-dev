@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.h,v 1.2 2004/12/30 02:23:17 mschimek Exp $ */
+/* $Id: dvb_demux.h,v 1.3 2005/02/17 10:21:16 mschimek Exp $ */
 
 #ifndef __ZVBI_DVB_DEMUX_H__
 #define __ZVBI_DVB_DEMUX_H__
@@ -51,7 +51,7 @@ typedef struct _vbi_dvb_demux vbi_dvb_demux;
  * @param pts Presentation Time Stamp associated with the first sliced
  *   line.
  *
- * The vbi_dvb_demux_demux() function calls a function of this type when
+ * The vbi_dvb_demux_feed() function calls a function of this type when
  * a new frame of sliced data is complete.
  */
 typedef vbi_bool
