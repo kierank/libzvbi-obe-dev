@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.2 2002/04/16 05:49:57 mschimek Exp $ */
+/* $Id: packet.c,v 1.3 2002/05/23 03:59:46 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1094,14 +1094,17 @@ dump_pil(int pil)
 static void
 dump_pty(int pty)
 {
+	extern const char *ets_program_class[16];
+	extern const char *ets_program_type[8][16];
+
 	if (pty == 0xFF)
 		printf("... prog. type: %02x unused", pty);
 	else
-		printf("... prog. type: %02x class %s", pty, program_class[pty >> 4]);
+		printf("... prog. type: %02x class %s", pty, ets_program_class[pty >> 4]);
 
 	if (pty < 0x80) {
-		if (program_type[pty >> 4][pty & 0xF])
-			printf(", type %s", program_type[pty >> 4][pty & 0xF]);
+		if (ets_program_type[pty >> 4][pty & 0xF])
+			printf(", type %s", ets_program_type[pty >> 4][pty & 0xF]);
 		else
 			printf(", type undefined");
 	}
@@ -1161,9 +1164,7 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 		n->cycle = 2;
 	}
 
-#if BSDATA_TEST
-
-	{
+	if (BSDATA_TEST && 0) {
 		static char pr_label[20];
 		static char label[20];
 		static int l = 0;
@@ -1172,7 +1173,7 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 
 		printf("\nVPS:\n");
 
-		c = bit_reverse[buf[1]];
+		c = vbi_bit_reverse[buf[1]];
 
 		if ((char) c < 0) {
 			label[l] = 0;
@@ -1195,11 +1196,11 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 		      + (buf[11] & 0x3F);
 
 		if (cni)
-			for (j = 0; VPS_CNI[j].short_name; j++)
-				if (VPS_CNI[j].cni == cni) {
+			for (j = 0; vbi_cni_table[j].name; j++)
+				if (vbi_cni_table[j].cni4 == cni) {
 					printf(" Country: %s\n Station: %s%s\n",
-						country_names_en[VPS_CNI[j].country],
-						VPS_CNI[j].long_name,
+						vbi_country_names_en[vbi_cni_table[j].country],
+						vbi_cni_table[j].name,
 						(cni == 0x0DC3) ? ((buf[2] & 0x10) ? " (ZDF)" : " (ARD)") : "");
 					break;
 				}
@@ -1208,96 +1209,15 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 		pil = ((buf[8] & 0x3F) << 14) + (buf[9] << 6) + (buf[10] >> 2);
 		pty = buf[12];
 
-/*		if (!cni || !VPS_CNI[j].short_name) */
+		/* if (!cni || !vbi_cni_table[j].name) */
 			printf(" CNI: %04x\n", cni);
-
+#if BSDATA_TEST
 		printf(" Analog audio: %s\n", pcs_names[pcs]);
 
 		dump_pil(pil);
 		dump_pty(pty);
-	}
-
-#endif /* BSDATA_TEST */
-
-}
-
-static void
-parse_x26_pdc(int address, int mode, int data)
-{
-	static int day, month, lto, caf, duration;
-	static int hour[2], min[2], mi = 0;
-	int cni;
-
-	if (mode != 6 && address < 40)
-		return;
-
-	switch (mode) {
-	case 6:
-		if (address >= 40)
-			return;
-		min[mi] = data & 0x7F; // BCD
-		break;
-
-	case 8:
-		cni = address * 256 + data;
-
-		if (0) { /* country and network identifier */
-			const char *country, *name;
-
-			if (station_lookup(CNI_X26, cni, &country, &name))
-				printf("X/26 country: %s\n... station: %s\n", country, name);
-			else
-				printf("X/26 unknown CNI %04x\n", cni);
-		}
-
-		return;
-
-	case 9:
-		month = address & 15;
-		day = (data >> 4) * 10 + (data & 15);
-		break;
-
-	case 10:
-		hour[0] = data & 0x3F; // BCD
-		caf = !!(data & 0x40);
-		mi = 0;
-		break;
-
-	case 11:
-		hour[1] = data & 0x3F; // BCD
-		duration = !!(data & 0x40);
-		mi = 1;
-		break;
-
-	case 12:
-		lto = (data & 0x40) ? ((~0x7F) | data) : data;
-		break;
-
-	case 13:
-#if BSDATA_TEST
-		if (0) {
-			printf("X/26 pty series: %d\n", address == 0x30);
-			dump_pty(data | 0x80);
-		}
 #endif
-		break;
-
-	default:
-		return;
 	}
-
-#if BSDATA_TEST
-
-	/*
-	 *  It's life, but not as we know it...
-	 */
-	if (0 && mode == 6)
-		printf("X/26 %2d/%2d/%2d; lto=%d, caf=%d, end/dur=%d; %d %s %02x:%02x %02x:%02x\n",
-			address, mode, data,
-			lto, caf, duration,
-			day, month_names[month],
-			hour[0], min[0], hour[1], min[1]);
-#endif
 }
 
 static vbi_bool
@@ -1353,8 +1273,8 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 			}
 #if BSDATA_TEST
 			if (1) { /* country and network identifier */
-				if (station_lookup(CNI_8301, cni, &country, &short_name, &long_name))
-					printf("... country: %s\n... station: %s\n", country, long_name);
+				if (station_lookup(CNI_8301, cni, &country, &name))
+					printf("... country: %s\n... station: %s\n", country, name);
 				else
 					printf("... unknown CNI %04x\n", cni);
 			}
@@ -1442,7 +1362,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 				const char *country, *name;
 
 				if (station_lookup(CNI_8302, cni, &country, &name))
-					printf("... country: %s\n... station: %s\n", country, long_name);
+					printf("... country: %s\n... station: %s\n", country, name);
 				else
 					printf("... unknown CNI %04x\n", cni);
 			}
@@ -1450,11 +1370,11 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 			if (1) { /* PDC data */
 				int lci, luf, prf, mi, pil;
 
-				lci = (n[0] >> 2) & 3;
-				luf = !!(n[0] & 2);
-				prf = n[0] & 1;
-				mi = !!(n[1] & 0x20);
-				pil = ((n[2] & 0x3F) << 14) + (n[3] << 6) + (n[4] >> 2);
+				lci = (b[0] >> 2) & 3;
+				luf = !!(b[0] & 2);
+				prf = b[0] & 1;
+				mi = !!(b[1] & 0x20);
+				pil = ((b[2] & 0x3F) << 14) + (b[3] << 6) + (b[4] >> 2);
 
 				printf("... label channel %d: update %d,"
 				       " prepare to record %d, mode %d\n",
@@ -1465,8 +1385,8 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 			if (1) {
 				int pty, pcs;
 
-				pcs = n[1] >> 6;
-				pty = n[6];
+				pcs = b[1] >> 6;
+				pty = b[6];
 
 				printf("... analog audio: %s\n", pcs_names[pcs]);
 				dump_pty(pty);
@@ -1497,6 +1417,105 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 	}
 
 	return TRUE;
+}
+
+#define FPC 0
+
+#define FPC_BLOCK_SEPARATOR	0xC
+#define FPC_FILLER_BYTE		0x3
+
+static inline void
+vbi_reset_page_clear(struct page_clear *pc)
+{
+	pc->ci = 256;
+	pc->packet = 256;
+	pc->num_packets = 0;
+	pc->bi = 0;
+	pc->left = 0;
+	pc->pfc.application_id = -1;
+}
+
+static void
+parse_page_clear(struct page_clear *pc, uint8_t *p, int packet)
+{
+	int bp, col;
+
+	if ((pc->packet + 1) != packet || packet > pc->num_packets)
+		goto desync;
+
+	pc->packet = packet;
+
+	if ((bp = vbi_hamm8(p[0]) * 3) < 0 || bp > 39)
+		goto desync;
+
+	for (col = 1; col < 40;) {
+		int bs;
+
+		if (pc->left > 0) {
+			int size = MIN(pc->left, 40 - col);
+
+			memcpy(pc->pfc.block + pc->bi, p + col, size);
+
+			pc->bi += size;
+			pc->left -= size;
+
+			if (pc->left > 0)
+				return; /* packet done */
+
+			col += size;
+
+			if (pc->pfc.application_id < 0) {
+				int sh = vbi_hamm16(pc->pfc.block)
+					+ vbi_hamm16(pc->pfc.block + 2) * 256;
+
+				pc->pfc.application_id = sh & 0x1F;
+				pc->pfc.block_size =
+					pc->left = sh >> 5;
+				pc->bi = 0;
+
+				continue;
+			} else {
+				int i;
+					
+				fprintf(stderr, "pfc %d %d\n",
+					pc->pfc.application_id,
+					pc->pfc.block_size);
+
+				for (i = 0; i < pc->pfc.block_size; i++) {
+					fputc(printable(pc->pfc.block[i]), stderr);
+
+					if ((i % 75) == 75)
+						fputc('\n', stderr);
+				}
+
+				fputc('\n', stderr);
+			}
+		}
+
+		if (col <= 1) {
+			if (bp >= 39)
+				return; /* no SH in this packet */
+			col = bp + 2;
+			bs = vbi_hamm8(p[col - 1]);
+		} else
+			while ((bs = vbi_hamm8(p[col++])) == FPC_FILLER_BYTE) {
+				if (col >= 40)
+					return; /* packet done */
+			}
+
+		if (bs != FPC_BLOCK_SEPARATOR)
+			goto desync;
+
+		pc->pfc.application_id = -1;
+		pc->left = 4; /* sizeof structure header */
+		pc->bi = 0;
+	}
+
+	return;
+
+ desync:
+	// fprintf(stderr, "FPC reset\n");
+	vbi_reset_page_clear(pc);
 }
 
 static int
@@ -2124,6 +2143,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 
 			switch (vtp->function) {
 			case PAGE_FUNCTION_DISCARD:
+			case PAGE_FUNCTION_EPG:
 				break;
 
 			case PAGE_FUNCTION_LOP:
@@ -2202,6 +2222,8 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			cvtp->lop_lines = vtp->lop_lines;
 			cvtp->enh_lines = vtp->enh_lines;
 		} else {
+			struct page_info *pi = vbi->vt.page_info + cvtp->pgno - 0x100;
+
 			cvtp->flags |= C4_ERASE_PAGE;
 
 			if (0)
@@ -2209,21 +2231,44 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 
 			if (cvtp->pgno == 0x1F0) {
 				cvtp->function = PAGE_FUNCTION_BTT;
-				vbi->vt.page_info[0x1F0 - 0x100].code = VBI_TOP_PAGE;
+				pi->code = VBI_TOP_PAGE;
 			} else if (cvtp->pgno == 0x1E7) {
 				cvtp->function = PAGE_FUNCTION_TRIGGER;
-				vbi->vt.page_info[0x1E7 - 0x100].code = VBI_DISP_SYSTEM_PAGE;
-				vbi->vt.page_info[0x1E7 - 0x100].subcode = 0;
+				pi->code = VBI_DISP_SYSTEM_PAGE;
+				pi->subcode = 0;
 				memset(cvtp->data.unknown.raw[0], 0x20, sizeof(cvtp->data.unknown.raw));
 				memset(cvtp->data.enh_lop.enh, 0xFF, sizeof(cvtp->data.enh_lop.enh));
 				cvtp->data.unknown.ext = FALSE;
 			} else if (page == 0xFD) {
 				cvtp->function = PAGE_FUNCTION_MIP;
-				vbi->vt.page_info[cvtp->pgno - 0x100].code = VBI_SYSTEM_PAGE;
+				pi->code = VBI_SYSTEM_PAGE;
 			} else if (page == 0xFE) {
 				cvtp->function = PAGE_FUNCTION_MOT;
-				vbi->vt.page_info[cvtp->pgno - 0x100].code = VBI_SYSTEM_PAGE;
+				pi->code = VBI_SYSTEM_PAGE;
+#ifdef FPC
+			} else if (pi->code == VBI_EPG_DATA) {
+				int stream = (cvtp->subno >> 8) & 15;
+
+				if (stream >= 2) {
+					cvtp->function = PAGE_FUNCTION_DISCARD;
+					// fprintf(stderr, "Discard FPC %d\n", stream);
+				} else {
+					struct page_clear *pc = vbi->epg_pc + stream;
+					int ci = cvtp->subno & 15;
+
+					cvtp->function = PAGE_FUNCTION_EPG;
+					pc->pfc.pgno = cvtp->pgno;
+
+					if (((pc->ci + 1) & 15) != ci)
+						vbi_reset_page_clear(pc);
+
+					pc->ci = ci;
+					pc->packet = 0;
+					pc->num_packets = ((cvtp->subno >> 4) & 7)
+						+ ((cvtp->subno >> 9) & 0x18);
+				}
 			} else {
+#endif
 				cvtp->function = PAGE_FUNCTION_UNKNOWN;
 
 				memcpy(cvtp->data.unknown.raw[0] + 0, p, 40);
@@ -2294,9 +2339,14 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			case VBI_TRIGGER_DATA:
 				function = PAGE_FUNCTION_TRIGGER;
 				break;
-
-			case 0x52 ... 0x6F:	/* reserved */
+#ifdef FPC
+			case VBI_EPG_DATA:
+				function = PAGE_FUNCTION_EPG;
+				break;
+#else
 			case VBI_EPG_DATA:	/* EPG/NexTView transport layer */
+#endif
+			case 0x52 ... 0x6F:	/* reserved */
 			case VBI_ACI:		/* ACI page */
 			case VBI_NOT_PUBLIC:
 			case 0xD2 ... 0xDF:	/* reserved */
@@ -2368,7 +2418,11 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			if (!(parse_mpt_ex(&vbi->vt, p, packet)))
 				return FALSE;
 			break;
-
+#ifdef FPC
+		case PAGE_FUNCTION_EPG:
+			parse_page_clear(vbi->epg_pc + ((cvtp->subno >> 8) & 1), p, packet);
+			break;
+#endif
 		case PAGE_FUNCTION_LOP:
 		case PAGE_FUNCTION_TRIGGER:
 			for (n = i = 0; i < 40; i++)
@@ -2442,12 +2496,6 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			triplet.data = t >> 11;
 
 			cvtp->data.enh_lop.enh[rvtp->num_triplets++] = triplet;
-
-			if (0
-			    && triplet.mode >= 6
-			    && triplet.mode <= 13)
-				parse_x26_pdc(triplet.address,
-					      triplet.mode, triplet.data);
 		}
 
 		cvtp->enh_lines |= 1 << designation;
@@ -2595,6 +2643,12 @@ vbi_teletext_desync(vbi_decoder *vbi)
 
 	for (i = 0; i < 8; i++)
 		vbi->vt.raw_page[i].page->function = PAGE_FUNCTION_DISCARD;
+
+	vbi_reset_page_clear(vbi->epg_pc + 0);
+	vbi_reset_page_clear(vbi->epg_pc + 1);
+
+	vbi->epg_pc[0].pfc.stream = 1;
+	vbi->epg_pc[1].pfc.stream = 2;
 }
 
 /**

@@ -22,7 +22,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: search.c,v 1.4 2002/03/09 12:09:58 mschimek Exp $ */
+/* $Id: search.c,v 1.5 2002/05/23 03:59:46 mschimek Exp $ */
+
+#ifdef HAVE_CONFIG_H
+#  include "../config.h"
+#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -34,7 +38,7 @@
 #include "ure.h"
 #include "vbi.h"
 
-#ifdef HAVE_LIBUNICODE
+#if defined(HAVE_GLIBC21) || defined(HAVE_LIBUNICODE)
 
 struct vbi_search {
 	vbi_decoder *		vbi;
@@ -612,7 +616,7 @@ vbi_search_next(vbi_search *search, vbi_page **pg, int dir)
 	return VBI_SEARCH_ERROR;
 }
 
-#else /* !HAVE_LIBUNICODE */
+#else /* !HAVE_GLIBC21 && !HAVE_LIBUNICODE */
 
 vbi_search *
 vbi_search_new(vbi_decoder *vbi,
@@ -624,4 +628,15 @@ vbi_search_new(vbi_decoder *vbi,
 	return NULL;
 }
 
-#endif /* !HAVE_LIBUNICODE */
+int
+vbi_search_next(vbi_search *search, vbi_page **pg, int dir)
+{
+	return VBI_SEARCH_ERROR;
+}
+
+void
+vbi_search_delete(vbi_search *search)
+{
+}
+
+#endif /* !HAVE_GLIBC21 && !HAVE_LIBUNICODE */

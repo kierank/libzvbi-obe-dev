@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.h,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
+/* $Id: vbi.h,v 1.3 2002/05/23 03:59:46 mschimek Exp $ */
 
 #ifndef VBI_H
 #define VBI_H
@@ -41,6 +41,15 @@ struct event_handler {
 	int			event_mask;
 	vbi_event_handler	handler;
 	void *			user_data;
+};
+
+struct page_clear {
+	int			ci;		/* continuity index */
+	int			packet;
+	int			num_packets;
+	int			bi;		/* block index */
+	int			left;
+	pfc_block		pfc;
 };
 
 struct vbi_decoder {
@@ -69,6 +78,8 @@ struct vbi_decoder {
 	struct caption		cc;
 
 	struct cache		cache;
+
+	struct page_clear	epg_pc[2];
 
 	/* preliminary */
 	int			pageref;

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: tables.c,v 1.1 2002/01/12 16:18:57 mschimek Exp $ */
+/* $Id: tables.c,v 1.2 2002/05/23 03:59:46 mschimek Exp $ */
 
 #include <stdlib.h>
 
@@ -536,12 +536,12 @@ vbi_cni_table[] = {
 	{ 0, 0,  0,  0, 0, 0, 0 }
 };
 
-#if 0
+#if 1
 
 /*
  *  ETS 300 231 Table 3: Codes for programme type (PTY) Principle of classification
  */
-static const char *
+const char *
 ets_program_class[16] =
 {
 	"undefined content",
@@ -567,7 +567,7 @@ ets_program_class[16] =
 /*
  *  ETS 300 231 Table 3: Codes for programme type (PTY) Principle of classification
  */
-static const char *
+const char *
 ets_program_type[8][16] =
 {
 	{

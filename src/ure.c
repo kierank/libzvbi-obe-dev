@@ -2,8 +2,8 @@
  * Copyright 1997, 1998, 1999 Computing Research Labs,
  * New Mexico State University
  *
- * Modifications and fixes to the 0.5 release by Iñaki García
- * Etxebarrria <garetxe@users.sourceforge.net>
+ * Modifications and fixes for the Zapping 0.5 release by
+ * Iñaki García Etxebarrria <garetxe@users.sourceforge.net>
  *
  * Modifications by Michael H. Schimek <mschimek@users.sf.net>
  * for libzvbi 0.1: Added character classes :gfx: and :drcs:,
@@ -28,18 +28,43 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $Id: ure.c,v 1.3 2002/03/06 00:54:51 mschimek Exp $ */
+/* $Id: ure.c,v 1.4 2002/05/23 03:59:46 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
 #endif
 
-#ifdef HAVE_LIBUNICODE
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+
+#if defined(HAVE_GLIBC21)
+
+#include <wctype.h>
+
+#define unicode_isalnum(c) iswalnum((wint_t)(c))
+#define unicode_isalpha(c) iswalpha((wint_t)(c))
+#define unicode_iscntrl(c) iswcntrl((wint_t)(c))
+#define unicode_isdigit(c) iswdigit((wint_t)(c))
+#define unicode_isgraph(c) iswgraph((wint_t)(c))
+#define unicode_islower(c) iswlower((wint_t)(c))
+#define unicode_isprint(c) iswprint((wint_t)(c))
+#define unicode_ispunct(c) iswpunct((wint_t)(c))
+#define unicode_isspace(c) iswspace((wint_t)(c))
+#define unicode_isupper(c) iswupper((wint_t)(c))
+#define unicode_isxdigit(c) iswxdigit((wint_t)(c))
+
+#define unicode_tolower(c) towlower((wint_t)(c))
+
+
+#elif defined(HAVE_LIBUNICODE)
+
 #include <unicode.h>
+
+#endif
+
+#if defined(HAVE_GLIBC21) || defined(HAVE_LIBUNICODE)
+
 #include "ure.h"
 
 /*
@@ -146,6 +171,7 @@ _ure_matches_properties(unsigned long props, ucs4_t c)
   if ((props & _URE_XDIGIT) && (unicode_isxdigit(c)))
     return 1;
 
+/* No such characters in libzvbi
   if ((props & _URE_TITLE) && (unicode_istitle(c)))
     return 1;
 
@@ -168,6 +194,9 @@ _ure_matches_properties(unsigned long props, ucs4_t c)
       if (type < UNICODE_LINE_SEPARATOR)
 	return 1;
     }
+*/
+  if (props & _URE_NONSPACING)
+    return 1;
 
   if (props & _URE_ZVBI_GFX)
     {
@@ -2055,9 +2084,11 @@ ure_write_dfa(ure_dfa_t dfa, FILE *out)
 	    rp->min_code <= 0x10ffff) {
 	  h = ((rp->min_code - 0x10000) >> 10) + 0xd800;
 	  l = ((rp->min_code - 0x10000) & 1023) + 0xdc00;
-	  fprintf(out, "\\x%04hX\\x%04hX", h, l);
+	  fprintf(out, "\\x%04X\\x%04X",
+		  (unsigned) h, (unsigned) l);
 	} else
-	  fprintf(out, "\\x%04lX", rp->min_code & 0xffff);
+	  fprintf(out, "\\x%04lX",
+		  (unsigned long)(rp->min_code & 0xffff));
 	if (rp->max_code != rp->min_code) {
 	  putc('-', out);
 	  if (rp->max_code >= 0x10000 &&
@@ -2066,7 +2097,7 @@ ure_write_dfa(ure_dfa_t dfa, FILE *out)
 	    l = ((rp->max_code - 0x10000) & 1023) + 0xdc00;
 	    fprintf(out, "\\x%04hX\\x%04hX", h, l);
 	  } else
-	    fprintf(out, "\\x%04lX", rp->max_code & 0xffff);
+	    fprintf(out, "\\x%04lX", (unsigned long) rp->max_code & 0xffff);
 	}
       }
       if (sym->sym.ccl.ranges_used > 0)
@@ -2328,4 +2359,4 @@ ure_exec(ure_dfa_t dfa, int flags, ucs2_t *text, unsigned long textlen,
   return (ms != ~0) ? 1 : 0;
 }
 
-#endif /* HAVE_LIBUNICODE */
+#endif /* HAVE_GLIBC21 || HAVE_LIBUNICODE */

@@ -272,6 +272,28 @@ returned access is no longer permitted.
 @user_data: 
 
 
+<!-- ##### FUNCTION vbi_event_handler_register ##### -->
+<para>
+
+</para>
+
+@vbi: 
+@event_mask: 
+@handler: 
+@user_data: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_event_handler_unregister ##### -->
+<para>
+
+</para>
+
+@vbi: 
+@handler: 
+@user_data: 
+
+
 <!-- ##### FUNCTION vbi_event_handler_add ##### -->
 <para>
 

@@ -1,3 +1,26 @@
+2002-05-23	<mschimek@users.sf.net>
+
+	* macros/autogen.sh: Updated.
+	* Release 0.2.
+
+2002-05-20	<mschimek@users.sf.net>
+
+	* configure.in: Inherit env CFLAGS.
+	* teletext.c: Triggers a GCC 3.1 bug, do export CFLAGS=-V3.0.4
+
+2002-04-28	<mschimek@users.sf.net>
+
+	* src/packet.c, src/vbi.h, src/event.h: Added Page Format - Clear
+	  (ETS 300 708) decoder. Future stuff.
+	* src/teletext.c: Some work towards PDC preselection.
+
+2002-04-20	<mschimek@users.sf.net>
+
+	* src/vbi.c, src/event.h: New handler functions identifying handler by
+	  func ptr and user data.
+	* src/ure.c: If possible use glibc 2.1 wchar_t instead of
+	  libunicode.
+
 2002-04-18	<mschimek@users.sf.net>
 
 	* src/io.c, src/io.h, src/io-v4l.c, src/io-v4l2.c: Added function

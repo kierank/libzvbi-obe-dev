@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.5 2002/04/20 21:00:54 mschimek Exp $ */
+/* $Id: caption.c,v 1.6 2002/05/23 03:59:46 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -587,10 +587,10 @@ xds_decoder(vbi_decoder *vbi, int class, int type,
 			return; /* no event */
 		}
 
-#if 0
-		printf("[type %d cycle %08x class %d neq %d]\n",
-		       type, vbi->cc.info_cycle[class], class, neq);
-#endif
+		if (0)
+			printf("[type %d cycle %08x class %d neq %d]\n",
+			       type, vbi->cc.info_cycle[class], class, neq);
+
 		if (neq) /* first occurence of this type with this data */
 			vbi->cc.info_cycle[class] |= 1 << type;
 		else if (vbi->cc.info_cycle[class] & (1 << type)) {

@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.6.1\n"
-"POT-Creation-Date: 2002-04-18 14:22+0200\n"
+"POT-Creation-Date: 2002-05-22 10:57+0200\n"
 "PO-Revision-Date: 2002-01-08 14:34+0100\n"
 "Last-Translator: Ime Smits <ime@iae.nl>\n"
 "Language-Team: Dutch <ime@iae.nl>\n"
@@ -271,51 +271,51 @@ msgstr ""
 "Deze pagina als VTX-bestand exporteren, het formaat dat gebruikt wordt door "
 "VideoteXt en vbidecode"
 
-#: src/export.c:400
+#: src/export.c:399
 #, c-format
 msgid "Invalid option string \"%s\"."
 msgstr ""
 
-#: src/export.c:489
+#: src/export.c:488
 #, c-format
 msgid "Unknown export module '%s'."
 msgstr ""
 
-#: src/export.c:499
+#: src/export.c:498
 #, c-format
 msgid "Cannot initialize export module '%s', probably lack of memory."
 msgstr ""
 
-#: src/export.c:935
+#: src/export.c:934
 #, c-format
 msgid "Cannot create file '%s': Error %d, %s."
 msgstr "Kan bestand '%s' niet aanmaken: %d, %s."
 
-#: src/export.c:1010
+#: src/export.c:1009
 #, c-format
 msgid "Error while writing file '%s'"
 msgstr ""
 
-#: src/export.c:1012
+#: src/export.c:1011
 msgid "Error while writing file"
 msgstr ""
 
-#: src/export.c:1025
+#: src/export.c:1024
 #, c-format
 msgid "Export module '%s' has no option '%s'."
 msgstr ""
 
-#: src/export.c:1070
+#: src/export.c:1069
 #, c-format
 msgid "Invalid argument %s for option %s of export module %s."
 msgstr ""
 
-#: src/export.c:1081
+#: src/export.c:1080
 #, c-format
 msgid "Out of memory in export module '%s'."
 msgstr ""
 
-#: src/export.c:1111
+#: src/export.c:1110
 msgid "Unknown error."
 msgstr ""
 

@@ -1,3 +1,10 @@
+0.2
+---
+Bug fixes, most notably the character code range check in Closed
+Caption decoder, a V4L2 interface update to work with bttv 0.8.x,
+and new handler registration functions (the old ones retained
+for compatibility).   
+
 0.1.1
 -----
 Bug fixes.

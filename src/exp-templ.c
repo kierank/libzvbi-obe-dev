@@ -4,7 +4,7 @@
  *  Placed in the public domain.
  */
 
-/* $Id: exp-templ.c,v 1.1 2002/01/12 16:18:37 mschimek Exp $ */
+/* $Id: exp-templ.c,v 1.2 2002/05/23 03:59:46 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -280,6 +280,6 @@ vbi_export_class_tmpl = {
  *  This is a constructor calling vbi_register_export_module().
  *  (Commented out since we don't want the example module listed.)
  */
-#if 1
+#if 0
 VBI_AUTOREG_EXPORT_MODULE(vbi_export_class_tmpl)
 #endif

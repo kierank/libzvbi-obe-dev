@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.6 2002/03/19 19:27:40 mschimek Exp $ */
+/* $Id: export.c,v 1.7 2002/05/23 03:59:46 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -52,10 +52,9 @@ vbi_register_export_module(vbi_export_class *new)
 {
 	vbi_export_class **xcp;
 
-#if 0
-	fprintf(stderr, "libzvbi:vbi_register_export_module(\"%s\")\n",
-	       new->public.keyword);
-#endif
+	if (0)
+		fprintf(stderr, "libzvbi:vbi_register_export_module(\"%s\")\n",
+		        new->public.keyword);
 
 	for (xcp = &vbi_export_modules; *xcp; xcp = &(*xcp)->next)
 		if (strcmp(new->public.keyword, (*xcp)->public.keyword) < 0)

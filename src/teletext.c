@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
+/* $Id: teletext.c,v 1.3 2002/05/23 03:59:46 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -446,6 +446,262 @@ top_index(vbi_decoder *vbi, vbi_page *pg, int subno)
 	}
 
 	return 1;
+}
+
+struct pex26 {
+	signed			month		: 8;  /* 0 ... 11 */
+	signed			day		: 8;  /* 0 ... 30 */
+	signed			at1		: 16; /* min since 00:00 */
+	signed			at2		: 16; /* min since 00:00 */
+	signed			length		: 16; /* min */
+	unsigned		x26_cni		: 16; /* see tables.c */
+	unsigned		pty		: 8;
+	signed			lto		: 8;  /* +- 1/4 hr */
+	signed			row		: 8;  /* title 1 ... 23 */
+	signed			column		: 8;  /* title 0 ... 39 */
+	unsigned		caf		: 1;
+	unsigned				: 15;
+};
+
+static void
+dump_pex26(struct pex26 *pt, int n)
+{
+	int i;
+
+	for (i = 0; i < n; i++, pt++)
+		fprintf(stderr, "%2d: %02d-%02d %d:%02d (%d:%02d) +%d, "
+			"cni=%04x pty=%02x lto=%d tit=%d:%d caf=%d\n",
+			i, pt->month, pt->day,
+			pt->at1 / 60, pt->at1 % 60,
+			pt->at2 / 60, pt->at2 % 60,
+			pt->length,
+			pt->x26_cni, pt->pty, pt->lto,
+			pt->row, pt->column,
+			pt->caf);
+}
+
+/*
+
+type	pre	text		____      post       ____
+                               /                         \
+AT-1	+	zz.zz		+	%		<
+AT-1	+	zz.zz-zz.zz	+	%		<
+PTL	++	title		++	%%	::	<
+AT-1	%	zz.zz		+	%		<
+PW*)	%	hh
+LTO	%	0zz		+	%		<
+LTO	%	9zz		+	%		<
+AT-2	%	zzzz		+	%		<
+CNI*)	%	hhzzz		+	%		<
+AD*)	%	zzzzzz		+	%		<
+PTL	%%	title		++	%%	::	<
+AT-2	:	zzzz		+	%		<
+AD	:	zzzzzz		+	%		<
+PW	:%	hh		+	%		<
+PTY	:%	Fhh		+	%		<
+AT-2	:%	zzzz		+	%		<
+CNI	:%	hhzzz		+	%		<
+AD	:%	zzzzzz		+	%		<
+
++  colour code
+:  magenta
+%  conceal
+
+*) permitted when CNI, AD, PW combine
+
+Note ETS 300 231 Table 4 is wrong: '%' = 0x18; ',' = '+' | '%' | '<'
+
+*/
+
+/* to be rewritten */
+
+struct program_entry {
+	int			start;
+	int			stop;
+	int			at2;
+	int			ad;
+	int			cni;
+	int			pty;
+	int			lto;
+	uint16_t		title[200];
+};
+
+#define PMA_COLOUR /* 0x01, 0x02, 0x03, 0x04, 0x06, 0x07 */
+#define PMA_MAGENTA 0x05
+#define PMA_CONCEAL 0x18
+
+#define IS_PMA_CTRL(c) (((c) >= 0x01 && (c) <= 0x07) || (c) == PMA_CONCEAL)
+
+static int
+bcd2time(int bcd)
+{
+	int sec = bcd & 15;
+	int min = (bcd >> 8) & 15;
+
+	if (sec > 9 || min > 9 || (bcd & 0x00FF) > 0x0059)
+		return -1;
+//#warning hour check
+
+	return sec * 1 + min * 60
+		+ ((bcd >> 4) & 15) * 10
+		+ ((bcd >> 12) & 15) * 600;
+}
+
+static int
+pdc_method_a(vbi_page *pg, vt_page *vtp, struct program_entry *pe)
+{
+	int row, column;
+	int i;
+
+//	memset(pe, -1, sizeof(*pe));
+
+	i = 40;
+
+	for (row = 1; row <= 23; row++) {
+		for (column = 0; column <= 38;) {
+			int ctrl1 = vbi_parity(vtp->data.lop.raw[row][column]);
+			int ctrl2 = vbi_parity(vtp->data.lop.raw[row][column + 1]);
+
+fprintf(stderr, "%d %d %02x %02x\n", row, column, ctrl1, ctrl2);
+
+			if ((ctrl1 | ctrl2) < 0) {
+				return 0; /* hamming error */
+			} else if (!IS_PMA_CTRL(ctrl1)) {
+				column++;
+				continue;
+			}
+
+			if (ctrl1 == ctrl2 && ctrl1 != PMA_MAGENTA) {
+fprintf(stderr, "PTL %d %d\n", row, column);
+				/* title */
+				column += 2;fprintf(stderr, "%d %d %02x %02x\n", row, column, ctrl1, ctrl2);
+
+
+			} else {
+				/* numeral */
+				int digits, sep, value;
+fprintf(stderr, "NUM %d %d\n", row, column);
+				column += (ctrl1 == PMA_MAGENTA && ctrl2 == PMA_CONCEAL) ? 2 : 1;
+
+				sep = 0;
+				value = 0;
+
+				for (digits = 0; column < 40; column++) {
+					int c = vbi_parity(vtp->data.lop.raw[row][column]);
+
+					if (IS_PMA_CTRL(c)) {
+						break;
+					} else if (c >= 0x30 && c <= 0x39) {
+						value = value * 16 + c - 0x30;
+						digits++;
+					} else if (c >= 0x41 && c <= 0x46) {
+						if (digits >= 3)
+							goto invalid_pattern;
+						value = value * 16 + c + (0x0A - 0x41);
+						digits++;
+					} else if (c == 0x2E) {
+						if (digits != 2 && digits != 6)
+							goto invalid_pattern;
+						sep |= 1 << digits;
+					} else if (c == 0x2D) {
+						if (digits != 4)
+							goto invalid_pattern;
+						sep |= 1 << 4;
+					} else
+						goto invalid_pattern;
+				}
+
+				if (sep) {
+					if (ctrl1 == PMA_MAGENTA)
+						goto invalid_pattern;
+					if (ctrl1 == PMA_CONCEAL && digits != 4)
+						goto invalid_pattern;
+				}
+
+				switch (digits) {
+					int start, stop;
+
+				case 2:
+					/* Actually ctrl1 only permitted when combined */
+					if (ctrl1 != PMA_CONCEAL && ctrl2 != PMA_CONCEAL)
+						goto invalid_pattern;
+fprintf(stderr, "PW %02x\n", value);
+					/* PW */
+					break;
+
+				case 3:
+					if (ctrl1 == PMA_CONCEAL) {
+						if (value >= 0x100 && value < 0x900)
+							goto invalid_pattern;
+fprintf(stderr, "LTO %03x\n", value);
+						/* LTO */
+					} else if (ctrl2 == PMA_CONCEAL) {
+						if ((value -= 0xF00) < 0)
+						goto invalid_pattern;
+fprintf(stderr, "PTY %02x\n", value);
+						/* PTY */
+					} else
+						goto invalid_pattern;
+
+				case 4:
+					start = bcd2time(value);
+
+					if (start < 0)
+						goto invalid_pattern;
+
+					if (sep) {
+						if (ctrl1 == PMA_MAGENTA)
+							goto invalid_pattern;
+fprintf(stderr, "AT-1 %04x\n", value);
+						; /* AT-1 short */
+					} else if (ctrl1 == PMA_MAGENTA || ctrl1 == PMA_CONCEAL) {
+fprintf(stderr, "AT-2 %04x\n", value);
+						; /* AT-2 */
+					} else
+						goto invalid_pattern;
+
+					break;
+
+				case 5:
+					/* Actually ctrl1 only permitted when combined */
+					if ((ctrl1 != PMA_CONCEAL && ctrl2 != PMA_CONCEAL)
+					    || (value & 0x00F00) > 0x00900)
+						goto invalid_pattern;
+
+					/* CNI */
+fprintf(stderr, "CNI %05x\n", value);
+					break;
+
+				case 6:
+					/* Actually ctrl1 only permitted when combined */
+					if (ctrl1 != PMA_CONCEAL && ctrl2 != PMA_CONCEAL)
+						goto invalid_pattern;
+					/* AD */
+fprintf(stderr, "AD %06x\n", value);
+					break;
+
+				case 8:
+					start = bcd2time(value >> 16); 
+					stop = bcd2time(value);
+
+					if ((start | stop) < 0
+					    || ctrl1 == PMA_MAGENTA || ctrl1 == PMA_CONCEAL
+					    || sep != ((1 << 2) + (1 << 4) + (1 << 6)))
+						goto invalid_pattern;
+
+					/* AT-1 long */
+fprintf(stderr, "AT1 %08x\n", value);
+					break;
+
+				default:
+				invalid_pattern:
+					continue;
+				}
+			}
+		}
+	}
+
+	return 0; /* invalid */
 }
 
 /*
@@ -903,7 +1159,8 @@ enhance(vbi_decoder *vbi, magazine *mag,	extension *ext,
 	object_type type, vt_triplet *p,
 	int max_triplets,
 	int inv_row, int inv_column,
-	vbi_wst_level max_level, vbi_bool header_only)
+	vbi_wst_level max_level, vbi_bool header_only,
+	struct pex26 *ptable)
 {
 	vbi_char ac, mac, *acp;
 	int active_column, active_row;
@@ -912,6 +1169,8 @@ enhance(vbi_decoder *vbi, magazine *mag,	extension *ext,
 	struct vbi_font_descr *font;
 	int invert;
 	int drcs_s1[2];
+	struct pex26 *pt, ptmp;
+	int pdc_hr;
 
 	static void
 	flush(int column)
@@ -1120,7 +1379,21 @@ enhance(vbi_decoder *vbi, magazine *mag,	extension *ext,
 
 	font = pg->font[0];
 
-	for (;max_triplets>0; p++, max_triplets--) {
+	if (ptable) {
+		ptmp.month	= -1;
+		ptmp.at1	= -1; /* n/a */
+		ptmp.length	= 0;
+		ptmp.x26_cni	= 0;
+		ptmp.pty	= 0;
+		ptmp.lto	= 0;
+
+		pt = ptable - 1;
+	} else
+		pt = &ptmp;
+
+	pdc_hr = 0;
+
+	for (; max_triplets>0; p++, max_triplets--) {
 		if (p->address >= COLUMNS) {
 			/*
 			 *  Row address triplets
@@ -1129,6 +1402,8 @@ enhance(vbi_decoder *vbi, magazine *mag,	extension *ext,
 			int row = (p->address - COLUMNS) ? : (ROWS - 1);
 			int column = 0;
 
+			if (pdc_hr)
+				return FALSE; /* invalid */
 
 			switch (p->mode) {
 			case 0x00:		/* full screen color */
@@ -1200,7 +1475,59 @@ enhance(vbi_decoder *vbi, magazine *mag,	extension *ext,
 
 			case 0x05:		/* reserved */
 			case 0x06:		/* reserved */
-			case 0x08 ... 0x0F:	/* PDC data */
+				break;
+
+			case 0x08:		/* PDC data - Country of Origin and Programme Source */
+				ptmp.x26_cni = p->address * 256 + p->data;
+				break;
+
+			case 0x09:		/* PDC data - Month and Day */
+				ptmp.month = (p->address & 15) - 1;
+				ptmp.day = (p->data >> 4) * 10 + (p->data & 15) - 1;
+				break;
+
+			case 0x0A:		/* PDC data - Cursor Row and Announced Starting Time Hours */
+				if (!ptable) {
+					break;
+				} else if ((ptmp.month | ptmp.x26_cni) < 0) {
+					return FALSE;
+				} else if ((ptable - pt) > 22) {
+					return FALSE;
+				}
+
+				*++pt = ptmp;
+
+				/* fall through */
+
+			case 0x0B:		/* PDC data - Cursor Row and Announced Finishing Time Hours */
+				s = (p->data & 15) * 60;
+
+				if (p->mode == 0x0A) {
+					pt->at2 = ((p->data & 0x30) >> 4) * 600 + s;
+					pt->length = 0;
+					pt->row = row;
+					pt->caf = !!(p->data & 0x40);
+				} else {
+					pt->length = ((p->data & 0x70) >> 4) * 600 + s;
+				}
+
+				pdc_hr = p->mode;
+
+				break;
+
+			case 0x0C:		/* PDC data - Cursor Row and Local Time Offset */
+				ptmp.lto = (p->data & 0x40) ? ((~0x7F) | p->data) : p->data;
+				break;
+
+			case 0x0D:		/* PDC data - Series Identifier and Series Code */
+				if (p->address == 0x30) {
+					break;
+				}
+				pt->pty = 0x80 + p->data;
+				break;
+
+			case 0x0E:		/* reserved */
+			case 0x0F:		/* reserved */
 				break;
 
 			case 0x10:		/* origin modifier */
@@ -1307,7 +1634,7 @@ enhance(vbi_decoder *vbi, magazine *mag,	extension *ext,
 				if (!enhance(vbi, mag, ext, pg, vtp, new_type, trip,
 					     remaining_max_triplets,
 					     row + offset_row, column + offset_column,
-					     max_level, header_only))
+					     max_level, header_only, NULL))
 					return FALSE;
 
 				printv("... object done\n");
@@ -1413,8 +1740,48 @@ enhance(vbi_decoder *vbi, magazine *mag,	extension *ext,
 
 			case 0x04:		/* reserved */
 			case 0x05:		/* reserved */
+				break;
 
-			case 0x06:		/* PDC data */
+			case 0x06:		/* PDC data - Cursor Column and Announced Starting */
+						/* and Finishing Time Minutes */
+				if (!ptable)
+					break;
+
+				s = (p->data >> 4) * 10 + (p->data & 15);
+
+				if (pdc_hr == 0x0A) {
+					pt->at2 += s;
+
+					if (pt > ptable && pt[-1].length == 0) {
+						pt[-1].length = pt->at2 - pt[-1].at2;
+
+						if (pt->at2 < pt[-1].at2)
+							pt[-1].length += 24 * 60;
+
+						if (pt[-1].length >= 12 * 60) {
+							/* bullshit */
+							pt[-1] = pt[0];
+							pt--;
+						}
+					}
+				} else if (pdc_hr == 0x0B) {
+					pt->length += s;
+
+					if (pt->length >= 4 * 600) {
+						pt->length -= 4 * 600;
+					} else {
+						if (pt->length < pt->at2)
+							pt->length += 24 * 60;
+
+						pt->length -= pt->at2;
+					}
+				} else {
+					return FALSE;
+				}
+
+				pt->column = column;
+				pdc_hr = 0;
+
 				break;
 
 			case 0x07:		/* additional flash functions */
@@ -1656,21 +2023,29 @@ enhance(vbi_decoder *vbi, magazine *mag,	extension *ext,
 
 swedish:
 
-#if 0
-	acp = pg->data[0];
+	if (ptable) {
+		if (pt >= ptable && (pdc_hr || pt->length == 0))
+			pt--; /* incomplete start or end tag */
 
-	for (active_row = 0; active_row < ROWS; active_row++) {
-		printv("%2d: ", active_row);
-
-		for (active_column = 0; active_column < COLUMNS; acp++, active_column++) {
-			printv("%04x ", acp->unicode);
-		}
-
-		printv("\n");
-
-		acp += EXT_COLUMNS - COLUMNS;
+		if (1)
+			dump_pex26(ptable, pt - ptable + 1);
 	}
-#endif
+
+	if (0) {
+		acp = pg->text;
+
+		for (active_row = 0; active_row < ROWS; active_row++) {
+			printv("%2d: ", active_row);
+
+			for (active_column = 0; active_column < COLUMNS; acp++, active_column++) {
+				printv("%04x ", acp->unicode);
+			}
+
+			printv("\n");
+
+			acp += EXT_COLUMNS - COLUMNS;
+		}
+	}
 
 	return TRUE;
 }
@@ -1802,7 +2177,7 @@ default_object_invocation(vbi_decoder *vbi, magazine *mag,
 
 		if (!enhance(vbi, mag, ext, pg, vtp, type, trip,
 			     remaining_max_triplets, 0, 0, max_level,
-			     header_only))
+			     header_only, NULL))
 			return FALSE;
 	}
 
@@ -2096,21 +2471,23 @@ vbi_format_vt_page(vbi_decoder *vbi,
 			pg->double_height_lower |= 1 << row;
 		}
 	}
-#if 0
-	if (row < ROWS) {
-		vbi_char ac;
 
-		memset(&ac, 0, sizeof(ac));
+	if (0) {
+		if (row < ROWS) {
+			vbi_char ac;
 
-		ac.foreground	= ext->foreground_clut + WHITE;
-		ac.background	= ext->background_clut + BLACK;
-		ac.opacity	= pg->page_opacity[1];
-		ac.unicode	= 0x0020;
+			memset(&ac, 0, sizeof(ac));
 
-		for (i = row * EXT_COLUMNS; i < ROWS * EXT_COLUMNS; i++)
-			pg->text[i] = ac;
+			ac.foreground	= ext->foreground_clut + VBI_WHITE;
+			ac.background	= ext->background_clut + VBI_BLACK;
+			ac.opacity	= pg->page_opacity[1];
+			ac.unicode	= 0x0020;
+
+			for (i = row * EXT_COLUMNS; i < ROWS * EXT_COLUMNS; i++)
+				pg->text[i] = ac;
+		}
 	}
-#endif
+
 	/* Local enhancement data and objects */
 
 	if (max_level >= VBI_WST_LEVEL_1p5 && display_rows > 0) {
@@ -2128,7 +2505,8 @@ vbi_format_vt_page(vbi_decoder *vbi,
 			printv("enhancement packets %08x\n", vtp->enh_lines);
 			success = enhance(vbi, mag, ext, pg, vtp, LOCAL_ENHANCEMENT_DATA,
 				vtp->data.enh_lop.enh, elements(vtp->data.enh_lop.enh),
-				0, 0, max_level, display_rows == 1);
+				0, 0, max_level, display_rows == 1, NULL);
+							   // here --^
 		} else
 			success = default_object_invocation(vbi, mag, ext, pg, vtp,
 							    max_level, display_rows == 1);
@@ -2164,6 +2542,24 @@ vbi_format_vt_page(vbi_decoder *vbi,
 					flof_navigation_bar(pg, vtp);
 			} else if (vbi->vt.top)
 				top_navigation_bar(vbi, pg, vtp);
+
+//			pdc_method_a(pg, vtp, NULL);
+		}
+	}
+
+	if (0) {
+		vbi_char *acp;
+
+		for (row = ROWS - 1, acp = pg->text + EXT_COLUMNS * row; row < ROWS; row++) {
+			fprintf(stderr, "%2d: ", row);
+
+			for (column = 0; column < COLUMNS; acp++, column++) {
+				fprintf(stderr, "%04x ", acp->unicode);
+			}
+
+			fprintf(stderr, "\n");
+
+			acp += EXT_COLUMNS - COLUMNS;
 		}
 	}
 

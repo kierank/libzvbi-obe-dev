@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.5\n"
-"POT-Creation-Date: 2002-04-18 14:22+0200\n"
+"POT-Creation-Date: 2002-05-22 10:57+0200\n"
 "PO-Revision-Date: 2002-03-31 22:50+0200\n"
 "Last-Translator: Michael H. Schimek <mschimek@users.sourceforge.net>\n"
 "Language-Team: German <de@li.org>\n"
@@ -266,52 +266,52 @@ msgid ""
 msgstr ""
 "Diese Seite als VTX Datei ausgeben, das Format von VideoteXt und vbidecode"
 
-#: src/export.c:400
+#: src/export.c:399
 #, c-format
 msgid "Invalid option string \"%s\"."
 msgstr "Optionen \"%s\" fehlerhaft."
 
-#: src/export.c:489
+#: src/export.c:488
 #, c-format
 msgid "Unknown export module '%s'."
 msgstr "Unbekanntes Ausgabemodul '%s'."
 
-#: src/export.c:499
+#: src/export.c:498
 #, c-format
 msgid "Cannot initialize export module '%s', probably lack of memory."
 msgstr ""
 "Kann Ausgabemodul '%s' nicht initialisieren, vermutlich Speichermangel."
 
-#: src/export.c:935
+#: src/export.c:934
 #, c-format
 msgid "Cannot create file '%s': Error %d, %s."
 msgstr "Kann Datei '%s' nicht erstellen: Fehler %d, %s."
 
-#: src/export.c:1010
+#: src/export.c:1009
 #, c-format
 msgid "Error while writing file '%s'"
 msgstr "Fehler beim Speichern von '%s'"
 
-#: src/export.c:1012
+#: src/export.c:1011
 msgid "Error while writing file"
 msgstr "Fehler beim Speichern der Datei"
 
-#: src/export.c:1025
+#: src/export.c:1024
 #, c-format
 msgid "Export module '%s' has no option '%s'."
 msgstr "Ausgabemodul '%s' hat keine Option '%s'."
 
-#: src/export.c:1070
+#: src/export.c:1069
 #, c-format
 msgid "Invalid argument %s for option %s of export module %s."
 msgstr "Fehlerhaftes Argument %s für Option %s von Ausgabemodul %s."
 
-#: src/export.c:1081
+#: src/export.c:1080
 #, c-format
 msgid "Out of memory in export module '%s'."
 msgstr "Speichermangel in Ausgabemodul '%s'."
 
-#: src/export.c:1111
+#: src/export.c:1110
 msgid "Unknown error."
 msgstr "Unbekannter fehler."
 

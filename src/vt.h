@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vt.h,v 1.1 2002/01/12 16:19:06 mschimek Exp $ */
+/* $Id: vt.h,v 1.2 2002/05/23 03:59:46 mschimek Exp $ */
 
 #ifndef VT_H
 #define VT_H
@@ -44,6 +44,7 @@ typedef struct vbi_decoder vbi_decoder;
  * X/28/3 and X/28/4).
  **/
 typedef enum {
+	PAGE_FUNCTION_EPG = -4,		/* libzvbi private */
 	PAGE_FUNCTION_TRIGGER = -3,	/* libzvbi private */
 	PAGE_FUNCTION_DISCARD = -2,	/* libzvbi private */
 	PAGE_FUNCTION_UNKNOWN = -1,	/* libzvbi private */

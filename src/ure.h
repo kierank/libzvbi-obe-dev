@@ -20,7 +20,7 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $Id: ure.h,v 1.3 2002/03/06 00:54:51 mschimek Exp $ */
+/* $Id: ure.h,v 1.4 2002/05/23 03:59:46 mschimek Exp $ */
 
 #ifndef _h_ure
 #define _h_ure
@@ -29,10 +29,10 @@
 #  include "../config.h"
 #endif
 
-#ifdef HAVE_LIBUNICODE
+#if defined(HAVE_GLIBC21) || defined(HAVE_LIBUNICODE)
 
 #include <stdio.h>
-#include <unicode.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,8 +62,8 @@ extern "C" {
 #define URE_NOTBOL		   0x04
 #define URE_NOTEOL		   0x08
 
-typedef unsigned long ucs4_t;
-typedef unsigned short ucs2_t;
+typedef uint32_t ucs4_t;
+typedef uint16_t ucs2_t;
 
 /*
  * Opaque type for memory used when compiling expressions.
@@ -141,6 +141,6 @@ extern int ure_exec __((ure_dfa_t dfa, int flags,
 }
 #endif
 
-#endif /* HAVE_LIBUNICODE */
+#endif /* HAVE_GLIBC21 || HAVE_LIBUNICODE */
 
 #endif /* _h_ure */

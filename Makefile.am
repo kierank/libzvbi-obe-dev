@@ -2,4 +2,4 @@
 
 EXTRA_DIST = BUGS zvbi.spec.in zvbi.spec autogen.sh depcomp
 
-SUBDIRS = src po test doc intl
+SUBDIRS = src po test doc intl contrib

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.2 2002/04/16 05:49:57 mschimek Exp $ */
+/* $Id: vbi.c,v 1.3 2002/05/23 03:59:46 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -49,6 +49,37 @@
  *  Events
  */
 
+/* Should this be public? */
+static void
+vbi_event_enable(vbi_decoder *vbi, int mask) 
+{
+	int activate;
+
+	activate = mask & ~vbi->event_mask;
+
+	if (activate & VBI_EVENT_TTX_PAGE)
+		vbi_teletext_channel_switched(vbi);
+	if (activate & VBI_EVENT_CAPTION)
+		vbi_caption_channel_switched(vbi);
+	if (activate & VBI_EVENT_NETWORK)
+		memset(&vbi->network, 0, sizeof(vbi->network));
+	if (activate & VBI_EVENT_TRIGGER)
+		vbi_trigger_flush(vbi);
+	if (activate & (VBI_EVENT_ASPECT | VBI_EVENT_PROG_INFO)) {
+		if (!(vbi->event_mask & (VBI_EVENT_ASPECT | VBI_EVENT_PROG_INFO))) {
+			vbi_reset_prog_info(&vbi->prog_info[0]);
+			vbi_reset_prog_info(&vbi->prog_info[1]);
+
+			vbi->prog_info[1].future = TRUE;
+			vbi->prog_info[0].future = FALSE;
+
+			vbi->aspect_source = 0;
+		}
+	}
+
+	vbi->event_mask = mask;
+}
+
 /**
  * vbi_event_handler_add:
  * @vbi: Initialized vbi decoding context.
@@ -56,21 +87,10 @@
  * @handler: Event handler function.
  * @user_data: Pointer passed to the handler.
  * 
- * Registers a new event handler. @event_mask can be any 'or' of VBI_EVENT_*,
- * -1 for all events and 0 for none. When the @handler is already registered,
- * its event_mask will be changed. Any number of handlers can be registered,
- * also different handlers for the same event which will be called in
- * registration order.
- * 
- * Apart of adding handlers this function also enables and disables decoding
- * of data services depending on the presence of at least one handler for the
- * respective data. A VBI_EVENT_TTX_PAGE handler for example enables Teletext
- * decoding.
- * 
- * This function can be safely called at any time, even from a handler.
+ * Deprecated, use vbi_event_handler_register() in new code.
  * 
  * Return value:
- * FALSE (0) on failure, practically that means lack of memory.
+ * FALSE on failure.
  **/
 vbi_bool
 vbi_event_handler_add(vbi_decoder *vbi, int event_mask,
@@ -78,7 +98,6 @@ vbi_event_handler_add(vbi_decoder *vbi, int event_mask,
 {
 	struct event_handler *eh, **ehp;
 	int found = 0, mask = 0, was_locked;
-	int activate;
 
 	/* If was_locked we're a handler, no recursion. */
 	was_locked = pthread_mutex_trylock(&vbi->event_mutex);
@@ -119,29 +138,7 @@ vbi_event_handler_add(vbi_decoder *vbi, int event_mask,
 		*ehp = eh;
 	}
 
-	activate = mask & ~vbi->event_mask;
-
-	if (activate & VBI_EVENT_TTX_PAGE)
-		vbi_teletext_channel_switched(vbi);
-	if (activate & VBI_EVENT_CAPTION)
-		vbi_caption_channel_switched(vbi);
-	if (activate & VBI_EVENT_NETWORK)
-		memset(&vbi->network, 0, sizeof(vbi->network));
-	if (activate & VBI_EVENT_TRIGGER)
-		vbi_trigger_flush(vbi);
-	if (activate & (VBI_EVENT_ASPECT | VBI_EVENT_PROG_INFO)) {
-		if (!(vbi->event_mask & (VBI_EVENT_ASPECT | VBI_EVENT_PROG_INFO))) {
-			vbi_reset_prog_info(&vbi->prog_info[0]);
-			vbi_reset_prog_info(&vbi->prog_info[1]);
-
-			vbi->prog_info[1].future = TRUE;
-			vbi->prog_info[0].future = FALSE;
-
-			vbi->aspect_source = 0;
-		}
-	}
-
-	vbi->event_mask = mask;
+	vbi_event_enable(vbi, mask);
 
 	if (!was_locked)
 		pthread_mutex_unlock(&vbi->event_mutex);
@@ -153,6 +150,98 @@ vbi_event_handler_add(vbi_decoder *vbi, int event_mask,
  * vbi_event_handler_remove:
  * @vbi: Initialized vbi decoding context.
  * @handler: Event handler function.
+ * 
+ * Deprecated, use vbi_event_handler_register() in new code.
+ **/
+void
+vbi_event_handler_remove(vbi_decoder *vbi, vbi_event_handler handler)
+{
+	vbi_event_handler_add(vbi, 0, handler, NULL);
+} 
+
+/**
+ * vbi_event_handler_register:
+ * @vbi: Initialized vbi decoding context.
+ * @event_mask: Events the handler is waiting for.
+ * @handler: Event handler function.
+ * @user_data: Pointer passed to the handler.
+ * 
+ * Registers a new event handler. @event_mask can be any 'or' of VBI_EVENT_*,
+ * -1 for all events and 0 for none. When the @handler with @user_data is
+ * already registered, its event_mask will be changed. Any number of handlers
+ * can be registered, also different handlers for the same event which will be
+ * called in registration order.
+ * 
+ * Apart of adding handlers this function also enables and disables decoding
+ * of data services depending on the presence of at least one handler for the
+ * respective data. A VBI_EVENT_TTX_PAGE handler for example enables Teletext
+ * decoding.
+ * 
+ * This function can be safely called at any time, even from a handler.
+ * 
+ * Return value:
+ * FALSE on failure, practically that means lack of memory.
+ **/
+vbi_bool
+vbi_event_handler_register(vbi_decoder *vbi, int event_mask,
+		           vbi_event_handler handler, void *user_data) 
+{
+	struct event_handler *eh, **ehp;
+	int found = 0, mask = 0, was_locked;
+
+	/* If was_locked we're a handler, no recursion. */
+	was_locked = pthread_mutex_trylock(&vbi->event_mutex);
+
+	ehp = &vbi->handlers;
+
+	while ((eh = *ehp)) {
+		if (eh->handler == handler
+		    && eh->user_data == user_data) {
+			found = 1;
+
+			if (!event_mask) {
+				*ehp = eh->next;
+
+				if (vbi->next_handler == eh)
+					vbi->next_handler = eh->next;
+						/* in event send loop */
+				free(eh);
+
+				continue;
+			} else
+				eh->event_mask = event_mask;
+		}
+
+		mask |= eh->event_mask;	
+		ehp = &eh->next;
+	}
+
+	if (!found && event_mask) {
+		if (!(eh = calloc(1, sizeof(*eh))))
+			return FALSE;
+
+		eh->event_mask = event_mask;
+		mask |= event_mask;
+
+		eh->handler = handler;
+		eh->user_data = user_data;
+
+		*ehp = eh;
+	}
+
+	vbi_event_enable(vbi, mask);
+
+	if (!was_locked)
+		pthread_mutex_unlock(&vbi->event_mutex);
+
+	return TRUE;
+}
+
+/**
+ * vbi_event_handler_unregister:
+ * @vbi: Initialized vbi decoding context.
+ * @handler: Event handler function.
+ * @user_data: Pointer passed to the handler.
  * 
  * Unregisters an event handler.
  *
@@ -166,10 +255,11 @@ vbi_event_handler_add(vbi_decoder *vbi, int event_mask,
  * in question has been actually registered.
  **/
 void
-vbi_event_handler_remove(vbi_decoder *vbi, vbi_event_handler handler)
+vbi_event_handler_unregister(vbi_decoder *vbi,
+			     vbi_event_handler handler, void *user_data)
 {
-	vbi_event_handler_add(vbi, 0, handler, NULL);
-} 
+	vbi_event_handler_register(vbi, 0, handler, user_data);
+}
 
 /**
  * vbi_send_event:

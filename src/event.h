@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: event.h,v 1.2 2002/01/15 03:20:25 mschimek Exp $ */
+/* $Id: event.h,v 1.3 2002/05/23 03:59:46 mschimek Exp $ */
 
 #ifndef EVENT_H
 #define EVENT_H
@@ -34,6 +34,8 @@ typedef struct vbi_decoder vbi_decoder;
 #endif
 
 /* Public */
+
+#include <stdint.h>
 
 /*
  *  Unique network id (a libzvbi thing),
@@ -448,6 +450,14 @@ typedef struct vbi_program_info {
 
 extern void		vbi_reset_prog_info(vbi_program_info *pi);
 
+typedef struct pfc_block {
+	vbi_pgno		pgno;
+	int			stream;
+	int			application_id;
+	int			block_size;
+	uint8_t			block[2048];
+} pfc_block;
+
 /*
  *  Event types
  */
@@ -585,11 +595,20 @@ typedef struct vbi_event {
 
 typedef void (* vbi_event_handler)(vbi_event *event, void *user_data);
 
+/* deprecated */
 extern vbi_bool		vbi_event_handler_add(vbi_decoder *vbi, int event_mask,
 					      vbi_event_handler handler,
 					      void *user_data);
+/* deprecated */
 extern void		vbi_event_handler_remove(vbi_decoder *vbi,
 						 vbi_event_handler handler);
+
+extern vbi_bool		vbi_event_handler_register(vbi_decoder *vbi, int event_mask,
+						   vbi_event_handler handler,
+						   void *user_data);
+extern void		vbi_event_handler_unregister(vbi_decoder *vbi,
+						     vbi_event_handler handler,
+						     void *user_data);
 
 /* Private */
 

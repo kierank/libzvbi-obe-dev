@@ -136,6 +136,8 @@ VBI_EVENT_ASPECT
 VBI_EVENT_PROG_INFO
 vbi_event
 vbi_event_handler
+vbi_event_handler_register
+vbi_event_handler_unregister
 vbi_event_handler_add
 vbi_event_handler_remove
 </SUBSECTION>
