@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-v4l2.c,v 1.1 2002/01/12 16:19:10 mschimek Exp $ */
+static char rcsid[] = "$Id: io-v4l2.c,v 1.2 2002/01/15 03:20:25 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -318,7 +318,8 @@ vbi_capture_v4l2_new(char *dev_name, int buffers,
 
 	assert(services && *services != 0);
 
-	printv("Try to open v4l2 vbi device\n");
+	printv("Try to open v4l2 vbi device, libzvbi interface rev.\n"
+	       "%s", rcsid);
 
 	if (!(v = calloc(1, sizeof(*v)))) {
 		vbi_asprintf(errorstr, _("Virtual memory exhausted."));
@@ -400,7 +401,7 @@ vbi_capture_v4l2_new(char *dev_name, int buffers,
 		printv("Attempt to set vbi capture parameters\n");
 
 		*services = vbi_raw_decoder_parameters(&v->dec, *services,
-						       vstd.framelines, &max_rate);
+						       v->dec.scanning, &max_rate);
 
 		if (*services == 0) {
 			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of the "
@@ -458,7 +459,7 @@ vbi_capture_v4l2_new(char *dev_name, int buffers,
 			default:
 					vbi_asprintf(errorstr, _("Could not set the vbi capture parameters "
 							       "for %s (%s): %d, %s."),
-						     dev_name, errno, strerror(errno));
+						     dev_name, vcap.name, errno, strerror(errno));
 					guess = _("Possibly a driver bug.");
 					goto io_error;
 				}
@@ -500,10 +501,6 @@ vbi_capture_v4l2_new(char *dev_name, int buffers,
 		/* Nyquist */
 
 		if (v->dec.sampling_rate < max_rate * 3 / 2) {
-			vbi_asprintf(errorstr, _("Cannot capture the requested data services with "
-					       "%s (%s), the sampling frequency %.2f MHz is too low."),
-				     dev_name, vcap.name, v->dec.sampling_rate / 1e6);
-			goto failure;
 		}
 
 		printv("Nyquist check passed\n");
@@ -686,10 +683,7 @@ mmap_failure:
 
 io_error:
 failure:
-	if (v->fd != -1)
-		close(v->fd);
-
-	free(v);
+	v4l2_delete(&v->capture);
 
 	return NULL;
 }

@@ -10,7 +10,7 @@ INCLUDES += $(X_CFLAGS) $(UNICODE_CFLAGS)
 
 libzvbi_la_SOURCES = \
 	decoder.c decoder.h sliced.h \
-	io.c io.h io-v4l2.c videodev.h videodev2.h \
+	io.c io.h io-v4l2.c io-v4l.c videodev.h videodev2.h \
 	vbi.c vbi.h event.h \
 	packet.c teletext.c vt.h \
 	caption.c cc.h \

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: unicode.c,v 1.1 2002/01/12 16:19:29 mschimek Exp $ */
+/* $Id: unicode.c,v 1.2 2002/01/15 03:20:25 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,10 +26,11 @@
 
 #include <libzvbi.h>
 
-static vbi_char ac;
-static int cx, cy;
+extern unsigned int	vbi_teletext_unicode(int, int, int);
+extern unsigned int	vbi_teletext_composed_unicode(unsigned int a, unsigned int c);
+extern unsigned int	vbi_caption_unicode(unsigned int c);
 
-static int
+static void
 putwchar(int c)
 {
 	if (c < 0x80) {

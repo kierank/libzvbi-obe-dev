@@ -1,3 +1,16 @@
+2002-01-14	Restored V4L interface, more test stuff, fixes <mschimek@users.sf.net>
+
+	* src/io_v4l.c: Added, *untested*.
+	* test/osc: Try v4l2, then v4l.
+	* po: Updated.
+	* src/hamm.c: Corrected char types (use char only for
+	  text, these are ints).
+	* src/export.c: Bugfix in option_string(), didn't
+	  accept '-' and '_' in option keywords.
+	* test/capture.c: Added, from old vbi_decoder().
+	* test/sim.c: Ditto, plus new Teletext simulation.
+	* test: Updated, misc small improvements.
+
 2002-01-13	Fixes <mschimek@users.sf.net>
 
 	* test/explist.h: Option type check.

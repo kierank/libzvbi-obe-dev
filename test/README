@@ -23,15 +23,64 @@ explist
 
 export
 	Exports a Teletext page from a TTX sample stream on stdin, eg.
-	export "text;charset=ISO-8859-1,color=1" 100 <samples/s1-swr >foo.txt
+	export "text;charset=ISO-8859-1,control=1" 100 <samples/s1-swr >foo.txt
+	capture --sim --pal --sliced | export "png" 100 >foo.png
 	Purpose: test teletext decoder and export modules.
 
 caption
 	Closed Caption test displaying a hello world message or the
         CC sample stream on stdin, for debugging the CC decoder.
-	Note this works only on a X11 5:6:5 LE display. 
+	Note this works only on a X11 5:6:5 LE display. The keys
+	F1-F8 switch between the Closed Caption channels 1-4
+	and Text channels 1-4.
 
 osc
 	Raw vbi data visualization. Purpose: test vbi device interface,
-	raw vbi decoder. Works only on X11 5:6:5 LE display.
-	-d/--device name (/dev/vbi), -v/--verbose.
+	raw vbi decoder. Works only on X11 5:6:5 LE display. Options:
+	-d | --device name
+			Default is /dev/vbi.
+	--sim		Create artificial raw vbi data instead of
+			opening a vbi device, to test decoding in
+			absence of a real source.
+	-v | --verbose	Trace device access on stderr, may reveal
+			why opening a device failed.
+	-p | --pal, 
+	-n | --ntsc	Video standard hint for simulation and v4l.
+			When not given libzvbi may have to guess
+			which can fail. Default is PAL.
+
+capture
+	Capture sliced vbi data. Purpose: test vbi device interface,
+	raw vbi decoder. Options:
+	-d | --device name
+			Default is /dev/vbi.
+	--sim		Create artificial raw vbi data instead of
+			opening a vbi device, to test decoding in
+			absence of a real source.
+	-v | --verbose	Trace device access on stderr, may reveal
+			why opening a device failed.
+	-p | --pal, 
+	-n | --ntsc	Video standard hint for simulation and v4l.
+			When not given libzvbi may have to guess
+			which can fail. Default is PAL.
+	--read		Use libzvbi capture read interface (default).
+	--pull		Use libzvbi capture pull interface, to test
+			if it works.
+
+	Options to write sliced vbi data _as_ASCII_ to standard output:
+
+	--dump-ttx	Teletext data (PAL).
+	--dump-cc	Closed Caption data, excluding XDS (PAL & NTSC).
+	--dump-xds	eXtended Data Service data (station name etc; NTSC).
+	--dump-wss	Wide Screen Signalling (PAL & NTSC-Japan).
+	--dump-vps	Video Programming System (PAL in DE/AT/CH).
+	--dump-sliced	Everything.
+
+	Options to write sliced vbi data _in_binary_format_ to standard
+	output. This can be piped
+		"./capture <options> --sliced | ./export <options>" or
+		"./capture <options> --sliced | ./caption".
+	--sliced	Write sliced vbi data.
+
+The ultimative test is http://zapping.sourceforge.net, the TV viewer this
+library was written for.

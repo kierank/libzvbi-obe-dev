@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.1 2002/01/12 16:19:32 mschimek Exp $ */
+/* $Id: export.c,v 1.2 2002/01/15 03:20:25 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,6 +48,8 @@ handler(vbi_event *ev, void *unused)
 		return;
 
 	fprintf(stderr, "\nSaving... ");
+	if (isatty(STDERR_FILENO))
+		fputc('\n', stderr);
 	fflush(stderr);
 
 	/* Fetching & exporting here is a bad idea,
@@ -85,7 +87,7 @@ handler(vbi_event *ev, void *unused)
 		quit = TRUE;
 }
 
-void
+static void
 stream(void)
 {
 	char buf[256];
@@ -106,14 +108,37 @@ stream(void)
 			index = fgetc(stdin);
 			s->line = (fgetc(stdin) + 256 * fgetc(stdin)) & 0xFFF;
 
-			if (index == 0) {
+			if (index < 0)
+				goto abort;
+
+			switch (index) {
+			case 0:
 				s->id = VBI_SLICED_TELETEXT_B;
 				fread(s->data, 1, 42, stdin);
-			} else if (index == 7) {
-				s->id = VBI_SLICED_CAPTION_525;
+				break;
+			case 1:
+				s->id = VBI_SLICED_CAPTION_625; 
 				fread(s->data, 1, 2, stdin);
-			} else {
-				fprintf(stderr, "\nOops! Unknown data in sample file\n");
+				break; 
+			case 2:
+				s->id = VBI_SLICED_VPS; 
+				fread(s->data, 1, 13, stdin);
+				break;
+			case 3:
+				s->id = VBI_SLICED_WSS_625; 
+				fread(s->data, 1, 2, stdin);
+				break;
+			case 4:
+				s->id = VBI_SLICED_WSS_CPR1204; 
+				fread(s->data, 1, 3, stdin);
+				break;
+			case 7:
+				s->id = VBI_SLICED_CAPTION_525; 
+				fread(s->data, 1, 2, stdin);
+				break;
+			default:
+				fprintf(stderr, "\nOops! Unknown data %d "
+					"in sample file\n", index);
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -137,7 +162,6 @@ main(int argc, char **argv)
 {
 	char *module, *t;
 	vbi_export_info *xi;
-	int i;
 
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s module[;options] pgno <vbi data >file\n"

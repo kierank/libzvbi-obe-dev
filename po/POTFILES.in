@@ -6,4 +6,5 @@ src/exp-txt.c
 src/exp-vtx.c
 src/export.c
 src/io-v4l2.c
+src/io-v4l.c
 src/io.c

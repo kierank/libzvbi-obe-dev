@@ -18,10 +18,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.1 2002/01/12 16:19:29 mschimek Exp $ */
+/* $Id: caption.c,v 1.2 2002/01/15 03:20:25 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include <unistd.h>
 
@@ -131,11 +132,10 @@ draw_row(ushort *canvas, vbi_page *pg, int row)
 	}
 }
 
-void
+static void
 bump(int n, vbi_bool draw)
 {
 	ushort *canvas = ximgdata + 45 * DISP_WIDTH;
-	int i;
 
 	if (shift < n)
 		n = shift;
@@ -157,8 +157,7 @@ bump(int n, vbi_bool draw)
 static void
 render(vbi_page *pg, int row)
 {
-	ushort *canvas = ximgdata + 48 + 45 * DISP_WIDTH;
-	int i;
+	/* ushort *canvas = ximgdata + 48 + 45 * DISP_WIDTH; */
 
 	if (shift > 0) {
 		bump(shift, FALSE);
@@ -174,8 +173,6 @@ render(vbi_page *pg, int row)
 static void
 clear(vbi_page *pg)
 {
-	int i;
-
 	draw_video(0, 0, DISP_WIDTH, DISP_HEIGHT);
 
 	XPutImage(display, window, gc, ximage,
@@ -387,7 +384,7 @@ init_window(int ac, char **av)
  *  Feed caption from a sample stream
  */
 
-void
+static void
 sample_stream(void)
 {
 	char buf[256];
@@ -405,18 +402,56 @@ sample_stream(void)
 
 		for (s = sliced, i = 0; i < items; s++, i++) {
 			index = fgetc(stdin);
-
-			s->id = VBI_SLICED_CAPTION_525;
 			s->line = (fgetc(stdin) + 256 * fgetc(stdin)) & 0xFFF;
-			fread(s->data, 1, 2, stdin);
 
-			printf(" %3d %02x %02x %c%c\n", s->line,
-			       s->data[0] & 0x7F, s->data[1] & 0x7F,
-			       printable(s->data[0]), printable(s->data[1]));
+			if (index < 0)
+				goto abort;
+
+			switch (index) {
+			case 0:
+				s->id = VBI_SLICED_TELETEXT_B;
+				fread(s->data, 1, 42, stdin);
+				break;
+			case 1:
+				s->id = VBI_SLICED_CAPTION_625; 
+				fread(s->data, 1, 2, stdin);
+				break; 
+			case 2:
+				s->id = VBI_SLICED_VPS; 
+				fread(s->data, 1, 13, stdin);
+				break;
+			case 3:
+				s->id = VBI_SLICED_WSS_625; 
+				fread(s->data, 1, 2, stdin);
+				break;
+			case 4:
+				s->id = VBI_SLICED_WSS_CPR1204; 
+				fread(s->data, 1, 3, stdin);
+				break;
+			case 7:
+				s->id = VBI_SLICED_CAPTION_525; 
+				fread(s->data, 1, 2, stdin);
+				break;
+			default:
+				fprintf(stderr, "\nOops! Unknown data %d "
+					"in sample file\n", index);
+				exit(EXIT_FAILURE);
+			}
+
+			if (index == 1 || index == 7) {
+				printf(" %3d %02x %02x %c%c\n", s->line,
+				       s->data[0] & 0x7F, s->data[1] & 0x7F,
+				       printable(s->data[0]), printable(s->data[1]));
+			} else {
+				printf(" %3d %d ignored\n", s->line, index);
+				s--;
+			}
 		}
 
 		if (feof(stdin) || ferror(stdin))
-			break;
+			goto abort;
+
+		items = s - sliced;
 
 		vbi_decode(vbi, sliced, items, time);
 
@@ -424,6 +459,8 @@ sample_stream(void)
 
 		time += dt;
 	}
+abort:
+	return;
 }
 
 /*
@@ -656,7 +693,7 @@ main(int argc, char **argv)
 	for (;;)
 		xevent(33333);
 
-	vbi_close(vbi);
+	vbi_decoder_delete(vbi);
 
 	exit(EXIT_SUCCESS);
 }

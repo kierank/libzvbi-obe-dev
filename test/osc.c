@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.1 2002/01/12 16:19:32 mschimek Exp $ */
+/* $Id: osc.c,v 1.2 2002/01/15 03:20:25 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +41,8 @@ vbi_sliced *		sliced;
 int			slines;
 vbi_bool		quit;
 
+int			do_sim;
+
 Display *		display;
 int			screen;
 Colormap		cmap;
@@ -55,6 +57,8 @@ int			palette[256];
 int			depth;
 int			draw_row, draw_offset;
 int			draw_count = -1;
+
+#include "sim.c"
 
 static void
 draw(unsigned char *raw)
@@ -330,7 +334,7 @@ init_window(int ac, char **av, char *dev_name)
 	XSync(display, False);
 }
 
-void
+static void
 mainloop(void)
 {
 	double timestamp;
@@ -342,8 +346,17 @@ mainloop(void)
 	assert((sliced = malloc(sizeof(vbi_sliced) * src_h)));
 
 	for (quit = FALSE; !quit;) {
-		switch (vbi_capture_read(cap, raw1, sliced,
-					 &slines, &timestamp, &tv)) {
+		int r;
+
+		if (do_sim) {
+			read_sim(raw1, sliced, &slines, &timestamp);
+			r = 1;
+		} else {
+			r = vbi_capture_read(cap, raw1, sliced,
+					     &slines, &timestamp, &tv);
+		}
+
+		switch (r) {
 		case -1:
 			fprintf(stderr, "VBI read error: %d, %s\n",
 				errno, strerror(errno));
@@ -367,8 +380,11 @@ mainloop(void)
 
 static const struct option
 long_options[] = {
-	{ "device", required_argument, NULL, 'd' },
-	{ "verbose", no_argument, NULL, 'v' },
+	{ "device",	required_argument,	NULL,		'd' },
+	{ "ntsc",	no_argument,		NULL,		'n' },
+	{ "pal",	no_argument,		NULL,		'p' },
+	{ "sim",	no_argument,		&do_sim,	TRUE },
+	{ "verbose",	no_argument,		NULL,		'v' },
 };
 
 int
@@ -377,19 +393,26 @@ main(int argc, char **argv)
 	char *dev_name = "/dev/vbi";
 	char *errstr;
 	unsigned int services;
+	int scanning = 625;
 	vbi_bool verbose = FALSE;
 	int c, index;
 
-	while ((c = getopt_long(argc, argv, "d:v", long_options, &index)) != -1)
+	while ((c = getopt_long(argc, argv, "d:npv", long_options, &index)) != -1)
 		switch (c) {
+		case 0: /* set flag */
+			break;
 		case 'd':
 			dev_name = optarg;
 			break;
-
+		case 'n':
+			scanning = 525;
+			break;
+		case 'p':
+			scanning = 625;
+			break;
 		case 'v':
 			verbose ^= TRUE;
 			break;
-
 		default:
 			fprintf(stderr, "Unknown option\n");
 			exit(EXIT_FAILURE);
@@ -397,18 +420,39 @@ main(int argc, char **argv)
 
 	services = VBI_SLICED_VBI_525 | VBI_SLICED_VBI_625
 		| VBI_SLICED_TELETEXT_B | VBI_SLICED_CAPTION_525
-		| VBI_SLICED_CAPTION_625 | VBI_SLICED_VPS;
+		| VBI_SLICED_CAPTION_625 | VBI_SLICED_VPS
+		| VBI_SLICED_WSS_625 | VBI_SLICED_WSS_CPR1204;
 
-	cap = vbi_capture_v4l2_new(dev_name, /* buffers */ 5,
-		&services, /* strict */ -1, &errstr, /* trace */ 1);
+	if (do_sim) {
+		par = init_sim(scanning, services);
+	} else {
+		cap = vbi_capture_v4l2_new(dev_name, /* buffers */ 5,
+			&services, /* strict */ -1, &errstr, /* trace */ verbose);
 
-	if (!cap) {
-		fprintf(stderr, "Cannot capture vbi data:\n%s\n", errstr);
-		exit(EXIT_FAILURE);
+		if (!cap) {
+			fprintf(stderr, "Cannot capture vbi data "
+				"with v4l2 interface:\n%s\n", errstr);
+
+			if (errstr)
+				free(errstr);
+
+			cap = vbi_capture_v4l_new(dev_name, scanning,
+				&services, /* strict */ -1, &errstr,
+				/* trace */ verbose);
+
+			if (!cap) {
+				fprintf(stderr, "Cannot capture vbi data "
+					"with v4l interface:\n%s\n", errstr);
+		
+				exit(EXIT_FAILURE);
+			}
+		}
+
+		assert((par = vbi_capture_parameters(cap)));
 	}
 
-	assert((par = vbi_capture_parameters(cap)));
 	assert(par->sampling_format == VBI_PIXFMT_YUV420);
+
 	src_w = par->bytes_per_line / 1;
 	src_h = par->count[0] + par->count[1];
 
@@ -416,7 +460,8 @@ main(int argc, char **argv)
 
 	mainloop();
 
-	vbi_capture_delete(cap);
+	if (!do_sim)
+		vbi_capture_delete(cap);
 
 	exit(EXIT_SUCCESS);	
 }

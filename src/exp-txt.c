@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.1 2002/01/12 16:18:38 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.2 2002/01/15 03:20:25 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -578,7 +578,7 @@ export(vbi_export *e, FILE *fp, vbi_page *pg)
 
 		if (row >= pg->rows) {
 			if (text->term > 0)
-				fprintf(fp, "\n\e[m"); /* reset */
+				fprintf(fp, "\e[m\n"); /* reset */
 			else
 				fputc('\n', fp);
 			break;

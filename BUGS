@@ -1,2 +1,4 @@
 * TTX search broken.
-
+* "./osc --sim --pal" caption not recognized
+* ./capture --sim --sliced | ./export "text,control=1" 100 
+  colors are wrong. HTML and PNG works.

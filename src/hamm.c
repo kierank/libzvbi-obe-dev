@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: hamm.c,v 1.1 2002/01/12 16:18:44 mschimek Exp $ */
+/* $Id: hamm.c,v 1.2 2002/01/15 03:20:25 mschimek Exp $ */
 
 #include "hamm.h"
 
@@ -39,7 +39,7 @@
  *  number of single bit errors in b8-b11 and the number
  *  of double errors in b12-b15.
  */
-static const unsigned short
+static const uint16_t
 vbi_hammtab[256] =
 {
     0x0101, 0x100f, 0x0001, 0x0101, 0x100f, 0x0100, 0x0101, 0x100f,
@@ -84,7 +84,7 @@ vbi_hammtab[256] =
  *  The idea: you ignore single bit errors and get a negative
  *  result (which can be ORed) to detect incorrectable errors.
  */
-const char
+const int8_t
 vbi_hamm8val[256] __attribute__ ((aligned(32))) = {
 	0x01,   -1, 0x01, 0x01,   -1, 0x00, 0x01,   -1,
 	  -1, 0x02, 0x01,   -1, 0x0a,   -1,   -1, 0x07,
@@ -128,7 +128,7 @@ vbi_hamm8val[256] __attribute__ ((aligned(32))) = {
  *  This information is contained in hamm24par bit 5
  *  simple parity table (sum of 1 bits modulo 2)
  */
-static const char
+static const int8_t
 vbi_odd_parity[256] =
 {
     0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
@@ -159,7 +159,7 @@ vbi_odd_parity[256] =
  *
  *  Thanks to R. Gancarz for this fine table *g*
  */
-const char
+const int8_t
 vbi_hamm24par[3][256] __attribute__ ((aligned(32))) = {
     {
         /* Parities of first byte */
@@ -223,7 +223,7 @@ vbi_hamm24par[3][256] __attribute__ ((aligned(32))) = {
  *
  *  Table to extract the lower 4 bit from hamm24/18 encoded bytes
  */
-static const char
+static const int8_t
 vbi_hamm24val[256] __attribute__ ((aligned(32))) = {
       0,  0,  0,  0,  1,  1,  1,  1,  0,  0,  0,  0,  1,  1,  1,  1,
       2,  2,  2,  2,  3,  3,  3,  3,  2,  2,  2,  2,  3,  3,  3,  3,
@@ -252,7 +252,7 @@ vbi_hamm24val[256] __attribute__ ((aligned(32))) = {
  *  results returned by hamm24.
  *  (0 = no error, 0x0100 = single bit error, 0x1000 = double error)
  */
-static const short
+static const uint16_t
 vbi_hamm24err[64] =
 {
     0x0000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000,
@@ -268,7 +268,7 @@ vbi_hamm24err[64] =
 
 #endif
 
-static const char
+static const int8_t
 vbi_hamm24err[64] __attribute__ ((aligned(32))) = {
      0, -1, -1, -1,  -1, -1, -1, -1,  -1, -1, -1, -1,  -1, -1, -1, -1,
     -1, -1, -1, -1,  -1, -1, -1, -1,  -1, -1, -1, -1,  -1, -1, -1, -1,
@@ -282,7 +282,7 @@ vbi_hamm24err[64] __attribute__ ((aligned(32))) = {
  *  Mapping from parity checks made by table hamm24par to faulty bit
  *  in the decoded 18 bit word.
  */
-static const int
+static const int32_t
 vbi_hamm24cor[64] __attribute__ ((aligned(32))) = {
     0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000,
     0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000,
@@ -294,7 +294,7 @@ vbi_hamm24cor[64] __attribute__ ((aligned(32))) = {
     0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000,
 };
 
-const unsigned char
+const uint8_t
 vbi_bit_reverse[256] __attribute__ ((aligned(32))) = {
 	0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,	
 	0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
