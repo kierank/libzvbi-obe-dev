@@ -1,4 +1,4 @@
-# English translations for ZVBI package.
+# English translations for PACKAGE package.
 # This file is put in the public domain.
 # Automatically generated, 2002.
 #
@@ -29,9 +29,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ZVBI 0.2\n"
-"POT-Creation-Date: 2002-06-17 03:01+0200\n"
-"PO-Revision-Date: 2002-06-17 03:01+0200\n"
+"Project-Id-Version: zvbi 0.2.1\n"
+"POT-Creation-Date: 2002-06-18 07:37+0200\n"
+"PO-Revision-Date: 2002-06-18 07:37+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
