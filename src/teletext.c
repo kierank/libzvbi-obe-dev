@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.17 2004/12/13 07:17:10 mschimek Exp $ */
+/* $Id: teletext.c,v 1.18 2005/01/15 10:23:05 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1198,7 +1198,7 @@ enhance(vbi_decoder *vbi, vt_magazine *mag, vt_extension *ext,
 	struct pex26 *pt, ptmp;
 	int pdc_hr;
 
-	static void
+	void
 	flush(int column)
 	{
 		int row = inv_row + active_row;
@@ -1358,7 +1358,7 @@ enhance(vbi_decoder *vbi, vt_magazine *mag, vt_extension *ext,
 		active_column = column;
 	}
 
-	static void
+	void
 	flush_row(void)
 	{
 		if (type == OBJ_TYPE_PASSIVE || type == OBJ_TYPE_ADAPTIVE)

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.16 2004/10/14 07:55:18 mschimek Exp $ */
+/* $Id: packet.c,v 1.17 2005/01/15 10:23:37 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1839,7 +1839,7 @@ parse_28_29(vbi_decoder *vbi, uint8_t *p,
 	vt_extension *ext;
 	int i, j, err = 0;
 
-	static int
+	int
 	bits(int count)
 	{
 		int r, n;
