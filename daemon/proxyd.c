@@ -37,6 +37,9 @@
  *
  *
  *  $Log: proxyd.c,v $
+ *  Revision 1.14  2005/01/20 01:39:15  mschimek
+ *  gcc 4.0 char pointer signedness warnings.
+ *
  *  Revision 1.13  2004/12/30 02:26:02  mschimek
  *  printf ptrdiff_t fixes.
  *
@@ -53,7 +56,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxyd.c,v 1.13 2004/12/30 02:26:02 mschimek Exp $";
+static const char rcsid[] = "$Id: proxyd.c,v 1.14 2005/01/20 01:39:15 mschimek Exp $";
 
 #include "config.h"
 
@@ -2023,7 +2026,7 @@ static vbi_bool vbi_proxyd_take_message( PROXY_CLNT *req, VBIPROXY_MSG * pMsg )
                { 
                   /* open & service initialization succeeded -> reply with confirm */
                   vbi_proxy_msg_fill_magics(&req->msg_buf.body.connect_cnf.magics);
-                  strncpy(req->msg_buf.body.connect_cnf.dev_vbi_name,
+                  strncpy((char *) req->msg_buf.body.connect_cnf.dev_vbi_name,
                           proxy.dev[req->dev_idx].p_dev_name, VBIPROXY_DEV_NAME_MAX_LENGTH);
                   req->msg_buf.body.connect_cnf.dev_vbi_name[VBIPROXY_DEV_NAME_MAX_LENGTH - 1] = 0;
                   req->msg_buf.body.connect_cnf.pid = getpid();
@@ -2064,7 +2067,7 @@ static vbi_bool vbi_proxyd_take_message( PROXY_CLNT *req, VBIPROXY_MSG * pMsg )
             else
             {  /* client uses incompatible protocol version */
                vbi_proxy_msg_fill_magics(&req->msg_buf.body.connect_rej.magics);
-               strncpy(req->msg_buf.body.connect_rej.errorstr,
+               strncpy((char *) req->msg_buf.body.connect_rej.errorstr,
                        "Incompatible proxy protocol version", VBIPROXY_ERROR_STR_MAX_LENGTH);
                req->msg_buf.body.connect_rej.errorstr[VBIPROXY_ERROR_STR_MAX_LENGTH - 1] = 0;
                vbi_proxy_msg_write(&req->io, MSG_TYPE_CONNECT_REJ,

@@ -315,9 +315,9 @@ int ioctl(int fd, ioctl_request_t request, ...)
          {
             struct v4l2_capability *p_cap = argp;
             memset(p_cap, 0, sizeof(p_cap[0]));
-            strcpy(p_cap->driver, "VBI Proxy");
-            strcpy(p_cap->card, "unknown");
-            strcpy(p_cap->bus_info, "");
+            strcpy((char *) p_cap->driver, "VBI Proxy");
+            strcpy((char *) p_cap->card, "unknown");
+            strcpy((char *) p_cap->bus_info, "");
             p_cap->version = VBIPROXY_VERSION;
             p_cap->capabilities = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE;
             return 0;

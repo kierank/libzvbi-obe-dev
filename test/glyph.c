@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: glyph.c,v 1.4 2004/10/25 16:56:30 mschimek Exp $ */
+/* $Id: glyph.c,v 1.5 2005/01/20 01:40:48 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -79,13 +79,13 @@ putwchar(int c)
 }
 
 static void
-putwstr(unsigned char *s)
+putwstr(const char *s)
 {
 	for (; *s; s++)
 		putwchar(*s);
 }
 
-static unsigned char
+static const char
 national[] = {
 	0x23, 0x24, 0x40, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F,
 	0x60, 0x7B, 0x7C, 0x7D, 0x7E
@@ -109,7 +109,7 @@ store(int s)
 }
 
 static void
-print_set(char *name, int s)
+print_set(const char *name, int s)
 {
 	int i, j;
 

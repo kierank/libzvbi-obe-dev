@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.16 2005/01/19 04:23:52 mschimek Exp $ */
+/* $Id: caption.c,v 1.17 2005/01/20 01:40:14 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -152,14 +152,14 @@ init_hcrc(void)
 }
 
 static int
-xds_strfu(char *d, char *s, int len)
+xds_strfu(signed char *d, const uint8_t *s, int len)
 {
 	int c, neq = 0;
 
 	for (; len > 0 && *s <= 0x20; s++, len--);
 
 	for (; len > 0; s++, len--) {
-		c = MAX((char) 0x20, *s);
+		c = MAX((uint8_t) 0x20, *s);
 		neq |= *d ^ c;
 		*d++ = c;
 	}
@@ -624,7 +624,7 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			if (xds_strfu(n->name, buffer, length)) {
 				n->cycle = 1;
 			} else if (n->cycle == 1) {
-				char *s = n->name;
+				signed char *s = n->name;
 				uint32_t sum;
 
 				if (n->call[0])

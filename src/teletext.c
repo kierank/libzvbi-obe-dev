@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.19 2005/01/19 04:22:40 mschimek Exp $ */
+/* $Id: teletext.c,v 1.20 2005/01/20 01:40:15 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -783,25 +783,25 @@ keyword(vbi_link *ld, uint8_t *p, int column,
 		ld->pgno = pgno;
 
 		return i + j;
-	} else if (!strncasecmp(s, "https://", i = 8)) {
+	} else if (!strncasecmp((char *) s, "https://", i = 8)) {
 		ld->type = VBI_LINK_HTTP;
-	} else if (!strncasecmp(s, "http://", i = 7)) {
+	} else if (!strncasecmp((char *) s, "http://", i = 7)) {
 		ld->type = VBI_LINK_HTTP;
-	} else if (!strncasecmp(s, "www.", i = 4)) {
+	} else if (!strncasecmp((char *) s, "www.", i = 4)) {
 		ld->type = VBI_LINK_HTTP;
-		strcpy(ld->url, "http://");
-	} else if (!strncasecmp(s, "ftp://", i = 6)) {
+		strcpy((char *) ld->url, "http://");
+	} else if (!strncasecmp((char *) s, "ftp://", i = 6)) {
 		ld->type = VBI_LINK_FTP;
 	} else if (*s == '@' || *s == 0xA7) {
 		ld->type = VBI_LINK_EMAIL;
-		strcpy(ld->url, "mailto:");
+		strcpy((char *) ld->url, "mailto:");
 		i = 1;
-	} else if (!strncasecmp(s, "(at)", i = 4)) {
+	} else if (!strncasecmp((char *) s, "(at)", i = 4)) {
 		ld->type = VBI_LINK_EMAIL;
-		strcpy(ld->url, "mailto:");
-	} else if (!strncasecmp(s, "(a)", i = 3)) {
+		strcpy((char *) ld->url, "mailto:");
+	} else if (!strncasecmp((char *) s, "(a)", i = 3)) {
 		ld->type = VBI_LINK_EMAIL;
-		strcpy(ld->url, "mailto:");
+		strcpy((char *) ld->url, "mailto:");
 	} else
 		return 1;
 
@@ -839,11 +839,11 @@ keyword(vbi_link *ld, uint8_t *p, int column,
 
 		*back = k;
 
-		strncat(ld->url, s + k, -k);
-		strcat(ld->url, "@");
-		strncat(ld->url, s + i, j);
+		strncat((char *) ld->url, (char *) s + k, -k);
+		strcat((char *) ld->url, "@");
+		strncat((char *) ld->url, (char *) s + i, j);
 	} else
-		strncat(ld->url, s + k, i + j - k);
+		strncat((char *) ld->url, (char *) s + k, i + j - k);
 
 	return i + j;
 }
@@ -938,9 +938,9 @@ vbi_resolve_link(vbi_page *pg, int column, int row, vbi_link *ld)
 
 		if (b <= 0) {
 			if (buffer[j + 1] == ')' && j > 2) {
-				if (!strncasecmp(buffer + j + 1 - 3, "(at", 3))
+				if (!strncasecmp((char *) buffer + j + 1 - 3, "(at", 3))
 					b = j - 3;
-				else if (!strncasecmp(buffer + j + 1 - 2, "(a", 2))
+				else if (!strncasecmp((char *) buffer + j + 1 - 2, "(a", 2))
 					b = j - 2;
 			} else if (buffer[j + 1] == '@' || buffer[j + 1] == 167)
 				b = j;

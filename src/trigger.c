@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: trigger.c,v 1.8 2003/10/21 20:53:05 mschimek Exp $ */
+/* $Id: trigger.c,v 1.9 2005/01/20 01:40:22 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,13 +46,13 @@ struct vbi_trigger {
 };
 
 static vbi_bool
-verify_checksum(unsigned char *s, int count, int checksum)
+verify_checksum(const char *s, int count, int checksum)
 {
 	register unsigned long sum2, sum1 = checksum;
 
 	for (; count > 1; count -= 2) {
-		sum1 += *s++ << 8;
-		sum1 += *s++;
+		sum1 += (unsigned long) *s++ << 8;
+		sum1 += (unsigned long) *s++;
 	}
 
 	sum2 = sum1;
@@ -64,8 +64,8 @@ verify_checksum(unsigned char *s, int count, int checksum)
 	 *  in subclause 1 (zero pad to 16 bit).
 	 */
 	if (count > 0) {
-		sum1 += *s << 8; /* correct */
-		sum2 += *s << 0; /* wrong */
+		sum1 += (unsigned long) *s << 8; /* correct */
+		sum2 += (unsigned long) *s << 0; /* wrong */
 	}
 
 	while (sum1 >= (1 << 16))
@@ -78,7 +78,7 @@ verify_checksum(unsigned char *s, int count, int checksum)
 }
 
 static int
-parse_dec(unsigned char *s, int digits)
+parse_dec(const char *s, int digits)
 {
 	int n = 0;
 
@@ -93,7 +93,7 @@ parse_dec(unsigned char *s, int digits)
 }
 
 static int
-parse_hex(unsigned char *s, int digits)
+parse_hex(const char *s, int digits)
 {
 	int n = 0;
 
@@ -113,7 +113,7 @@ parse_hex(unsigned char *s, int digits)
  *  XXX http://developer.webtv.net/itv/tvlink/main.htm adds more ...???
  */
 static time_t
-parse_date(unsigned char *s)
+parse_date(const char *s)
 {
 	struct tm tm;
 
@@ -139,7 +139,7 @@ parse_date(unsigned char *s)
 }
 
 static int
-parse_time(unsigned char *s)
+parse_time(const char *s)
 {
 	int seconds, frames = 0;
 
@@ -154,13 +154,13 @@ parse_time(unsigned char *s)
 }
 
 static int
-parse_bool(unsigned char *s)
+parse_bool(char *s)
 {
 	return (strcmp(s, "1") == 0) || (strcasecmp(s, "true") == 0);
 }
 
 static int
-keyword(unsigned char *s, const unsigned char **keywords, int num)
+keyword(char *s, const char **keywords, int num)
 {
 	int i;
 
@@ -177,15 +177,15 @@ keyword(unsigned char *s, const unsigned char **keywords, int num)
 	return -1;
 }
 
-static unsigned char *
-parse_eacem(vbi_trigger *t, unsigned char *s1, unsigned int nuid, double now)
+static char *
+parse_eacem(vbi_trigger *t, char *s1, unsigned int nuid, double now)
 {
-	static const unsigned char *attributes[] = {
+	static const char *attributes[] = {
 		"active", "countdown", "delete", "expires",
 		"name", "priority", "script"
 	};
-	unsigned char buf[256];
-	unsigned char *s, *e, *d, *dx;
+	char buf[256];
+	char *s, *e, *d, *dx;
 	int active, countdown;
 	int c;
 
@@ -210,7 +210,7 @@ parse_eacem(vbi_trigger *t, unsigned char *s1, unsigned int nuid, double now)
 			if (s != s1)
 				return NULL;
 
-			d = t->link.url;
+			d = (char *) t->link.url;
 			dx = d + sizeof(t->link.url) - 2;
 
 			for (s++; (c = *s) != '>'; s++)
@@ -223,7 +223,7 @@ parse_eacem(vbi_trigger *t, unsigned char *s1, unsigned int nuid, double now)
 
 		if (c == '[' || c == '(') {
 			int delim = (c == '[') ? ']' : ')';
-			unsigned char *attr, *text = "";
+			char *attr, *text = "";
 			vbi_bool quote = FALSE;
 
 			attr = d = buf;
@@ -303,7 +303,8 @@ parse_eacem(vbi_trigger *t, unsigned char *s1, unsigned int nuid, double now)
 				break;
 
 			case 4: /* name */
-				strncpy(t->link.name, text, sizeof(t->link.name) - 1);
+				strncpy((char *) t->link.name, text,
+					sizeof(t->link.name) - 1);
 				t->link.name[sizeof(t->link.name) - 1] = 0;
 				break;
 
@@ -314,7 +315,8 @@ parse_eacem(vbi_trigger *t, unsigned char *s1, unsigned int nuid, double now)
 				break;
 
 			case 6: /* script */
-				strncpy(t->link.script, text, sizeof(t->link.script) - 1);
+				strncpy((char *) t->link.script, text,
+					sizeof(t->link.script) - 1);
 				t->link.script[sizeof(t->link.script) - 1] = 0;
 				break;
 
@@ -335,30 +337,30 @@ parse_eacem(vbi_trigger *t, unsigned char *s1, unsigned int nuid, double now)
 	if (!t->link.url)
 		return NULL;
 
-	if (strncmp(t->link.url, "http://", 7) == 0)
+	if (strncmp((char *) t->link.url, "http://", 7) == 0)
 		t->link.type = VBI_LINK_HTTP;
-	else if (strncmp(t->link.url, "lid://", 6) == 0)
+	else if (strncmp((char *) t->link.url, "lid://", 6) == 0)
 		t->link.type = VBI_LINK_LID;
-	else if (strncmp(t->link.url, "tw://", 5) == 0)
+	else if (strncmp((char *) t->link.url, "tw://", 5) == 0)
 		t->link.type = VBI_LINK_TELEWEB;
-	else if (strncmp(t->link.url, "dummy", 5) == 0) {
-		t->link.pgno = parse_dec(t->link.url + 5, 2);
+	else if (strncmp((char *) t->link.url, "dummy", 5) == 0) {
+		t->link.pgno = parse_dec((char *) t->link.url + 5, 2);
 		if (!t->link.name || t->link.pgno < 0 || t->link.url[7])
 			return NULL;
 		t->link.type = VBI_LINK_MESSAGE;
-	} else if (strncmp(t->link.url, "ttx://", 6) == 0) {
+	} else if (strncmp((char *) t->link.url, "ttx://", 6) == 0) {
 		const struct vbi_cni_entry *p;
 		int cni;
 
-		cni = parse_hex(t->link.url + 6, 4);
+		cni = parse_hex((char *) t->link.url + 6, 4);
 		if (cni < 0 || t->link.url[10] != '/')
 			return NULL;
 
-		t->link.pgno = parse_hex(t->link.url + 11, 3);
+		t->link.pgno = parse_hex((char *) t->link.url + 11, 3);
 		if (t->link.pgno < 0x100 || t->link.url[14] != '/')
 			return NULL;
 
-		t->link.subno = parse_hex(t->link.url + 15, 4);
+		t->link.subno = parse_hex((char *) t->link.url + 15, 4);
 		if (t->link.subno < 0)
 			return NULL;
 
@@ -379,20 +381,20 @@ parse_eacem(vbi_trigger *t, unsigned char *s1, unsigned int nuid, double now)
 	return s;
 }
 
-static unsigned char *
-parse_atvef(vbi_trigger *t, unsigned char *s1, double now)
+static char *
+parse_atvef(vbi_trigger *t, char *s1, double now)
 {
-	static const unsigned char *attributes[] = {
+	static const char *attributes[] = {
 		"auto", "expires", "name", "script",
 		"type" /* "t" */, "time", "tve",
 		"tve-level", "view" /* "v" */
 	};
-	static const unsigned char *type_attrs[] = {
+	static const char *type_attrs[] = {
 		"program", "network", "station", "sponsor",
 		"operator", "tve"
 	};
-	unsigned char buf[256];
-	unsigned char *s, *e, *d, *dx;
+	char buf[256];
+	char *s, *e, *d, *dx;
 	int c;
 
 	t->link.url[0]    = 0;
@@ -414,8 +416,8 @@ parse_atvef(vbi_trigger *t, unsigned char *s1, double now)
 			if (s != s1)
 				return NULL;
 
-			d = t->link.url;
-			dx = d + sizeof(t->link.url) - 1;
+			d = (char *) t->link.url;
+			dx = (char *) d + sizeof(t->link.url) - 1;
 
 			for (s++; (c = *s) != '>'; s++)
 				if (c && d < dx)
@@ -426,7 +428,7 @@ parse_atvef(vbi_trigger *t, unsigned char *s1, double now)
 		} else
 
 		if (c == '[') {
-			unsigned char *attr, *text = "";
+			char *attr, *text = "";
 			vbi_bool quote = FALSE;
 
 			attr = d = buf;
@@ -465,7 +467,7 @@ parse_atvef(vbi_trigger *t, unsigned char *s1, double now)
 				}
 
 				if (!verify_checksum(s1, e - s1,
-						       strtoul(attr, NULL, 16)))
+						     strtoul(attr, NULL, 16)))
 					return NULL;
 
 				break;
@@ -501,12 +503,14 @@ parse_atvef(vbi_trigger *t, unsigned char *s1, double now)
 				break;
 
 			case 2: /* name */
-				strncpy(t->link.name, text, sizeof(t->link.name) - 1);
+				strncpy((char *) t->link.name, text,
+					sizeof(t->link.name) - 1);
 				t->link.name[sizeof(t->link.name) - 1] = 0;
 				break;
 
 			case 3: /* script */
-				strncpy(t->link.script, text, sizeof(t->link.script));
+				strncpy((char *) t->link.script, text,
+					sizeof(t->link.script));
 				t->link.script[sizeof(t->link.script) - 1] = 0;
 				break;
 
@@ -544,9 +548,9 @@ parse_atvef(vbi_trigger *t, unsigned char *s1, double now)
 	if (!t->link.url)
 		return NULL;
 
-	if (strncmp(t->link.url, "http://", 7) == 0)
+	if (strncmp((char *) t->link.url, "http://", 7) == 0)
 		t->link.type = VBI_LINK_HTTP;
-	else if (strncmp(t->link.url, "lid://", 6) == 0)
+	else if (strncmp((char *) t->link.url, "lid://", 6) == 0)
 		t->link.type = VBI_LINK_LID;
 	else
 		return NULL;
@@ -609,7 +613,7 @@ add_trigger(vbi_decoder *vbi, vbi_trigger *a)
 		vbi_trigger **tp;
 
 		for (tp = &vbi->triggers; (t = *tp); tp = &t->next)
-			if (strcmp(a->link.url, t->link.url) == 0
+			if (strcmp((char *) a->link.url, (char *) t->link.url) == 0
 			    && fabs(a->fire - t->fire) < 0.1) {
 				*tp = t->next;
 				free(t);
@@ -620,7 +624,7 @@ add_trigger(vbi_decoder *vbi, vbi_trigger *a)
 	}
 
 	for (t = vbi->triggers; t; t = t->next)
-		if (strcmp(a->link.url, t->link.url) == 0
+		if (strcmp((char *) a->link.url, (char *) t->link.url) == 0
 		    && fabs(a->fire - t->fire) < 0.1)
 			return;
 
@@ -653,8 +657,12 @@ void
 vbi_eacem_trigger(vbi_decoder *vbi, unsigned char *s)
 {
 	vbi_trigger t;
+	char *r;
 
-	while ((s = parse_eacem(&t, s, vbi->network.ev.network.nuid, vbi->time))) {
+	r = (char *) s;
+
+	while ((r = parse_eacem(&t, r,
+				vbi->network.ev.network.nuid, vbi->time))) {
 		if (0)
 			fprintf(stderr, "At %f eacem link type %d '%s', <%s> '%s', "
 				"%08x %03x.%04x, exp %f, pri %d %d, auto %d; "
@@ -688,7 +696,7 @@ vbi_atvef_trigger(vbi_decoder *vbi, unsigned char *s)
 {
 	vbi_trigger t;
 
-	if (parse_atvef(&t, s, vbi->time)) {
+	if (parse_atvef(&t, (char *) s, vbi->time)) {
 		if (0)
 			fprintf(stderr, "At %f atvef link type %d '%s', <%s> '%s', "
 				"%08x %03x.%04x, exp %f, pri %d %d, auto %d; "
@@ -702,7 +710,7 @@ vbi_atvef_trigger(vbi_decoder *vbi, unsigned char *s)
 		t.link.eacem = FALSE;
 
 		if (t.view == 't' /* WebTV */
-		    || strchr(t.link.url, '*') /* trigger matching */
+		    || strchr((char *) t.link.url, '*') /* trigger matching */
 		    || t.link.type == VBI_LINK_LID)
 			return;
 

@@ -1,6 +1,6 @@
 /* Copyright (C) 2002 Gerd Knorr */
 
-/* $Id: x11font.c,v 1.3 2004/10/25 16:56:26 mschimek Exp $ */
+/* $Id: x11font.c,v 1.4 2005/01/20 01:41:13 mschimek Exp $ */
 
 #include "src/exp-gfx.c"
 
@@ -49,7 +49,7 @@ static void print_head(FILE *fp,
 
 static void
 print_font(char *filename, char *foundry, char *name, int italic,
-	   unsigned char *font, int cw, int ch, int cpl,
+	   uint8_t *font, int cw, int ch, int cpl,
 	   int count, unsigned int (*map)(unsigned int,int), int invalid)
 {
     FILE *fp;
@@ -107,13 +107,13 @@ print_font(char *filename, char *foundry, char *name, int italic,
 int 
 main(int argc, char *argv[])
 {
-    print_font("teletext.bdf","ets","teletext",0,wstfont2_bits,
+    print_font("teletext.bdf","ets","teletext",0,(uint8_t *) wstfont2_bits,
 	       TCW,TCH,TCPL,1448,unicode_wstfont2,357);
-    print_font("teletexti.bdf","ets","teletext",1,wstfont2_bits,
+    print_font("teletexti.bdf","ets","teletext",1,(uint8_t *) wstfont2_bits,
 	       TCW,TCH,TCPL,1449,unicode_wstfont2,357);
-    print_font("caption.bdf","ets","caption",0,ccfont2_bits,
+    print_font("caption.bdf","ets","caption",0,(uint8_t *) ccfont2_bits,
 	       CCW,CCH,CCPL,120,unicode_ccfont2,15);
-    print_font("captioni.bdf","ets","caption",1,ccfont2_bits,
+    print_font("captioni.bdf","ets","caption",1,(uint8_t *) ccfont2_bits,
 	       CCW,CCH,CCPL,120,unicode_ccfont2,15 + 4 * 32);
     return 0;
 }

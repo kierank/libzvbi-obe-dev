@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: cc.h,v 1.5 2003/02/16 21:11:15 mschimek Exp $ */
+/* $Id: cc.h,v 1.6 2005/01/20 01:40:14 mschimek Exp $ */
 
 #ifndef CC_H
 #define CC_H
@@ -36,7 +36,7 @@ typedef struct vbi_decoder vbi_decoder;
 typedef struct {
 	int			count;
 	int			chksum;
-	char			buffer[32];
+	uint8_t			buffer[32];
 } xds_sub_packet;
 
 typedef enum {
@@ -68,7 +68,7 @@ typedef struct {
 struct caption {
 	pthread_mutex_t		mutex;
 
-	unsigned char		last[2];		/* field 1, cc command repetition */
+	uint8_t			last[2];		/* field 1, cc command repetition */
 
 	int			curr_chan;
 	vbi_char		transp_space[2];	/* caption, text mode */
@@ -78,7 +78,7 @@ struct caption {
 	xds_sub_packet *	curr_sp;
 	int			xds;
 
-	unsigned char		itv_buf[256];
+	uint8_t			itv_buf[256];
 	int			itv_count;
 
 	int			info_cycle[2];

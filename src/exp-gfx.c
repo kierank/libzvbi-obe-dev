@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.c,v 1.9 2005/01/15 10:23:53 mschimek Exp $ */
+/* $Id: exp-gfx.c,v 1.10 2005/01/20 01:40:14 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -540,11 +540,17 @@ vbi_draw_cc_page_region(vbi_page *pg,
 			pen[0] = pg->color_map[ac->background];
 			pen[1] = pg->color_map[ac->foreground];
 
-			draw_char(sizeof(*canvast), (uint8_t *) canvast, rowstride,
-				  (uint8_t *) pen, ccfont2_bits, CCPL, CCW, CCH,
-				  unicode_ccfont2(ac->unicode, ac->italic), 0 /* bold */,
-				  ac->underline * (3 << 24) /* cell row 24, 25 */,
-				  VBI_NORMAL_SIZE);
+			draw_char (sizeof (*canvast),
+				   (uint8_t *) canvast,
+				   rowstride,
+				   (uint8_t *) pen,
+				   (uint8_t *) ccfont2_bits,
+				   CCPL, CCW, CCH,
+				   unicode_ccfont2 (ac->unicode, ac->italic),
+				   0 /* bold */,
+				   (ac->underline
+				    * (3 << 24)) /* cell row 24, 25 */,
+				   VBI_NORMAL_SIZE);
 
 			canvast += CCW;
 		}
@@ -640,10 +646,16 @@ vbi_draw_vt_page_region(vbi_page *pg,
 						draw_blank(sizeof(*canvast), (uint8_t *) canvast, rowstride,
 							   pen[0], TCW, TCH);
 				} else {
-					draw_char(sizeof(*canvast), (uint8_t *) canvast, rowstride,
-						(uint8_t *) pen, wstfont2_bits, TCPL, TCW, TCH,
-						unicode_wstfont2(unicode, ac->italic), ac->bold,
-						ac->underline << 9 /* cell row 9 */, ac->size);
+					draw_char (sizeof (*canvast),
+						   (uint8_t *) canvast,
+						   rowstride,
+						   (uint8_t *) pen,
+						   (uint8_t *) wstfont2_bits,
+						   TCPL, TCW, TCH,
+						   unicode_wstfont2 (unicode, ac->italic),
+						   ac->bold,
+						   ac->underline << 9 /* cell row 9 */,
+						   ac->size);
 				}
 			}
 
@@ -928,7 +940,7 @@ draw_char_cc_indexed(png_bytep canvas, int rowstride, png_bytep pen,
 		     int unicode, vbi_char *ac)
 {
 	draw_char(sizeof(png_byte), (uint8_t *) canvas, rowstride,
-		  (uint8_t *) pen, ccfont2_bits, CCPL, CCW, CCH,
+		  (uint8_t *) pen, (uint8_t *) ccfont2_bits, CCPL, CCW, CCH,
 		  unicode_ccfont2(unicode, ac->italic), 0 /* bold */,
 		  ac->underline * (3 << 24) /* cell row 24, 25 */,
 		  VBI_NORMAL_SIZE);
@@ -939,7 +951,7 @@ draw_char_vt_indexed(png_bytep canvas, int rowstride, png_bytep pen,
 		     int unicode, vbi_char *ac)
 {
 	draw_char(sizeof(png_byte), (uint8_t *) canvas, rowstride,
-		  (uint8_t *) pen, wstfont2_bits, TCPL, TCW, TCH,
+		  (uint8_t *) pen, (uint8_t *) wstfont2_bits, TCPL, TCW, TCH,
 		  unicode_wstfont2(unicode, ac->italic), ac->bold,
 		  ac->underline << 9 /* cell row 9 */, ac->size);
 }
