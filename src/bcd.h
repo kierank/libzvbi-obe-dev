@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bcd.h,v 1.4 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: bcd.h,v 1.5 2002/09/28 00:05:08 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -147,7 +147,7 @@ vbi_bcd2dec(unsigned int bcd)
  * 
  * Adds two bcd numbers, returning a bcd sum. The result will be in
  * range 0x0000&nbsp;0000 ... 0x9999&nbsp;9999, discarding carry and extra digits
- * in the inputs. To subtract you can add the two's complement,
+ * in the inputs. To subtract you can add the complement,
  * e. g. -0x1 = +0x9999&nbsp;9999.
  * 
  * @return
