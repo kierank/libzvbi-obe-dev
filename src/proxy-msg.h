@@ -1,22 +1,30 @@
 /*
  *  Basic I/O between VBI proxy client & server
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License Version 2 as
- *  published by the Free Software Foundation. You find a copy of this
- *  license in the file COPYRIGHT in the root directory of this release.
+ *  Copyright (C) 2003 Tom Zoerner
  *
- *  THIS PROGRAM IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
- *  BUT WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF
- *  MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *  Description: see respective C source file.
  *
- *  Author: Tom Zoerner
+ *  $Id: proxy-msg.h,v 1.3 2003/05/03 12:04:52 tomzo Exp $
  *
- *  $Id: proxy-msg.h,v 1.2 2003/04/29 17:12:48 mschimek Exp $
+ *  $Log: proxy-msg.h,v $
+ *  Revision 1.3  2003/05/03 12:04:52  tomzo
+ *  - added new macro VBIPROXY_ENDIAN_MISMATCH to replace use of swap32()
+ *  - added declaration for new func vbi_proxy_msg_set_debug_level()
+ *  - fixed copyright headers, added description to file headers
+ *
  */
 
 #ifndef __VBIPROXYMSG_H
@@ -61,6 +69,7 @@ typedef struct
 #define VBIPROXY_VERSION                   0x00000000
 #define VBIPROXY_COMPAT_VERSION            0x00000000
 #define VBIPROXY_ENDIAN_MAGIC              0x11223344
+#define VBIPROXY_ENDIAN_MISMATCH           0x44332211
 #define VBIPROXY_CLIENT_NAME_MAX_LENGTH    64
 #define VBIPROXY_DEV_NAME_MAX_LENGTH      128
 #define VBIPROXY_ERROR_STR_MAX_LENGTH     128
@@ -141,6 +150,7 @@ typedef struct
 void     vbi_proxy_msg_logger( int level, int clnt_fd, int errCode, const char * pText, ... );
 void     vbi_proxy_msg_set_logging( vbi_bool do_logtty, int sysloglev,
                                     int fileloglev, const char * pLogfileName );
+void     vbi_proxy_msg_set_debug_level( int level );
 
 vbi_bool vbi_proxy_msg_is_idle( VBIPROXY_MSG_STATE * pIO );
 vbi_bool vbi_proxy_msg_check_timeout( VBIPROXY_MSG_STATE * pIO, time_t now );
