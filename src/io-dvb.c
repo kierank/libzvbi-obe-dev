@@ -314,7 +314,7 @@ vbi_capture_dvb_new(char *dev, int scanning,
 		    unsigned int *services, int strict,
 		    char **errstr, vbi_bool trace)
 {
-	vbi_asprintf(errstr, _("DVB interface not compiled."));
+	vbi_asprintf(errstr, ("DVB interface not compiled."));
 	return NULL;
 }
 
