@@ -1,3 +1,12 @@
+2004-04-09    <mschimek@users.sf.net>
+
+	* Release 0.2.7.
+
+2004-04-09    <mschimek@users.sf.net>
+
+	* src/io-v4l2k.c: Incomplete v4l2_buffer initialization, doesn't
+	  work with bttv driver 0.9.12.
+
 2004-04-04    <mschimek@users.sf.net>
 
 	* Release 0.2.6.
