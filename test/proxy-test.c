@@ -25,6 +25,11 @@
  *    for a list of possible options.
  *
  *  $Log: proxy-test.c,v $
+ *  Revision 1.5  2003/05/24 12:19:57  tomzo
+ *  - added dynamic service switch to test add_service() interface: new function
+ *    read_service_string() reads service requests from stdin
+ *  - added new service closed caption
+ *
  *  Revision 1.4  2003/05/10 13:31:23  tomzo
  *  - bugfix main loop: check for 0 result from vbi_capture_pull_sliced()
  *    and for NULL pointer for sliced buffer
@@ -37,7 +42,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxy-test.c,v 1.4 2003/05/10 13:31:23 tomzo Exp $";
+static const char rcsid[] = "$Id: proxy-test.c,v 1.5 2003/05/24 12:19:57 tomzo Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -171,18 +176,107 @@ static void TtxDecode_AddVpsData( const unsigned char * data )
 }
 
 /* ---------------------------------------------------------------------------
+** Check stdin for services change requests
+** - syntax: ["+"|"-"|"="]keyword, e.g. "+vps-ttx" or "=wss"
+*/
+static unsigned int read_service_string( void )
+{
+   unsigned int    services;
+   unsigned int    tmp_services;
+   struct timeval  timeout;
+   vbi_bool substract;
+   fd_set   rd;
+   char  buf[100];
+   char  *p_inp;
+   int   ret;
+
+   services = opt_services;
+   timeout.tv_sec  = 0;
+   timeout.tv_usec = 0;
+   FD_ZERO(&rd);
+   FD_SET(0, &rd);
+
+   ret = select(1, &rd, NULL, NULL, &timeout);
+   if (ret == 1)
+   {
+      ret = read(0, buf, sizeof(buf));
+      if (ret > 0)
+      {
+         p_inp = buf;
+         while (*p_inp != 0)
+         {
+            while (*p_inp == ' ')
+               p_inp += 1;
+
+            substract = FALSE;
+            if (*p_inp == '=')
+            {
+               services = 0;
+               p_inp += 1;
+            }
+            else if (*p_inp == '-')
+            {
+               substract = TRUE;
+               p_inp += 1;
+            }
+            else if (*p_inp == '+')
+               p_inp += 1;
+
+            if ( (strncasecmp(p_inp, "ttx", 3) == 0) ||
+                 (strncasecmp(p_inp, "teletext", 8) == 0) )
+            {
+               tmp_services = VBI_SLICED_TELETEXT_B;
+            }
+            else if (strncasecmp(p_inp, "vps", 3) == 0)
+            {
+               tmp_services = VBI_SLICED_VPS;
+            }
+            else if (strncasecmp(p_inp, "wss", 3) == 0)
+            {
+               tmp_services = VBI_SLICED_WSS_625 | VBI_SLICED_WSS_CPR1204;
+            }
+            else if ( (strncasecmp(p_inp, "cc", 2) == 0) ||
+                      (strncasecmp(p_inp, "caption", 7) == 0) )
+            {
+               tmp_services = VBI_SLICED_CAPTION_625 | VBI_SLICED_CAPTION_525;
+            }
+            else
+               tmp_services = 0;
+
+            if (substract == FALSE)
+               services |= tmp_services;
+            else
+               services &= ~ tmp_services;
+
+            while ((*p_inp != 0) && (*p_inp != '+') && (*p_inp != '-'))
+               p_inp += 1;
+         }
+      }
+      else if (ret < 0)
+         perror("read_service_string: read");
+   }
+   else if (ret < 0)
+      perror("read_service_string: select");
+
+   return services;
+}
+
+/* ---------------------------------------------------------------------------
 ** Print usage and exit
 */
 static void usage_exit( const char *argv0, const char *argvn, const char * reason )
 {
    fprintf(stderr, "%s: %s: %s\n"
                    "Usage: %s [ Options ] service ...\n"
-                   "       services            : ttx | vps | wss\n"
+                   "Supported services         : ttx | vps | wss | cc\n"
+                   "Supported options:\n"
                    "       -dev <path>         : device path\n"
                    "       -api <type>         : v4l API: proxy|v4l2|v4l\n"
                    "       -strict <level>     : service strictness level: 0..2\n"
                    "       -debug <level>      : enable debug output: 1=warnings, 2=all\n"
-                   "       -help               : this message\n",
+                   "       -help               : this message\n"
+                   "You can also type service requests to stdin at runtime:\n"
+                   "Format: [\"+\"|\"-\"|\"=\"]<service>, e.g. \"+vps -ttx\" or \"=wss\"\n",
                    argv0, reason, argvn, argv0);
 
    exit(1);
@@ -233,6 +327,12 @@ static void parse_argv( int argc, char * argv[] )
       else if (strcasecmp(argv[arg_idx], "wss") == 0)
       {
          opt_services |= VBI_SLICED_WSS_625 | VBI_SLICED_WSS_CPR1204;
+         arg_idx += 1;
+      }
+      else if ( (strcasecmp(argv[arg_idx], "cc") == 0) ||
+                (strcasecmp(argv[arg_idx], "caption") == 0) )
+      {
+         opt_services |= VBI_SLICED_CAPTION_625 | VBI_SLICED_CAPTION_525;
          arg_idx += 1;
       }
       else if (strcasecmp(argv[arg_idx], "-dev") == 0)
@@ -315,12 +415,15 @@ int main ( int argc, char ** argv )
    vbi_capture_buffer * pVbiBuf;
    char               * pErr;
    struct timeval       timeout;
+   unsigned int         new_services;
    uint    lineCount;
    uint    lastLineCount;
    uint    line;
    int     res;
 
    parse_argv(argc, argv);
+
+   fcntl(0, F_SETFL, O_NONBLOCK);
 
    pVbiCapt = NULL;
    if (opt_api == TEST_API_V4L2)
@@ -339,6 +442,17 @@ int main ( int argc, char ** argv )
 
          while(1)
          {
+            new_services = read_service_string();
+            if (new_services != opt_services)
+            {
+               fprintf(stderr, "switching service from 0x%X to 0x%X...\n", opt_services, new_services);
+               opt_services = vbi_capture_add_services(pVbiCapt, TRUE, TRUE,
+                                                       new_services, opt_strict, NULL);
+               pVbiPar = vbi_capture_parameters(pVbiCapt);
+               fprintf(stderr, "...got granted services 0x%X.\n", opt_services);
+               lastLineCount = 0;
+            }
+
             timeout.tv_sec  = 5;
             timeout.tv_usec = 0;
 
