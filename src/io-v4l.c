@@ -19,10 +19,10 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l.c,v 1.26 2004/11/26 05:53:56 mschimek Exp $";
+"$Id: io-v4l.c,v 1.27 2004/12/13 07:12:02 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #include "misc.h"
@@ -1120,6 +1120,8 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		return NULL;
 	}
 
+	vbi_raw_decoder_init (&v->dec);
+
 	v->do_trace = trace;
 
 	printv ("Try to open v4l vbi device, "
@@ -1289,15 +1291,29 @@ vbi_capture_v4l_new(const char *dev_name, int scanning,
 #else
 
 /**
+ * @param dev_name Name of the device to open, usually one of
+ *   @c /dev/vbi or @c /dev/vbi0 and up.
  * @param given_fd File handle of an already open video device,
  *   usually one of @c /dev/video or @c /dev/video0 and up.
  *   Must be assorted with the named vbi device, i.e. refer to
  *   the same driver instance and hardware.
+ * @param services This must point to a set of @ref VBI_SLICED_
+ *   symbols describing the
+ *   data services to be decoded. On return the services actually
+ *   decodable will be stored here. See vbi_raw_decoder_add()
+ *   for details. If you want to capture raw data only, set to
+ *   @c VBI_SLICED_VBI_525, @c VBI_SLICED_VBI_625 or both.
+ *   If this parameter is @c NULL, no services will be installed.
+ *   You can do so later with vbi_capture_update_services(); note the
+ *   reset parameter must be set to @c TRUE in this case.
+ * @param strict Will be passed to vbi_raw_decoder_add().
+ * @param errorstr If not @c NULL this function stores a pointer to an error
+ *   description here. You must free() this string when no longer needed.
+ * @param trace If @c TRUE print progress messages on stderr.
  *
- * This functions behaves much like vbi_capture_v4l_new (see there
- * for a complete parameter description), with the sole difference
- * that it uses the given file handle to determine the current video
- * standard if such queries aren't supported by the VBI device.
+ * This functions behaves much like vbi_capture_v4l_new, with the sole
+ * difference that it uses the given file handle to determine the current
+ * video standard if such queries aren't supported by the VBI device.
  * 
  * @return
  * Initialized vbi_capture context, @c NULL on failure.
