@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.15 2004/04/04 21:46:38 mschimek Exp $ */
+/* $Id: teletext.c,v 1.16 2004/10/14 07:55:53 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -2314,6 +2314,7 @@ vbi_format_vt_page(vbi_decoder *vbi,
 		struct vbi_font_descr *font;
 		int mosaic_unicodes; /* 0xEE00 separate, 0xEE20 contiguous */
 		int held_mosaic_unicode;
+		int esc;
 		vbi_bool hold, mosaic;
 		vbi_bool double_height, wide_char;
 		vbi_char ac, *acp = &pg->text[row * EXT_COLUMNS];
@@ -2328,6 +2329,7 @@ vbi_format_vt_page(vbi_decoder *vbi,
 		mosaic_unicodes	= 0xEE20; /* contiguous */
 		ac.opacity	= pg->page_opacity[row > 0];
 		font		= pg->font[0];
+		esc		= 0;
 		hold		= FALSE;
 		mosaic		= FALSE;
 
@@ -2461,7 +2463,7 @@ vbi_format_vt_page(vbi_decoder *vbi,
 				break;
 
 			case 0x1B:		/* ESC */
-				font = (font == pg->font[0]) ? pg->font[1] : pg->font[0];
+				font = pg->font[esc ^= 1];
 				break;
 			}
 		}
