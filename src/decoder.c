@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.3 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: decoder.c,v 1.4 2002/08/07 19:27:38 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +35,7 @@
  * The libzvbi already offers hardware interfaces to obtain sliced
  * VBI data for further processing. However if you want to write your own
  * interface or decode data services not covered by libzvbi you can use
- * these functions.
+ * these lower level functions.
  */
 
 /*
@@ -472,7 +472,7 @@ vbi_bit_slicer_init(vbi_bit_slicer *slicer,
 
 #define MAX_JOBS		(sizeof(((vbi_raw_decoder *) 0)->jobs)	\
 				 / sizeof(((vbi_raw_decoder *) 0)->jobs[0]))
-#define MAX_WAYS		4
+#define MAX_WAYS		8
 
 struct vbi_service_par {
 	unsigned int	id;		/* VBI_SLICED_ */
@@ -628,11 +628,15 @@ vbi_sliced_name(unsigned int service)
  * Note this function attempts to learn which lines carry which data
  * service, or none, to speed up decoding. You should avoid using the same
  * vbi_raw_decoder structure for different sources.
- * 
+ *
+ * @bug This function ignores the sampling_format field in struct
+ * vbi_raw_decoder, always assuming VBI_PIXFMT_YUV420.
+ *
  * @return
  * The number of lines decoded, i. e. the number of vbi_sliced records
  * written.
  */
+/* XXX bit_slicer_1() */
 int
 vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out)
 {
@@ -655,11 +659,27 @@ vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out)
 		if (rd->interlaced && i == rd->count[0])
 			raw = raw1 + rd->bytes_per_line;
 
+		if (1) {
+			fprintf(stderr, "L%02d ", i);
+			for (j = 0; j < MAX_WAYS; j++)
+				if (pattern[j] < 1 || pattern[j] > 8)
+					fprintf(stderr, "0x%02x       ",
+						pattern[j] & 0xFF);
+				else
+					fprintf(stderr, "0x%08x ",
+						rd->jobs[pattern[j] - 1].id);
+			fprintf(stderr, "\n");
+		}
+
 		for (pat = pattern;; pat++) {
-			if ((j = *pat) > 0) {
+			j = *pat; /* data service n, blank 0, or counter -n */
+
+			if (j > 0) {
 				job = rd->jobs + (j - 1);
+
 				if (!bit_slicer_1(&job->slicer, raw + job->offset, out->data))
-					continue;
+					continue; /* no match, try next data service */
+
 				if (job->id == VBI_SLICED_WSS_CPR1204) {
 					const int poly = (1 << 6) + (1 << 1) + 1;
 					int crc, j;
@@ -673,30 +693,48 @@ vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out)
 					}
 
 					if (crc)
-						continue;
+						continue; /* no match */
 				}
+
+				/* Positive match, output decoded line */
+
 				out->id = job->id;
+
 				if (i >= rd->count[0])
 					out->line = (rd->start[1] > 0) ? rd->start[1] - rd->count[0] + i : 0;
 				else
 					out->line = (rd->start[0] > 0) ? rd->start[0] + i : 0;
 				out++;
+
+				/* Predict line as non-blank, force testing for
+				   data services in the next 128 frames */
 				pattern[MAX_WAYS - 1] = -128;
+
 			} else if (pat == pattern) {
+				/* Line was predicted as blank, once in 16
+				   frames look for data services */
 				if (readj == 0) {
-					j = pattern[1];
-					pattern[1] = pattern[2];
-					pattern[2] = pattern[3];
-					pat += MAX_WAYS - 1;
+					j = pattern[0];
+					memmove (&pattern[0], &pattern[1],
+						 sizeof (*pattern) * (MAX_WAYS - 1));
+					pattern[MAX_WAYS - 1] = j;
 				}
+
+				break;
 			} else if ((j = pattern[MAX_WAYS - 1]) < 0) {
+				/* Increment counter, when zero predict line as
+				   blank and stop looking for data services */
 				pattern[MAX_WAYS - 1] = j + 1;
     				break;
+			} else {
+				/* found nothing, j = 0 */
 			}
 
+			/* Try the found data service first next time */
 			*pat = pattern[0];
 			pattern[0] = j;
-			break;
+
+			break; /* line done */
 		}
 
 		raw += pitch;
