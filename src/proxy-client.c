@@ -17,16 +17,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-client.c,v 1.4 2004/11/03 17:07:39 mschimek Exp $
+ *  $Id: proxy-client.c,v 1.5 2004/11/11 05:34:34 mschimek Exp $
  */
 
-static const char rcsid[] = "$Id: proxy-client.c,v 1.4 2004/11/03 17:07:39 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-client.c,v 1.5 2004/11/11 05:34:34 mschimek Exp $";
 
-#ifdef HAVE_CONFIG_H
-#  include "../config.h"
-#endif
-
-#ifdef ENABLE_PROXY
+#include "../config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,6 +42,8 @@ static const char rcsid[] = "$Id: proxy-client.c,v 1.4 2004/11/03 17:07:39 mschi
 
 #include "proxy-msg.h"
 #include "proxy-client.h"
+
+#ifdef ENABLE_PROXY
 
 #define dprintf1(fmt, arg...)    do {if (vpc->trace >= 1) fprintf(stderr, "proxy-client: " fmt, ## arg);} while(0)
 #define dprintf2(fmt, arg...)    do {if (vpc->trace >= 2) fprintf(stderr, "proxy-client: " fmt, ## arg);} while(0)
@@ -851,54 +849,7 @@ vbi_proxy_process_callbacks( vbi_proxy_client * vpc )
 **                  E X P O R T E D   F U N C T I O N S
 ** --------------------------------------------------------------------------*/
 
-/**
- * @addtogroup Proxy VBI capture proxy interface
- * @ingroup Raw
- * @brief Receiving sliced or raw data from VBI proxy daemon
- *
- * Using the VBI proxy daemon instead of capturing directly from a
- * VBI device allows multiple clients to capture concurrently, e.g.
- * to decode multiple data services.
- */
-
-
-/**
- * @param vpc Pointer to initialized proxy client context
- * @param chn_prio Channel change priority level.  If there are other clients
- *   with higher priority the client will be refused any channel changes.
- * @param p_chn_profile Channel profile for scheduling at background
- *   priority level.
- *
- * This function is used to request permission to switch channels or norm.
- * Since the VBI device can be shared with other proxy clients, clients should
- * wait for permission, so that the proxy daemon can fairly schedule channel
- * requests.
- *
- * Scheduling differs at the 3 priority levels. For an explanation of
- * priorities see enum VBI_CHN_PRIO.  At background level channel changes
- * are coordinated by introduction of a virtual token: only the
- * one client which holds the token is allowed to switch channels. The daemon
- * will wait for the token to be returned before it's granted to another
- * client.  This way conflicting channel changes are avoided.
- *
- * At the upper level the latest request always wins.  To avoid interference
- * the application still might wait until it gets indicated that the token
- * has been returned to the daemon.
- *
- * The token may be granted right away or at a later time, e.g. when it has
- * to be reclaimed from another client first, or if there are other clients
- * with higher priority.  If a callback has been registered, it will be
- * invoked when the token arrives; otherwise vbi_proxy_client_has_channel_control
- * can be used to poll for it.
- *
- * Note: to set the priority level to "background" only without requesting
- * a channel, set the is_valid member in the profile to @c FALSE.
- *
- * @return
- * 1 if change is allowed, 0 if not allowed,
- * -1 on error, examine @c errno for details.
- */
-/* XXX TODO improve description */
+/* document below */
 int
 vbi_proxy_client_channel_request( vbi_proxy_client * vpc,
                                   VBI_CHN_PRIO chn_prio,
@@ -964,17 +915,7 @@ failure:
 }
 
 
-/**
- * @param vpc Pointer to initialized proxy client context
- * @param notify_flags Combination of event notification bits
- * @param scanning New norm, if norm event bit is set
- *
- * Send channel control request to proxy daemon.
- * See description of the flags for details.
- *
- * @return
- * 0 upon success, -1 on error, examine @c errno for details.
- */
+/* document below */
 int
 vbi_proxy_client_channel_notify( vbi_proxy_client * vpc,
                                  VBI_PROXY_CHN_FLAGS notify_flags,
@@ -1030,15 +971,7 @@ failure:
 }
 
 
-/**
- * @param vpc Pointer to initialized proxy client context
- * @param cmd Control command
- *
- * Request to temporarily suspend capturing
- *
- * @return
- * 0 upon success, -1 on error, examine @c errno for details.
- */
+/* document below */
 int
 vbi_proxy_client_channel_suspend( vbi_proxy_client * vpc,
                                   VBI_PROXY_SUSPEND cmd )
@@ -1048,25 +981,7 @@ vbi_proxy_client_channel_suspend( vbi_proxy_client * vpc,
 }
 
 
-/**
- * @param vpc Pointer to initialized proxy client context
- * @param request Ioctl request code to be passed to driver
- * @param p_arg Ioctl argument to be passed to driver
- *
- * @brief Wrapper for ioctl requests on the VBI device
- *
- * This function allows to manipulate parameters of the underlying
- * VBI device.  Not all ioctls are allowed here.  It's mainly intended
- * to be used for channel enumeration and channel/norm changes.  
- * The request codes and parameters are the same as for the actual device.
- * The caller has to query the driver API first and use the respective
- * ioctl codes, same as if the device would be used directly.
- *
- * @return
- * Same as for the ioctl, i.e. -1 on error and errno set appropriately.
- * The funtion also will fail with errno @c EBUSY if the client doesn't
- * have permission to control the channel.
- */
+/* document below */
 int
 vbi_proxy_client_device_ioctl( vbi_proxy_client * vpc, int request, void * p_arg )
 {
@@ -1150,17 +1065,7 @@ failure:
 }
 
 
-/**
- * @param vpc Pointer to initialized proxy client context
- * @param p_scanning Returns new scanning after channel change
- * @param p_granted Returns@c TRUE if client is currently allowed to
- *   switch channels
- *
- * Retrieve info sent by the proxy daemon in a channel change indication.
- *
- * @return
- * 0 upon success, -1 on error.
- */
+/* document below */
 int
 vbi_proxy_client_get_channel_desc( vbi_proxy_client * vpc,
                                    unsigned int * p_scanning,
@@ -1180,14 +1085,7 @@ vbi_proxy_client_get_channel_desc( vbi_proxy_client * vpc,
 }
 
 
-/**
- * @param vpc Pointer to initialized proxy client context
- *
- * @brief Query if the client is currently allowed to switch channels
- *
- * @return
- * Returns @c TRUE if client is currently allowed to switch channels.
- */
+/* document below */
 vbi_bool
 vbi_proxy_client_has_channel_control( vbi_proxy_client * vpc )
 {
@@ -1203,23 +1101,7 @@ vbi_proxy_client_has_channel_control( vbi_proxy_client * vpc )
 }
 
 
-/**
- * @param vpc Pointer to initialized proxy client context
- *
- * @brief Returns the driver type behind the actual capture device
- *
- * This function can be used to query which driver is behind the
- * device which is currently opened by the VBI proxy daemon.
- * Applications which use libzvbi's capture API only need not
- * care about this.  The information is only relevant to applications
- * which need to change channels or norms.
- *
- * The function will fail if the client is currently not connected
- * to the daemon, i.e. VPI capture has to be started first.
- *
- * @return
- * Driver type or -1 on error.
- */
+/* document below */
 VBI_DRIVER_API_REV
 vbi_proxy_client_get_driver_api( vbi_proxy_client * vpc )
 {
@@ -1232,34 +1114,7 @@ vbi_proxy_client_get_driver_api( vbi_proxy_client * vpc )
 }
 
 
-/**
- * @param vpc Pointer to initialized proxy client context
- * @param p_callback Pointer to callback function
- * @param p_data Void pointer which will be passed through to the
- *   callback function unmodified.
- *
- * @brief Installs callback function for asynchronous events
- *
- * This function installs a callback function which will be invoked
- * upon asynchronous events (e.g. channel changes by other clients.)
- * Since the proxy client has no activity carrier on it's own (i.e.
- * it's not using an internal thread or process) callbacks will only
- * occur from inside other proxy client function calls.  The client's
- * file description will become readable when an asynchronous message
- * has arrived from the daemon.  Typically the application then will
- * call read to obtain sliced data and the callback will be invoked
- * from inside the read function.  Usually in this case the read call
- * will return zero, i.e. indicate an timeout since no actual sliced
- * data has arrived.
- *
- * Note for channel requests the callback to grant channel control may
- * be invoked before the request function returns.
- * Note you can call any interface function from inside the callback,
- * including the destroy operator.
- *
- * @return
- * Returns pointer to the previous callback or @c NULL if none.
- */
+/* document below */
 VBI_PROXY_CLIENT_CALLBACK *
 vbi_proxy_client_set_callback( vbi_proxy_client * vpc,
                                VBI_PROXY_CLIENT_CALLBACK * p_callback, void * p_data )
@@ -1280,21 +1135,7 @@ vbi_proxy_client_set_callback( vbi_proxy_client * vpc,
 }
 
 
-/**
- * @param vpc Pointer to initialized and active proxy client context
- *
- * @brief Returns capture interface for an initialized proxy client
- *
- * This function is for convenience only: it returns the same pointer
- * as the previous call to vbi_capture_proxy_new(), so that the client
- * need not store it.  This pointer is required for function calls
- * through the capture device API (e.g. reading raw or sliced data)
- *
- * @return
- * Pointer to a vbi_capture structure, should be treated as void * by
- * caller, i.e. acessed neither for read nor write.  Returns @c NULL
- * upon error (i.e. if the client is not connected to the daemon)
- */
+/* document below */
 vbi_capture *
 vbi_proxy_client_get_capture_if( vbi_proxy_client * vpc )
 {
@@ -1585,44 +1426,7 @@ vbi_proxy_client_stop( vbi_capture * vc )
    }
 }
 
-
-/**
- * @ingroup Device
- *
- * @param p_proxy_client Reference to an initialized proxy client
- *   context.
- * @param buffers Number of device buffers for raw vbi data. The same
- *   number of buffers is allocated to cache sliced data in the proxy daemon.
- * @param scanning This indicates the current norm: 625 for PAL and
- *   525 for NTSC; set to 0 if you don't know (you should not attempt
- *   to query the device for the norm, as this parameter is only required
- *   for v4l1 drivers which don't support video standard query ioctls)
- * @param p_services This must point to a set of @ref VBI_SLICED_
- *   symbols describing the
- *   data services to be decoded. On return the services actually
- *   decodable will be stored here. See vbi_raw_decoder_add()
- *   for details. If you want to capture raw data only, set to
- *   @c VBI_SLICED_VBI_525, @c VBI_SLICED_VBI_625 or both.
- * @param strict Will be passed to vbi_raw_decoder_add().
- * @param pp_errorstr If not @c NULL this function stores a pointer to an error
- *   description here. You must free() this string when no longer needed.
- *
- * Open a new connection to a VBI proxy to open a VBI device for the
- * given services.  On side of the proxy one of the regular v4l_new()
- * functions is invoked and if it succeeds, data slicing is started
- * and all captured data forwarded transparently.
- *
- * Whenever possible the proxy should be used instead of opening the device
- * directly, since it allows the user to start multiple VBI clients in
- * parallel.  When this function fails (usually because the user hasn't
- * started the proxy daemon) applications should automatically fall back
- * to opening the device directly.
- *
- * @since 0.3.0
- * 
- * @return
- * Initialized vbi_capture context, @c NULL on failure.
- */
+/* document below */
 vbi_capture *
 vbi_capture_proxy_new( struct vbi_proxy_client * vpc,
                        int buffers, int scanning,
@@ -1683,19 +1487,6 @@ vbi_capture_proxy_new( struct vbi_proxy_client * vpc,
    return NULL;
 }
 
-
-/**
- * @addtogroup Proxy VBI proxy interface
- */
-
-/**
- * @param vpc Pointer to initialized proxy client context
- *
- * This function closes the connection to the proxy daemon and frees
- * all resources.  The given context must no longer be used after this
- * function was called.  If the context was used via the capture device
- * interface, the vbi_capture context must be destroyed first.
- */
 void
 vbi_proxy_client_destroy( vbi_proxy_client * vpc )
 {
@@ -1724,27 +1515,7 @@ vbi_proxy_client_destroy( vbi_proxy_client * vpc )
    }
 }
 
-
-/**
- * @param p_dev_name Name of the device to open, usually one of
- *   @c /dev/vbi or @c /dev/vbi0 and up.  Note: should be the same path as
- *   used by the proxy daemon, else the client may not be able to connect.
- * @param p_client_name Name of the client application, typically identical
- *   to argv[0] (without the path though)  Can be used by the proxy daemon
- *   to fine-tune scheduling or to present the user with a list of
- *   currently connected applications.
- * @param client_flags Can contain one or more members of VBI_PROXY_CLIENT_FLAGS
- * @param pp_errorstr If not @c NULL this function stores a pointer to an error
- *   description here. You must free() this string when no longer needed.
- * @param trace_level Enable debug output to stderr if non-zero.
- *   Larger values produce more output.
- *
- * This function initializes a proxy daemon client context with the given
- * parameters.  (Note this function does not yet connect the daemon.)
- *
- * @return
- * Initialized proxy client context, @c NULL on failure
- */
+/* document below */
 vbi_proxy_client *
 vbi_proxy_client_create( const char *p_dev_name, const char *p_client_name,
                          VBI_PROXY_CLIENT_FLAGS client_flags,
@@ -1787,21 +1558,325 @@ vbi_proxy_client_create( const char *p_dev_name, const char *p_client_name,
    return vpc;
 }
 
-#else /* not ENABLE_PROXY */
+#else /* !ENABLE_PROXY */
 
-/* document above */
+/**
+ * @addtogroup Proxy VBI capture proxy interface
+ * @ingroup Raw
+ * @brief Receiving sliced or raw data from VBI proxy daemon
+ *
+ * Using the VBI proxy daemon instead of capturing directly from a
+ * VBI device allows multiple clients to capture concurrently, e.g.
+ * to decode multiple data services.
+ */
+
+/**
+ * @param vpc Pointer to initialized proxy client context
+ * @param chn_prio Channel change priority level.  If there are other clients
+ *   with higher priority the client will be refused any channel changes.
+ * @param p_chn_profile Channel profile for scheduling at background
+ *   priority level.
+ *
+ * This function is used to request permission to switch channels or norm.
+ * Since the VBI device can be shared with other proxy clients, clients should
+ * wait for permission, so that the proxy daemon can fairly schedule channel
+ * requests.
+ *
+ * Scheduling differs at the 3 priority levels. For an explanation of
+ * priorities see enum VBI_CHN_PRIO.  At background level channel changes
+ * are coordinated by introduction of a virtual token: only the
+ * one client which holds the token is allowed to switch channels. The daemon
+ * will wait for the token to be returned before it's granted to another
+ * client.  This way conflicting channel changes are avoided.
+ *
+ * At the upper level the latest request always wins.  To avoid interference
+ * the application still might wait until it gets indicated that the token
+ * has been returned to the daemon.
+ *
+ * The token may be granted right away or at a later time, e.g. when it has
+ * to be reclaimed from another client first, or if there are other clients
+ * with higher priority.  If a callback has been registered, it will be
+ * invoked when the token arrives; otherwise
+ * vbi_proxy_client_has_channel_control()
+ * can be used to poll for it.
+ *
+ * Note: to set the priority level to "background" only without requesting
+ * a channel, set the is_valid member in the profile to @c FALSE.
+ *
+ * @return
+ * 1 if change is allowed, 0 if not allowed,
+ * -1 on error, examine @c errno for details.
+ */
+/* XXX TODO improve description */
+int
+vbi_proxy_client_channel_request( vbi_proxy_client * vpc,
+                                  VBI_CHN_PRIO chn_prio,
+                                  vbi_channel_profile * p_chn_profile )
+{
+   errno = 0;
+   return -1;
+}
+
+
+/**
+ * @param vpc Pointer to initialized proxy client context
+ * @param notify_flags Combination of event notification bits
+ * @param scanning New norm, if norm event bit is set
+ *
+ * Send channel control request to proxy daemon.
+ * See description of the flags for details.
+ *
+ * @return
+ * 0 upon success, -1 on error, examine @c errno for details.
+ */
+int
+vbi_proxy_client_channel_notify( vbi_proxy_client * vpc,
+                                 VBI_PROXY_CHN_FLAGS notify_flags,
+                                 unsigned int scanning )
+{
+   return -1;
+}
+
+
+/**
+ * @param vpc Pointer to initialized proxy client context
+ * @param cmd Control command
+ *
+ * Request to temporarily suspend capturing
+ *
+ * @return
+ * 0 upon success, -1 on error, examine @c errno for details.
+ */
+int
+vbi_proxy_client_channel_suspend( vbi_proxy_client * vpc,
+                                  VBI_PROXY_SUSPEND cmd )
+{
+   return -1;
+}
+
+
+/**
+ * @param vpc Pointer to initialized proxy client context
+ * @param request Ioctl request code to be passed to driver
+ * @param p_arg Ioctl argument to be passed to driver
+ *
+ * @brief Wrapper for ioctl requests on the VBI device
+ *
+ * This function allows to manipulate parameters of the underlying
+ * VBI device.  Not all ioctls are allowed here.  It's mainly intended
+ * to be used for channel enumeration and channel/norm changes.  
+ * The request codes and parameters are the same as for the actual device.
+ * The caller has to query the driver API first and use the respective
+ * ioctl codes, same as if the device would be used directly.
+ *
+ * @return
+ * Same as for the ioctl, i.e. -1 on error and errno set appropriately.
+ * The funtion also will fail with errno @c EBUSY if the client doesn't
+ * have permission to control the channel.
+ */
+int
+vbi_proxy_client_device_ioctl( vbi_proxy_client * vpc,
+			       int request, void * p_arg )
+{
+   return -1;
+}
+
+/**
+ * @param vpc Pointer to initialized proxy client context
+ * @param p_scanning Returns new scanning after channel change
+ * @param p_granted Returns@c TRUE if client is currently allowed to
+ *   switch channels
+ *
+ * Retrieve info sent by the proxy daemon in a channel change indication.
+ *
+ * @return
+ * 0 upon success, -1 on error.
+ */
+int
+vbi_proxy_client_get_channel_desc( vbi_proxy_client * vpc,
+                                   unsigned int * p_scanning,
+                                   vbi_bool * p_granted )
+{
+   return -1;
+}
+
+/**
+ * @param vpc Pointer to initialized proxy client context
+ *
+ * @brief Query if the client is currently allowed to switch channels
+ *
+ * @return
+ * Returns @c TRUE if client is currently allowed to switch channels.
+ */
+vbi_bool
+vbi_proxy_client_has_channel_control( vbi_proxy_client * vpc )
+{
+   return FALSE;
+}
+
+/**
+ * @param vpc Pointer to initialized proxy client context
+ *
+ * @brief Returns the driver type behind the actual capture device
+ *
+ * This function can be used to query which driver is behind the
+ * device which is currently opened by the VBI proxy daemon.
+ * Applications which use libzvbi's capture API only need not
+ * care about this.  The information is only relevant to applications
+ * which need to change channels or norms.
+ *
+ * The function will fail if the client is currently not connected
+ * to the daemon, i.e. VPI capture has to be started first.
+ *
+ * @return
+ * Driver type or -1 on error.
+ */
+VBI_DRIVER_API_REV
+vbi_proxy_client_get_driver_api( vbi_proxy_client * vpc )
+{
+   return VBI_API_UNKNOWN;
+}
+
+/**
+ * @param vpc Pointer to initialized proxy client context
+ * @param p_callback Pointer to callback function
+ * @param p_data Void pointer which will be passed through to the
+ *   callback function unmodified.
+ *
+ * @brief Installs callback function for asynchronous events
+ *
+ * This function installs a callback function which will be invoked
+ * upon asynchronous events (e.g. channel changes by other clients.)
+ * Since the proxy client has no activity carrier on it's own (i.e.
+ * it's not using an internal thread or process) callbacks will only
+ * occur from inside other proxy client function calls.  The client's
+ * file description will become readable when an asynchronous message
+ * has arrived from the daemon.  Typically the application then will
+ * call read to obtain sliced data and the callback will be invoked
+ * from inside the read function.  Usually in this case the read call
+ * will return zero, i.e. indicate an timeout since no actual sliced
+ * data has arrived.
+ *
+ * Note for channel requests the callback to grant channel control may
+ * be invoked before the request function returns.
+ * Note you can call any interface function from inside the callback,
+ * including the destroy operator.
+ *
+ * @return
+ * Returns pointer to the previous callback or @c NULL if none.
+ */
+VBI_PROXY_CLIENT_CALLBACK *
+vbi_proxy_client_set_callback( vbi_proxy_client * vpc,
+                               VBI_PROXY_CLIENT_CALLBACK * p_callback,
+			       void * p_data )
+{
+   return NULL;
+}
+
+/**
+ * @param vpc Pointer to initialized and active proxy client context
+ *
+ * @brief Returns capture interface for an initialized proxy client
+ *
+ * This function is for convenience only: it returns the same pointer
+ * as the previous call to vbi_capture_proxy_new(), so that the client
+ * need not store it.  This pointer is required for function calls
+ * through the capture device API (e.g. reading raw or sliced data)
+ *
+ * @return
+ * Pointer to a vbi_capture structure, should be treated as void * by
+ * caller, i.e. acessed neither for read nor write.  Returns @c NULL
+ * upon error (i.e. if the client is not connected to the daemon)
+ */
+vbi_capture *
+vbi_proxy_client_get_capture_if( vbi_proxy_client * vpc )
+{
+   return NULL;
+}
+
+/**
+ * @ingroup Device
+ *
+ * @param p_proxy_client Reference to an initialized proxy client
+ *   context.
+ * @param buffers Number of device buffers for raw vbi data. The same
+ *   number of buffers is allocated to cache sliced data in the proxy daemon.
+ * @param scanning This indicates the current norm: 625 for PAL and
+ *   525 for NTSC; set to 0 if you don't know (you should not attempt
+ *   to query the device for the norm, as this parameter is only required
+ *   for v4l1 drivers which don't support video standard query ioctls)
+ * @param p_services This must point to a set of @ref VBI_SLICED_
+ *   symbols describing the
+ *   data services to be decoded. On return the services actually
+ *   decodable will be stored here. See vbi_raw_decoder_add()
+ *   for details. If you want to capture raw data only, set to
+ *   @c VBI_SLICED_VBI_525, @c VBI_SLICED_VBI_625 or both.
+ * @param strict Will be passed to vbi_raw_decoder_add().
+ * @param pp_errorstr If not @c NULL this function stores a pointer to an error
+ *   description here. You must free() this string when no longer needed.
+ *
+ * Open a new connection to a VBI proxy to open a VBI device for the
+ * given services.  On side of the proxy one of the regular v4l_new()
+ * functions is invoked and if it succeeds, data slicing is started
+ * and all captured data forwarded transparently.
+ *
+ * Whenever possible the proxy should be used instead of opening the device
+ * directly, since it allows the user to start multiple VBI clients in
+ * parallel.  When this function fails (usually because the user hasn't
+ * started the proxy daemon) applications should automatically fall back
+ * to opening the device directly.
+ *
+ * @since 0.3.0
+ * 
+ * @return
+ * Initialized vbi_capture context, @c NULL on failure.
+ */
 vbi_capture *
 vbi_capture_proxy_new( struct vbi_proxy_client *p_proxy_client,
                        int buffers, int scanning,
                        unsigned int *p_services, int strict,
-                       char **pp_errorstr, vbi_bool trace )
+                       char **pp_errorstr )
 {
    pthread_once (&vbi_init_once, vbi_init);
    vbi_asprintf(pp_errorstr, _("Proxy client interface not compiled."));
    return NULL;
 }
 
-/* document above */
+/**
+ * @param vpc Pointer to initialized proxy client context
+ *
+ * This function closes the connection to the proxy daemon and frees
+ * all resources.  The given context must no longer be used after this
+ * function was called.  If the context was used via the capture device
+ * interface, the vbi_capture context must be destroyed first.
+ */
+void
+vbi_proxy_client_destroy( vbi_proxy_client * vpc )
+{
+   vpc = vpc;
+}
+
+/**
+ * @param p_dev_name Name of the device to open, usually one of
+ *   @c /dev/vbi or @c /dev/vbi0 and up.  Note: should be the same path as
+ *   used by the proxy daemon, else the client may not be able to connect.
+ * @param p_client_name Name of the client application, typically identical
+ *   to argv[0] (without the path though)  Can be used by the proxy daemon
+ *   to fine-tune scheduling or to present the user with a list of
+ *   currently connected applications.
+ * @param client_flags Can contain one or more members of
+ * VBI_PROXY_CLIENT_FLAGS
+ * @param pp_errorstr If not @c NULL this function stores a pointer to an error
+ *   description here. You must free() this string when no longer needed.
+ * @param trace_level Enable debug output to stderr if non-zero.
+ *   Larger values produce more output.
+ *
+ * This function initializes a proxy daemon client context with the given
+ * parameters.  (Note this function does not yet connect the daemon.)
+ *
+ * @return
+ * Initialized proxy client context, @c NULL on failure
+ */
 vbi_proxy_client *
 vbi_proxy_client_create(const char *p_dev_name, const char *p_client_name,
                         VBI_PROXY_CLIENT_FLAGS client_flags,
@@ -1811,4 +1886,4 @@ vbi_proxy_client_create(const char *p_dev_name, const char *p_client_name,
    return NULL;
 }
 
-#endif /* not ENABLE_PROXY */
+#endif /* !ENABLE_PROXY */

@@ -32,7 +32,6 @@ INCLUDES += \
 
 if ENABLE_PROXY
 proxy_sources = \
-	proxy-client.c proxy-client.h \
 	proxy-msg.c proxy-msg.h
 proxy_libs = \
 	libzvbi-chains.la
@@ -67,6 +66,7 @@ libzvbi_la_SOURCES = \
 	lang.c lang.h \
 	misc.c misc.h \
 	packet.c teletext.c vt.h \
+	proxy-client.c proxy-client.h \
 	search.c search.h ure.c ure.h \
 	tables.c tables.h \
 	trigger.c trigger.h \

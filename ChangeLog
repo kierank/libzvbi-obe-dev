@@ -1,3 +1,21 @@
+2004-11-11    <mschimek@users.sf.net>
+
+	* Release 0.2.9
+
+2004-11-10    <mschimek@users.sf.net>
+
+	* README, NEWS, TODO, daemon/README: Updated for 0.2.9.
+	* src/io-dvb.c: New version with vbi_dvb_demux still untested,
+	  restored previous version for 0.2.9.
+	* configure.in: By default no proxy on FreeBSD.
+	* src/io-bktr.c: Include fix.
+	* src/Makefile.am: Always compile proxy-client.c.
+	* src/proxy-client.c: Moved function documentation down to #ifndef
+	  proxy section, or doxygen won't find it. Added missing dummy
+	  functions to make the linker happy.
+	(vbi_capture_proxy_new): in no-proxy section, fixed parameter
+	  mismatch with header.
+
 2004-11-07    <mschimek@users.sf.net>
 
 	* daemon/proxyd.c (dprintf): s/proxyd/zvbid.
@@ -122,7 +140,7 @@
 2004-05-12    <mschimek@users.sf.net>
 
 	* m4/autogen.sh: Fixed non-Posix-ness of head args,
-	  reported by Stéphane Loeuillet.
+	  reported by St�phane Loeuillet.
 
 2004-05-12    <mschimek@users.sf.net>
 
@@ -130,8 +148,8 @@
 	
 2004-04-25    <mschimek@users.sf.net>
 
-	* src/tables.c: Updated CNI table, with Arte/La Cinquième
-	  fix by Stéphane Loeuillet.
+	* src/tables.c: Updated CNI table, with Arte/La Cinqui�me
+	  fix by St�phane Loeuillet.
 
 2004-04-09    <mschimek@users.sf.net>
 

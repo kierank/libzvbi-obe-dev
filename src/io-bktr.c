@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-bktr.c,v 1.8 2004/10/25 16:56:29 mschimek Exp $";
+"$Id: io-bktr.c,v 1.9 2004/11/11 05:34:34 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -34,13 +34,10 @@ static const char rcsid [] =
 #include <string.h>
 #include <math.h>
 #include <errno.h>
-//#include <fcntl.h>
-//#include <unistd.h>
+#include <unistd.h>
 #include <assert.h>
 #include <sys/time.h>		/* timeval */
 #include <sys/select.h>		/* fd_set */
-//#include <sys/ioctl.h>
-//#include <sys/mman.h>
 #include <pthread.h>
 
 #define printv(format, args...)						\
