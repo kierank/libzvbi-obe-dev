@@ -29,9 +29,12 @@
  *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
  *    the latter ones are currently not officially supported.
  *
- *  $Id: proxy-msg.c,v 1.4 2003/05/10 13:30:51 tomzo Exp $
+ *  $Id: proxy-msg.c,v 1.5 2003/05/24 12:19:11 tomzo Exp $
  *
  *  $Log: proxy-msg.c,v $
+ *  Revision 1.5  2003/05/24 12:19:11  tomzo
+ *  - renamed MSG_TYPE_DATA_IND into _SLICED_IND in preparation for raw data
+ *
  *  Revision 1.4  2003/05/10 13:30:51  tomzo
  *  Reduced default debug level of proxy_msg_trace from 1 to 0
  *
@@ -78,8 +81,8 @@
 #include "io.h"
 #include "proxy-msg.h"
 
-#define dprintf1(fmt, arg...)    if (proxy_msg_trace >= 1) printf("proxy_msg: " fmt, ## arg)
-#define dprintf2(fmt, arg...)    if (proxy_msg_trace >= 2) printf("proxy_msg: " fmt, ## arg)
+#define dprintf1(fmt, arg...)    do {if (proxy_msg_trace >= 1) printf("proxy_msg: " fmt, ## arg);} while(0)
+#define dprintf2(fmt, arg...)    do {if (proxy_msg_trace >= 2) printf("proxy_msg: " fmt, ## arg);} while(0)
 static int proxy_msg_trace = 0;
 
 
@@ -467,6 +470,7 @@ void vbi_proxy_msg_write( VBIPROXY_MSG_STATE * p_io, VBIPROXY_MSG_TYPE type,
    p_io->freeWriteBuf = freeBuf;
    p_io->writeLen     = sizeof(VBIPROXY_MSG_HEADER) + msgLen;
    p_io->writeOff     = 0;
+   p_io->lastIoTime   = time(NULL);
 
    /* message header: length is coded in network byte order (i.e. big endian) */
    p_io->writeHeader.len  = htons(p_io->writeLen);
@@ -486,7 +490,7 @@ vbi_bool vbi_proxy_msg_write_queue( VBIPROXY_MSG_STATE * p_io, vbi_bool * p_bloc
                                     vbi_sliced * p_lines, unsigned int line_count,
                                     double timestamp )
 {
-   VBIPROXY_DATA_IND * p_data_ind;
+   VBIPROXY_SLICED_IND * p_sliced_ind;
    uint32_t  body_size;
    vbi_bool  result = TRUE;
    int idx;
@@ -496,29 +500,29 @@ vbi_bool vbi_proxy_msg_write_queue( VBIPROXY_MSG_STATE * p_io, vbi_bool * p_bloc
 
    if ((p_io != NULL) && (p_blocked != NULL) && (p_lines != NULL))
    {
-      body_size = VBIPROXY_DATA_IND_SIZE(line_count);
-      p_data_ind = malloc(body_size);
-      p_data_ind->timestamp  = timestamp;
+      body_size = VBIPROXY_SLICED_IND_SIZE(line_count);
+      p_sliced_ind = malloc(body_size);
+      p_sliced_ind->timestamp  = timestamp;
 
       /* filter for services requested by this client */
-      p_data_ind->line_count = 0;
+      p_sliced_ind->line_count = 0;
       for (idx = 0; (idx < line_count) && (idx < max_lines); idx++)
       {
          if ((p_lines[idx].id & services) != 0)
          {
-            memcpy(p_data_ind->sliced + p_data_ind->line_count, p_lines + idx, sizeof(vbi_sliced));
-            p_data_ind->line_count += 1;
+            memcpy(p_sliced_ind->sliced + p_sliced_ind->line_count, p_lines + idx, sizeof(vbi_sliced));
+            p_sliced_ind->line_count += 1;
          }
       }
-      body_size = VBIPROXY_DATA_IND_SIZE(p_data_ind->line_count);
+      body_size = VBIPROXY_SLICED_IND_SIZE(p_sliced_ind->line_count);
 
       dprintf2("msg_write_queue: fd %d: msg body size %d\n", p_io->sock_fd, body_size);
-      p_io->pWriteBuf        = p_data_ind;
+      p_io->pWriteBuf        = p_sliced_ind;
       p_io->freeWriteBuf     = TRUE;
       p_io->writeLen         = sizeof(VBIPROXY_MSG_HEADER) + body_size;
       p_io->writeOff         = 0;
       p_io->writeHeader.len  = htons(p_io->writeLen);
-      p_io->writeHeader.type = MSG_TYPE_DATA_IND;
+      p_io->writeHeader.type = MSG_TYPE_SLICED_IND;
 
       #ifdef linux
       val = 1;  /* "kork" the socket so that only one TCP packet is sent for the message, if possible */
