@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.6.1\n"
-"POT-Creation-Date: 2002-09-29 17:38+0200\n"
-"PO-Revision-Date: 2002-01-08 14:34+0100\n"
+"POT-Creation-Date: 2002-10-01 22:38+0200\n"
+"PO-Revision-Date: 2002-10-03 21:38+0200\n"
 "Last-Translator: Ime Smits <ime@iae.nl>\n"
 "Language-Team: Dutch <ime@iae.nl>\n"
 "MIME-Version: 1.0\n"
@@ -18,13 +18,10 @@ msgid "Correct aspect ratio"
 msgstr "Corrigeer beeldverhouding"
 
 #: src/exp-gfx.c:732
-#, fuzzy
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
-msgstr ""
-"Een standaard TV (4:3) verhouding benaderen, hierdoor wordt overbodige "
-"beeldinformatie toegevoegd"
+msgstr "Een standaard TV (4:3) verhouding benaderen. De beeldgrootte wordt hierdoor verdubbeld."
 
 #: src/exp-gfx.c:805 src/exp-gfx.c:1101
 #, c-format
@@ -101,7 +98,7 @@ msgstr "Geen ondersteuning voor tekenconversie van unicode (UCS-2) naar %s."
 
 #: src/exp-html.c:431
 msgid "Character conversion failed."
-msgstr ""
+msgstr "Karakter conversie mislukt."
 
 #: src/exp-html.c:720
 msgid "HTML"
@@ -117,43 +114,43 @@ msgstr "ASCII"
 
 #: src/exp-txt.c:80
 msgid "ISO-8859-1 (Latin-1 Western languages)"
-msgstr ""
+msgstr "ISO-8859-1 (Latin-1 Westerse talen)"
 
 #: src/exp-txt.c:81
 msgid "ISO-8859-2 (Latin-2 Central and Eastern Europe languages)"
-msgstr ""
+msgstr "ISO-8859-2 (Latin-2 Centraal- en Oost-Europesche talen)"
 
 #: src/exp-txt.c:82
 msgid "ISO-8859-4 (Latin-3 Baltic languages)"
-msgstr ""
+msgstr "ISO8859-4 (Latin-3 Baltische talen)"
 
 #: src/exp-txt.c:83
 msgid "ISO-8859-5 (Cyrillic)"
-msgstr ""
+msgstr "ISO-8859-5 (Cyrillisch)"
 
 #: src/exp-txt.c:84
 msgid "ISO-8859-7 (Greek)"
-msgstr ""
+msgstr "ISO-8859-7 (Grieks)"
 
 #: src/exp-txt.c:85
 msgid "ISO-8859-8 (Hebrew)"
-msgstr ""
+msgstr "ISO-8859-8 (Hebreeuws)"
 
 #: src/exp-txt.c:86
 msgid "ISO-8859-9 (Turkish)"
-msgstr ""
+msgstr "ISO-8859-9 (Turks)"
 
 #: src/exp-txt.c:87
 msgid "KOI8-R (Russian and Bulgarian)"
-msgstr ""
+msgstr "KOI8-R (Russisch en Bulgaars)"
 
 #: src/exp-txt.c:88
 msgid "KOI8-U (Ukranian)"
-msgstr ""
+msgstr "KOI8-U (Ukrainsch)"
 
 #: src/exp-txt.c:89
 msgid "ISO-10646/UTF-8 (Unicode)"
-msgstr ""
+msgstr "ISO-10646/UTF-8 (Unicode)"
 
 # src/frequencies.c:827
 #: src/exp-txt.c:101
@@ -194,23 +191,23 @@ msgstr "Maakt niet uit"
 
 #: src/exp-txt.c:109
 msgid "None"
-msgstr ""
+msgstr "Geen"
 
 #: src/exp-txt.c:109
 msgid "ANSI X3.64 / VT 100"
-msgstr ""
+msgstr "ANSI X3.64 / VT 100"
 
 #: src/exp-txt.c:109
 msgid "VT 200"
-msgstr ""
+msgstr "VT 200"
 
 #: src/exp-txt.c:116
 msgid "Format"
-msgstr ""
+msgstr "Formaat"
 
 #: src/exp-txt.c:126
 msgid "Control codes"
-msgstr ""
+msgstr "Control codes"
 
 #: src/exp-txt.c:130
 msgid "Foreground"
@@ -230,12 +227,11 @@ msgstr "Aangenomen achtergrondkleur van terminal"
 
 #: src/exp-txt.c:649
 msgid "Text"
-msgstr ""
+msgstr "Tekst"
 
 #: src/exp-txt.c:650
-#, fuzzy
 msgid "Export this page as text file"
-msgstr "Exporteren als ANSI-tekst"
+msgstr "Exporteren als tekst bestand"
 
 #: src/exp-vtx.c:77
 msgid "Can only export Teletext pages."
@@ -246,9 +242,8 @@ msgid "Page is not cached, sorry."
 msgstr "Pagina is helaas niet gecached."
 
 #: src/exp-vtx.c:95
-#, fuzzy
 msgid "Cannot export this page, not displayable."
-msgstr "Kan deze pagina niet exporteren."
+msgstr "Kan deze pagina niet exporteren, niet displayable."
 
 #: src/exp-vtx.c:131
 msgid "VTX"
@@ -264,17 +259,17 @@ msgstr ""
 #: src/export.c:458
 #, c-format
 msgid "Invalid option string \"%s\"."
-msgstr ""
+msgstr "Ongeldige optie string \"%s\"."
 
 #: src/export.c:546
 #, c-format
 msgid "Unknown export module '%s'."
-msgstr ""
+msgstr "Onbekende export module '%s'."
 
 #: src/export.c:556
 #, c-format
 msgid "Cannot initialize export module '%s', probably lack of memory."
-msgstr ""
+msgstr "Kan export module '%s' niet initialiseren. Waarschijnlijk geheugenprobleem."
 
 #: src/export.c:983
 #, c-format
@@ -284,30 +279,30 @@ msgstr "Kan bestand '%s' niet aanmaken: %d, %s."
 #: src/export.c:1055
 #, c-format
 msgid "Error while writing file '%s'"
-msgstr ""
+msgstr "Fout bij het schrijven van bestan '%s'"
 
 #: src/export.c:1057
 msgid "Error while writing file"
-msgstr ""
+msgstr "Fout tijdens het schrijven van bestand"
 
 #: src/export.c:1087
 #, c-format
 msgid "Export module '%s' has no option '%s'."
-msgstr ""
+msgstr "Export module '%s' heeft geen optie '%s'."
 
 #: src/export.c:1137
 #, c-format
 msgid "Invalid argument %s for option %s of export module %s."
-msgstr ""
+msgstr "Ongeldig argument %s voor optie %s van export module %s."
 
 #: src/export.c:1161
 #, c-format
 msgid "Out of memory in export module '%s'."
-msgstr ""
+msgstr "Geen geheugen meer in export module '%s'."
 
 #: src/export.c:1188
 msgid "Unknown error."
-msgstr ""
+msgstr "Onbekende fout."
 
 #: src/io-v4l2.c:323 src/io-v4l2.c:532 src/io-v4l2.c:580 src/io-v4l2.c:661
 #: src/io-v4l.c:522 src/io-v4l.c:786 src/io-v4l.c:804
@@ -326,7 +321,7 @@ msgstr "Kan apparaat '%s' niet openen: %d, %s."
 
 #: src/io-v4l2.c:346
 msgid "Probably not a v4l2 device."
-msgstr ""
+msgstr "Waarschijnlijk geen v4l2 device."
 
 #: src/io-v4l2.c:351 src/io-v4l.c:557
 #, c-format
@@ -336,16 +331,16 @@ msgstr "%s (%s) is geen VBI-apparaat."
 #: src/io-v4l2.c:362 src/io-v4l2.c:545 src/io-v4l.c:708
 #, c-format
 msgid "%s (%s) does not support the select() function."
-msgstr ""
+msgstr "%s (%s) ondersteunt de select() functie niet."
 
 #: src/io-v4l2.c:370
 #, c-format
 msgid "Cannot query current videostandard of %s (%s): %d, %s."
-msgstr ""
+msgstr "Kan huidige videostandaard %s (%s) niet querien: %d, %s"
 
 #: src/io-v4l2.c:372 src/io-v4l2.c:644
 msgid "Probably a driver bug."
-msgstr ""
+msgstr "Waarschijnlijk een driver bug."
 
 #: src/io-v4l2.c:392
 #, c-format
@@ -364,29 +359,29 @@ msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "%s (%s) is al in gebruik."
 
 #: src/io-v4l2.c:462 src/io-v4l.c:457
-#, fuzzy, c-format
+#, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
-msgstr "Kan de VBI-parameters voor %s (%s) niet activeren: %d, %s."
+msgstr "Kan de VBI-capture-parameters voor %s (%s) niet activeren: %d, %s."
 
 #: src/io-v4l2.c:465 src/io-v4l2.c:564
 msgid "Possibly a driver bug."
 msgstr "Mogelijk een bug in de drivers."
 
 #: src/io-v4l2.c:494 src/io-v4l.c:596
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
-msgstr "%s (%s) biedt een onbekend VBI-formaat #%d aan."
+msgstr ""
+"%s (%s) biedt een onbekend VBI sampling formaat #%d aan. Dit kan een"
+"driver bug zijn of libzvbi is te oud."
 
 #: src/io-v4l2.c:506 src/io-v4l.c:760
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
 "frequency %.2f MHz is too low."
-msgstr ""
-"Kan de gewenste datadienst niet ontvangen met %s (%s), de samplingfrequentie "
-"%.2f MHz is te laag."
+msgstr "Kan de gewenste datadienst niet ontvangen met %s (%s), de samplingfrequentie %.2f MHz is te laag."
 
 #: src/io-v4l2.c:561
 #, c-format
@@ -435,7 +430,7 @@ msgstr ""
 
 #: src/io-v4l2.c:733
 msgid "V4L2 interface not compiled."
-msgstr ""
+msgstr "V4L2 interface niet gecompileerd."
 
 #: src/io-v4l.c:508
 msgid "driver unknown"
@@ -452,16 +447,16 @@ msgstr ""
 msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
-msgstr ""
+msgstr "Kan %s (%s) niet identificeren. Vermelde vbi frame size suggereert dat dit geen bttv driver is."
 
 #: src/io-v4l.c:673 src/io-v4l.c:733
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
-msgstr "Kan de huidige videostandaard van %s (%s) niet uitlezen ofactiveren.\n"
+msgstr "Kan de huidige videostandaard van %s (%s) niet uitlezen of bepalen."
 
 #: src/io-v4l.c:863 src/io-v4l.c:873
 msgid "V4L interface not compiled."
-msgstr ""
+msgstr "V4L interface niet gecompileerd."
 
 #~ msgid "Character conversion Unicode -> %s not supported"
 #~ msgstr "Geen ondersteuning voor tekenconversie van unicode naar %s"
