@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.20 2005/02/17 10:21:16 mschimek Exp $ */
+/* $Id: packet.c,v 1.21 2005/02/25 18:32:35 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1427,103 +1427,6 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 	return TRUE;
 }
 
-#define FPC_BLOCK_SEPARATOR	0xC
-#define FPC_FILLER_BYTE		0x3
-
-static inline void
-vbi_reset_page_clear(struct page_clear *pc)
-{
-	pc->ci = 256;
-	pc->packet = 256;
-	pc->num_packets = 0;
-	pc->bi = 0;
-	pc->left = 0;
-	pc->pfc.application_id = -1;
-}
-
-static void
-parse_page_clear(struct page_clear *pc, uint8_t *p, int packet)
-{
-	int bp, col;
-
-	if ((pc->packet + 1) != packet || packet > pc->num_packets)
-		goto desync;
-
-	pc->packet = packet;
-
-	if ((bp = vbi_unham8 (p[0]) * 3) < 0 || bp > 39)
-		goto desync;
-
-	for (col = 1; col < 40;) {
-		int bs;
-
-		if (pc->left > 0) {
-			int size = MIN(pc->left, 40 - col);
-
-			memcpy(pc->pfc.block + pc->bi, p + col, size);
-
-			pc->bi += size;
-			pc->left -= size;
-
-			if (pc->left > 0)
-				return; /* packet done */
-
-			col += size;
-
-			if (pc->pfc.application_id < 0) {
-				int sh = vbi_unham16p (pc->pfc.block)
-					+ vbi_unham16p (pc->pfc.block + 2) * 256;
-
-				pc->pfc.application_id = sh & 0x1F;
-				pc->pfc.block_size =
-					pc->left = sh >> 5;
-				pc->bi = 0;
-
-				continue;
-			} else {
-				int i;
-					
-				fprintf(stderr, "pfc %d %d\n",
-					pc->pfc.application_id,
-					pc->pfc.block_size);
-
-				for (i = 0; i < pc->pfc.block_size; i++) {
-					fputc(vbi_printable (pc->pfc.block[i]), stderr);
-
-					if ((i % 75) == 75)
-						fputc('\n', stderr);
-				}
-
-				fputc('\n', stderr);
-			}
-		}
-
-		if (col <= 1) {
-			if (bp >= 39)
-				return; /* no SH in this packet */
-			col = bp + 2;
-			bs = vbi_unham8 (p[col - 1]);
-		} else
-			while ((bs = vbi_unham8 (p[col++])) == FPC_FILLER_BYTE) {
-				if (col >= 40)
-					return; /* packet done */
-			}
-
-		if (bs != FPC_BLOCK_SEPARATOR)
-			goto desync;
-
-		pc->pfc.application_id = -1;
-		pc->left = 4; /* sizeof structure header */
-		pc->bi = 0;
-	}
-
-	return;
-
- desync:
-	// fprintf(stderr, "FPC reset\n");
-	vbi_reset_page_clear(pc);
-}
-
 static int
 same_header(int cur_pgno, uint8_t *cur,
 	    int ref_pgno, uint8_t *ref,
@@ -2267,6 +2170,8 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 				cvtp->function = PAGE_FUNCTION_MOT;
 				pi->code = VBI_SYSTEM_PAGE;
 			} else if (FPC && pi->code == VBI_EPG_DATA) {
+				cvtp->function = PAGE_FUNCTION_DISCARD;
+#if 0 /* TODO */
 				int stream = (cvtp->subno >> 8) & 15;
 
 				if (stream >= 2) {
@@ -2287,6 +2192,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 					pc->num_packets = ((cvtp->subno >> 4) & 7)
 						+ ((cvtp->subno >> 9) & 0x18);
 				}
+#endif
 			} else {
 				cvtp->function = PAGE_FUNCTION_UNKNOWN;
 
@@ -2441,7 +2347,9 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			break;
 
 		case PAGE_FUNCTION_EPG:
+#if 0 /* TODO */
 			parse_page_clear(vbi->epg_pc + ((cvtp->subno >> 8) & 1), p, packet);
+#endif
 			break;
 
 		case PAGE_FUNCTION_LOP:
@@ -2660,11 +2568,13 @@ vbi_teletext_desync(vbi_decoder *vbi)
 	for (i = 0; i < 8; i++)
 		vbi->vt.raw_page[i].page->function = PAGE_FUNCTION_DISCARD;
 
+#if 0 /* TODO */
 	vbi_reset_page_clear(vbi->epg_pc + 0);
 	vbi_reset_page_clear(vbi->epg_pc + 1);
 
 	vbi->epg_pc[0].pfc.stream = 1;
 	vbi->epg_pc[1].pfc.stream = 2;
+#endif
 }
 
 /**
