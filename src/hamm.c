@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: hamm.c,v 1.4 2005/01/19 04:21:17 mschimek Exp $ */
+/* $Id: hamm.c,v 1.5 2005/01/20 20:49:30 mschimek Exp $ */
 
 #include <limits.h>		/* CHAR_BIT */
 #include "hamm.h"
@@ -77,6 +77,8 @@ _vbi_bit_reverse [256] = {
  * 
  * Of each byte of the array, changes the most significant
  * bit to make the number of set bits odd.
+ *
+ * @since 0.2.12
  */
 void
 vbi_par				(uint8_t *		p,
@@ -101,6 +103,8 @@ vbi_par				(uint8_t *		p,
  * @return
  * A negative value if any byte of the array had even
  * parity (sum of bits modulo 2 is 0).
+ *
+ * @since 0.2.12
  */
 int
 vbi_unpar			(uint8_t *		p,
@@ -297,6 +301,8 @@ _vbi_hamm24_corr [64] = {
  * @return
  * Triplet data bits D18 [msb] ... D1 [lsb] or a negative value
  * if the triplet contained incorrectable errors.
+ *
+ * @since 0.2.12
  */
 int
 vbi_unham24p			(const uint8_t *	p)
