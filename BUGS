@@ -1,4 +1,4 @@
-$Id: BUGS,v 1.10 2002/08/07 19:29:03 mschimek Exp $
+$Id: BUGS,v 1.11 2002/08/31 17:13:02 mschimek Exp $
 
-* 001 v4l and v4l2 i/o can ignore timeout parameter
+* v4l and v4l2 i/o can ignore timeout parameter
   > maybe a sleep() loop works, but what about timestamping?
