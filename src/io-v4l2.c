@@ -18,10 +18,10 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2.c,v 1.29 2004/10/25 16:56:29 mschimek Exp $";
+"$Id: io-v4l2.c,v 1.30 2004/12/13 07:11:37 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #include "vbi.h"
@@ -34,14 +34,10 @@ static const char rcsid [] =
 #include <string.h>
 #include <math.h>
 #include <errno.h>
-//#include <fcntl.h>
-//#include <unistd.h>		
 #include <assert.h>
 #include <sys/time.h>		/* timeval */
 #include <sys/types.h>		/* fd_set */
-//#include <sys/ioctl.h>
 #include <sys/ioctl.h>		/* for (_)videodev2.h */
-//#include <sys/mman.h>
 #include <asm/types.h>		/* for videodev2.h */
 #include <pthread.h>
 
