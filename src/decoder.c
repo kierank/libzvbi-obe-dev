@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.15 2004/11/07 10:52:25 mschimek Exp $ */
+/* $Id: decoder.c,v 1.16 2004/12/13 07:14:07 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -29,6 +29,7 @@
 
 #include "misc.h"
 #include "decoder.h"
+#include "raw_decoder.h"
 
 /**
  * @addtogroup Rawdec Raw VBI decoder
@@ -468,165 +469,6 @@ vbi_bit_slicer_init(vbi_bit_slicer *slicer,
 	}
 }
 
-/*
- * Data Service Table
- */
-
-#define MAX_JOBS		(sizeof(((vbi_raw_decoder *) 0)->jobs)	\
-				 / sizeof(((vbi_raw_decoder *) 0)->jobs[0]))
-#define MAX_WAYS		8
-
-struct vbi_service_par {
-	unsigned int	id;		/* VBI_SLICED_ */
-	char *		label;
-	int		first[2];	/* scanning lines (ITU-R), max. distribution; */
-	int		last[2];	/*  zero: no data from this field, requires field sync */
-	int		offset;		/* leading edge hsync to leading edge first CRI one bit
-					    half amplitude points, nanoseconds */
-	int		cri_rate;	/* Hz */
-	int		bit_rate;	/* Hz */
-	int		scanning;	/* scanning system: 525 (FV = 59.94 Hz, FH = 15734 Hz),
-							    625 (FV = 50 Hz, FH = 15625 Hz) */
-	unsigned int	cri_frc;	/* Clock Run In and FRaming Code, LSB last txed bit of FRC */
-	unsigned int	cri_mask;	/* cri bits significant for identification, */
-	char		cri_bits;
-	char		frc_bits;	/* cri_bits at cri_rate, frc_bits at bit_rate */
-	short		payload;	/* in bits */
-	char		modulation;	/* payload modulation */
-};
-
-const struct vbi_service_par
-vbi_services[] = {
-	{
-		VBI_SLICED_TELETEXT_B_L10_625, "Teletext System B Level 1.5, 625",
-		{ 7, 320 },
-		{ 22, 335 },
-		10300, 6937500, 6937500, /* 444 x FH */
-		625, 0x00AAAAE4, ~0, 10, 6, 42 * 8, VBI_MODULATION_NRZ_LSB
-	}, {
-		VBI_SLICED_TELETEXT_B, "Teletext System B, 625",
-		{ 6, 318 },
-		{ 22, 335 },
-		10300, 6937500, 6937500, /* 444 x FH */
-		625, 0x00AAAAE4, ~0, 10, 6, 42 * 8, VBI_MODULATION_NRZ_LSB
-	}, {
-		VBI_SLICED_VPS, "Video Programming System",
-		{ 16, 0 },
-		{ 16, 0 },
-		12500, 5000000, 2500000, /* 160 x FH */
-		625, 0xAAAA8A99, ~0, 24, 0, 13 * 8, VBI_MODULATION_BIPHASE_MSB
-	}, {
-		VBI_SLICED_WSS_625, "Wide Screen Signalling 625",
-		{ 23, 0 },
-		{ 23, 0 },
-		11000, 5000000, 833333, /* 160/3 x FH */
-		625, 0xC71E3C1F, 0x924C99CE, 32, 0, 14 * 1, VBI_MODULATION_BIPHASE_LSB
-	}, {
-		VBI_SLICED_CAPTION_625_F1, "Closed Caption 625, field 1",
-		{ 22, 0 },
-		{ 22, 0 },
-		10500, 1000000, 500000, /* 32 x FH */
-		625, 0x00005551, ~0, 9, 2, 2 * 8, VBI_MODULATION_NRZ_LSB
-	}, {
-		VBI_SLICED_CAPTION_625_F2, "Closed Caption 625, field 2",
-		{ 0, 335 },
-		{ 0, 335 },
-		10500, 1000000, 500000, /* 32 x FH */
-		625, 0x00005551, ~0, 9, 2, 2 * 8, VBI_MODULATION_NRZ_LSB
-	}, {
-		VBI_SLICED_VBI_625, "VBI 625", /* Blank VBI */
-		{ 6, 318 },
-		{ 22, 335 },
-		10000, 1510000, 1510000,
-		625, 0, 0, 0, 0, 10 * 8, 0 /* 10.0-2 ... 62.9+1 us */
-	}, {
-		VBI_SLICED_NABTS, "Teletext System C, 525", /* NOT CONFIRMED */
-		{ 10, 0 },
-		{ 21, 0 },
-		10500, 5727272, 5727272,
-		525, 0x00AAAAE7, ~0, 10, 6, 33 * 8, VBI_MODULATION_NRZ_LSB /* Tb. */
-	}, {
-		VBI_SLICED_WSS_CPR1204, "Wide Screen Signalling 525",
-		/* NOT CONFIRMED (EIA-J CPR-1204) */
-		{ 20, 283 },
-		{ 20, 283 },
-		11200, 3579545, 447443, /* 1/8 x FSC */
-		525, 0x0000FF00, 0x00003C3C, 16, 0, 20 * 1, VBI_MODULATION_NRZ_MSB
-		/* No useful FRC, but a six bit CRC */
-	}, {
-		VBI_SLICED_CAPTION_525_F1, "Closed Caption 525, field 1",
-		{ 21, 0 },
-		{ 21, 0 },
-		10500, 1006976, 503488, /* 32 x FH */
-		525, 0x00005551, ~0, 9, 2, 2 * 8, VBI_MODULATION_NRZ_LSB
-	}, {
-		VBI_SLICED_CAPTION_525_F2, "Closed Caption 525, field 2",
-		{ 0, 284 },
-		{ 0, 284 },
-		10500, 1006976, 503488, /* 32 x FH */
-		525, 0x00005551, ~0, 9, 2, 2 * 8, VBI_MODULATION_NRZ_LSB
-	}, {
-		VBI_SLICED_2xCAPTION_525, "2xCaption 525", /* NOT CONFIRMED */
-		{ 10, 0 },
-		{ 21, 0 },
-		10500, 1006976, 1006976, /* 64 x FH */
-		525, 0x000554ED, ~0, 8, 8, 4 * 8, VBI_MODULATION_NRZ_LSB /* Tb. */
-	}, {
-		VBI_SLICED_TELETEXT_BD_525, "Teletext System B / D (Japan), 525", /* NOT CONFIRMED */
-		{ 10, 0 },
-		{ 21, 0 },
-		9600, 5727272, 5727272,
-		525, 0x00AAAAE4, ~0, 10, 6, 34 * 8, VBI_MODULATION_NRZ_LSB /* Tb. */
-	}, {
-		VBI_SLICED_VBI_525, "VBI 525", /* Blank VBI */
-		{ 10, 272 },
-		{ 21, 284 },
-		9500, 1510000, 1510000,
-		525, 0, 0, 0, 0, 10 * 8, 0 /* 9.5-1 ... 62.4+1 us */
-	},
-	{ 0 }
-};
-
-/**
- * @param service A @ref VBI_SLICED_ symbol, for example from a vbi_sliced structure.
- *
- * @return
- * Name of the @a service, ASCII, or @c NULL if unknown.
- */
-/* XXX make return type const */
-const char *
-vbi_sliced_name(unsigned int service)
-{
-	int i;
-
-	/* ambiguous */
-	if (service & VBI_SLICED_TELETEXT_B)
-		return "Teletext System B";
-	if (service & VBI_SLICED_CAPTION_525)
-		return "Closed Caption 525";
-	if (service & VBI_SLICED_CAPTION_625)
-		return "Closed Caption 625";
-
-	for (i = 0; vbi_services[i].id; i++)
-		if (service & vbi_services[i].id)
-			return vbi_services[i].label;
-
-	return NULL;
-}
-
-#ifndef DECODER_PATTERN_DUMP
-#define DECODER_PATTERN_DUMP 0
-#endif
-
-#ifndef DECODER_SERVICE_DIAG
-#define DECODER_SERVICE_DIAG 0
-#endif
-
-#define ds_diag(templ, args...)						\
-do { /* Check syntax in any case */					\
-	if (DECODER_SERVICE_DIAG)					\
-		fprintf (stderr, templ , ##args);			\
-} while (0)
 
 /**
  * @param rd Initialized vbi_raw_decoder structure.
@@ -645,123 +487,34 @@ do { /* Check syntax in any case */					\
  * service, or none, to speed up decoding. You should avoid using the same
  * vbi_raw_decoder structure for different sources.
  *
- * @bug This function ignores the sampling_format field in struct
- * vbi_raw_decoder, always assuming VBI_PIXFMT_YUV420.
- *
  * @return
  * The number of lines decoded, i. e. the number of vbi_sliced records
  * written.
  */
-/* XXX bit_slicer_1() */
 int
-vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out)
+vbi_raw_decode			(vbi_raw_decoder *	rd,
+				 uint8_t *		raw,
+				 vbi_sliced *		out)
 {
-	static int readj = 1;
-	int pitch = rd->bytes_per_line << rd->interlaced;
-	int8_t *pat, *pattern = rd->pattern;
-	uint8_t *raw1 = raw;
-	vbi_sliced *out1 = out;
-	struct _vbi_raw_decoder_job *job;
-	int i, j;
+	vbi3_raw_decoder *rd3;
+	unsigned int n_lines;
 
-	pthread_mutex_lock(&rd->mutex);
+	assert (NULL != rd);
+	assert (NULL != raw);
+	assert (NULL != out);
 
-	if (!rd->services) {
-		pthread_mutex_unlock(&rd->mutex);
-		return 0;
+	rd3 = (vbi3_raw_decoder *) rd->pattern;
+	n_lines = rd->count[0] + rd->count[1];
+
+	pthread_mutex_lock (&rd->mutex);
+
+	{
+		n_lines = vbi3_raw_decoder_decode (rd3, out, n_lines, raw);
 	}
 
-	for (i = 0; i < rd->count[0] + rd->count[1]; i++) {
-		if (rd->interlaced && i == rd->count[0])
-			raw = raw1 + rd->bytes_per_line;
+	pthread_mutex_unlock (&rd->mutex);
 
-		if (DECODER_PATTERN_DUMP) {
-			fprintf(stderr, "L%02d ", i);
-			for (j = 0; j < MAX_WAYS; j++)
-				if (pattern[j] < 1 || pattern[j] > 8)
-					fprintf(stderr, "0x%02x       ",
-						pattern[j] & 0xFF);
-				else
-					fprintf(stderr, "0x%08x ",
-						rd->jobs[pattern[j] - 1].id);
-			fprintf(stderr, "\n");
-		}
-
-		for (pat = pattern;; pat++) {
-			j = *pat; /* data service n, blank 0, or counter -n */
-
-			if (j > 0) {
-				job = rd->jobs + (j - 1);
-
-				if (!bit_slicer_1(&job->slicer, raw + job->offset, out->data))
-					continue; /* no match, try next data service */
-
-				if (job->id == VBI_SLICED_WSS_CPR1204) {
-					const int poly = (1 << 6) + (1 << 1) + 1;
-					int crc, j;
-
-					crc = (out->data[0] << 12) + (out->data[1] << 4) + out->data[2];
-					crc |= (((1 << 6) - 1) << (14 + 6));
-
-					for (j = 14 + 6 - 1; j >= 0; j--) {
-						if (crc & ((1 << 6) << j))
-							crc ^= poly << j;
-					}
-
-					if (crc)
-						continue; /* no match */
-				}
-
-				/* Positive match, output decoded line */
-
-				out->id = job->id;
-
-				if (i >= rd->count[0])
-					out->line = (rd->start[1] > 0) ? rd->start[1] - rd->count[0] + i : 0;
-				else
-					out->line = (rd->start[0] > 0) ? rd->start[0] + i : 0;
-				out++;
-
-				/* Predict line as non-blank, force testing for
-				   data services in the next 128 frames */
-				pattern[MAX_WAYS - 1] = -128;
-
-			} else if (pat == pattern) {
-				/* Line was predicted as blank, once in 16
-				   frames look for data services */
-				if (readj == 0) {
-					j = pattern[0];
-					memmove (&pattern[0], &pattern[1],
-						 sizeof (*pattern) * (MAX_WAYS - 1));
-					pattern[MAX_WAYS - 1] = j;
-				}
-
-				break;
-			} else if ((j = pattern[MAX_WAYS - 1]) < 0) {
-				/* Increment counter, when zero predict line as
-				   blank and stop looking for data services */
-				pattern[MAX_WAYS - 1] = j + 1;
-    				break;
-			} else {
-				/* found nothing, j = 0 */
-			}
-
-			/* Try the found data service first next time */
-			*pat = pattern[0];
-			pattern[0] = j;
-
-			break; /* line done */
-		}
-
-		raw += pitch;
-		pattern += MAX_WAYS;
-	}
-
-	readj = (readj + 1) & 15;
-
-	pthread_mutex_unlock(&rd->mutex);
-
-	return out - out1;
+	return n_lines;
 }
 
 /**
@@ -772,74 +525,40 @@ vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out)
  * Grows or shrinks the internal state arrays for VBI geometry changes
  */
 void
-vbi_raw_decoder_resize( vbi_raw_decoder *rd, int * start, unsigned int * count )
+vbi_raw_decoder_resize		(vbi_raw_decoder *	rd,
+				 int *			start,
+				 unsigned int *		count)
 {
-	int8_t * old_pattern;
-	int8_t * base;
-	int8_t * dest;
-	int8_t * src;
-	int      frm;
-	int      line;
+	vbi_service_set service_set;
+	vbi3_raw_decoder *rd3;
 
-	if ( (rd->start[0] == start[0]) && (rd->start[1] == start[1]) &&
-	     (rd->count[0] == count[0]) && (rd->count[1] == count[1]) )
-		return;
+	assert (NULL != rd);
+	assert (NULL != start);
+	assert (NULL != count);
 
-	if (rd->pattern != NULL) {
-		old_pattern = rd->pattern;
+	rd3 = (vbi3_raw_decoder *) rd->pattern;
 
-		rd->pattern = (int8_t *) calloc((count[0] + count[1])
-						* MAX_WAYS, sizeof(rd->pattern[0]));
+	pthread_mutex_lock (&rd->mutex);
 
-		base = old_pattern;
-		for (frm = 0; frm < 2; frm++) {
-			for (line = rd->start[frm]; line < rd->start[frm] + rd->count[frm]; line++) {
-				if ((line >= start[frm]) && (line < start[frm] + count[frm])) {
-					dest = rd->pattern + (line - start[frm]) * MAX_WAYS;
-					src  = old_pattern + (line - rd->start[frm]) * MAX_WAYS;
-					memcpy(dest, src, MAX_WAYS * sizeof(*rd->pattern));
-				}
-			}
-			base += rd->count[frm] * MAX_WAYS;
-
-			rd->start[frm] = start[frm];
-			rd->count[frm] = count[frm];
+	{
+		if ((rd->start[0] == start[0])
+		    && (rd->start[1] == start[1])
+		    && (rd->count[0] == count[0])
+		    && (rd->count[1] == count[1])) {
+			pthread_mutex_unlock (&rd->mutex);
+			return;
 		}
 
-		free(old_pattern);
-        }
-}
+		rd->start[0] = start[0];
+		rd->start[1] = start[1];
+		rd->count[0] = count[0];
+		rd->count[1] = count[1];
 
-/**
- *  Helper function for service removal:
- *  remove one job from one VBI line's pattern array
- */
-static void
-vbi_raw_decoder_remove_pattern( int job, int8_t * pattern, int pattern_size )
-{
-        int8_t * pat;
-	int ways_left;
-        int  i, j;
+		service_set = vbi3_raw_decoder_set_sampling_par
+			(rd3, (vbi_sampling_par *) rd, /* strict */ 0);
+	}
 
-        for (i = 0; i < pattern_size; i++) {
-                pat = pattern + i * MAX_WAYS;
-                for (j = 0; j < MAX_WAYS; j++) {
-                        if (pat[j] == job + 1) {
-                                ways_left = (MAX_WAYS - 1) - j;
-
-				if (ways_left > 0)
-                                        memmove(&pat[j], &pat[j + 1],
-                                                ways_left * sizeof(*pattern));
-
-                                pat[MAX_WAYS - 1] = 0;
-                        }
-                }
-        }
-
-        for (i = 0; i < pattern_size; i++) {
-                if (pattern[i] >= job + 1)
-                        pattern[i] -= 1;
-        }
+	pthread_mutex_unlock (&rd->mutex);
 }
 
 /**
@@ -855,156 +574,28 @@ vbi_raw_decoder_remove_pattern( int job, int8_t * pattern, int pattern_size )
  * services that will be decoded.
  */
 unsigned int
-vbi_raw_decoder_remove_services(vbi_raw_decoder *rd, unsigned int services)
+vbi_raw_decoder_remove_services	(vbi_raw_decoder *	rd,
+				 unsigned int		services)
 {
-	int i;
-	int pattern_size = (rd->count[0] + rd->count[1]) * MAX_WAYS;
+	vbi_service_set service_set;
+	vbi3_raw_decoder *rd3;
 
-	pthread_mutex_lock(&rd->mutex);
+	assert (NULL != rd);
 
-	for (i = 0; i < rd->num_jobs;) {
-		if (rd->jobs[i].id & services) {
-			if (rd->pattern)
-                                vbi_raw_decoder_remove_pattern(i, rd->pattern, pattern_size);
+	rd3 = (vbi3_raw_decoder *) rd->pattern;
+	service_set = services;
 
-                        if (i + 1 < MAX_JOBS)
-			        memmove(rd->jobs + i, rd->jobs + (i + 1),
-				        (MAX_JOBS - (i + 1)) * sizeof(rd->jobs[0]));
+	pthread_mutex_lock (&rd->mutex);
 
-			rd->num_jobs -= 1;
-			rd->jobs[rd->num_jobs].id = 0;
-		} else
-			i++;
+	{
+		service_set = vbi3_raw_decoder_remove_services
+			(rd3, service_set);
 	}
 
-	pthread_mutex_unlock(&rd->mutex);
+	pthread_mutex_unlock (&rd->mutex);
 
-	return rd->services &= ~services;
+	return service_set;
 }
-
-/**
- *  Helper function for service add and check functions:
- *  check if the given service can be decoded with the parameters in rd;
- *  if yes, return TRUE and line start and count for both fields within
- *  the range limits of rd.
- */
-static vbi_bool
-vbi_raw_decoder_check_service(const vbi_raw_decoder *rd, int srv_idx, int strict,
-                              int *row, int *count)
-{
-	double signal;
-	int field;
-	vbi_bool result = FALSE;
-
-	if (vbi_services[srv_idx].scanning != rd->scanning)
-		goto finished;
-
-	if ((vbi_services[srv_idx].id & (VBI_SLICED_CAPTION_525_F1
-				       | VBI_SLICED_CAPTION_525))
-	    && (rd->start[0] <= 0 || rd->start[1] <= 0)) {
-		/*
-		 *  The same format is used on other lines
-		 *  for non-CC data.
-		 */
-		goto finished;
-	}
-
-	signal = vbi_services[srv_idx].cri_bits / (double) vbi_services[srv_idx].cri_rate
-		 + (vbi_services[srv_idx].frc_bits + vbi_services[srv_idx].payload)
-		   / (double) vbi_services[srv_idx].bit_rate;
-
-	if (rd->offset > 0 && strict > 0) {
-		double offset = rd->offset / (double) rd->sampling_rate;
-		double samples_end = (rd->offset + rd->bytes_per_line)
-				     / (double) rd->sampling_rate;
-
-		if (offset > (vbi_services[srv_idx].offset / 1e9 - 0.5e-6)) {
-			ds_diag ("skipping service 0x%08X: H-Off %d = %f > %f\n",
-				vbi_services[srv_idx].id, rd->offset, offset,
-				vbi_services[srv_idx].offset / 1e9 - 0.5e-6);
-			goto finished;
-		}
-
-		if (samples_end < (vbi_services[srv_idx].offset / 1e9
-				   + signal + 0.5e-6)) {
-			ds_diag ("skipping service 0x%08X: sampling window too short: "
-				"end %f < %f = offset %d *10^-9 + %f\n",
-				vbi_services[srv_idx].id, samples_end,
-				vbi_services[srv_idx].offset / 1e9 + signal + 0.5e-6,
-				vbi_services[srv_idx].offset, signal);
-			goto finished;
-		}
-	} else {
-		double samples = rd->bytes_per_line
-				 / (double) rd->sampling_rate;
-
-		if (samples < (signal + 1.0e-6)) {
-			ds_diag ("skipping service 0x%08X: not enough samples\n",
-				vbi_services[srv_idx].id);
-			goto finished;
-		}
-	}
-
-	for (field = 0; field < 2; field++) {
-		int start = rd->start[field];
-		int end = start + rd->count[field] - 1;
-
-		if (!rd->synchronous) {
-			ds_diag ("skipping service 0x%08X: not sync'ed\n",
-				vbi_services[srv_idx].id);
-			goto finished; /* too difficult */
-		}
-
-		if (!(vbi_services[srv_idx].first[field] && vbi_services[srv_idx].last[field])) {
-			count[field] = 0;
-			continue;
-		}
-
-		if (rd->count[field] == 0) {
-			count[field] = 0;
-			continue;
-		}
-
-		if (rd->start[field] > 0 && strict > 0) {
-			/*
-			 *  May succeed if not all scanning lines
-			 *  available for the service are actually used.
-			 */
-			if (strict > 1
-			    || (vbi_services[srv_idx].first[field] ==
-				vbi_services[srv_idx].last[field]))
-				if (start > vbi_services[srv_idx].first[field] ||
-				    end < vbi_services[srv_idx].last[field]) {
-					ds_diag ("skipping service 0x%08X: lines not available "
-						"have %d-%d, need %d-%d\n",
-						vbi_services[srv_idx].id, start, end,
-						vbi_services[srv_idx].first[field],
-						vbi_services[srv_idx].last[field]);
-					goto finished;
-				}
-
-			row[field] = MAX(0, (int) vbi_services[srv_idx].first[field] - start);
-			count[field] = MIN(end, vbi_services[srv_idx].last[field])
-				       - (start + row[field]) + 1;
-		} else {
-			row[field] = 0;
-			count[field] = rd->count[field];
-		}
-	}
-	row[1] += rd->count[0];
-
-	if (count[0] + count[1] == 0) {
-		ds_diag ("skipping service 0x%08X: zero line count\n",
-			vbi_services[srv_idx].id);
-		goto finished;
-	}
-
-	result = TRUE;
-
-finished:
-	return result;
-}
-
 
 /**
  * @param rd Initialized vbi_raw_decoder structure.
@@ -1018,25 +609,27 @@ finished:
  * Subset of services actually decodable.
  */
 unsigned int
-vbi_raw_decoder_check_services(vbi_raw_decoder *rd, unsigned int services, int strict)
+vbi_raw_decoder_check_services	(vbi_raw_decoder *	rd,
+				 unsigned int		services,
+				 int			strict)
 {
-	int row[2], count[2];
-	int i;
+	vbi_service_set service_set;
 
-	services &= ~(VBI_SLICED_VBI_525 | VBI_SLICED_VBI_625);
+	assert (NULL != rd);
 
-	for (i = 0; vbi_services[i].id; i++) {
+	service_set = services;
 
-		if ( ((vbi_services[i].id & services) != 0) &&
-		     (vbi_raw_decoder_check_service(rd, i, strict, row, count) == FALSE) ) {
+	pthread_mutex_lock (&rd->mutex);
 
-			/* incompatible service */
-			services &= ~ vbi_services[i].id;
-		}
+	{
+		service_set = vbi_sampling_par_check_services
+			((vbi_sampling_par *) rd, service_set, strict);
 	}
-	return services;
-}
 
+	pthread_mutex_unlock (&rd->mutex);
+
+	return (unsigned int) service_set;
+}
 
 /**
  * @param rd Initialized vbi_raw_decoder structure.
@@ -1062,113 +655,31 @@ vbi_raw_decoder_check_services(vbi_raw_decoder *rd, unsigned int services, int s
  * the sampling parameters in @a rd.
  */
 unsigned int
-vbi_raw_decoder_add_services(vbi_raw_decoder *rd, unsigned int services, int strict)
+vbi_raw_decoder_add_services	(vbi_raw_decoder *	rd,
+				 unsigned int		services,
+				 int			strict)
 {
-	double off_min = (rd->scanning == 525) ? 7.9e-6 : 8.0e-6;
-	double offset = rd->offset / (double) rd->sampling_rate;
-	struct _vbi_raw_decoder_job *job;
-	int8_t *pattern;
-	int row[2], count[2];
-	int skip;
-	int way;
-	int i, j, k;
+	vbi_service_set service_set;
+	vbi3_raw_decoder *rd3;
 
-	pthread_mutex_lock(&rd->mutex);
+	assert (NULL != rd);
 
-	services &= ~(VBI_SLICED_VBI_525 | VBI_SLICED_VBI_625);
+	rd3 = (vbi3_raw_decoder *) rd->pattern;
+	service_set = services;
 
-	if (!rd->pattern)
-		rd->pattern = (int8_t *) calloc((rd->count[0] + rd->count[1])
-						* MAX_WAYS, sizeof(rd->pattern[0]));
+	pthread_mutex_lock (&rd->mutex);
 
-	for (i = 0; vbi_services[i].id; i++) {
-		if (rd->num_jobs >= (int) MAX_JOBS)
-			break;
+	{
+		vbi3_raw_decoder_set_sampling_par
+			(rd3, (vbi_sampling_par *) rd, strict);
 
-		if ((vbi_services[i].id & services) == 0)
-			continue;
-
-		if (vbi_raw_decoder_check_service(rd, i, strict, row, count) == FALSE)
-			goto finished;
-
-		for (j = 0, job = rd->jobs; j < rd->num_jobs; job++, j++) {
-			unsigned int id = job->id | vbi_services[i].id;
-
-			if ((id & ~(VBI_SLICED_TELETEXT_B_L10_625 | VBI_SLICED_TELETEXT_B_L25_625)) == 0
-			    || (id & ~(VBI_SLICED_CAPTION_625_F1 | VBI_SLICED_CAPTION_625)) == 0
-			    || (id & ~(VBI_SLICED_CAPTION_525_F1 | VBI_SLICED_CAPTION_525)) == 0)
-				break;
-			/*
-			 *  General form implies the special form. If both are
-			 *  available from the device, decode() will set both
-			 *  bits in the id field for the respective line. 
-			 */
-		}
-
-		for (j = 0; j < 2; j++) {
-			for (pattern = rd->pattern + row[j] * MAX_WAYS, k = count[j];
-			     k > 0; pattern += MAX_WAYS, k--) {
-				int free = 0;
-
-				for (way = 0; way < MAX_WAYS; way++)
-					free += (pattern[way] <= 0
-						 || ((pattern[way] - 1)
-						     == job - rd->jobs));
-
-				if (free <= 1) { /* reserve one NULL way */
-					ds_diag ("skipping service 0x%08X: no more patterns free\n",
-						vbi_services[i].id);
-					goto finished;
-				}
-			}
-		}
-
-		for (j = 0; j < 2; j++) {
-			for (pattern = rd->pattern + row[j] * MAX_WAYS, k = count[j];
-			     k > 0; pattern += MAX_WAYS, k--) {
-				for (way = 0; pattern[way] > 0
-				      && (pattern[way] - 1) != (job - rd->jobs); way++);
-
-                                assert((pattern + MAX_WAYS - rd->pattern) <= (rd->count[0] + rd->count[1]) * MAX_WAYS);
-
-				pattern[way] = (job - rd->jobs) + 1;
-				pattern[MAX_WAYS - 1] = -128;
-			}
-                }
-
-		/* skip colour burst */
-		if (rd->offset > 0 && strict > 0 && offset < off_min)
-			skip = (int)((off_min - offset) * rd->sampling_rate);
-		else
-			skip = 0;
-
-		job->id |= vbi_services[i].id;
-		job->offset = skip;
-
-		vbi_bit_slicer_init(&job->slicer,
-				    rd->bytes_per_line - skip, // XXX * bpp?
-				    rd->sampling_rate,
-				    vbi_services[i].cri_rate,
-				    vbi_services[i].bit_rate,
-				    vbi_services[i].cri_frc,
-				    vbi_services[i].cri_mask,
-				    vbi_services[i].cri_bits,
-				    vbi_services[i].frc_bits,
-				    vbi_services[i].payload,
-				    vbi_services[i].modulation,
-				    rd->sampling_format);
-
-		if (job >= rd->jobs + rd->num_jobs)
-			rd->num_jobs++;
-
-		rd->services |= vbi_services[i].id;
-finished:
-		;
+		service_set = vbi3_raw_decoder_add_services
+			(rd3, service_set, strict);
 	}
 
-	pthread_mutex_unlock(&rd->mutex);
+	pthread_mutex_unlock (&rd->mutex);
 
-	return rd->services;
+	return service_set;
 }
 
 /**
@@ -1177,7 +688,7 @@ finished:
  *   can add @c VBI_SLICED_VBI_625 or @c VBI_SLICED_VBI_525 to include all
  *   vbi scan lines in the calculated sampling parameters.
  * @param scanning When 525 accept only NTSC services, when 625
- *   only PAL/SECAM services. When scanning is 0, assume the scanning
+ *   only PAL/SECAM services. When scanning is 0, determine the scanning
  *   from the requested services, an ambiguous set will pick
  *   a 525 or 625 line system at random.
  * @param max_rate If given, the highest data bit rate in Hz of all
@@ -1198,93 +709,43 @@ finished:
  * raw decoder cannot decode.
  */
 unsigned int
-vbi_raw_decoder_parameters(vbi_raw_decoder *rd, unsigned int services,
-			   int scanning, int *max_rate)
+vbi_raw_decoder_parameters	(vbi_raw_decoder *	rd,
+				 unsigned int		services,
+				 int			scanning,
+				 int *			max_rate)
 {
-	int i, j;
+	vbi_videostd_set videostd_set;
+	vbi_service_set service_set;
 
-	pthread_mutex_lock(&rd->mutex);
+	switch (scanning) {
+	case 525:
+		videostd_set = VBI_VIDEOSTD_SET_525_60;
+		break;
 
-	rd->scanning = scanning;
-	rd->sampling_format = VBI_PIXFMT_YUV420;
-	rd->sampling_rate = 27000000;	/* ITU-R Rec. 601 */
-	rd->bytes_per_line = 0;
-	rd->offset = (int)(1000e-6 * rd->sampling_rate);
-	rd->start[0] = 1000;
-	rd->count[0] = 0;
-	rd->start[1] = 1000;
-	rd->count[1] = 0;
-	rd->interlaced = FALSE;
-	rd->synchronous = TRUE;
+	case 625:
+		videostd_set = VBI_VIDEOSTD_SET_625_50;
+		break;
 
-	/*
-	 *  Will only allocate as many vbi lines as
-	 *  we need, eg. two lines per frame for CC 525,
-	 *  and set reasonable parameters.
-	 */
-	for (i = 0; vbi_services[i].id; i++) {
-		double left_margin;
-		int offset, samples;
-		double signal;
-
-		if (!(vbi_services[i].id & services))
-			continue;
-
-		if (rd->scanning == 0)
-			rd->scanning = vbi_services[i].scanning;
-
-		left_margin = (rd->scanning == 525) ? 1.0e-6 : 2.0e-6;
-
-		if (vbi_services[i].scanning != rd->scanning) {
-			services &= ~vbi_services[i].id;
-			continue;
-		}
-
-		*max_rate = MAX(*max_rate,
-			MAX(vbi_services[i].cri_rate,
-			    vbi_services[i].bit_rate));
-
-		signal = vbi_services[i].cri_bits / (double) vbi_services[i].cri_rate
-			 + (vbi_services[i].frc_bits + vbi_services[i].payload)
-			   / (double) vbi_services[i].bit_rate;
-
-		offset = (int)((vbi_services[i].offset / 1e9 - left_margin)
-			* rd->sampling_rate + 0.5);
-		samples = (int)((signal + left_margin + 1.0e-6)
-			  * rd->sampling_rate + 0.5);
-
-		rd->offset = MIN(rd->offset, offset);
-
-		rd->bytes_per_line =
-			MIN(rd->bytes_per_line + rd->offset,
-			    samples + offset) - rd->offset;
-
-		for (j = 0; j < 2; j++)
-			if (vbi_services[i].first[j] &&
-			    vbi_services[i].last[j]) {
-				rd->start[j] =
-					MIN(rd->start[j],
-					    vbi_services[i].first[j]);
-				rd->count[j] =
-					MAX(rd->start[j] + rd->count[j],
-					    vbi_services[i].last[j] + 1)
-					- rd->start[j];
-			}
+	default:
+		videostd_set = 0;
+		break;
 	}
 
-	if (!rd->count[0])
-		rd->start[0] = -1;
+	service_set = services;
+ 
+	pthread_mutex_lock (&rd->mutex);
 
-	if (!rd->count[1]) {
-		rd->start[1] = -1;
-
-		if (!rd->count[0])
-			rd->offset = 0;
+	{
+		service_set = vbi_sampling_par_from_services
+			((vbi_sampling_par *) rd,
+			 max_rate,
+			 videostd_set,
+			 service_set);
 	}
 
 	pthread_mutex_unlock(&rd->mutex);
 
-	return services;
+	return (unsigned int) service_set;
 }
 
 /**
@@ -1296,24 +757,24 @@ vbi_raw_decoder_parameters(vbi_raw_decoder *rd, unsigned int services,
  * free to change the sampling parameters after calling this.
  */
 void
-vbi_raw_decoder_reset(vbi_raw_decoder *rd)
+vbi_raw_decoder_reset		(vbi_raw_decoder *	rd)
 {
+	vbi3_raw_decoder *rd3;
+
 	if (!rd)
-		return;
+		return; /* compatibility */
 
-	pthread_mutex_lock(&rd->mutex);
+	assert (NULL != rd);
 
-	if (rd->pattern)
-		free(rd->pattern);
+	rd3 = (vbi3_raw_decoder *) rd->pattern;
 
-	rd->services = 0;
-	rd->num_jobs = 0;
+	pthread_mutex_lock (&rd->mutex);
 
-	rd->pattern = NULL;
+	{
+		vbi3_raw_decoder_reset (rd3);
+	}
 
-	memset(rd->jobs, 0, sizeof(rd->jobs));
-
-	pthread_mutex_unlock(&rd->mutex);
+	pthread_mutex_unlock (&rd->mutex);
 }
 
 /**
@@ -1323,11 +784,19 @@ vbi_raw_decoder_reset(vbi_raw_decoder *rd)
  * Free all resources associated with @a rd.
  */
 void
-vbi_raw_decoder_destroy(vbi_raw_decoder *rd)
+vbi_raw_decoder_destroy		(vbi_raw_decoder *	rd)
 {
-	vbi_raw_decoder_reset(rd);
+	vbi3_raw_decoder *rd3;
 
-	pthread_mutex_destroy(&rd->mutex);
+	assert (NULL != rd);
+
+	rd3 = (vbi3_raw_decoder *) rd->pattern;
+
+	vbi3_raw_decoder_delete (rd3);
+
+	pthread_mutex_destroy (&rd->mutex);
+
+	CLEAR (*rd);
 }
 
 /**
@@ -1336,11 +805,18 @@ vbi_raw_decoder_destroy(vbi_raw_decoder *rd)
  * Initializes a vbi_raw_decoder structure.
  */
 void
-vbi_raw_decoder_init(vbi_raw_decoder *rd)
+vbi_raw_decoder_init		(vbi_raw_decoder *	rd)
 {
-	pthread_mutex_init(&rd->mutex, NULL);
+	vbi3_raw_decoder *rd3;
 
-	rd->pattern = NULL;
+	assert (NULL != rd);
 
-	vbi_raw_decoder_reset(rd);
+	CLEAR (*rd);
+
+	pthread_mutex_init (&rd->mutex, NULL);
+
+	rd3 = vbi3_raw_decoder_new (/* sampling_par */ NULL);
+	assert (NULL != rd3);
+
+	rd->pattern = (int8_t *) rd3;
 }
