@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.14 2004/04/03 00:09:37 mschimek Exp $ */
+/* $Id: teletext.c,v 1.15 2004/04/04 21:46:38 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -69,7 +69,7 @@ extern const char _zvbi_intl_domainname[];
 #  endif
 #endif
 
-#define DEBUG 1
+#define DEBUG 0
 
 #define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? \
                       '.' : ((c) & 0x7F))
