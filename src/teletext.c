@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.11 2003/10/21 20:53:05 mschimek Exp $ */
+/* $Id: teletext.c,v 1.12 2004/01/02 07:45:52 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -247,11 +247,19 @@ top_label(vbi_decoder *vbi, vbi_page *pg, struct vbi_font_descr *font,
 	return FALSE;
 }
 
+static __inline__ vbi_pgno
+add_modulo			(vbi_pgno		pgno,
+				 int			incr)
+{
+	return ((pgno - 0x100 + incr) & 0x7FF) + 0x100;
+}
+
 static inline void
 top_navigation_bar(vbi_decoder *vbi, vbi_page *pg,
 		   vt_page *vtp)
 {
 	vbi_char ac;
+	vbi_pgno pgno1;
 	int i, got;
 
 	printv("PAGE MIP/BTT: %d\n", vbi->vt.page_info[vtp->pgno - 0x100].code);
@@ -269,14 +277,16 @@ top_navigation_bar(vbi_decoder *vbi, vbi_page *pg,
 	if (pg->page_opacity[1] != VBI_OPAQUE)
 		return;
 
-	for (i = vtp->pgno; i != vtp->pgno + 1; i = (i == 0) ? 0x89a : i - 1)
+	pgno1 = add_modulo (vtp->pgno, 1);
+
+	for (i = vtp->pgno; i != pgno1; i = add_modulo (i, -1))
 		if (vbi->vt.page_info[i - 0x100].code == VBI_TOP_BLOCK ||
 		    vbi->vt.page_info[i - 0x100].code == VBI_TOP_GROUP) {
 			top_label(vbi, pg, pg->font[0], 0, i, 32 + VBI_WHITE, 0);
 			break;
 		}
 
-	for (i = vtp->pgno + 1, got = FALSE; i != vtp->pgno; i = (i == 0x899) ? 0x100 : i + 1)
+	for (i = pgno1, got = FALSE; i != vtp->pgno; i = add_modulo (i, 1))
 		switch (vbi->vt.page_info[i - 0x100].code) {
 		case VBI_TOP_BLOCK:
 			top_label(vbi, pg, pg->font[0], 2, i, 32 + VBI_YELLOW, 2);
