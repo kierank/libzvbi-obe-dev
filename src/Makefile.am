@@ -15,50 +15,62 @@ EXTRA_DIST = \
 	wstfont2.xbm \
 	ccfont2.xbm
 
-INCLUDES  = -Wall -Wunused -Wmissing-prototypes -Wmissing-declarations
+INCLUDES  = \
+	-Wall \
+	-Wunused \
+	-Wmissing-prototypes \
+	-Wmissing-declarations
 # INCLUDES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE to enable pthread_rwlocks
-INCLUDES += -D_REENTRANT -D_XOPEN_SOURCE=500 -D_BSD_SOURCE
-INCLUDES += $(X_CFLAGS) $(UNICODE_CFLAGS)
+INCLUDES += \
+	-D_REENTRANT \
+	-D_XOPEN_SOURCE=500 \
+	-D_BSD_SOURCE
+INCLUDES += \
+	$(X_CFLAGS) \
+	$(UNICODE_CFLAGS)
 
-# if ENABLE_PROXY
-# proxy_sources = io-proxy.c proxy-msg.c proxy-msg.h
-# else
+if ENABLE_PROXY
+proxy_sources = \
+	proxy-client.c proxy-client.h \
+	proxy-msg.c proxy-msg.h
+else
 proxy_sources =
-## endif
+endif
 
 lib_LTLIBRARIES = libzvbi.la
 
 libzvbi_la_SOURCES = \
-	$(proxy_sources) \
-	decoder.c decoder.h sliced.h \
-	io.c io.h \
-	io-dvb.c \
-	io-bktr.c \
-	io-v4l2k.c videodev2k.h \
-	io-v4l2.c videodev2.h \
-	io-v4l.c videodev.h \
-	vbi.c vbi.h event.h \
-	packet.c teletext.c vt.h \
-	caption.c cc.h \
-	trigger.c trigger.h \
-	wss.c wss.h \
-	search.c search.h ure.c ure.h \
+	bcd.h \
 	cache.c cache.h \
-	export.c export.h format.h \
-	exp-txt.c exp-txt.h \
+	caption.c cc.h \
+	decoder.c decoder.h sliced.h \
 	exp-gfx.c exp-gfx.h \
 	exp-html.c \
-	exp-vtx.c \
 	exp-templ.c \
+	exp-txt.c exp-txt.h \
+	exp-vtx.c \
+	export.c export.h format.h \
 	hamm.c hamm.h \
+	io.c io.h \
+	io-bktr.c \
+	io-dvb.c \
+	io-v4l.c videodev.h \
+	io-v4l2.c videodev2.h \
+	io-v4l2k.c videodev2k.h \
 	lang.c lang.h \
+	misc.h \
+	packet.c teletext.c vt.h \
+	search.c search.h ure.c ure.h \
 	tables.c tables.h \
-	bcd.h misc.h
+	trigger.c trigger.h \
+	vbi.c vbi.h event.h \
+	wss.c wss.h \
+	$(proxy_sources)
 
 libzvbiincludedir = $(includedir)
 libzvbiinclude_HEADERS = libzvbi.h
 
-libzvbi_la_LIBADD = $(PTHREAD_LIB) $(PNG_LIB) $(UNICODE_LIBS)
+libzvbi_la_LIBADD = $(LIBS) $(UNICODE_LIBS)
 libzvbi_la_LDFLAGS = -version-info $(LIBZVBI_SO_VERSION)
 
 version.h:
@@ -79,6 +91,8 @@ LIBZVBI_HDRS = \
 	sliced.h \
 	decoder.h \
 	io.h \
+	proxy-msg.h \
+	proxy-client.h \
 	exp-gfx.h \
 	exp-txt.h \
 	cc.h \
