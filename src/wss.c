@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.1 2002/01/12 16:18:48 mschimek Exp $ */
+/* $Id: wss.c,v 1.2 2002/09/26 20:48:39 mschimek Exp $ */
 
 #include <stdio.h>
 #include <string.h>
@@ -88,7 +88,7 @@ vbi_decode_wss_625(vbi_decoder *vbi, uint8_t *buf, double time)
 	case 7: /* 16:9 anamorphic */
 		r->first_line = 23;
 		r->last_line = 310;
-		r->ratio = 16.0 / 9.0;
+		r->ratio = 3.0 / 4.0;
 		break;
 	}
 
@@ -173,7 +173,7 @@ vbi_decode_wss_cpr1204(vbi_decoder *vbi, uint8_t *buf)
 		r->last_line = 262;
 	}
 
-	r->ratio = b0 ? 16.0 / 9.0 : 1.0;
+	r->ratio = b0 ? 3.0 / 4.0 : 1.0;
 	r->film_mode = 0;
 	r->open_subtitles = VBI_SUBT_UNKNOWN;
 
