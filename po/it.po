@@ -1,4 +1,4 @@
-# zvbi Italian translation
+# zvbi Italian translation -*- coding: latin-15 -*-
 # Pino Toscano <toscano.pino@tiscali.it>, 2002.
 #
 msgid ""
@@ -11,6 +11,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1\n"
 
 #: src/exp-gfx.c:731
 msgid "Correct aspect ratio"
