@@ -1,3 +1,8 @@
+2003-10-20	<mschimek@users.sf.net>
+
+	* configure.in, src/Makefile.am, daemon: Proxy code
+	  is not ready for release, moved to a separate branch.
+
 2003-10-16	<mschimek@users.sf.net>
 
 	* src/bcd.h (vbi_dec2bcd, vbi_bcd2dec, vbi_add_bcd,
