@@ -4,7 +4,7 @@
  *  Placed in the public domain.
  */
 
-/* $Id: exp-templ.c,v 1.2 2002/05/23 03:59:46 mschimek Exp $ */
+/* $Id: exp-templ.c,v 1.3 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -251,7 +251,7 @@ export(vbi_export *e, FILE *fp, vbi_page *pg)
  */
 vbi_export_class
 vbi_export_class_tmpl = {
-	.public = {
+	._public = {
 		/* The mandatory keyword must be unique and shall
                    contain only "AZaz09-_" */
 		.keyword	= "templ",
@@ -264,8 +264,8 @@ vbi_export_class_tmpl = {
 
 	/* Functions to allocate and free a tmpl_class vbi_export instance.
 	   When you omit these, libzvbi will allocate a bare struct vbi_export */
-	.new			= tmpl_new,
-	.delete			= tmpl_delete,
+	._new			= tmpl_new,
+	._delete		= tmpl_delete,
 
 	/* Functions to enumerate, read and write options */
 	.option_enum		= option_enum,

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.5 2002/03/09 12:10:11 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.6 2002/07/16 00:11:36 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -304,37 +304,37 @@ print_unicode(iconv_t cd, int endian, int unicode, char **p, int n)
 }
 
 /**
- * vbi_print_page_region:
- * @pg: Source page.
- * @buf: Memory location to hold the ouput.
- * @size: Size of the buffer in bytes. The function fails
- *   before the data exceeds the buffer capacity.
- * @format: Character set name for iconv() conversion,
+ * @param pg Source page.
+ * @param buf Memory location to hold the output.
+ * @param size Size of the buffer in bytes. The function
+ *   fails when the data exceeds the buffer capacity.
+ * @param format Character set name for iconv() conversion,
  *   for example "ISO-8859-1".
- * @table: Scan page in table mode, printing all characters
- *   within the source rectangle. Otherwise scan all
- *   characters from @column, @row to @column + @width - 1,
- *   @row + @height - 1 and all intermediate rows to their
- *   full pg->columns width. Table mode also preserves
- *   runs of spaces at the start and end of rows.
- * @rtl: Currently ignored, please set to FALSE.
- * @column: First source column, 0 ... pg->columns - 1.
- * @row: First source row, 0 ... pg->rows - 1.
- * @width: Number of columns to print, 1 ... pg->columns.
- * @height: Number of rows to print, 1 ... pg->rows.
+ * @param table Scan page in table mode, printing all characters
+ *   within the source rectangle including runs of spaces at
+ *   the start and end of rows. When @c FALSE, scan all characters
+ *   from @a column, @a row to @a column + @a width - 1,
+ *   @a row + @a height - 1 and all intermediate rows to their
+ *   full pg->columns width. In this mode runs of spaces at
+ *   the start and end of rows are collapsed into single spaces.
+ * @param ltr Currently ignored, please set to @c TRUE.
+ * @param column First source column, 0 ... pg->columns - 1.
+ * @param row First source row, 0 ... pg->rows - 1.
+ * @param width Number of columns to print, 1 ... pg->columns.
+ * @param height Number of rows to print, 1 ... pg->rows.
  * 
- * Print a subsection of a Teletext or Closed Caption #vbi_page,
+ * Print a subsection of a Teletext or Closed Caption vbi_page,
  * rows separated by linefeeds "\n", in the desired format.
  * All character attributes and colors will be lost. Graphics
  * characters, DRCS and all characters not representable in the
  * target format will be replaced by spaces.
  * 
- * Return value:
- * Number of bytes written into @buf, a value of zero when
- * some error occurred. In this case @buf may contain incomplete
+ * @return
+ * Number of bytes written into @a buf, a value of zero when
+ * some error occurred. In this case @a buf may contain incomplete
  * data. Note this function does not append a terminating null
  * character.
- **/
+ */
 int
 vbi_print_page_region(vbi_page *pg, char *buf, int size,
 		      const char *format, vbi_bool table, vbi_bool rtl,
@@ -595,7 +595,7 @@ export(vbi_export *e, FILE *fp, vbi_page *pg)
 
 vbi_export_class
 vbi_export_class_text = {
-	.public = {
+	._public = {
 		.keyword	= "text",
 		.label		= N_("Text"),
 		.tooltip	= N_("Export this page as text file"),
@@ -604,8 +604,8 @@ vbi_export_class_text = {
 		.extension	= "txt",
 	},
 
-	.new			= text_new,
-	.delete			= text_delete,
+	._new			= text_new,
+	._delete		= text_delete,
 
 	.option_enum		= option_enum,
 	.option_get		= option_get,

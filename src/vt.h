@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vt.h,v 1.2 2002/05/23 03:59:46 mschimek Exp $ */
+/* $Id: vt.h,v 1.3 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifndef VT_H
 #define VT_H
@@ -37,12 +37,12 @@ typedef struct vbi_decoder vbi_decoder;
 #endif
 
 /**
- * page_function:
+ * @internal
  *
  * Page function code according to ETS 300 706, Section 9.4.2,
  * Table 3: Page function and page coding bits (packets X/28/0 Format 1,
  * X/28/3 and X/28/4).
- **/
+ */
 typedef enum {
 	PAGE_FUNCTION_EPG = -4,		/* libzvbi private */
 	PAGE_FUNCTION_TRIGGER = -3,	/* libzvbi private */
@@ -63,12 +63,11 @@ typedef enum {
 } page_function;
 
 /**
- * page_coding:
- *
+ * @internal
  * Page coding code according to ETS 300 706, Section 9.4.2,
  * Table 3: Page function and page coding bits (packets X/28/0 Format 1,
  * X/28/3 and X/28/4).
- **/
+ */
 typedef enum {
 	PAGE_CODING_UNKNOWN = -1,	/* libzvbi private */
 	PAGE_CODING_PARITY,
@@ -80,12 +79,12 @@ typedef enum {
 } page_coding;
 
 /**
- * drcs_mode:
+ * @internal
  *
  * DRCS character coding according to ETS 300 706, Section 14.2,
  * Table 31: DRCS modes; Section 9.4.6, Table 9: Coding of Packet
  * X/28/3 for DRCS Downloading Pages.
- **/
+ */
 typedef enum {
 	DRCS_MODE_12_10_1,
 	DRCS_MODE_12_10_2,
@@ -124,13 +123,13 @@ typedef struct {
 	uint8_t		drcs_clut[2 + 2 * 4 + 2 * 16];
 						/* f/b, dclut4, dclut16 */
 	vbi_rgba	color_map[40];
-} extension;
+} vt_extension;
 
 /**
- * vt_triplet:
+ * @internal
  *
  * Packet X/26 code triplet according to ETS 300 706, Section 12.3.1.
- **/
+ */
 typedef struct vt_triplet {
 	unsigned	address : 8;
 	unsigned	mode : 8;
@@ -163,38 +162,40 @@ typedef vt_triplet enhancement[16 * 13 + 1];
 #define C11_MAGAZINE_SERIAL	0x100000
 
 /**
- * vt_page:
- * 
+ * @internal
+ *
  * This structure holds a raw Teletext page as decoded by
  * vbi_teletext_packet(), stored in the Teletext page cache, and
  * formatted by vbi_format_vt_page() creating a vbi_page. It is
  * thus not directly accessible by the client. Note the size
  * (of the union) will vary in order to save cache memory.
- * 
- * @function: defines the page function and which member of the
- * union applies.
- * 
- * @pgno:
- * @subno: Page and subpage number.
- * 
- * @national: National character set designator 0 ... 7.
- * 
- * @flags: Page flags C4_ERASE_PAGE ... C11_MAGAZIN_SERIAL.
- * 
- * @lop_lines:
- * @enh_lines: One bit for each LOP and enhancement packet
- *  received. 
  **/
-typedef struct vt_page
-{
+typedef struct vt_page {
+	/**
+	 * Defines the page function and which member of the
+	 * union applies.
+	 */ 
 	page_function		function;
 
+	/**
+	 * Page and subpage number.
+	 */
 	vbi_pgno		pgno;
 	vbi_subno		subno;
 
+	/**
+	 * National character set designator 0 ... 7.
+	 */
 	int			national;
+
+	/**
+	 * Page flags C4_ERASE_PAGE ... C11_MAGAZIN_SERIAL.
+	 */
 	int			flags;
 
+	/**
+	 * One bit for each LOP and enhancement packet
+	 */
 	int			lop_lines;
 	int			enh_lines;
 
@@ -211,7 +212,7 @@ typedef struct vt_page
 		struct {
 			struct lop	lop;
 			enhancement	enh;
-			extension	ext;
+			vt_extension	ext;
 		}		ext_lop;
 		struct {
 			uint16_t	pointer[96];
@@ -230,17 +231,16 @@ typedef struct vt_page
 	}		data;
 
 	/* 
-	 *  Dynamic size, no fields below unless
+	 *  Dynamic size, add no fields below unless
 	 *  vt_page is statically allocated.
 	 */
 } vt_page;
 
 /**
- * vtp_size:
- * @vtp: Teletext page in question.
+ * @internal
+ * @param vtp Teletext page in question.
  * 
- * Return value: 
- * Storage size required for the raw Teletext page,
+ * @return Storage size required for the raw Teletext page,
  * depending on its function and the data union member used.
  **/
 static inline int
@@ -275,10 +275,10 @@ vtp_size(vt_page *vtp)
 }
 
 /**
- * btt_page_class:
+ * @internal
  *
  * TOP BTT page class.
- **/
+ */
 typedef enum {
 	BTT_NO_PAGE = 0,
 	BTT_SUBTITLE,
@@ -296,11 +296,11 @@ typedef enum {
 } btt_page_class;
 
 /**
- * object_type:
+ * @internal
  *
  * Enhancement object type according to ETS 300 706, Section 12.3.1,
  * Table 28: Function of Row Address triplets.
- **/
+ */
 typedef enum {
 	LOCAL_ENHANCEMENT_DATA = 0,
 	OBJ_TYPE_NONE = 0,
@@ -310,16 +310,16 @@ typedef enum {
 } object_type;
 
 /**
- * object_address:
+ * @internal
  *
- * MOT default, POP and GPOP
+ * MOT default, POP and GPOP object address.
  *
  * n8  n7  n6  n5  n4  n3  n2  n1  n0
  * packet  triplet lsb ----- s1 -----
  *
  * According to ETS 300 706, Section 12.3.1, Table 28
  * (under Mode 10001 - Object Invocation ff.)
- **/
+ */
 typedef int object_address;
 
 typedef struct {
@@ -329,17 +329,17 @@ typedef struct {
 		object_type	type;
 		object_address	address;
 	}		default_obj[2];
-} pop_link;
+} vt_pop_link;
 
 typedef struct {
-	extension	extension;
+	vt_extension	extension;
 
 	uint8_t		pop_lut[256];
 	uint8_t		drcs_lut[256];
 
-    	pop_link	pop_link[16];
+    	vt_pop_link	pop_link[16];
 	vbi_pgno	drcs_link[16];
-} magazine;
+} vt_magazine;
 
 struct raw_page {
 	vt_page			page[1];
@@ -351,22 +351,18 @@ struct raw_page {
 /* Public */
 
 /**
- * vbi_wst_level:
- *
- * Teletext implementation level:
- * <informaltable frame=none><tgroup cols=2><tbody>
- * <row><entry>1</><entry>Basic Teletext pages</></row>
- * <row><entry>1.5</><entry>Additional national and graphics characters</></row>
- * <row><entry>2.5</><entry>Additional text styles, more colors and DRCS. You should
- *   enable Level 2.5 only if you can render and/or export these pages.</></row>
- * <row><entry>3.5</><entry>Multicolor DRCS, proportional script</></row>
- * </tbody></tgroup></informaltable>
- **/
+ * @ingroup Service
+ * @brief Teletext implementation level.
+ */
 typedef enum {
-	VBI_WST_LEVEL_1,
-	VBI_WST_LEVEL_1p5,
+	VBI_WST_LEVEL_1,   /**< 1 - Basic Teletext pages */
+	VBI_WST_LEVEL_1p5, /**< 1.5 - Additional national and graphics characters */
+	/**
+	 * 2.5 - Additional text styles, more colors and DRCS. You should
+	 * enable Level 2.5 only if you can render and/or export such pages.
+	 */
 	VBI_WST_LEVEL_2p5,
-	VBI_WST_LEVEL_3p5
+	VBI_WST_LEVEL_3p5  /**< 3.5 - Multicolor DRCS, proportional script */
 } vbi_wst_level;
 
 /* Private */
@@ -378,7 +374,7 @@ struct teletext {
 	uint8_t		        header[40];
 
         pagenum		        initial_page;
-	magazine		magazine[9];		/* 1 ... 8; #0 unmodified level 1.5 default */
+	vt_magazine		magazine[9];		/* 1 ... 8; #0 unmodified level 1.5 default */
 
 	int                     region;
 
@@ -403,19 +399,31 @@ struct teletext {
 
 /* Public */
 
+/**
+ * @addtogroup Service
+ * @{
+ */
 extern void		vbi_teletext_set_default_region(vbi_decoder *vbi, int default_region);
 extern void		vbi_teletext_set_level(vbi_decoder *vbi, int level);
-
+/** @} */
+/**
+ * @addtogroup Cache
+ * @{
+ */
 extern vbi_bool		vbi_fetch_vt_page(vbi_decoder *vbi, vbi_page *pg,
 					  vbi_pgno pgno, vbi_subno subno,
 					  vbi_wst_level max_level, int display_rows,
 					  vbi_bool navigation);
-
+extern int		vbi_page_title(vbi_decoder *vbi, int pgno, int subno, char *buf);
+/** @} */
+/**
+ * @addtogroup Event
+ * @{
+ */
 extern void		vbi_resolve_link(vbi_page *pg, int column, int row,
 					 vbi_link *ld);
 extern void		vbi_resolve_home(vbi_page *pg, vbi_link *ld);
-
-extern int		vbi_page_title(vbi_decoder *vbi, int pgno, int subno, char *buf);
+/** @} */
 
 /* Private */
 

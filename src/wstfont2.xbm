@@ -1,4 +1,5 @@
 /* Teletext font, verbatim from ETS 300 706 */
+/* plus some beautyfications */
 #define wstfont2_width 384
 #define wstfont2_height 480
 static char wstfont2_bits[] = {

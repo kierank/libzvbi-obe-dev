@@ -42,6 +42,11 @@
     Hmm... maybe a tree would be better...
 */
 
+/**
+ * @addtogroup Cache Page cache
+ * @ingroup Service
+ */
+
 static inline int
 hash(int pgno)
 {
@@ -64,26 +69,26 @@ for ((p) = PARENT((l)->head, typeof(*(p)), _node_);			\
      (p) = PARENT((p)->_node_.succ, typeof(*(p)), _node_))
 
 /**
- * destroy_list:
- * @l: list *
+ * @internal
+ * @param l list *
  *
  * Free all resources associated with the list,
  * you must pair this with an init_list() call.
  *
  * Does not free the list object or any nodes.
- **/
+ */
 static inline void
 destroy_list(list *l)
 {
 }
 
 /**
- * init_list:
- * @l: list * 
+ * @internal
+ * @param l list * 
  * 
- * Return value:
+ * @return
  * The list pointer.
- **/
+ */
 static inline list *
 init_list(list *l)
 {
@@ -97,13 +102,13 @@ init_list(list *l)
 }
 
 /**
- * list_members:
- * @l: list *
+ * @internal
+ * @param l list *
  * 
- * Return value:
+ * @return
  * Number of nodes linked in the list. You can read
  * l->members directly when the rwlock is unused.
- **/
+ */
 static inline unsigned int
 list_members(list *l)
 {
@@ -111,13 +116,13 @@ list_members(list *l)
 }
 
 /**
- * empty_list:
- * @l: list *
+ * @internal
+ * @param l list *
  * 
- * Return value:
- * %1 if the list is empty, %0 otherwise. You can read
+ * @return
+ * @c 1 if the list is empty, @c 0 otherwise. You can read
  * l->members directly when the rwlock is unused.
- **/
+ */
 static inline int
 empty_list(list *l)
 {
@@ -125,15 +130,15 @@ empty_list(list *l)
 }
 
 /**
- * add_head:
- * @l: list *
- * @n: node *
+ * @internal
+ * @param l list *
+ * @param n node *
  * 
  * Add node at the head of the list.
  *
- * Return value:
+ * @return
  * The node pointer.
- **/
+ */
 static inline node *
 add_head(list *l, node *n)
 {
@@ -147,15 +152,15 @@ add_head(list *l, node *n)
 }
 
 /**
- * add_tail:
- * @l: list *
- * @n: node *
+ * @internal
+ * @param l list *
+ * @param n node *
  * 
  * Add node at the end of the list.
  * 
- * Return value: 
+ * @return 
  * The node pointer.
- **/
+ */
 static inline node *
 add_tail(list *l, node *n)
 {
@@ -169,14 +174,14 @@ add_tail(list *l, node *n)
 }
 
 /**
- * rem_head:
- * @l: list *
+ * @internal
+ * @param l list *
  * 
  * Remove first node of the list.
  * 
- * Return value: 
- * Node pointer, or %NULL if the list is empty.
- **/
+ * @return 
+ * Node pointer, or @c NULL if the list is empty.
+ */
 static inline node *
 rem_head(list *l)
 {
@@ -193,14 +198,14 @@ rem_head(list *l)
 }
 
 /**
- * rem_tail:
- * @l: list *
+ * @internal
+ * @param l list *
  * 
  * Remove last node of the list.
  * 
- * Return value: 
- * Node pointer, or %NULL if the list is empty.
- **/
+ * @return 
+ * Node pointer, or @c NULL if the list is empty.
+ */
 static inline node *
 rem_tail(list *l)
 {
@@ -217,16 +222,15 @@ rem_tail(list *l)
 }
 
 /**
- * unlink_node:
- * @l: list *
- * @n: node *
+ * @param l list *
+ * @param n node *
  * 
  * Remove the node from its list. The node must
  * be a member of the list, not verified.
  * 
- * Return value: 
+ * @return 
  * The node pointer.
- **/
+ */
 static inline node *
 unlink_node(list *l, node *n)
 {
@@ -238,16 +242,15 @@ unlink_node(list *l, node *n)
 }
 
 /**
- * rem_node:
- * @l: list *
- * @n: node *
+ * @param l list *
+ * @param n node *
  * 
  * Remove the node if member of the list.
  * 
- * Return value: 
- * The node pointer or %NULL if the node is not
+ * @return 
+ * The node pointer or @c NULL if the node is not
  * member of the list.
- **/
+ */
 static inline node *
 rem_node(list *l, node *n)
 {
@@ -304,18 +307,17 @@ vbi_cache_get(vbi_decoder *vbi, int pgno, int subno, int subno_mask)
 
 
 /**
- * vbi_is_cached:
- * @vbi: 
- * @pgno: 
- * @subno: 
+ * @param vbi 
+ * @param pgno 
+ * @param subno 
  * 
- * Deprecated. (At the moment pages can only be added to the
+ * @deprecated At the moment pages can only be added to the
  * cache but not removed unless the decoder is reset. That
  * will change, making the result volatile in a multithreaded
- * environment.)
+ * environment.
  * 
- * Return value: 
- **/
+ * @return 
+ */
 int
 vbi_is_cached(vbi_decoder *vbi, int pgno, int subno)
 {
@@ -323,15 +325,14 @@ vbi_is_cached(vbi_decoder *vbi, int pgno, int subno)
 }
 
 /**
- * vbi_unref_page:
- * @pg: Previously fetched #vbi_page.
+ * @param pg Previously fetched vbi_page.
  * 
- * A #vbi_page fetched from cache with vbi_fetch_vt_page() or
+ * A vbi_page fetched from cache with vbi_fetch_vt_page() or
  * vbi_fetch_cc_page() may reference other resource in cache which
  * are locked after fetching. When done processing the page, you
  * must call this function to unlock all the resources associated
- * with this #vbi_page.
- **/
+ * with this vbi_page.
+ */
 void
 vbi_unref_page(vbi_page *pg)
 {
@@ -451,14 +452,13 @@ vbi_cache_foreach(vbi_decoder *vbi, int pgno, int subno,
 }
 
 /**
- * vbi_cache_hi_subno:
- * @vbi: 
- * @pgno: 
+ * @param vbi 
+ * @param pgno
  * 
- * Deprecated, rationale same as vbi_is_cached().
+ * @deprecated Rationale same as vbi_is_cached().
  * 
- * Return value: 
- **/
+ * @return
+ */
 int
 vbi_cache_hi_subno(vbi_decoder *vbi, int pgno)
 {

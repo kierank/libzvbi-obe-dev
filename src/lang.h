@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: lang.h,v 1.1 2002/01/12 16:18:47 mschimek Exp $ */
+/* $Id: lang.h,v 1.2 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifndef LANG_H
 #define LANG_H
@@ -26,10 +26,10 @@
 #include "format.h" /* vbi_page */
 
 /**
- * vbi_character_set:
+ * @internal
  *
  * Teletext character set according to ETS 300 706, Section 15.
- **/
+ */
 typedef enum {
 	LATIN_G0 = 1,
 	LATIN_G2,
@@ -47,11 +47,11 @@ typedef enum {
 } vbi_character_set;
 
 /**
- * vbi_national_subset:
+ * @internal
  *
  * Teletext Latin G0 national option subsets according to
  * ETS 300 706, Section 15.2; Section 15.6.2 Table 36.
- **/
+ */
 typedef enum {
 	NO_SUBSET,
 	CZECH_SLOVAK,
@@ -70,12 +70,12 @@ typedef enum {
 } vbi_national_subset;
 
 /**
- * vbi_font_descr:
+ * @internal
  *
  * vbi_font_descriptors[], array of vbi_font_descr implements
  * the Teletext character set designation tables in ETS 300 706,
  * Section 15: Table 32, 33 and 34.  
- **/
+ */
 struct vbi_font_descr {
 	vbi_character_set	G0;
 	vbi_character_set	G2;	
@@ -89,50 +89,54 @@ extern struct vbi_font_descr	vbi_font_descriptors[88];
 
 /* Public */
 
+/**
+ * @ingroup Page
+ * @brief Opaque font descriptor.
+ */
 typedef struct vbi_font_descr vbi_font_descr;
 
 /**
- * vbi_is_print:
- * @unicode: Unicode as in #vbi_char.
+ * @ingroup Page
+ * @param unicode Unicode as in vbi_char.
  * 
- * Return value: 
- * %TRUE if @unicode represents a Teletext or Closed Caption
+ * @return
+ * @c TRUE if @a unicode represents a Teletext or Closed Caption
  * printable character. This excludes Teletext Arabic characters (which
  * are represented by private codes U+E600 ... U+E7FF until the conversion
  * table is ready), the Teletext Turkish currency sign U+E800 which is not
  * representable in Unicode, the Teletext G1 Block Mosaic and G3 Smooth
- * Mosaics and Line Drawing Set, codes U+EE00 ... U+EFFF, and
+ * Mosaics and Line Drawing Set, with codes U+EE00 ... U+EFFF, and
  * Teletext DRCS coded U+F000 ... U+F7FF.
- **/
-static inline vbi_bool
+ */
+static_inline vbi_bool
 vbi_is_print(unsigned int unicode)
 {
 	return unicode < 0xE600;
 }
 
 /**
- * vbi_is_gfx:
- * @unicode: Unicode as in #vbi_char.
+ * @ingroup Page
+ * @param unicode Unicode as in vbi_char.
  * 
- * Return value: 
- * %TRUE if @unicode represents a Teletext G1 Block Mosaic or G3 Smooth
+ * @return
+ * @c TRUE if @a unicode represents a Teletext G1 Block Mosaic or G3 Smooth
  * Mosaics and Line Drawing Set, that is a code in range U+EE00 ... U+EFFF.
- **/
-static inline vbi_bool
+ */
+static_inline vbi_bool
 vbi_is_gfx(unsigned int unicode)
 {
 	return unicode >= 0xEE00 && unicode <= 0xEFFF;
 }
 
 /**
- * vbi_is_drcs:
- * @unicode: Unicode as in #vbi_char.
+ * @ingroup Page
+ * @param unicode Unicode as in vbi_char.
  * 
- * Return value: 
- * %TRUE if @unicode represents a Teletext DRCS (Dynamically
+ * @return
+ * @c TRUE if @a unicode represents a Teletext DRCS (Dynamically
  * Redefinable Character), that is a code in range U+F000 ... U+F7FF.
  **/
-static inline vbi_bool
+static_inline vbi_bool
 vbi_is_drcs(unsigned int unicode)
 {
 	return unicode >= 0xF000;

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: trigger.c,v 1.1 2002/01/12 16:19:03 mschimek Exp $ */
+/* $Id: trigger.c,v 1.2 2002/07/16 00:11:36 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +41,7 @@ struct vbi_trigger {
 	vbi_link		link;
 	double			fire;
 	unsigned char		view;
-	vbi_bool		delete;
+	vbi_bool		_delete;
 };
 
 static vbi_bool
@@ -194,7 +194,7 @@ parse_eacem(vbi_trigger *t, unsigned char *s1, unsigned int nuid, double now)
 	t->link.priority  = 9;
 	t->link.expires   = 0.0;
 	t->link.autoload  = FALSE;
-	t->delete	  = FALSE;
+	t->_delete	  = FALSE;
 	t->fire		  = now;
 	t->view		  = 'w';
 	t->link.itv_type  = 0;
@@ -292,7 +292,7 @@ parse_eacem(vbi_trigger *t, unsigned char *s1, unsigned int nuid, double now)
 				break;
 
 			case 2: /* delete */
-				t->delete = TRUE;
+				t->_delete = TRUE;
 				break;
 
                         case 3: /* expires */
@@ -399,7 +399,7 @@ parse_atvef(vbi_trigger *t, unsigned char *s1, double now)
 	t->fire      = now;
 	t->link.expires   = 0.0;
 	t->link.autoload  = FALSE;
-	t->delete    = FALSE;
+	t->_delete    = FALSE;
 	t->view      = 'w';
 	t->link.itv_type  = 0;
 
@@ -551,7 +551,7 @@ parse_atvef(vbi_trigger *t, unsigned char *s1, double now)
 
 /**
  * vbi_trigger_flush:
- * @vbi: Initialized vbi decoding context.
+ * @param vbi Initialized vbi decoding context.
  * 
  * Discard all triggers stored to fire at a later time. This function
  * must be called before deleting the @vbi context.
@@ -569,7 +569,7 @@ vbi_trigger_flush(vbi_decoder *vbi)
 
 /**
  * vbi_deferred_trigger:
- * @vbi: Initialized vbi decoding context.
+ * @param vbi Initialized vbi decoding context.
  * 
  * This function must be called at regular intervals,
  * preferably once per video frame, to fire (send a trigger
@@ -600,7 +600,7 @@ add_trigger(vbi_decoder *vbi, vbi_trigger *a)
 {
 	vbi_trigger *t;
 
-	if (a->delete) {
+	if (a->_delete) {
 		vbi_trigger **tp;
 
 		for (tp = &vbi->triggers; (t = *tp); tp = &t->next)
@@ -638,8 +638,8 @@ add_trigger(vbi_decoder *vbi, vbi_trigger *a)
 
 /**
  * vbi_atvef_trigger:
- * @vbi: Initialized vbi decoding context.
- * @s: EACEM string (supposedly ASCII).
+ * @param vbi Initialized vbi decoding context.
+ * @param s EACEM string (supposedly ASCII).
  * 
  * Parse an EACEM string and add it to the trigger list (where it
  * may fire immediately or at a later time).
@@ -658,7 +658,7 @@ vbi_eacem_trigger(vbi_decoder *vbi, unsigned char *s)
 				t.link.type, t.link.name, t.link.url, t.link.script,
 				t.link.nuid, t.link.pgno, t.link.subno,
 				t.link.expires, t.link.priority, t.link.itv_type,
-				t.link.autoload, t.fire, t.view, t.delete);
+				t.link.autoload, t.fire, t.view, t._delete);
 
 		t.link.eacem = TRUE;
 
@@ -672,8 +672,8 @@ vbi_eacem_trigger(vbi_decoder *vbi, unsigned char *s)
 
 /**
  * vbi_atvef_trigger:
- * @vbi: Initialized vbi context.
- * @s: ATVEF string (ASCII).
+ * @param vbi Initialized vbi context.
+ * @param s ATVEF string (ASCII).
  * 
  * Parse an ATVEF string and add it to the trigger list (where it
  * may fire immediately or at a later time).
@@ -692,7 +692,7 @@ vbi_atvef_trigger(vbi_decoder *vbi, char *s)
 				t.link.type, t.link.name, t.link.url, t.link.script,
 				t.link.nuid, t.link.pgno, t.link.subno,
 				t.link.expires, t.link.priority, t.link.itv_type,
-				t.link.autoload, t.fire, t.view, t.delete);
+				t.link.autoload, t.fire, t.view, t._delete);
 
 		t.link.eacem = FALSE;
 
@@ -704,3 +704,4 @@ vbi_atvef_trigger(vbi_decoder *vbi, char *s)
 		add_trigger(vbi, &t);
 	}
 }
+

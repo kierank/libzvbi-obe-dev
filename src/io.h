@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.3 2002/04/18 13:37:17 mschimek Exp $ */
+/* $Id: io.h,v 1.4 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -28,6 +28,9 @@
 
 #include <sys/time.h> /* struct timeval */
 
+/**
+ * @ingroup Device
+ */
 typedef struct vbi_capture_buffer {
 	void *			data;
 	int			size;
@@ -35,12 +38,15 @@ typedef struct vbi_capture_buffer {
 } vbi_capture_buffer;
 
 /**
- * vbi_capture:
- *
- * Opaque device interface handle.
+ * @ingroup Device
+ * @brief Opaque device interface handle.
  **/
 typedef struct vbi_capture vbi_capture;
 
+/**
+ * @addtogroup Device
+ * @{
+ */
 extern vbi_capture *	vbi_capture_v4l2_new(char *dev_name, int buffers,
 					     unsigned int *services, int strict,
 					     char **errorstr, vbi_bool trace);
@@ -69,36 +75,53 @@ extern vbi_raw_decoder *vbi_capture_parameters(vbi_capture *capture);
 extern int		vbi_capture_fd(vbi_capture *capture);
 
 extern void		vbi_capture_delete(vbi_capture *capture);
+/** @} */
 
 /* Private */
 
+#ifndef DOXYGEN_SHOULD_IGNORE_THIS
+
+#include <stdarg.h>
+#include <stddef.h>
+
 #ifndef _
-#ifdef ENABLE_NLS
+#  ifdef ENABLE_NLS
 #    include <libintl.h>
 #    define _(String) gettext (String)
 #    ifdef gettext_noop
-#        define N_(String) gettext_noop (String)
+#      define N_(String) gettext_noop (String)
 #    else
-#        define N_(String) (String)
+#      define N_(String) (String)
 #    endif
-#else
-/* Stubs that do something close enough.  */
-#    define textdomain(String) (String)
-#    define gettext(String) (String)
-#    define dgettext(Domain,Message) (Message)
-#    define dcgettext(Domain,Message,Type) (Message)
-#    define bindtextdomain(Domain,Directory) (Domain)
+#  else /* Stubs that do something close enough.  */
+#    define gettext(Msgid) ((const char *) (Msgid))
+#    define dgettext(Domainname, Msgid) ((const char *) (Msgid))
+#    define dcgettext(Domainname, Msgid, Category) ((const char *) (Msgid))
+#    define ngettext(Msgid1, Msgid2, N) \
+       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
+#    define dngettext(Domainname, Msgid1, Msgid2, N) \
+       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
+#    define dcngettext(Domainname, Msgid1, Msgid2, N, Category) \
+       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
+#    define textdomain(Domainname) ((const char *) (Domainname))
+#    define bindtextdomain(Domainname, Dirname) ((const char *) (Dirname))
+#    define bind_textdomain_codeset(Domainname, Codeset) ((const char *) (Codeset))
 #    define _(String) (String)
 #    define N_(String) (String)
-#endif
+#  endif
 #endif
 
+#endif /* !DOXYGEN_SHOULD_IGNORE_THIS */
+
+/**
+ * @ingroup Devmod
+ */
 struct vbi_capture {
 	vbi_bool		(* read)(vbi_capture *, vbi_capture_buffer **,
 					 vbi_capture_buffer **, struct timeval *);
 	vbi_raw_decoder *	(* parameters)(vbi_capture *);
 	int			(* get_fd)(vbi_capture *);
-	void			(* delete)(vbi_capture *);
+	void			(* _delete)(vbi_capture *);
 };
 
 #endif /* IO_H */

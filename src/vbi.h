@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.h,v 1.3 2002/05/23 03:59:46 mschimek Exp $ */
+/* $Id: vbi.h,v 1.4 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifndef VBI_H
 #define VBI_H
@@ -108,10 +108,11 @@ struct vbi_decoder {
 #ifndef VBI_DECODER
 #define VBI_DECODER
 /**
- * vbi_decoder:
+ * @ingroup Service
+ * @brief Opaque VBI data service decoder object.
  *
- * Opaque vbi decoder object, allocate with vbi_decoder_new().
- **/
+ * Allocate with vbi_decoder_new().
+ */
 typedef struct vbi_decoder vbi_decoder;
 #endif
 
@@ -146,10 +147,11 @@ typedef struct vbi_decoder vbi_decoder;
 /* Public */
 
 /**
- * vbi_page_type:
+ * @ingroup Service
+ * @brief Page classification.
  *
  * See vbi_classify_page().
- **/
+ */
 typedef enum {
 	VBI_NO_PAGE = 0x00,
 	VBI_NORMAL_PAGE = 0x01,
@@ -163,6 +165,7 @@ typedef enum {
 	VBI_PROGR_SCHEDULE = 0x81,
 	VBI_UNKNOWN_PAGE = 0xFF,
 /* Private */
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 	VBI_NOT_PUBLIC = 0x80,
 	VBI_CA_DATA_BROADCAST =	0xE0,
 	VBI_EPG_DATA = 0xE3,
@@ -174,22 +177,30 @@ typedef enum {
 	VBI_TRIGGER_DATA = 0xFC,
 	VBI_ACI = 0xFD,
 	VBI_TOP_PAGE = 0xFE
+#endif
 /* Public */
 } vbi_page_type;
 
-extern void             vbi_channel_switched(vbi_decoder *vbi, vbi_nuid nuid);
-
+/**
+ * @addtogroup Render
+ * @{
+ */
 extern void		vbi_set_brightness(vbi_decoder *vbi, int brightness);
 extern void		vbi_set_contrast(vbi_decoder *vbi, int contrast);
+/** @} */
 
-extern vbi_page_type	vbi_classify_page(vbi_decoder *vbi, vbi_pgno pgno,
-					  vbi_subno *subno, char **language);
-
+/**
+ * @addtogroup Service
+ * @{
+ */
 extern vbi_decoder *	vbi_decoder_new(void);
 extern void		vbi_decoder_delete(vbi_decoder *vbi);
-
 extern void		vbi_decode(vbi_decoder *vbi, vbi_sliced *sliced,
 				   int lines, double timestamp);
+extern void             vbi_channel_switched(vbi_decoder *vbi, vbi_nuid nuid);
+extern vbi_page_type	vbi_classify_page(vbi_decoder *vbi, vbi_pgno pgno,
+					  vbi_subno *subno, char **language);
+/** @} */
 
 /* Private */
 

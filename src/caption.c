@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.6 2002/05/23 03:59:46 mschimek Exp $ */
+/* $Id: caption.c,v 1.7 2002/07/16 00:11:36 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,20 +81,26 @@ language[8] = {
 	"None"
 };
 
+#ifdef __GNUC__
+#define UNUSED __attribute__ ((unused))
+#else
+#define UNUSED
+#endif
+
 static char *
-map_type[8] __attribute__ ((unused)) = {
+map_type[] UNUSED = {
 	"unknown", "mono", "simulated stereo", "stereo",
 	"stereo surround", "data service", "unknown", "none"
 };
 
 static char *
-sap_type[8] __attribute__ ((unused)) = {
+sap_type[] UNUSED = {
 	"unknown", "mono", "video descriptions", "non-program audio",
 	"special effects", "data service", "unknown", "none"
 };
 
 static char *
-cgmsa[4] __attribute__ ((unused)) = {
+cgmsa[] UNUSED = {
 	"copying permitted",
 	"-",
 	"one generation copy allowed",
@@ -102,7 +108,7 @@ cgmsa[4] __attribute__ ((unused)) = {
 };
 
 static char *
-scrambling[4] __attribute__ ((unused)) = {
+scrambling[] UNUSED = {
 	"no pseudo-sync pulse",
 	"pseudo-sync pulse on; color striping off",
 	"pseudo-sync pulse on; 2-line color striping on",
@@ -110,13 +116,13 @@ scrambling[4] __attribute__ ((unused)) = {
 };
 
 static char *
-month_names[] __attribute__ ((unused)) = {
+month_names[] UNUSED = {
 	"0?", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug",
 	"Sep", "Oct", "Nov", "Dec", "13?", "14?", "15?"
 };
 
 static char *
-day_names[] __attribute__ ((unused)) = {
+day_names[] UNUSED = {
 	"0?", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
 
@@ -180,7 +186,7 @@ flush_prog_info(vbi_decoder *vbi, vbi_program_info *pi, vbi_event *e)
 }
 
 static inline void
-xds_decoder(vbi_decoder *vbi, int class, int type,
+xds_decoder(vbi_decoder *vbi, int _class, int type,
 	    uint8_t *buffer, int length)
 {
 	vbi_network *n = &vbi->network.ev.network;
@@ -195,7 +201,7 @@ xds_decoder(vbi_decoder *vbi, int class, int type,
 //     what the station transmits when the next program starts.
 //     (Nothing, possibly.) A timeout seems necessary. 
 
-	switch (class) {
+	switch (_class) {
 	case XDS_CURRENT: /* 0 */
 	case XDS_FUTURE: /* 1 */
 		XDS_DEBUG(printf((class == XDS_CURRENT) ? "Current " : "Next "));
@@ -203,7 +209,7 @@ xds_decoder(vbi_decoder *vbi, int class, int type,
 		if (!(vbi->event_mask & (VBI_EVENT_ASPECT | VBI_EVENT_PROG_INFO)))
 			return;
 
-		pi = &vbi->prog_info[class];
+		pi = &vbi->prog_info[_class];
 		neq = 0;
 
 		switch (type) {
@@ -306,16 +312,16 @@ xds_decoder(vbi_decoder *vbi, int class, int type,
 			neq = xds_strfu(pi->title, buffer, length);
 
 			if (!neq) { /* no title change */
-				if (!(vbi->cc.info_cycle[class] & (1 << 3)))
+				if (!(vbi->cc.info_cycle[_class] & (1 << 3)))
 					break; /* already reported */
 
-				if (!(vbi->cc.info_cycle[class] & (1 << 1))) {
+				if (!(vbi->cc.info_cycle[_class] & (1 << 1))) {
 					/* Second occurence without PIN */
 
 					flush_prog_info(vbi, pi, &e);
 
 					xds_strfu(pi->title, buffer, length);
-					vbi->cc.info_cycle[class] |= 1 << 3;
+					vbi->cc.info_cycle[_class] |= 1 << 3;
 				}
 			}
 
@@ -492,7 +498,7 @@ xds_decoder(vbi_decoder *vbi, int class, int type,
 					neq = 1; pi->caption_language[ch] = s;
 				}
 
-				if (class == XDS_CURRENT)
+				if (_class == XDS_CURRENT)
 					vbi->cc.channel[ch].language =
 						pi->caption_language[ch];
 			}
@@ -589,11 +595,11 @@ xds_decoder(vbi_decoder *vbi, int class, int type,
 
 		if (0)
 			printf("[type %d cycle %08x class %d neq %d]\n",
-			       type, vbi->cc.info_cycle[class], class, neq);
+			       type, vbi->cc.info_cycle[_class], _class, neq);
 
 		if (neq) /* first occurence of this type with this data */
-			vbi->cc.info_cycle[class] |= 1 << type;
-		else if (vbi->cc.info_cycle[class] & (1 << type)) {
+			vbi->cc.info_cycle[_class] |= 1 << type;
+		else if (vbi->cc.info_cycle[_class] & (1 << type)) {
 			/* Second occurance of this type with same data */
 
 			e.type = VBI_EVENT_PROG_INFO;
@@ -601,7 +607,7 @@ xds_decoder(vbi_decoder *vbi, int class, int type,
 
 			caption_send_event(vbi, &e);
 
-			vbi->cc.info_cycle[class] = 0; /* all changes reported */
+			vbi->cc.info_cycle[_class] = 0; /* all changes reported */
 		}
 
 		break;
@@ -953,7 +959,7 @@ roll_up(vbi_page *pg, int first_row, int last_row)
 }
 
 static inline void
-update(channel *ch)
+update(cc_channel *ch)
 {
 	vbi_char *acp = ch->line - ch->pg[0].text + ch->pg[1].text;
 
@@ -961,7 +967,7 @@ update(channel *ch)
 }
 
 static void
-word_break(struct caption *cc, channel *ch, int upd)
+word_break(struct caption *cc, cc_channel *ch, int upd)
 {
 	/*
 	 *  Add a leading and trailing space.
@@ -1002,7 +1008,7 @@ word_break(struct caption *cc, channel *ch, int upd)
 }
 
 static inline void
-set_cursor(channel *ch, int col, int row)
+set_cursor(cc_channel *ch, int col, int row)
 {
 	ch->col = ch->col1 = col;
 	ch->row = row;
@@ -1011,7 +1017,7 @@ set_cursor(channel *ch, int col, int row)
 }
 
 static void
-put_char(struct caption *cc, channel *ch, vbi_char c)
+put_char(struct caption *cc, cc_channel *ch, vbi_char c)
 {
 	/* c.foreground = rand() & 7; */
 	/* c.background = rand() & 7; */
@@ -1028,8 +1034,8 @@ put_char(struct caption *cc, channel *ch, vbi_char c)
 		word_break(cc, ch, 1);
 }
 
-static inline channel *
-switch_channel(struct caption *cc, channel *ch, int new_chan)
+static inline cc_channel *
+switch_channel(struct caption *cc, cc_channel *ch, int new_chan)
 {
 	word_break(cc, ch, 1); // we leave for a number of frames
 
@@ -1037,7 +1043,7 @@ switch_channel(struct caption *cc, channel *ch, int new_chan)
 }
 
 static void
-erase_memory(struct caption *cc, channel *ch, int page)
+erase_memory(struct caption *cc, cc_channel *ch, int page)
 {
 	vbi_page *pg = ch->pg + page;
 	vbi_char *acp = pg->text;
@@ -1070,7 +1076,7 @@ static inline void
 caption_command(vbi_decoder *vbi, struct caption *cc,
 	unsigned char c1, unsigned char c2, vbi_bool field2)
 {
-	channel *ch;
+	cc_channel *ch;
 	int chan, col, i;
 	int last_row;
 
@@ -1399,14 +1405,14 @@ caption_command(vbi_decoder *vbi, struct caption *cc,
 }
 
 /**
- * vbi_decode_caption:
- * @vbi: Initialized vbi decoding context.
- * @line: ITU-R line number this data originated from.
- * @buf: Two bytes.
+ * @internal
+ * @param vbi Initialized vbi decoding context.
+ * @param line ITU-R line number this data originated from.
+ * @param buf Two bytes.
  * 
  * Decode two bytes of Closed Caption data (Caption, XDS, ITV),
  * updating the decoder state accordingly. May send events.
- **/
+ */
 void
 vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 {
@@ -1469,7 +1475,7 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 	)
 
 	switch (c1) {
-		channel *ch;
+		cc_channel *ch;
 		vbi_char c;
 
 	case 0x01 ... 0x0F:
@@ -1549,13 +1555,13 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 }
 
 /**
- * vbi_caption_desync:
- * @vbi: Initialized vbi decoding context. 
+ * @internal
+ * @param vbi Initialized vbi decoding context. 
  * 
  * This function must be called after desynchronisation
  * has been detected (i. e. vbi data has been lost)
  * to reset the Closed Caption decoder.
- **/
+ */
 void
 vbi_caption_desync(vbi_decoder *vbi)
 {
@@ -1574,17 +1580,17 @@ vbi_caption_desync(vbi_decoder *vbi)
 }
 
 /**
- * vbi_caption_channel_switched:
- * @vbi: Initialized vbi decoding context.
+ * @internal
+ * @param vbi Initialized vbi decoding context.
  * 
  * This function must be called after a channel switch,
  * to reset the Closed Caption decoder.
- **/
+ */
 void
 vbi_caption_channel_switched(vbi_decoder *vbi)
 {
 	struct caption *cc = &vbi->cc;
-	channel *ch;
+	cc_channel *ch;
 	int i;
 
 	for (i = 0; i < 9; i++) {
@@ -1639,12 +1645,12 @@ default_color_map[8] = {
 };
 
 /**
- * vbi_caption_color_level:
- * @vbi: Initialized vbi decoding context.
+ * @internal
+ * @param vbi Initialized vbi decoding context.
  * 
  * After the client changed text brightness and saturation
  * this function adjusts the Closed Caption color palette.
- **/
+ */
 void
 vbi_caption_color_level(vbi_decoder *vbi)
 {
@@ -1660,12 +1666,12 @@ vbi_caption_color_level(vbi_decoder *vbi)
 }
 
 /**
- * vbi_caption_destroy:
- * @vbi: VBI decoding context.
+ * @internal
+ * @param vbi VBI decoding context.
  * 
- * This function is called during @vbi destruction
- * to destroy Closed Caption subset of @vbi.
- **/
+ * This function is called during @a vbi destruction
+ * to destroy Closed Caption subset of @a vbi.
+ */
 void
 vbi_caption_destroy(vbi_decoder *vbi)
 {
@@ -1673,17 +1679,17 @@ vbi_caption_destroy(vbi_decoder *vbi)
 }
 
 /**
- * vbi_caption_init:
- * @vbi: VBI decoding context.
+ * @internal
+ * @param vbi VBI decoding context.
  * 
- * This function is called during @vbi initialization
- * to initialize the Closed Caption subset of @vbi.
- **/
+ * This function is called during @a vbi initialization
+ * to initialize the Closed Caption subset of @a vbi.
+ */
 void
 vbi_caption_init(vbi_decoder *vbi)
 {
 	struct caption *cc = &vbi->cc;
-	channel *ch;
+	cc_channel *ch;
 	int i;
 
 	memset(cc, 0, sizeof(struct caption));
@@ -1725,35 +1731,34 @@ vbi_caption_init(vbi_decoder *vbi)
 }
 
 /**
- * vbi_fetch_cc_page:
- * @vbi: Initialized vbi decoding context.
- * @pg: Place to store the formatted page.
- * @pgno: Page number of the page to fetch, see #vbi_pgno.
- * @reset: TRUE resets the #vbi_page dirty fields in cache after
- *   fetching. Pass FALSE only if you plan to call this function again
+ * @param vbi Initialized vbi decoding context.
+ * @param pg Place to store the formatted page.
+ * @param pgno Page number 1 ... 8 of the page to fetch, see vbi_pgno.
+ * @param reset @c TRUE resets the vbi_page dirty fields in cache after
+ *   fetching. Pass @c FALSE only if you plan to call this function again
  *   to update other displays.
  * 
- * Fetches a Closed Caption page designated by @pgno from the cache,
- * formats and stores it in @pg. CC pages are transmitted basically in
+ * Fetches a Closed Caption page designated by @a pgno from the cache,
+ * formats and stores it in @a pg. CC pages are transmitted basically in
  * two modes: at once and character by character ("roll-up" mode).
  * Either way you get a snapshot of the page as it should appear on
  * screen at present. With vbi_event_handler_add() you can request a
- * #VBI_EVENT_CAPTION event to be notified about pending changes
+ * @c VBI_EVENT_CAPTION event to be notified about pending changes
  * (in case of "roll-up" mode that is with each new word received)
- * and the #vbi_page dirty fields will mark the lines actually in
+ * and the vbi_page->dirty fields will mark the lines actually in
  * need of updates, to speed up rendering.
  * 
  * Although safe to do, this function is not supposed to be
- * called from an event handler since rendering may block decoding
+ * called from an event handler, since rendering may block decoding
  * for extended periods of time.
  * 
- * Return value:
- * FALSE if some error occured.
- **/
+ * @return
+ * @c FALSE if some error occured.
+ */
 vbi_bool
 vbi_fetch_cc_page(vbi_decoder *vbi, vbi_page *pg, vbi_pgno pgno, vbi_bool reset)
 {
-	channel *ch = vbi->cc.channel + ((pgno - 1) & 7);
+	cc_channel *ch = vbi->cc.channel + ((pgno - 1) & 7);
 	vbi_page *spg;
 
 	if (pgno < 1 || pgno > 8)

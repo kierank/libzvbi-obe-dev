@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.h,v 1.1 2002/01/12 16:19:06 mschimek Exp $ */
+/* $Id: exp-gfx.h,v 1.2 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifndef EXP_GFX_H
 #define EXP_GFX_H
@@ -32,26 +32,29 @@
 
 /* Public */
 
+/**
+ * @addtogroup Render
+ * @{
+ */
 extern void		vbi_draw_vt_page_region(vbi_page *pg, vbi_pixfmt fmt,
 						void *canvas, int rowstride,
 						int column, int row,
 						int width, int height,
 						int reveal, int flash_on);
 /**
- * vbi_draw_vt_page:
- * @pg: Source page.
- * @fmt: Target format. For now only VBI_PIXFMT_RGBA32_LE (#vbi_rgba) permitted.
- * @canvas: Pointer to destination image (currently an array of vbi_rgba). This
+ * @param pg Source page.
+ * @param fmt Target format. For now only VBI_PIXFMT_RGBA32_LE (vbi_rgba) permitted.
+ * @param canvas Pointer to destination image (currently an array of vbi_rgba). This
  *   must be at least pg->columns * pg->rows * 12 * 10 * pixels large,
  *   without padding between lines.
- * @reveal: If FALSE, draw characters flagged 'concealed' (see #vbi_char) as
+ * @param reveal If FALSE, draw characters flagged 'concealed' (see vbi_char) as
  *   space (U+0020).
- * @flash_on: If FALSE, draw characters flagged 'blink' (see #vbi_char) as
+ * @param flash_on If FALSE, draw characters flagged 'blink' (see vbi_char) as
  *   space (U+0020).
  * 
- * Draw a Teletext #vbi_page. In this mode one character occupies 12 x 10 pixels.
- **/
-static inline void
+ * Draw a Teletext vbi_page. In this mode one character occupies 12 x 10 pixels.
+ */
+static_inline void
 vbi_draw_vt_page(vbi_page *pg, vbi_pixfmt fmt, void *canvas,
 		 int reveal, int flash_on)
 {
@@ -65,17 +68,16 @@ extern void		vbi_draw_cc_page_region(vbi_page *pg, vbi_pixfmt fmt,
 						int width, int height);
 
 /**
- * vbi_draw_cc_page:
- * @pg: Source page.
- * @fmt: Target format. For now only VBI_PIXFMT_RGBA32_LE (#vbi_rgba) permitted.
- * @canvas: Pointer to destination image (currently an array of #vbi_rgba). This
+ * @param pg Source page.
+ * @param fmt Target format. For now only VBI_PIXFMT_RGBA32_LE (vbi_rgba) permitted.
+ * @param canvas Pointer to destination image (currently an array of vbi_rgba). This
  *   must be at least pg->columns * pg->rows * 16 * 26 * pixels large, without
  *   padding between lines.
  *
- * Draw a Closed Caption #vbi_page. In this mode one character occupies
+ * Draw a Closed Caption vbi_page. In this mode one character occupies
  * 16 x 26 pixels.
- **/
-static inline void
+ */
+static_inline void
 vbi_draw_cc_page(vbi_page *pg, vbi_pixfmt fmt, void *canvas)
 {
 	vbi_draw_cc_page_region(pg, fmt, canvas, -1, 0, 0, pg->columns, pg->rows);
@@ -83,7 +85,16 @@ vbi_draw_cc_page(vbi_page *pg, vbi_pixfmt fmt, void *canvas)
 
 extern void vbi_get_max_rendered_size(int *w, int *h);
 extern void vbi_get_vt_cell_size(int *w, int *h);
+/** @} */
 
 /* Private */
 
 #endif /* EXP_GFX_H */
+
+
+
+
+
+
+
+

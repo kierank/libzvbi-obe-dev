@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.3 2002/05/23 03:59:46 mschimek Exp $ */
+/* $Id: teletext.c,v 1.4 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -40,24 +40,30 @@
 #include "lang.h"
 
 #ifndef _
-#ifdef ENABLE_NLS
+#  ifdef ENABLE_NLS
 #    include <libintl.h>
 #    define _(String) gettext (String)
 #    ifdef gettext_noop
-#        define N_(String) gettext_noop (String)
+#      define N_(String) gettext_noop (String)
 #    else
-#        define N_(String) (String)
+#      define N_(String) (String)
 #    endif
-#else
-/* Stubs that do something close enough.  */
-#    define textdomain(String) (String)
-#    define gettext(String) (String)
-#    define dgettext(Domain,Message) (Message)
-#    define dcgettext(Domain,Message,Type) (Message)
-#    define bindtextdomain(Domain,Directory) (Domain)
+#  else /* Stubs that do something close enough.  */
+#    define gettext(Msgid) ((const char *) (Msgid))
+#    define dgettext(Domainname, Msgid) ((const char *) (Msgid))
+#    define dcgettext(Domainname, Msgid, Category) ((const char *) (Msgid))
+#    define ngettext(Msgid1, Msgid2, N) \
+       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
+#    define dngettext(Domainname, Msgid1, Msgid2, N) \
+       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
+#    define dcngettext(Domainname, Msgid1, Msgid2, N, Category) \
+       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
+#    define textdomain(Domainname) ((const char *) (Domainname))
+#    define bindtextdomain(Domainname, Dirname) ((const char *) (Dirname))
+#    define bind_textdomain_codeset(Domainname, Codeset) ((const char *) (Codeset))
 #    define _(String) (String)
 #    define N_(String) (String)
-#endif
+#  endif
 #endif
 
 #define DEBUG 0
@@ -163,7 +169,7 @@ flof_links(vbi_page *pg, vt_page *vtp)
  */
 
 static void character_set_designation(struct vbi_font_descr **font,
-				      extension *ext, vt_page *vtp);
+				      vt_extension *ext, vt_page *vtp);
 static void screen_color(vbi_page *pg, int flags, int color);
 
 static vbi_bool
@@ -338,7 +344,7 @@ top_index(vbi_decoder *vbi, vbi_page *pg, int subno)
 	ait_entry *ait;
 	int i, j, k, n, lines;
 	int xpgno, xsubno;
-	extension *ext;
+	vt_extension *ext;
 	char *index_str;
 
 	pg->vbi = vbi;
@@ -862,17 +868,16 @@ zap_links(vbi_page *pg, int row)
 }
 
 /**
- * vbi_resolve_link:
- * @pg: With vbi_fetch_vt_page() obtained #vbi_page.
- * @column: Column 0 ... pg->columns - 1 of the character in question.
- * @row: Row 0 ... pg->rows - 1 of the character in question.
- * @ld: Place to store information about the link.
+ * @param pg With vbi_fetch_vt_page() obtained vbi_page.
+ * @param column Column 0 ... pg->columns - 1 of the character in question.
+ * @param row Row 0 ... pg->rows - 1 of the character in question.
+ * @param ld Place to store information about the link.
  * 
- * A #vbi_page (in practice only Teletext pages) may contain hyperlinks
+ * A vbi_page (in practice only Teletext pages) may contain hyperlinks
  * such as HTTP URLs, e-mail addresses or links to other pages. Characters
- * being part of a hyperlink have a set #vbi_char.link flag, this function
- * returns a more verbose description of the respective link.
- **/
+ * being part of a hyperlink have a set vbi_char->link flag, this function
+ * returns a more verbose description of the link.
+ */
 void
 vbi_resolve_link(vbi_page *pg, int column, int row, vbi_link *ld)
 {
@@ -934,14 +939,13 @@ vbi_resolve_link(vbi_page *pg, int column, int row, vbi_link *ld)
 }
 
 /**
- * vbi_resolve_home:
- * @pg: With vbi_fetch_vt_page() obtained #vbi_page.
- * @ld: Place to store information about the link.
+ * @param pg With vbi_fetch_vt_page() obtained vbi_page.
+ * @param ld Place to store information about the link.
  * 
  * All Teletext pages have a built-in home link, by default
- * page 100, but also the magazine intro page or another page
- * selected by the editor.
- **/
+ * page 100, but can also be the magazine intro page or another
+ * page selected by the editor.
+ */
 void
 vbi_resolve_home(vbi_page *pg, vbi_link *ld)
 {
@@ -978,20 +982,19 @@ ait_title(vbi_decoder *vbi, vt_page *vtp, ait_entry *ait, char *buf)
 }
 
 /**
- * vbi_page_title:
- * @vbi: Initialized vbi decoding context.
- * @pgno: Page number, see #vbi_pgno.
- * @subno: Subpage number.
- * @buf: Place to store the titel, Latin-1 format, at least
+ * @param vbi Initialized vbi decoding context.
+ * @param pgno Page number, see vbi_pgno.
+ * @param subno Subpage number.
+ * @param buf Place to store the title, Latin-1 format, at least
  *   41 characters including the terminating zero.
  * 
  * Given a Teletext page number this function tries to deduce a
  * page title for bookmarks or other purposes, mainly from navigation
  * data. (XXX TODO: FLOF)
  * 
- * Return value: 
- * TRUE if a title has been found.
- **/
+ * @return
+ * @c TRUE if a title has been found.
+ */
 vbi_bool
 vbi_page_title(vbi_decoder *vbi, int pgno, int subno, char *buf)
 {
@@ -1033,7 +1036,7 @@ vbi_page_title(vbi_decoder *vbi, int pgno, int subno, char *buf)
 
 static void
 character_set_designation(struct vbi_font_descr **font,
-			  extension *ext, vt_page *vtp)
+			  vt_extension *ext, vt_page *vtp)
 {
 	int i;
 
@@ -1154,7 +1157,7 @@ resolve_obj_address(vbi_decoder *vbi, object_type type,
 /* FIXME: panels */
 
 static vbi_bool
-enhance(vbi_decoder *vbi, magazine *mag,	extension *ext,
+enhance(vbi_decoder *vbi, vt_magazine *mag, vt_extension *ext,
 	vbi_page *pg, vt_page *vtp,
 	object_type type, vt_triplet *p,
 	int max_triplets,
@@ -2135,11 +2138,11 @@ post_enhance(vbi_page *pg, int display_rows)
 }
 
 static inline vbi_bool
-default_object_invocation(vbi_decoder *vbi, magazine *mag,
-	extension *ext, vbi_page *pg, vt_page *vtp,
+default_object_invocation(vbi_decoder *vbi, vt_magazine *mag,
+	vt_extension *ext, vbi_page *pg, vt_page *vtp,
 	vbi_wst_level max_level, vbi_bool header_only)
 {
-	pop_link *pop;
+	vt_pop_link *pop;
 	int i, order;
 
 	if (!(i = mag->pop_lut[vtp->pgno & 0xFF]))
@@ -2185,21 +2188,21 @@ default_object_invocation(vbi_decoder *vbi, magazine *mag,
 }
 
 /**
- * vbi_format_vt_page:
- * @vbi: Initialized vbi decoding context.
- * @pg: Place to store the formatted page.
- * @vtp: Raw Teletext page. 
- * @max_level: Format the page at this Teletext implementation level.
- * @display_rows: Number of rows to format, between 1 ... 25.
- * @navigation: Analyse the page and add navigation links,
+ * @internal
+ * @param vbi Initialized vbi_decoder context.
+ * @param pg Place to store the formatted page.
+ * @param vtp Raw Teletext page. 
+ * @param max_level Format the page at this Teletext implementation level.
+ * @param display_rows Number of rows to format, between 1 ... 25.
+ * @param navigation Analyse the page and add navigation links,
  *   including TOP and FLOF.
  * 
- * Format a page @pg from a raw Teletext page @vtp. This function is
+ * Format a page @a pg from a raw Teletext page @a vtp. This function is
  * used internally by libzvbi only.
  * 
- * Return value: 
- * TRUE if the page could be formatted.
- **/
+ * @return
+ * @c TRUE if the page could be formatted.
+ */
 int
 vbi_format_vt_page(vbi_decoder *vbi,
 		   vbi_page *pg, vt_page *vtp,
@@ -2207,8 +2210,8 @@ vbi_format_vt_page(vbi_decoder *vbi,
 		   int display_rows, vbi_bool navigation)
 {
 	char buf[16];
-	magazine *mag;
-	extension *ext;
+	vt_magazine *mag;
+	vt_extension *ext;
 	int column, row, i;
 
 	if (vtp->function != PAGE_FUNCTION_LOP &&
@@ -2567,33 +2570,32 @@ vbi_format_vt_page(vbi_decoder *vbi,
 }
 
 /**
- * vbi_fetch_vt_page:
- * @vbi: Initialized VBI decoding context.
- * @pg: Place to store the formatted page.
- * @pgno: Page number of the page to fetch, see #vbi_pgno.
- * @subno: Subpage number to fetch (optional #VBI_ANY_SUBNO).
- * @max_level: Format the page at this Teletext implementation level.
- * @display_rows: Number of rows to format, between 1 ... 25.
- * @navigation: Analyse the page and add navigation links,
+ * @param vbi Initialized vbi_decoder context.
+ * @param pg Place to store the formatted page.
+ * @param pgno Page number of the page to fetch, see vbi_pgno.
+ * @param subno Subpage number to fetch (optional @c VBI_ANY_SUBNO).
+ * @param max_level Format the page at this Teletext implementation level.
+ * @param display_rows Number of rows to format, between 1 ... 25.
+ * @param navigation Analyse the page and add navigation links,
  *   including TOP and FLOF.
  * 
- * Fetches a Teletext page designated by @pgno and @subno from the
- * cache, formats and stores it in @pg. Formatting is limited to row
- * 0 ... @display_rows - 1 inclusive. The really useful values
+ * Fetches a Teletext page designated by @a pgno and @a subno from the
+ * cache, formats and stores it in @a pg. Formatting is limited to row
+ * 0 ... @a display_rows - 1 inclusive. The really useful values
  * are 1 (format header only) or 25 (everything). Likewise
- * @navigation can be used to save unnecessary formatting time.
+ * @a navigation can be used to save unnecessary formatting time.
  * 
  * Although safe to do, this function is not supposed to be called from
  * an event handler since rendering may block decoding for extended
  * periods of time.
  *
- * Return value:
- * FALSE if the page is not cached or could not be formatted
- * for other reasons, for instance a data page not intended for
+ * @return
+ * @c FALSE if the page is not cached or could not be formatted
+ * for other reasons, for instance is a data page not intended for
  * display. Level 2.5/3.5 pages which could not be formatted e. g.
  * due to referencing data pages not in cache are formatted at a
  * lower level.
- **/
+ */
 vbi_bool
 vbi_fetch_vt_page(vbi_decoder *vbi, vbi_page *pg,
 		  vbi_pgno pgno, vbi_subno subno,

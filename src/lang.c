@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: lang.c,v 1.2 2002/03/19 19:27:40 mschimek Exp $ */
+/* $Id: lang.c,v 1.3 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -349,11 +349,11 @@ hebrew_g0[37] = {
 };
 
 /**
- * vbi_teletext_unicode:
- * @s: Teletext character set as listed in ETS 300 706 section 15.
- * @n: National character subset as listed in section 15, only
+ * @internal
+ * @param s Teletext character set as listed in ETS 300 706 section 15.
+ * @param n National character subset as listed in section 15, only
  *     applicable to character set LATIN_G0, ignored otherwise.
- * @c: Character code in range 0x20 ... 0x7F.
+ * @param c Character code in range 0x20 ... 0x7F.
  * 
  * Translate Teletext character code to Unicode.
  * 
@@ -379,9 +379,9 @@ hebrew_g0[37] = {
  * 
  * Private codes U+F000 ... U+F7FF are reserved for DRCS.
  * 
- * Return value:
+ * @return
  * Unicode value.
- **/
+ */
 unsigned int
 vbi_teletext_unicode(vbi_character_set s, vbi_national_subset n, unsigned int c)
 {
@@ -503,17 +503,17 @@ composed[12 * 16] = {
 };
 
 /**
- * vbi_teletext_composed_unicode:
- * @a: Accent 0 ... 15.
- * @c: Character code in range 0x20 ... 0x7F.
+ * @internal
+ * @param a Accent 0 ... 15.
+ * @param c Character code in range 0x20 ... 0x7F.
  * 
  * Translate Teletext Latin G1 character 0x20 ... 0x7F combined
  * with accent code from Latin G2 0x40 ... 0x4F to Unicode. Not all
  * combinations are representable in Unicode.
  *
- * Return value:
+ * @return
  * Unicode value or 0.
- **/
+ */
 unsigned int
 vbi_teletext_composed_unicode(unsigned int a, unsigned int c)
 {
@@ -538,7 +538,7 @@ vbi_teletext_composed_unicode(unsigned int a, unsigned int c)
  *
  *  EIA 608
  *
- *  (from Video Demystifiedu, Table 8.31. Closed Captioning Basic Character Set)
+ *  (from Video Demystified, Table 8.31. Closed Captioning Basic Character Set)
  */
 static const unsigned short
 caption[96] = {
@@ -557,16 +557,16 @@ caption_special[] = {
 };
 
 /**
- * vbi_caption_unicode:
- * @c: Character code in range 0x00 ... 0x0F and 0x20 ... 0x7F.
+ * @internal
+ * @param c Character code in range 0x00 ... 0x0F and 0x20 ... 0x7F.
  * 
  * Translate Closed Caption character code to Unicode. Codes
  * in range 0x00 ... 0x0F are Special Characters (Closed
  * Caption commands 0x22 0x3x, 0x32 0x3x).
  *
- * Return value:
+ * @return
  * Unicode value.
- **/
+ */
 unsigned int
 vbi_caption_unicode(unsigned int c)
 {
@@ -603,15 +603,15 @@ isfull(vbi_char c)
 }
 
 /**
- * vbi_optimize_page:
- * @pg: Formatted #vbi_page to be optimized.
- * @column: First column, 0 ... pg->columns - 1.
- * @row: First row, 0 ... pg->rows - 1.
- * @width: Number of columns to optimize, 1 ... pg->columns.
- * @height: Number of rows to optimize, 1 ... pg->rows.
+ * @internal
+ * @param pg Formatted vbi_page to be optimized.
+ * @param column First column, 0 ... pg->columns - 1.
+ * @param row First row, 0 ... pg->rows - 1.
+ * @param width Number of columns to optimize, 1 ... pg->columns.
+ * @param height Number of rows to optimize, 1 ... pg->rows.
  *
  * Experimental.
- **/
+ */
 void
 vbi_optimize_page(vbi_page *pg, int column, int row, int width, int height)
 {

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.5 2002/04/18 13:37:17 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l.c,v 1.6 2002/07/16 00:11:36 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -290,7 +290,7 @@ guess_bttv_v4l(vbi_capture_v4l *v, int *strict,
 	struct stat vbi_stat;
 	DIR *dir;
 	int mode = -1;
-	int i;
+	unsigned int i;
 
 	if (scanning) {
 		v->dec.scanning = scanning;
@@ -515,14 +515,14 @@ v4l_new(char *dev_name, int given_fd, int scanning,
 	printv("Try to open v4l vbi device, libzvbi interface rev.\n"
 	       "%s", rcsid);
 
-	if (!(v = calloc(1, sizeof(*v)))) {
+	if (!(v = (vbi_capture_v4l *) calloc(1, sizeof(*v)))) {
 		vbi_asprintf(errorstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
 		return NULL;
 	}
 
 	v->capture.parameters = v4l_parameters;
-	v->capture.delete = v4l_delete;
+	v->capture._delete = v4l_delete;
 	v->capture.get_fd = v4l_fd;
 
 	if ((v->fd = open(dev_name, O_RDONLY)) == -1) {
@@ -601,11 +601,11 @@ v4l_new(char *dev_name, int given_fd, int scanning,
 		v->dec.sampling_rate		= vfmt.sampling_rate;
 		v->dec.bytes_per_line 		= vfmt.samples_per_line;
 		if (v->dec.scanning == 625)
-			v->dec.offset 		= 10.2e-6 * vfmt.sampling_rate;
+			v->dec.offset 		= (int)(10.2e-6 * vfmt.sampling_rate);
 		else if (v->dec.scanning == 525)
-			v->dec.offset		= 9.2e-6 * vfmt.sampling_rate;
+			v->dec.offset		= (int)(9.2e-6 * vfmt.sampling_rate);
 		else /* we don't know */
-			v->dec.offset		= 9.7e-6 * vfmt.sampling_rate;
+			v->dec.offset		= (int)(9.7e-6 * vfmt.sampling_rate);
 		v->dec.start[0] 		= vfmt.start[0];
 		v->dec.count[0] 		= vfmt.count[0];
 		v->dec.start[1] 		= vfmt.start[1];
@@ -682,7 +682,7 @@ v4l_new(char *dev_name, int given_fd, int scanning,
 		case 625:
 			/* Not confirmed */
 			v->dec.sampling_rate = 35468950;
-			v->dec.offset = 10.2e-6 * 35468950;
+			v->dec.offset = (int)(10.2e-6 * 35468950);
 			v->dec.start[0] = 22 + 1 - v->dec.count[0];
 			v->dec.start[1] = 335 + 1 - v->dec.count[1];
 			break;
@@ -690,7 +690,7 @@ v4l_new(char *dev_name, int given_fd, int scanning,
 		case 525:
 			/* Confirmed for bttv 0.7.52 */
 			v->dec.sampling_rate = 28636363;
-			v->dec.offset = 9.2e-6 * 28636363;
+			v->dec.offset = (int)(9.2e-6 * 28636363);
 			v->dec.start[0] = 10;
 			v->dec.start[1] = 273;
 			break;
@@ -832,11 +832,11 @@ io_error:
 }
 
 vbi_capture *
-vbi_capture_v4l_sidecar_new(char *dev_name, int given_fd,
+vbi_capture_v4l_sidecar_new(char *dev_name, int video_fd,
 			    unsigned int *services, int strict,
 			    char **errorstr, vbi_bool trace)
 {
-	return v4l_new(dev_name, given_fd, 0,
+	return v4l_new(dev_name, video_fd, 0,
 		       services, strict, errorstr, trace);
 }
 

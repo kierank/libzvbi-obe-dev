@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.7 2002/04/18 13:37:17 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2.c,v 1.8 2002/07/16 00:11:36 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -296,27 +296,7 @@ print_vfmt(char *s, struct v4l2_format *vfmt)
 		vfmt->fmt.vbi.flags);
 }
 
-/**
- * vbi_capture_v4l2_new:
- * @dev_name: Name of the device to open, usually one of
- *   <filename>/dev/vbi</> or <filename>/dev/vbi0</> and up.
- * @buffers: Number of device buffers for raw vbi data, when
- *   the driver supports streaming. Otherwise one bounce buffer
- *   is allocated for vbi_capture_pull().
- * @services: This must point to a set of VBI_SLICED_ describing the
- *   data services to be decoded. On return the services actually
- *   decodable will be stored here. See vbi_raw_decoder_add()
- *   for details. If you want to capture raw data only, set to
- *   #VBI_SLICED_VBI_525, #VBI_SLICED_VBI_625 or both.
- * @strict: Will be passed to vbi_raw_decoder_add().
- * @errorstr: If not %NULL this function stores a pointer to an error
- *   description here. You must free() this string when no longer needed.
- * @trace: If %TRUE print progress messages on stderr.
- * 
- * 
- * 
- * Return value: 
- **/
+/* document below */
 vbi_capture *
 vbi_capture_v4l2_new(char *dev_name, int buffers,
 		     unsigned int *services, int strict,
@@ -343,7 +323,7 @@ vbi_capture_v4l2_new(char *dev_name, int buffers,
 	}
 
 	v->capture.parameters = v4l2_parameters;
-	v->capture.delete = v4l2_delete;
+	v->capture._delete = v4l2_delete;
 	v->capture.get_fd = v4l2_fd;
 
 	/* O_RDWR required for PROT_WRITE */
@@ -721,6 +701,26 @@ failure:
 
 #else
 
+/**
+ * @param dev_name Name of the device to open, usually one of
+ *   @c /dev/vbi or @c /dev/vbi0 and up.
+ * @param buffers Number of device buffers for raw vbi data, when
+ *   the driver supports streaming. Otherwise one bounce buffer
+ *   is allocated for vbi_capture_pull().
+ * @param services This must point to a set of @ref VBI_SLICED_
+ *   symbols describing the
+ *   data services to be decoded. On return the services actually
+ *   decodable will be stored here. See vbi_raw_decoder_add()
+ *   for details. If you want to capture raw data only, set to
+ *   @c VBI_SLICED_VBI_525, @c VBI_SLICED_VBI_625 or both.
+ * @param strict Will be passed to vbi_raw_decoder_add().
+ * @param errorstr If not @c NULL this function stores a pointer to an error
+ *   description here. You must free() this string when no longer needed.
+ * @param trace If @c TRUE print progress messages on stderr.
+ * 
+ * @return
+ * Initialized vbi_capture context, @c NULL on failure.
+ */
 vbi_capture *
 vbi_capture_v4l2_new(char *dev_name, int buffers,
 		     unsigned int *services, int strict,

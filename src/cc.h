@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: cc.h,v 1.1 2002/01/12 16:18:36 mschimek Exp $ */
+/* $Id: cc.h,v 1.2 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifndef CC_H
 #define CC_H
@@ -63,7 +63,7 @@ typedef struct {
 
 	int			hidden;
 	vbi_page		pg[2];
-} channel;
+} cc_channel;
 
 struct caption {
 	pthread_mutex_t		mutex;
@@ -72,7 +72,7 @@ struct caption {
 
 	int			curr_chan;
 	vbi_char		transp_space[2];	/* caption, text mode */
-	channel			channel[9];		/* caption 1-4, text 1-4, garbage */
+	cc_channel		channel[9];		/* caption 1-4, text 1-4, garbage */
 
 	xds_sub_packet		sub_packet[4][0x18];
 	xds_sub_packet *	curr_sp;
@@ -86,8 +86,13 @@ struct caption {
 
 /* Public */
 
+/**
+ * @addtogroup Cache
+ * @{
+ */
 extern vbi_bool		vbi_fetch_cc_page(vbi_decoder *vbi, vbi_page *pg,
 					  vbi_pgno pgno, vbi_bool reset);
+/** @} */
 
 /* Private */
 

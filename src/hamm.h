@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: hamm.h,v 1.3 2002/05/23 03:59:46 mschimek Exp $ */
+/* $Id: hamm.h,v 1.4 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifndef HAMM_H
 #define HAMM_H
@@ -33,13 +33,13 @@ extern const int8_t		vbi_hamm24par[3][256];
 extern const int8_t		vbi_hamm8val[256];
 
 /**
- * vbi_parity:
- * @c: Unsigned byte. 
+ * @internal
+ * @param c Unsigned byte. 
  * 
- * Return value:
+ * @return
  * If the byte has odd parity (sum of bits mod 2 is 1) the
  * byte AND 127, otherwise -1.
- **/
+ */
 static inline int
 vbi_parity(unsigned int c)
 {
@@ -87,31 +87,31 @@ vbi_set_parity(uint8_t *p, int n)
 }
 
 /**
- * vbi_hamm8:
- * @c: A Hamming 8/4 protected byte, lsb first
+ * @internal
+ * @param c A Hamming 8/4 protected byte, lsb first
  *   transmitted.
  * 
  * This function decodes a Hamming 8/4 protected byte
  * as specified in ETS 300 706 8.2.
  * 
- * Return value: 
+ * @return
  * Data bits (D4 [msb] ... D1 [lsb])
  * or -1 if the byte contained incorrectable errors.
- **/
+ */
 #define vbi_hamm8(c) vbi_hamm8val[(uint8_t)(c)]
 
 /**
- * vbi_hamm16:
- * @p: Pointer to a Hamming 8/4 protected byte pair,
+ * @internal
+ * @param p Pointer to a Hamming 8/4 protected byte pair,
  *   bytes in transmission order, lsb first transmitted.
  * 
  * This function decodes a Hamming 8/4 protected byte pair
  * as specified in ETS 300 706 8.2.
  * 
- * Return value: 
+ * @return
  * Data bits D4 [msb] ... D1 of byte 1, D4 ... D1 [lsb] of byte 2
  * or a negative value if the pair contained incorrectable errors.
- **/
+ */
 static inline int
 vbi_hamm16(uint8_t *p)
 {

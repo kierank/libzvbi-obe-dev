@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.3 2002/05/23 03:59:46 mschimek Exp $ */
+/* $Id: vbi.c,v 1.4 2002/07/16 00:11:36 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -44,6 +44,29 @@
 #include "tables.h"
 #include "format.h"
 #include "wss.h"
+
+/**
+ * @mainpage ZVBI - VBI Decoding Library
+ *
+ * @author Iñaki García Etxebarria<br>
+ * Michael H. Schimek<br>
+ * based on AleVT by Edgar Toernig
+ *
+ * @section intro Introduction
+ *
+ * The ZVBI library provides routines to access raw VBI sampling devices
+ * (currently the Linux <a href="http://roadrunner.swansea.uk.linux.org/v4l.shtml">V4L</a>
+ * and <a href="http://www.thedirks.org/v4l2/">V4L2</a> API
+ * are supported), a versatile raw VBI bit slicer,
+ * decoders for various data services and basic search,
+ * render and export functions for text pages. The library was written for
+ * the <a href="http://zapping.sourceforge.net">Zapping TV viewer and
+ * Zapzilla Teletext browser</a>.
+ */
+
+/** @defgroup Basic Basic types */
+/** @defgroup Raw Raw VBI */
+/** @defgroup Service Data Service Decoder */
 
 /*
  *  Events
@@ -81,17 +104,16 @@ vbi_event_enable(vbi_decoder *vbi, int mask)
 }
 
 /**
- * vbi_event_handler_add:
- * @vbi: Initialized vbi decoding context.
- * @event_mask: Events the handler is waiting for.
- * @handler: Event handler function.
- * @user_data: Pointer passed to the handler.
+ * @param vbi Initialized vbi decoding context.
+ * @param event_mask Events the handler is waiting for.
+ * @param handler Event handler function.
+ * @param user_data Pointer passed to the handler.
  * 
- * Deprecated, use vbi_event_handler_register() in new code.
+ * @deprecated Use vbi_event_handler_register() in new code.
  * 
- * Return value:
+ * @return
  * FALSE on failure.
- **/
+ */
 vbi_bool
 vbi_event_handler_add(vbi_decoder *vbi, int event_mask,
 		      vbi_event_handler handler, void *user_data) 
@@ -126,7 +148,7 @@ vbi_event_handler_add(vbi_decoder *vbi, int event_mask,
 	}
 
 	if (!found && event_mask) {
-		if (!(eh = calloc(1, sizeof(*eh))))
+		if (!(eh = (struct event_handler *) calloc(1, sizeof(*eh))))
 			return FALSE;
 
 		eh->event_mask = event_mask;
@@ -147,12 +169,11 @@ vbi_event_handler_add(vbi_decoder *vbi, int event_mask,
 }
 
 /**
- * vbi_event_handler_remove:
- * @vbi: Initialized vbi decoding context.
- * @handler: Event handler function.
+ * @param vbi Initialized vbi decoding context.
+ * @param handler Event handler function.
  * 
- * Deprecated, use vbi_event_handler_register() in new code.
- **/
+ * @deprecated Use vbi_event_handler_register() in new code.
+ */
 void
 vbi_event_handler_remove(vbi_decoder *vbi, vbi_event_handler handler)
 {
@@ -160,28 +181,27 @@ vbi_event_handler_remove(vbi_decoder *vbi, vbi_event_handler handler)
 } 
 
 /**
- * vbi_event_handler_register:
- * @vbi: Initialized vbi decoding context.
- * @event_mask: Events the handler is waiting for.
- * @handler: Event handler function.
- * @user_data: Pointer passed to the handler.
+ * @param vbi Initialized vbi decoding context.
+ * @param event_mask Events the handler is waiting for.
+ * @param handler Event handler function.
+ * @param user_data Pointer passed to the handler.
  * 
- * Registers a new event handler. @event_mask can be any 'or' of VBI_EVENT_*,
- * -1 for all events and 0 for none. When the @handler with @user_data is
- * already registered, its event_mask will be changed. Any number of handlers
- * can be registered, also different handlers for the same event which will be
- * called in registration order.
+ * Registers a new event handler. @a event_mask can be any 'or' of VBI_EVENT_
+ * symbols, -1 for all events and 0 for none. When the @a handler with
+ * @a user_data is already registered, its event_mask will be changed. Any
+ * number of handlers can be registered, also different handlers for the same
+ * event which will be called in registration order.
  * 
  * Apart of adding handlers this function also enables and disables decoding
  * of data services depending on the presence of at least one handler for the
- * respective data. A VBI_EVENT_TTX_PAGE handler for example enables Teletext
+ * respective data. A @c VBI_EVENT_TTX_PAGE handler for example enables Teletext
  * decoding.
  * 
  * This function can be safely called at any time, even from a handler.
  * 
- * Return value:
- * FALSE on failure, practically that means lack of memory.
- **/
+ * @return
+ * @c FALSE on failure.
+ */
 vbi_bool
 vbi_event_handler_register(vbi_decoder *vbi, int event_mask,
 		           vbi_event_handler handler, void *user_data) 
@@ -217,7 +237,7 @@ vbi_event_handler_register(vbi_decoder *vbi, int event_mask,
 	}
 
 	if (!found && event_mask) {
-		if (!(eh = calloc(1, sizeof(*eh))))
+		if (!(eh = (struct event_handler *) calloc(1, sizeof(*eh))))
 			return FALSE;
 
 		eh->event_mask = event_mask;
@@ -238,21 +258,20 @@ vbi_event_handler_register(vbi_decoder *vbi, int event_mask,
 }
 
 /**
- * vbi_event_handler_unregister:
- * @vbi: Initialized vbi decoding context.
- * @handler: Event handler function.
- * @user_data: Pointer passed to the handler.
+ * @param vbi Initialized vbi decoding context.
+ * @param handler Event handler function.
+ * @param user_data Pointer passed to the handler.
  * 
  * Unregisters an event handler.
  *
- * Apart of removing handlers this function also disables decoding
- * of data services depending on the presence of at least one handler for the
- * respective data. Removing the last VBI_EVENT_TTX_PAGE handler for example
- * disables Teletext decoding.
+ * Apart of removing a handler this function also disables decoding
+ * of data services when no handler is registered to consume the
+ * respective data. Removing the last @c VBI_EVENT_TTX_PAGE handler for
+ * example disables Teletext decoding.
  * 
  * This function can be safely called at any time, even from a handler
- * removing itself or another handler, and regardless if the @handler
- * in question has been actually registered.
+ * removing itself or another handler, and regardless if the @a handler
+ * has been successfully registered.
  **/
 void
 vbi_event_handler_unregister(vbi_decoder *vbi,
@@ -262,16 +281,16 @@ vbi_event_handler_unregister(vbi_decoder *vbi,
 }
 
 /**
- * vbi_send_event:
- * @vbi: Initialized vbi decoding context.
- * @ev: The event to send.
+ * @internal
+ * @param vbi Initialized vbi decoding context.
+ * @param ev The event to send.
  * 
  * Traverses the list of event handlers and calls each handler waiting
- * for this ev->type of event, passing @ev as parameter.
+* * for this @a ev->type of event, passing @a ev as parameter.
  * 
  * This function is reentrant, but not supposed to be called from
  * different threads to ensure correct event order.
- **/
+ */
 void
 vbi_send_event(vbi_decoder *vbi, vbi_event *ev)
 {
@@ -304,27 +323,30 @@ current_time(void)
 }
 
 /**
- * vbi_decode:
- * @vbi: Initialized vbi decoding context.
- * @sliced: Array of #vbi_sliced data packets to be decoded.
- * @lines: Number of #vbi_sliced data packets, i. e. VBI lines.
- * @time: Timestamp associated with <emphasis>all</> sliced data packets.
+ * @param vbi Initialized vbi decoding context as returned by vbi_decoder_new().
+ * @param sliced Array of vbi_sliced data packets to be decoded.
+ * @param lines Number of vbi_sliced data packets, i. e. VBI lines.
+ * @param time Timestamp associated with <em>all</em> sliced data packets.
  *   This is the time in seconds and fractions since 1970-01-01 00:00,
- *   for example from function gettimeofday(). @time should only
- *   increment, the latest time entered is considered the current time.
+ *   for example from function gettimeofday(). @a time should only
+ *   increment, the latest time entered is considered the current time
+ *   for activity calculation.
  * 
- * Main entry to the VBI decoder. Decodes zero or more lines of sliced
- * VBI data, updates the decoder state and calls event handlers.
+ * @brief Main function of the data service decoder.
+ *
+ * Decodes zero or more lines of sliced VBI data from the same video
+ * frame, updates the decoder state and calls event handlers.
  * 
- * @timestamp shall advance by 1/30 to 1/25 seconds whenever calling this
+ * @a timestamp shall advance by 1/30 to 1/25 seconds whenever calling this
  * function. Failure to do so will be interpreted as frame dropping, which
- * starts a resynchronization cycle, and a channel switch may be assumed
+ * starts a resynchronization cycle, eventually a channel switch may be assumed
  * which resets even more decoder state. So even if a frame did not contain
- * any useful data this function must be called, with @lines set to zero.
+ * any useful data this function must be called, with @a lines set to zero.
  * 
- * This is one of the few <emphasis>not reentrant</> functions, and it
- * must never be called from an event handler.
- **/
+ * @note This is one of the few not reentrant libzvbi functions. If multiple
+ * threads call this with the same @a vbi context you must implement your
+ * own locking mechanism. Never call this function from an event handler.
+ */
 void
 vbi_decode(vbi_decoder *vbi, vbi_sliced *sliced, int lines, double time)
 {
@@ -387,7 +409,8 @@ vbi_decode(vbi_decoder *vbi, vbi_sliced *sliced, int lines, double time)
 		vbi_deferred_trigger(vbi);
 
 	if (0 && (rand() % 511) == 0)
-		vbi_eacem_trigger(vbi, "<http://zapping.sourceforge.net>[n:Zapping][5450]");
+		vbi_eacem_trigger(vbi, (unsigned char *) /* Latin-1 */
+				  "<http://zapping.sourceforge.net>[n:Zapping][5450]");
 }
 
 void
@@ -452,28 +475,24 @@ vbi_chsw_reset(vbi_decoder *vbi, vbi_nuid identified)
 }
 
 /**
- * vbi_channel_switched:
- * @vbi: VBI decoding context
- * @nuid: Set to zero until further
+ * @param vbi VBI decoding context.
+ * @param nuid Set to zero for now.
  * 
- * Call this after switching away from the channel (that is RF
- * channel, baseband video line etc, precisely: the network) from
- * which this context is receiving vbi data, to reset the context
- * accordingly. The decoder attempts to detect channel switches
- * automatically, but this is not 100 % reliable esp. without
- * receiving and decoding Teletext or VPS.
+ * Call this after switching away from the channel (RF channel,
+ * video input line, precisely: the network) from which this context
+ * used to receive vbi data, to reset the decoding context accordingly.
+ * This includes deletion of all cached Teletext and Closed Caption pages.
  *
- * Note the reset request is not executed until the next frame
- * is about to be decoded, so you can still receive "old" events
- * after calling this.
+ * The decoder attempts to detect channel switches automatically, but this
+ * is not 100 % reliable, especially without receiving and decoding Teletext
+ * or VPS which frequently transmit network identifiers.
  *
- * Side effects: A reset deletes all Teletext and Closed Caption
- * pages cached. Clients may receive a #VBI_EVENT_ASPECT and
- * #VBI_EVENT_NETWORK revoking a previous event. Note the
- * possibility of sending a blank #vbi_network to notify the
- * event handler of the [autodetected] switch and the [temporary]
- * inability to identify the new network.
- **/
+ * Note the reset is not executed until the next frame is about to be
+ * decoded, so you may still receive "old" events after calling this. You
+ * may also receive blank events (e. g. unknown network, unknown aspect
+ * ratio) revoking a previously sent event, until new information becomes
+ * available.
+ */
 void
 vbi_channel_switched(vbi_decoder *vbi, vbi_nuid nuid)
 {
@@ -495,14 +514,14 @@ transp(int val, int brig, int cont)
 }
 
 /**
- * vbi_transp_colormap:
- * @vbi: Initialized vbi decoding context.
- * @d: Destination palette.
- * @s: Source palette.
- * @entries: Size of source and destination palette.
+ * @internal
+ * @param vbi Initialized vbi decoding context.
+ * @param d Destination palette.
+ * @param s Source palette.
+ * @param entries Size of source and destination palette.
  *
- * Transposes the source palette by vbi->brightness and vbi->contrast.
- **/
+ * Transposes the source palette by @a vbi->brightness and @a vbi->contrast.
+ */
 void
 vbi_transp_colormap(vbi_decoder *vbi, vbi_rgba *d, vbi_rgba *s, int entries)
 {
@@ -520,14 +539,13 @@ vbi_transp_colormap(vbi_decoder *vbi, vbi_rgba *d, vbi_rgba *s, int entries)
 }
 
 /**
- * vbi_set_brightness:
- * @vbi: Initialized vbi decoding context.
- * @brightness: 0 dark ... 255 bright, default 128.
+ * @param vbi Initialized vbi decoding context.
+ * @param brightness 0 dark ... 255 bright, default 128.
  * 
  * Change brightness of text pages, this affects the
  * color palette of pages fetched with vbi_fetch_vt_page() and
  * vbi_fetch_cc_page().
- **/
+ */
 void
 vbi_set_brightness(vbi_decoder *vbi, int brightness)
 {
@@ -537,14 +555,13 @@ vbi_set_brightness(vbi_decoder *vbi, int brightness)
 }
 
 /**
- * vbi_set_contrast:
- * @vbi: Initialized vbi decoding context.
- * @contrast: -128 inverse ... 0 none ... 127 maximum, default 64.
+ * @param vbi Initialized vbi decoding context.
+ * @param contrast -128 inverse ... 0 none ... 127 maximum, default 64.
  * 
  * Change contrast of text pages, this affects the
  * color palette of pages fetched with vbi_fetch_vt_page() and
  * vbi_fetch_cc_page().
- **/
+ */
 void
 vbi_set_contrast(vbi_decoder *vbi, int contrast)
 {
@@ -554,69 +571,71 @@ vbi_set_contrast(vbi_decoder *vbi, int contrast)
 }
 
 /**
- * vbi_classify_page:
- * @vbi: Initialized vbi decoding context.
- * @pgno: Teletext or Closed Caption page to examine, see
- *   #vbi_pgno.
- * @subno: The highest subpage number of this page will be
- *   stored here. @subno can be %NULL.
- * @language: If it is possible to determine the language a page
+ * @param vbi Initialized vbi decoding context.
+ * @param pgno Teletext or Closed Caption page to examine, see vbi_pgno.
+ * @param subno The highest subpage number of this page will be
+ *   stored here. @a subno can be @c NULL.
+ * @param language If it is possible to determine the language a page
  *   is written in, a pointer to the language name (Latin-1) will
- *   be stored here, %NULL if the language is unknown. @language
- *   can be %NULL if this information is not needed.
+ *   be stored here, @c NULL if the language is unknown. @a language
+ *   can be @c NULL if this information is not needed.
  * 
  * Returns information about the page.
  * 
- * For Closed Caption pages (@pgno 1 ... 8) @subno will always
- * be zero, @language set or %NULL. The return value will be
- * VBI_SUBTITLE_PAGE for page 1 ... 4 (Closed Caption
- * channel 1 ... 4), VBI_NORMAL_PAGE for page 5 ... 8 (Text channel
- * 1 ... 4), or VBI_NO_PAGE if no data is currently transmitted on
+ * For Closed Caption pages (@a pgno 1 ... 8) @a subno will always
+ * be zero, @a language set or @c NULL. The return value will be
+ * @c VBI_SUBTITLE_PAGE for page 1 ... 4 (Closed Caption
+ * channel 1 ... 4), @c VBI_NORMAL_PAGE for page 5 ... 8 (Text channel
+ * 1 ... 4), or @c VBI_NO_PAGE if no data is currently transmitted on
  * the channel.
  *
- * For Teletext pages (@pgno 0x100 ... 0x8FF) @subno returns
+ * For Teletext pages (@a pgno 0x100 ... 0x8FF) @a subno returns
  * the highest subpage number used. Note this number can be larger
  * (but not smaller) than the number of subpages actually received
  * and cached. Still there is no guarantee the advertised subpages
  * will ever appear or stay in cache.
- * <informaltable frame=none><tgroup cols=2><thead>
- * <row><entry>subno</><entry>meaning</></row>
- * </thead><tbody>
- * <row><entry>0</><entry>single page, no subpages</></row>
- * <row><entry>1</><entry>never</></row>
- * <row><entry>2 ... 0x3F7F</><entry>has subpages 1 ... @subno</></row>
- * <row><entry>0xFFFE</><entry>has unknown number (two or more) of subpages</></row>
- * <row><entry>0xFFFF</><entry>presence of subpages unknown</></row>
- * </tbody></tgroup></informaltable>
- * @language returns the language of a subtitle page, %NULL if unknown
- * or the page is not classified as VBI_SUBTITLE_PAGE.
+ *
+ * <table>
+ * <tr><td><b>subno</b></td><td><b>meaning</b></td></tr>
+ * <tr><td>0</td><td>single page, no subpages</td></tr>
+ * <tr><td>1</td><td>never</td></tr>
+ * <tr><td>2 ... 0x3F7F</td><td>has subpages 1 ... @a subno </td></tr>
+ * <tr><td>0xFFFE</td><td>has unknown number (two or more) of subpages</td></tr>
+ * <tr><td>0xFFFF</td><td>presence of subpages unknown</td></tr>
+ * </table>
+ *
+ * @a language currently returns the language of subtitle pages, @c NULL
+ * if unknown or the page is not classified as @c VBI_SUBTITLE_PAGE.
  *
  * Other page types are:
- * <informaltable frame=none><tgroup cols=2><tbody>
- * <row><entry>VBI_NO_PAGE</><entry>Page is not in transmission</></row>
- * <row><entry>VBI_NORMAL_PAGE</><entry></></row>
- * <row><entry>VBI_SUBTITLE_PAGE</><entry></></row>
- * <row><entry>VBI_SUBTITLE_INDEX</><entry>Subtitle index page</></row>
- * <row><entry>VBI_NONSTD_SUBPAGES</><entry>For example a world time page</></row>
- * <row><entry>VBI_PROGR_WARNING</><entry>Program related warning</></row>
- * <row><entry>VBI_CURRENT_PROGR</><entry>Information about the
- * current program</></row>
- * <row><entry>VBI_NOW_AND_NEXT</><entry>Brief information about the
- * current and next program</></row>
- * <row><entry>VBI_PROGR_INDEX</><entry>Program index page</></row>
- * <row><entry>VBI_PROGR_SCHEDULE</><entry>Program schedule page</></row>
- * <row><entry>VBI_UNKNOWN_PAGE</><entry></></row>
- * </tbody></tgroup></informaltable>
  *
- * <important>The results of this function are volatile: As more information
+ * <table>
+ * <tr><td>VBI_NO_PAGE</td><td>Page is not in transmission</td></tr>
+ * <tr><td>VBI_NORMAL_PAGE</td><td>&nbsp;</td></tr>
+ * <tr><td>VBI_SUBTITLE_PAGE</td><td>&nbsp;</td></tr>
+ * <tr><td>VBI_SUBTITLE_INDEX</td><td>List of subtitle pages</td></tr>
+ * <tr><td>VBI_NONSTD_SUBPAGES</td><td>For example a world time page</td></tr>
+ * <tr><td>VBI_PROGR_WARNING</td><td>Program related warning (perhaps
+ * schedule change anouncements, the Teletext specification does not
+ * elaborate on this)</td></tr>
+ * <tr><td>VBI_CURRENT_PROGR</td><td>Information about the
+ * current program</td></tr>
+ * <tr><td>VBI_NOW_AND_NEXT</td><td>Brief information about the
+ * current and next program</td></tr>
+ * <tr><td>VBI_PROGR_INDEX</td><td>Program index page (perhaps the front
+ * page of all program related pages)</td></tr>
+ * <tr><td>VBI_PROGR_SCHEDULE</td><td>Program schedule page</td></tr>
+ * <tr><td>VBI_UNKNOWN_PAGE</td><td>&nbsp;</td></tr>
+ * </table>
+ *
+ * @note The results of this function are volatile: As more information
  * becomes available and pages are edited (e. g. activation of subtitles,
  * news updates, program related pages) subpage numbers can grow, page
  * types, subno 0xFFFE and 0xFFFF and languages can change.
- * </important>
  *
- * Return value: 
+ * @return
  * Page type.
- **/
+ */
 vbi_page_type
 vbi_classify_page(vbi_decoder *vbi, vbi_pgno pgno,
 		  vbi_subno *subno, char **language)
@@ -672,12 +691,11 @@ vbi_classify_page(vbi_decoder *vbi, vbi_pgno pgno,
 }
 
 /**
- * vbi_reset_prog_info:
- * @pi: 
+ * @param pi 
  * 
- * Convenience function to set a #vbi_program_info
+ * Convenience function to set a vbi_program_info
  * structure to defaults.
- **/
+ */
 void
 vbi_reset_prog_info(vbi_program_info *pi)
 {
@@ -723,6 +741,10 @@ vbi_reset_prog_info(vbi_program_info *pi)
 		pi->description[i][0] = 0;
 }
 
+/**
+ * @param vbi Decoder structure allocated with vbi_decoder_new().
+ * @brief Delete a data service decoder instance.
+ */
 void
 vbi_decoder_delete(vbi_decoder *vbi)
 {
@@ -740,20 +762,18 @@ vbi_decoder_delete(vbi_decoder *vbi)
 }
 
 /**
- * vbi_decoder_new:
+ * @brief Allocate a new data service decoder instance.
  * 
- * Allocate a new vbi decoding instance. This is the core
- * structure of libzvbi.
- * 
- * Return value: 
- * #vbi_decoder pointer or %NULL on failure.
- **/
+ * @return
+ * vbi_decoder pointer or @c NULL on failure, probably due to lack
+ * of memory.
+ */
 vbi_decoder *
 vbi_decoder_new(void)
 {
 	vbi_decoder *vbi;
 
-	if (!(vbi = calloc(1, sizeof(*vbi))))
+	if (!(vbi = (vbi_decoder *) calloc(1, sizeof(*vbi))))
 		return NULL;
 
 	vbi_cache_init(vbi);
@@ -777,11 +797,10 @@ vbi_decoder_new(void)
 }
 
 /**
- * vbi_asprintf:
- * 
+ * @internal
  * libzvbi internal helper function.
  * Note asprintf() is a GNU libc extension.
- **/
+ */
 void
 vbi_asprintf(char **errstr, char *templ, ...)
 {

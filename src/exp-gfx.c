@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.c,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
+/* $Id: exp-gfx.c,v 1.3 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -92,17 +92,17 @@ init_gfx(void)
 }
 
 /**
- * unicode_wstfont2:
- * @c: Unicode.
- * @italic: TRUE to switch to slanted character set (doesn't affect
+ * @internal
+ * @param c Unicode.
+ * @param italic @c TRUE to switch to slanted character set (doesn't affect
  *          Hebrew and Arabic). If this is a G1 block graphic character
  *          switch to separated block mosaic set.
  * 
  * Translate Unicode character to glyph number in wstfont2 image. 
  * 
- * Return value:
+ * @return
  * Glyph number.
- **/
+ */
 static int
 unicode_wstfont2(unsigned int c, int italic)
 {
@@ -174,15 +174,15 @@ special:
 }
 
 /**
- * unicode_ccfont2:
- * @c: Unicode.
- * @italic: TRUE to switch to slanted character set.
+ * @internal
+ * @param c Unicode.
+ * @param italic @c TRUE to switch to slanted character set.
  * 
  * Translate Unicode character to glyph number in ccfont2 image. 
  * 
- * Return value:
+ * @return
  * Glyph number.
- **/
+ */
 static int
 unicode_ccfont2(unsigned int c, int italic)
 {
@@ -215,56 +215,56 @@ slant:
 }
 
 /**
- * peek:
- * @p: Plane of @canvas_type char, short, int.
- * @i: Index.
+ * @internal
+ * @param p Plane of @a canvas_type char, short, int.
+ * @param i Index.
  *
- * Return value:
- * Pixel @i in plane @p.
- **/
+ * @return
+ * Pixel @a i in plane @a p.
+ */
 #define peek(p, i)							\
 ((canvas_type == sizeof(uint8_t)) ? ((uint8_t *)(p))[i] :		\
     ((canvas_type == sizeof(uint16_t)) ? ((uint16_t *)(p))[i] :		\
 	((uint32_t *)(p))[i]))
 
 /**
- * poke:
- * @p: Plane of @canvas_type char, short, int.
- * @i: Index.
- * @v: Value.
+ * @internal
+ * @param p Plane of @a canvas_type char, short, int.
+ * @param i Index.
+ * @param v Value.
  * 
- * Set pixel @i in plane @p to value @v.
- **/
+ * Set pixel @a i in plane @a p to value @a v.
+ */
 #define poke(p, i, v)							\
 ((canvas_type == sizeof(uint8_t)) ? (((uint8_t *)(p))[i] = (v)) :	\
     ((canvas_type == sizeof(uint16_t)) ? (((uint16_t *)(p))[i] = (v)) :	\
 	(((uint32_t *)(p))[i] = (v))))
 
 /**
- * draw_char:
- * @canvas_type: sizeof(char, short, int).
- * @canvas: Pointer to image plane where the character is to be drawed.
- * @rowstride: @canvas <emphasis>byte</> distance from line to line.
- * @pen: Pointer to color palette of @canvas_type (index 0 background
+ * @internal
+ * @param canvas_type sizeof(char, short, int).
+ * @param canvas Pointer to image plane where the character is to be drawed.
+ * @param rowstride @a canvas <em>byte</em> distance from line to line.
+ * @param pen Pointer to color palette of @a canvas_type (index 0 background
  *   pixels, index 1 foreground pixels).
- * @font: Pointer to font image with width @cpl x @cw pixels, height @ch
- *   pixels, depth one bit, bit '1' is foreground.
- * @cpl: Chars per line (number of characters in @font image).
- * @cw: Character cell width in pixels.
- * @ch: Character cell height in pixels.
- * @glyph: Glyph number in font image, 0 ... @cpl - 1.
- * @bold: Draw character bold (font image | font image << 1).
- * @underline: Bit mask of character rows. For each bit
- *   1 << (n = 0 ... @ch - 1) set all of character row n to
+ * @param font Pointer to font image with width @a cpl x @a cw pixels, height
+ *   @a ch pixels, depth one bit, bit '1' is foreground.
+ * @param cpl Chars per line (number of characters in @a font image).
+ * @param cw Character cell width in pixels.
+ * @param ch Character cell height in pixels.
+ * @param glyph Glyph number in font image, 0 ... @a cpl - 1.
+ * @param bold Draw character bold (font image | font image << 1).
+ * @param underline Bit mask of character rows. For each bit
+ *   1 << (n = 0 ... @a ch - 1) set all of character row n to
  *   foreground color.
- * @size: Size of character, either NORMAL, DOUBLE_WIDTH (draws left
+ * @param size Size of character, either NORMAL, DOUBLE_WIDTH (draws left
  *   and right half), DOUBLE_HEIGHT (draws upper half only),
  *   DOUBLE_SIZE (left and right upper half), DOUBLE_HEIGHT2
  *   (lower half), DOUBLE_SIZE2 (left and right lower half).
  * 
  * Draw one character (function template - define a static version with
- * constant @canvas_type, @font, @cpl, @cw, @ch).
- **/
+ * constant @a canvas_type, @a font, @a cpl, @a cw, @a ch).
+ */
 static inline void
 draw_char(int canvas_type, uint8_t *canvas, int rowstride,
 	  uint8_t *pen, uint8_t *font, int cpl, int cw, int ch,
@@ -366,26 +366,26 @@ draw_char(int canvas_type, uint8_t *canvas, int rowstride,
 }
 
 /**
- * draw_drcs:
- * @canvas_type: sizeof(char, short, int).
- * @canvas: Pointer to image plane where the character is to be drawed.
- * @rowstride: @canvas <emphasis>byte</> distance from line to line.
- * @pen: Pointer to color palette of @canvas_type (index 0 ... 1 for
+ * @internal
+ * @param canvas_type sizeof(char, short, int).
+ * @param canvas Pointer to image plane where the character is to be drawed.
+ * @param rowstride @a canvas <em>byte</em> distance from line to line.
+ * @param pen Pointer to color palette of @a canvas_type (index 0 ... 1 for
  *   depth 1 DRCS, 0 ... 3 for depth 2, 0 ... 15 for depth 4).
- * @color: Offset into color palette.
- * @font: Pointer to DRCS image. Each pixel is coded in four bits, an
+ * @param color Offset into color palette.
+ * @param font Pointer to DRCS image. Each pixel is coded in four bits, an
  *   index into the color palette, and stored in LE order (i. e. first
  *   pixel 0x0F, second pixel 0xF0). Character size is 12 x 10 pixels,
  *   60 bytes, without padding.
- * @glyph: Glyph number in font image, 0x00 ... 0x3F.
- * @size: Size of character, either NORMAL, DOUBLE_WIDTH (draws left
+ * @param glyph Glyph number in font image, 0x00 ... 0x3F.
+ * @param size Size of character, either NORMAL, DOUBLE_WIDTH (draws left
  *   and right half), DOUBLE_HEIGHT (draws upper half only),
  *   DOUBLE_SIZE (left and right upper half), DOUBLE_HEIGHT2
  *   (lower half), DOUBLE_SIZE2 (left and right lower half).
  * 
  * Draw one Teletext Dynamically Redefinable Character (function template -
- * define a static version with constant @canvas_type, @font).
- **/
+ * define a static version with constant @a canvas_type, @a font).
+ */
 static inline void
 draw_drcs(int canvas_type, uint8_t *canvas, unsigned int rowstride,
 	  uint8_t *pen, int color, uint8_t *font, int glyph, vbi_size size)
@@ -461,16 +461,16 @@ draw_drcs(int canvas_type, uint8_t *canvas, unsigned int rowstride,
 }
 
 /**
- * draw_blank:
- * @canvas_type: sizeof(char, short, int).
- * @canvas: Pointer to image plane where the character is to be drawed.
- * @rowstride: @canvas <emphasis>byte</> distance from line to line.
- * @color: Color value of @canvas_type.
- * @cw: Character width in pixels.
- * @ch: Character height in pixels.
+ * @internal
+ * @param canvas_type sizeof(char, short, int).
+ * @param canvas Pointer to image plane where the character is to be drawed.
+ * @param rowstride @a canvas <em>byte</em> distance from line to line.
+ * @param color Color value of @a canvas_type.
+ * @param cw Character width in pixels.
+ * @param ch Character height in pixels.
  * 
  * Draw blank character.
- **/
+ */
 static inline void
 draw_blank(int canvas_type, uint8_t *canvas, unsigned int rowstride,
 	   unsigned int color, int cw, int ch)
@@ -486,21 +486,19 @@ draw_blank(int canvas_type, uint8_t *canvas, unsigned int rowstride,
 }
 
 /**
- * vbi_draw_cc_page_region:
- * @pg: Source page.
- * @fmt: Target format. For now only VBI_PIXFMT_RGBA32_LE (#vbi_rgba) permitted.
- * @canvas: Pointer to destination image (currently an array of vbi_rgba), this
- *   must be at least @rowstride * @height * 26 bytes large.
- * @rowstride: @canvas <emphasis>byte</> distance from line to line.
+ * @param fmt Target format. For now only VBI_PIXFMT_RGBA32_LE (vbi_rgba) permitted.
+ * @param canvas Pointer to destination image (currently an array of vbi_rgba), this
+ *   must be at least @a rowstride * @a height * 26 bytes large.
+ * @param rowstride @a canvas <em>byte</em> distance from line to line.
  *   If this is -1, pg->columns * 16 * sizeof(vbi_rgba) bytes will be assumed.
- * @column: First source column, 0 ... pg->columns - 1.
- * @row: First source row, 0 ... pg->rows - 1.
- * @width: Number of columns to draw, 1 ... pg->columns.
- * @height: Number of rows to draw, 1 ... pg->rows.
+ * @param column First source column, 0 ... pg->columns - 1.
+ * @param row First source row, 0 ... pg->rows - 1.
+ * @param width Number of columns to draw, 1 ... pg->columns.
+ * @param height Number of rows to draw, 1 ... pg->rows.
  * 
- * Draw a subsection of a Closed Caption #vbi_page. In this mode one
+ * Draw a subsection of a Closed Caption vbi_page. In this mode one
  * character occupies 16 x 26 pixels.
- **/
+ */
 void
 vbi_draw_cc_page_region(vbi_page *pg,
 			vbi_pixfmt fmt, void *canvas, int rowstride,
@@ -554,25 +552,24 @@ vbi_draw_cc_page_region(vbi_page *pg,
 }
 
 /**
- * vbi_draw_vt_page_region:
- * @pg: Source page.
- * @fmt: Target format. For now only VBI_PIXFMT_RGBA32_LE (#vbi_rgba) permitted.
- * @canvas: Pointer to destination image (currently an array of vbi_rgba), this
- *   must be at least @rowstride * @height * 10 bytes large.
- * @rowstride: @canvas <emphasis>byte</> distance from line to line.
+ * @param pg Source page.
+ * @param fmt Target format. For now only VBI_PIXFMT_RGBA32_LE (vbi_rgba) permitted.
+ * @param canvas Pointer to destination image (currently an array of vbi_rgba), this
+ *   must be at least @a rowstride * @a height * 10 bytes large.
+ * @param rowstride @a canvas <em>byte</em> distance from line to line.
  *   If this is -1, pg->columns * 12 * sizeof(vbi_rgba) bytes will be assumed.
- * @column: First source column, 0 ... pg->columns - 1.
- * @row: First source row, 0 ... pg->rows - 1.
- * @width: Number of columns to draw, 1 ... pg->columns.
- * @height: Number of rows to draw, 1 ... pg->rows.
- * @reveal: If FALSE, draw characters flagged 'concealed' (see #vbi_char) as
+ * @param column First source column, 0 ... pg->columns - 1.
+ * @param row First source row, 0 ... pg->rows - 1.
+ * @param width Number of columns to draw, 1 ... pg->columns.
+ * @param height Number of rows to draw, 1 ... pg->rows.
+ * @param reveal If FALSE, draw characters flagged 'concealed' (see vbi_char) as
  *   space (U+0020).
- * @flash_on: If FALSE, draw characters flagged 'blink' (see #vbi_char) as
+ * @param flash_on If FALSE, draw characters flagged 'blink' (see vbi_char) as
  *   space (U+0020).
  * 
- * Draw a subsection of a Teletext #vbi_page. In this mode one
+ * Draw a subsection of a Teletext vbi_page. In this mode one
  * character occupies 12 x 10 pixels.
- **/
+ */
 void
 vbi_draw_vt_page_region(vbi_page *pg,
 			vbi_pixfmt fmt, void *canvas, int rowstride,
@@ -660,12 +657,13 @@ vbi_draw_vt_page_region(vbi_page *pg,
  */
 
 /**
- * vbi_get_max_rendered_size:
- * @w:
- * @h:
+ * @param w
+ * @param h
  *
- * Deprecated, will be removed.
- **/
+ * @deprecated
+ * Character cells are 12 x 10 for Teletext and 16 x 26 for Caption.
+ * Page size is in vbi_page.
+ */
 void
 vbi_get_max_rendered_size(int *w, int *h)
 {
@@ -674,12 +672,12 @@ vbi_get_max_rendered_size(int *w, int *h)
 }
 
 /**
- * vbi_get_vt_cell_size:
- * @w:
- * @h:
+ * @param w
+ * @param h
  *
- * Deprecated, will be removed.
- **/
+ * @deprecated
+ * Character cells are 12 x 10 for Teletext and 16 x 26 for Caption.
+ */
 void
 vbi_get_vt_cell_size(int *w, int *h)
 {
@@ -892,7 +890,7 @@ write_error:
 
 vbi_export_class
 vbi_export_class_ppm = {
-	.public = {
+	._public = {
 		.keyword	= "ppm",
 		.label		= N_("PPM"),
 		.tooltip	= N_("Export this page as raw PPM image"),
@@ -901,8 +899,8 @@ vbi_export_class_ppm = {
 		.extension	= "ppm",
 	},
 
-	.new			= gfx_new,
-	.delete			= gfx_delete,
+	._new			= gfx_new,
+	._delete		= gfx_delete,
 	.option_enum		= option_enum,
 	.option_get		= option_get,
 	.option_set		= option_set,
@@ -1242,7 +1240,7 @@ unknown_error:
 
 vbi_export_class
 vbi_export_class_png = {
-	.public = {
+	._public = {
 		.keyword	= "png",
 		.label		= N_("PNG"),
 		.tooltip	= N_("Export this page as PNG image"),
@@ -1251,8 +1249,8 @@ vbi_export_class_png = {
 		.extension	= "png",
 	},
 
-	.new			= gfx_new,
-	.delete			= gfx_delete,
+	._new			= gfx_new,
+	._delete		= gfx_delete,
 	.option_enum		= option_enum,
 	.option_get		= option_get,
 	.option_set		= option_set,

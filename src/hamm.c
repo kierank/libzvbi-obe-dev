@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: hamm.c,v 1.2 2002/01/15 03:20:25 mschimek Exp $ */
+/* $Id: hamm.c,v 1.3 2002/07/16 00:11:36 mschimek Exp $ */
 
 #include "hamm.h"
 
@@ -85,7 +85,7 @@ vbi_hammtab[256] =
  *  result (which can be ORed) to detect incorrectable errors.
  */
 const int8_t
-vbi_hamm8val[256] __attribute__ ((aligned(32))) = {
+vbi_hamm8val[256] = {
 	0x01,   -1, 0x01, 0x01,   -1, 0x00, 0x01,   -1,
 	  -1, 0x02, 0x01,   -1, 0x0a,   -1,   -1, 0x07,
 	  -1, 0x00, 0x01,   -1, 0x00, 0x00,   -1, 0x00,
@@ -160,7 +160,7 @@ vbi_odd_parity[256] =
  *  Thanks to R. Gancarz for this fine table *g*
  */
 const int8_t
-vbi_hamm24par[3][256] __attribute__ ((aligned(32))) = {
+vbi_hamm24par[3][256] = {
     {
         /* Parities of first byte */
 	 0, 33, 34,  3, 35,  2,  1, 32, 36,  5,  6, 39,  7, 38, 37,  4,
@@ -224,7 +224,7 @@ vbi_hamm24par[3][256] __attribute__ ((aligned(32))) = {
  *  Table to extract the lower 4 bit from hamm24/18 encoded bytes
  */
 static const int8_t
-vbi_hamm24val[256] __attribute__ ((aligned(32))) = {
+vbi_hamm24val[256] = {
       0,  0,  0,  0,  1,  1,  1,  1,  0,  0,  0,  0,  1,  1,  1,  1,
       2,  2,  2,  2,  3,  3,  3,  3,  2,  2,  2,  2,  3,  3,  3,  3,
       4,  4,  4,  4,  5,  5,  5,  5,  4,  4,  4,  4,  5,  5,  5,  5,
@@ -269,7 +269,7 @@ vbi_hamm24err[64] =
 #endif
 
 static const int8_t
-vbi_hamm24err[64] __attribute__ ((aligned(32))) = {
+vbi_hamm24err[64] = {
      0, -1, -1, -1,  -1, -1, -1, -1,  -1, -1, -1, -1,  -1, -1, -1, -1,
     -1, -1, -1, -1,  -1, -1, -1, -1,  -1, -1, -1, -1,  -1, -1, -1, -1,
      0,  0,  0,  0,   0,  0,  0,  0,   0,  0,  0,  0,   0,  0,  0,  0,
@@ -283,7 +283,7 @@ vbi_hamm24err[64] __attribute__ ((aligned(32))) = {
  *  in the decoded 18 bit word.
  */
 static const int32_t
-vbi_hamm24cor[64] __attribute__ ((aligned(32))) = {
+vbi_hamm24cor[64] = {
     0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000,
     0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000,
     0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000, 0x00000,
@@ -295,7 +295,7 @@ vbi_hamm24cor[64] __attribute__ ((aligned(32))) = {
 };
 
 const uint8_t
-vbi_bit_reverse[256] __attribute__ ((aligned(32))) = {
+vbi_bit_reverse[256] = {
 	0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,	
 	0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
 	0x08, 0x88, 0x48, 0xc8, 0x28, 0xa8, 0x68, 0xe8,	
@@ -345,17 +345,17 @@ vbi_hamm24(uint8_t *p, int *err)
 #endif
 
 /**
- * hamm24:
- * @p: Pointer to a byte triplet, bytes in transmission order,
+ * @internal
+ * @param p Pointer to a byte triplet, bytes in transmission order,
  *   lsb first transmitted.
  * 
  * This function decodes a Hamming 24/18 protected byte triplet
  * as specified in ETS 300 706 8.3.
  * 
- * Return value: 
+ * @return
  * Triplet data bits D18 [msb] ... D1 [lsb] or a negative
  * value if the triplet contained incorrectable errors. 
- **/
+ */
 int
 vbi_hamm24(uint8_t *p)
 {

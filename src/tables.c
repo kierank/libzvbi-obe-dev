@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: tables.c,v 1.2 2002/05/23 03:59:46 mschimek Exp $ */
+/* $Id: tables.c,v 1.3 2002/07/16 00:11:36 mschimek Exp $ */
 
 #include <stdlib.h>
 
@@ -764,17 +764,16 @@ eia608_program_type[96] =
 };
 
 /**
- * vbi_rating_str_by_id:
- * @auth: From #vbi_program_info.rating_auth.
- * @id: From #vbi_program_info.rating_id.
+ * @param auth From vbi_program_info.rating_auth.
+ * @param id From vbi_program_info.rating_id.
  * 
- * Translate a #vbi_program_info program rating code into a
+ * Translate a vbi_program_info program rating code into a
  * Latin-1 string, native language.
  * 
- * Return value: 
- * Static pointer to the string (don't free()), or %NULL if
+ * @a return
+ * Static pointer to the string (don't free()), or @c NULL if
  * this code is undefined.
- **/
+ */
 char *
 vbi_rating_string(vbi_rating_auth auth, int id)
 {
@@ -807,17 +806,16 @@ vbi_rating_string(vbi_rating_auth auth, int id)
 }
 
 /**
- * vbi_prog_type_str_by_id:
- * @classf: From #vbi_program_info.type_classf.
- * @id: From #vbi_program_info.type_id.
+ * @param classf From vbi_program_info.type_classf.
+ * @param id From vbi_program_info.type_id.
  * 
- * Translate a #vbi_program_info program type code into a
+ * Translate a vbi_program_info program type code into a
  * Latin-1 string, currently English only.
  * 
- * Return value: 
- * Static pointer to the string (don't free()), or %NULL if
+ * @return 
+ * Static pointer to the string (don't free()), or @c NULL if
  * this code is undefined.
- **/
+ */
 char *
 vbi_prog_type_string(vbi_prog_classf classf, int id)
 {

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: search.c,v 1.5 2002/05/23 03:59:46 mschimek Exp $ */
+/* $Id: search.c,v 1.6 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -37,6 +37,12 @@
 #include "search.h"
 #include "ure.h"
 #include "vbi.h"
+
+/**
+ * @addtogroup Search
+ * @ingroup Cache
+ * @brief Search the Teletext page cache.
+ */
 
 #if defined(HAVE_GLIBC21) || defined(HAVE_LIBUNICODE)
 
@@ -160,19 +166,19 @@ search_page_fwd(void *p, vt_page *vtp, vbi_bool wrapped)
 {
 	vbi_search *s = p;
 	vbi_char *acp;
-	int row, this, start, stop;
+	int row, _this, start, stop;
 	ucs2_t *hp, *first;
 	unsigned long ms, me;
 	int flags, i, j;
 
-	this  = (vtp->pgno << 16) + vtp->subno;
+	_this = (vtp->pgno << 16) + vtp->subno;
 	start = (s->start_pgno << 16) + s->start_subno;
 	stop  = (s->stop_pgno[0] << 16) + s->stop_subno[0];
 
 	if (start >= stop) {
-		if (wrapped && this >= stop)
+		if (wrapped && _this >= stop)
 			return -1; /* all done, abort */
-	} else if (this < start || this >= stop)
+	} else if (_this < start || _this >= stop)
 		return -1; /* all done, abort */
 
 	if (vtp->function != PAGE_FUNCTION_LOP)
@@ -183,7 +189,7 @@ search_page_fwd(void *p, vt_page *vtp, vbi_bool wrapped)
 
 	if (s->progress)
 		if (!s->progress(&s->pg)) {
-			if (this != start) {
+			if (_this != start) {
 				s->start_pgno = vtp->pgno;
 				s->start_subno = vtp->subno;
 				s->row[0] = FIRST_ROW;
@@ -198,7 +204,7 @@ search_page_fwd(void *p, vt_page *vtp, vbi_bool wrapped)
 
 	hp = s->haystack;
 	first = hp;
-	row = (this == start) ? s->row[0] : -1;
+	row = (_this == start) ? s->row[0] : -1;
 	flags = 0;
 
 	if (row > LAST_ROW)
@@ -362,11 +368,10 @@ fprintf(stderr, "exec: %x/%x; %d, %d; '%c%c%c...'\n",
 }
 
 /**
- * vbi_search_delete:
- * @search: #vbi_search context.
+ * @param search vbi_search context.
  * 
  * Delete the search context created by vbi_search_new().
- **/
+ */
 void
 vbi_search_delete(vbi_search *search)
 {
@@ -398,57 +403,59 @@ ucs2_strlen(const void *string)
 }
 
 /**
- * vbi_search_new:
- * @vbi: Initialized vbi decoding context.
- * @pgno: 
- * @subno: Page and subpage number of the first (forward) or
- *   last (backward) page to visit. Optional #VBI_ANY_SUBNO. 
- * @pattern: The Unicode (UCS-2, <emphasis>not</> UTF-16) search
+ * @param vbi Initialized vbi decoding context.
+ * @param pgno 
+ * @param subno Page and subpage number of the first (forward) or
+ *   last (backward) page to visit. Optional @c VBI_ANY_SUBNO. 
+ * @param pattern The Unicode (UCS-2, <em>not</em> UTF-16) search
  *   pattern, a 0-terminated string.
- * @casefold: Boolean, search case insensitive.
- * @regexp: Boolean, the search pattern is a regular expression.
- * @progress: A function called for each page scanned, can be
- *   %NULL. Shall return %FALSE to abort the search. @pg is valid
- *   for display (e. g. pg->pgno), do <emphasis>not</> call
+ * @param casefold Boolean, search case insensitive.
+ * @param regexp Boolean, the search pattern is a regular expression.
+ * @param progress A function called for each page scanned, can be
+ *   \c NULL. Shall return @c FALSE to abort the search. @a pg is valid
+ *   for display (e. g. @a pg->pgno), do <em>not</em> call
  *   vbi_unref_page() or modify this page.
  * 
- * Allocate a #vbi_search context and prepare for searching
+ * Allocate a vbi_search context and prepare for searching
  * the Teletext page cache. The context must be freed with
  * vbi_search_delete().
  * 
  * Regular expression searching supports the standard set
  * of operators and constants, with these extensions:
- * <informaltable frame=none><tgroup cols=2><tbody>
- * <row><entry>\x....</><entry>hexadecimal number of up to 4 digits</></row>
- * <row><entry>\X....</><entry>hexadecimal number of up to 4 digits</></row>
- * <row><entry>\u....</><entry>hexadecimal number of up to 4 digits</></row>
- * <row><entry>\U....</><entry>hexadecimal number of up to 4 digits</></row>
- * <row><entry>:title:</><entry>Unicode specific character class</></row>
- * <row><entry>:gfx:</><entry>Teletext G1 or G3 graphics</></row>
- * <row><entry>:drcs:</><entry>Teletext DRCS</></row>
- * <row><entry>\pN1,N2,...,Nn</><entry>Character properties class</></row>
- * <row><entry>\PN1,N2,...,Nn</><entry>Negated character properties class</></row>
- * </tbody></tgroup></informaltable>
- * <informaltable frame=none><tgroup cols=2><thead>
- * <row><entry>N</><entry>Property</></row></thead><tbody>
- * <row><entry>1</><entry>alphanumeric</></row>
- * <row><entry>2</><entry>alpha</></row>
- * <row><entry>3</><entry>control</></row>
- * <row><entry>4</><entry>digit</></row>
- * <row><entry>5</><entry>graphical</></row>
- * <row><entry>6</><entry>lowercase</></row>
- * <row><entry>7</><entry>printable</></row>
- * <row><entry>8</><entry>punctuation</></row>
- * <row><entry>9</><entry>space</></row>
- * <row><entry>10</><entry>uppercase</></row>
- * <row><entry>11</><entry>hex digit</></row>
- * <row><entry>12</><entry>title</></row>
- * <row><entry>13</><entry>defined</></row>
- * <row><entry>14</><entry>wide</></row>
- * <row><entry>15</><entry>nonspacing</></row>
- * <row><entry>16</><entry>Teletext G1 or G3 graphics</></row>
- * <row><entry>17</><entry>Teletext DRCS</></row>
- * </tbody></tgroup></informaltable>
+ *
+ * <table>
+ * <tr><td>\x....</td><td>hexadecimal number of up to 4 digits</td></tr>
+ * <tr><td>\X....</td><td>hexadecimal number of up to 4 digits</td></tr>
+ * <tr><td>\u....</td><td>hexadecimal number of up to 4 digits</td></tr>
+ * <tr><td>\U....</td><td>hexadecimal number of up to 4 digits</td></tr>
+ * <tr><td>:title:</td><td>Unicode specific character class</td></tr>
+ * <tr><td>:gfx:</td><td>Teletext G1 or G3 graphics</td></tr>
+ * <tr><td>:drcs:</td><td>Teletext DRCS</td></tr>
+ * <tr><td>\pN1,N2,...,Nn</td><td>Character properties class</td></tr>
+ * <tr><td>\PN1,N2,...,Nn</td><td>Negated character properties class</td></tr>
+ * </table>
+ *
+ * <table>
+ * <tr><td><b>N</b></td><td><b>Property</b></td></tr>
+ * <tr><td>1</td><td>alphanumeric</td></tr>
+ * <tr><td>2</td><td>alpha</td></tr>
+ * <tr><td>3</td><td>control</td></tr>
+ * <tr><td>4</td><td>digit</td></tr>
+ * <tr><td>5</td><td>graphical</td></tr>
+ * <tr><td>6</td><td>lowercase</td></tr>
+ * <tr><td>7</td><td>printable</td></tr>
+ * <tr><td>8</td><td>punctuation</td></tr>
+ * <tr><td>9</td><td>space</td></tr>
+ * <tr><td>10</td><td>uppercase</td></tr>
+ * <tr><td>11</td><td>hex digit</td></tr>
+ * <tr><td>12</td><td>title</td></tr>
+ * <tr><td>13</td><td>defined</td></tr>
+ * <tr><td>14</td><td>wide</td></tr>
+ * <tr><td>15</td><td>nonspacing</td></tr>
+ * <tr><td>16</td><td>Teletext G1 or G3 graphics</td></tr>
+ * <tr><td>17</td><td>Teletext DRCS</td></tr>
+ * </table>
+ *
  * Character classes can contain literals, constants, and character
  * property classes. Example: [abc\U10A\p1,3,4]. Note double height
  * and size characters will match twice, on the upper and lower row,
@@ -456,9 +463,16 @@ ucs2_strlen(const void *string)
  * line width) so one can find combinations of normal and enlarged
  * characters.
  *
- * Return value:
- * A #vbi_search context pointer or %NULL if some problem occured. 
- **/
+ * @bug
+ * In a multithreaded application the data service decoder may receive
+ * and cache new pages during a search session. When these page numbers
+ * have been visited already the pages are not searched. At a channel
+ * switch (and in future at any time) pages can be removed from cache.
+ * All this has yet to be addressed.
+ *
+ * @return
+ * A vbi_search context or @c NULL on error.
+ */
 vbi_search *
 vbi_search_new(vbi_decoder *vbi,
 	       vbi_pgno pgno, vbi_subno subno,
@@ -530,37 +544,19 @@ abort:
 }
 
 /**
- * vbi_search_next:
- * @search: Initialized search context.
- * @pg: Place to store the formatted (as with vbi_fetch_vt_page())
- *   Teletext page containing the found pattern. Do <emphasis>not</>
- *   call vbi_unref_page() for this page, libzvbi take care. Also
- *   the page must not be modified.
- * @dir: Search direction +1 forward or -1 backward.
+ * @param search Initialized search context.
+ * @param pg Place to store the formatted (as with vbi_fetch_vt_page())
+ *   Teletext page containing the found pattern. Do <em>not</em>
+ *   call vbi_unref_page() for this page. Also the page must not
+ *   be modified. See vbi_search_status for semantics.
+ * @param dir Search direction +1 forward or -1 backward.
  *
  * Find the next occurence of the search pattern.
  *
- * Return value:
- * #vbi_search_status.
- * <informaltable frame=none><tgroup cols=2><thead>
- * <row><entry>Value</><entry>Meaning</></row></thead><tbody>
- * <row><entry></><entry></></row>
- * <row><entry>@VBI_SEARCH_SUCCESS</><entry>Pattern found.
- *   *@pg points to the page ready for display with the pattern
- *   highlighted, pg->pgno etc.</></row>
- * <row><entry>@VBI_SEARCH_NOT_FOUND</><entry>Pattern not found,
- *   *@pg is invalid. Another vbi_next_search() will restart
- *   from the original starting point.</></row>
- * <row><entry>@VBI_SEARCH_CANCELED</><entry>The search has been
- *   canceled by the progress function. *@pg points to the current
- *   page as in success case, except for the highlighting. Another
- *   vbi_next_search() continues from this page.</></row>
- * <row><entry>@VBI_SEARCH_CACHE_EMPTY</><entry>No pages in the
- *   cache, *@pg is invalid.</></row>
- * <row><entry>@VBI_SEARCH_ERROR</><entry>Some error occured,
- *   condition unclear. Call vbi_search_delete().</></row>
- * </tbody></tgroup></informaltable>
- **/
+ * @return
+ * vbi_search_status.
+ */
+/* XXX fix return type */
 int
 vbi_search_next(vbi_search *search, vbi_page **pg, int dir)
 {

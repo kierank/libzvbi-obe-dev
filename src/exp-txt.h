@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.h,v 1.2 2002/04/16 05:49:57 mschimek Exp $ */
+/* $Id: exp-txt.h,v 1.3 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifndef EXP_TXT_H
 #define EXP_TXT_H
@@ -30,35 +30,38 @@
 
 /* Public */
 
+/**
+ * @addtogroup Render
+ * @{
+ */
 extern int		vbi_print_page_region(vbi_page *pg, char *buf, int size,
 					      const char *format, vbi_bool table, vbi_bool ltr,
 					      int column, int row, int width, int height);
 
 /**
- * vbi_print_page:
- * @pg: Source page.
- * @buf: Memory location to hold the ouput.
- * @size: Size of the buffer in bytes. The function fails
- *   before the data exceeds the buffer capacity.
- * @format: Character set name for iconv() conversion,
+ * @param pg Source page.
+ * @param buf Memory location to hold the output.
+ * @param size Size of the buffer in bytes. The function fails
+ *   when the data exceeds the buffer capacity.
+ * @param format Character set name for iconv() conversion,
  *   for example "ISO-8859-1".
- * @table: When FALSE, runs of spaces at the start and
+ * @param table When @c FALSE, runs of spaces at the start and
  *   end of rows will be collapsed into single spaces.
- * @ltr: Currently ignored, please set to TRUE.
+ * @param ltr Currently ignored, please set to @c TRUE.
  * 
- * Print a Teletext or Closed Caption #vbi_page, rows separated
+ * Print a Teletext or Closed Caption vbi_page, rows separated
  * by linefeeds "\n", in the desired format. All character attributes
  * and colors will be lost. Graphics characters, DRCS and all
  * characters not representable in the target format will be replaced
  * by spaces.
  * 
- * Return value:
- * Number of bytes written into @buf, a value of zero when
- * some error occurred. In this case @buf may contain incomplete
+ * @return
+ * Number of bytes written into @a buf, a value of zero when
+ * some error occurred. In this case @a buf may contain incomplete
  * data. Note this function does not append a terminating null
  * character.
  **/
-static inline int
+static_inline int
 vbi_print_page(vbi_page *pg, char *buf, int size,
 	       const char *format, vbi_bool table, vbi_bool ltr)
 {
@@ -66,13 +69,9 @@ vbi_print_page(vbi_page *pg, char *buf, int size,
 				     format, table, ltr,
 				     0, 0, pg->columns, pg->rows);
 }
+/** @} */
 
 /* Private */
 
 #endif /* EXP_TXT_H */
-
-
-
-
-
 

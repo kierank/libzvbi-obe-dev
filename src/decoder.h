@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.h,v 1.1 2002/01/12 16:18:36 mschimek Exp $ */
+/* $Id: decoder.h,v 1.2 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifndef DECODER_H
 #define DECODER_H
@@ -36,126 +36,129 @@
 /* Bit slicer */
 
 /**
- * vbi_pixfmt:
- * 
- * Raw vbi data sample format, this enumeration corresponds to
- * librte rte_pixfmt.
- * 
- * <table frame=all><title>Sample formats</title><tgroup cols=5 align=center>
- * <colspec colname=c1><colspec colname=c2><colspec colname=c3><colspec colname=c4>
- * <colspec colname=c5>
- * <spanspec spanname=desc1 namest=c1 nameend=c5 align=left>
- * <spanspec spanname=desc2 namest=c1 nameend=c5 align=left>
- * <spanspec spanname=desc3 namest=c1 nameend=c5 align=left>
- * <spanspec spanname=desc4 namest=c1 nameend=c5 align=left>
- * <spanspec spanname=desc5 namest=c1 nameend=c5 align=left>
- * <spanspec spanname=desc6 namest=c1 nameend=c5 align=left>
- * <thead>
- * <row><entry>Symbol</><entry>Byte&nbsp;0</><entry>Byte&nbsp;1</>
- * <entry>Byte&nbsp;2</><entry>Byte&nbsp;3</></row>
- * </thead><tbody>
- * <row><entry spanname=desc1>Planar YUV 4:2:0 data. Only the luminance
- *   bytes are evaluated. This is the format in which raw vbi
- *   data is usually captured by hardware.</></row>
- * <row><entry>@VBI_PIXFMT_YUV420</><entry>Y0</><entry>Y1</><entry>Y2</><entry>Y3</></row>
- * <row><entry spanname=desc1>Packed YUV 4:2:2 data. Only the luminance bytes are evaluated.</></row>
- * <row><entry>@VBI_PIXFMT_YUYV</><entry>Y0</><entry>Cb</><entry>Y1</><entry>Cr</></row>
- * <row><entry>@VBI_PIXFMT_YVYU</><entry>Y0</><entry>Cr</><entry>Y1</><entry>Cb</></row>
- * <row><entry>@VBI_PIXFMT_UYVY</><entry>Cb</><entry>Y0</><entry>Cr</><entry>Y1</></row>
- * <row><entry>@VBI_PIXFMT_VYUY</><entry>Cr</><entry>Y0</><entry>Cb</><entry>Y1</></row>
- * <row><entry spanname=desc1>Packed 32 bit RGB data. Only the g bits are evaluated.</></row>
- * <row><entry>@VBI_PIXFMT_RGBA32_LE @VBI_PIXFMT_ARGB32_BE</>
- * <entry>r7&nbsp;...&nbsp;r0</><entry>g7&nbsp;...&nbsp;g0</>
- * <entry>b7&nbsp;...&nbsp;b0</><entry>a7&nbsp;...&nbsp;a0</></row>
- * <row><entry>@VBI_PIXFMT_BGRA32_LE @VBI_PIXFMT_ARGB32_BE</>
- * <entry>b7&nbsp;...&nbsp;b0</><entry>g7&nbsp;...&nbsp;g0</>
- * <entry>r7&nbsp;...&nbsp;r0</><entry>a7&nbsp;...&nbsp;a0</></row>
- * <row><entry>@VBI_PIXFMT_ARGB32_LE @VBI_PIXFMT_BGRA32_BE</>
- * <entry>a7&nbsp;...&nbsp;a0</><entry>r7&nbsp;...&nbsp;r0</>
- * <entry>g7&nbsp;...&nbsp;g0</><entry>b7&nbsp;...&nbsp;b0</></row>
- * <row><entry>@VBI_PIXFMT_ABGR32_LE @VBI_PIXFMT_RGBA32_BE</>
- * <entry>a7&nbsp;...&nbsp;a0</><entry>b7&nbsp;...&nbsp;b0</>
- * <entry>g7&nbsp;...&nbsp;g0</><entry>r7&nbsp;...&nbsp;r0</></row>
- * <row><entry spanname=desc4>Packed 24 bit RGB data. Only the g bits are evaluated.</></row>
- * <row><entry>@VBI_PIXFMT_RGBA24</>
- * <entry>r7&nbsp;...&nbsp;r0</><entry>g7&nbsp;...&nbsp;g0</>
- * <entry>b7&nbsp;...&nbsp;b0</><entry></></row>
- * <row><entry>@VBI_PIXFMT_BGRA24</>
- * <entry>b7&nbsp;...&nbsp;b0</><entry>g7&nbsp;...&nbsp;g0</>
- * <entry>r7&nbsp;...&nbsp;r0</><entry></></row>
- * <row><entry spanname=desc5>Packed 16 bit RGB data. Only the g bits are evaluated.</></row>
- * <row><entry>@VBI_PIXFMT_RGB16_LE</>
- * <entry>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</>
- * <entry>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g5&nbsp;g4&nbsp;g3</>
- * <entry></><entry></></row><row><entry>@VBI_PIXFMT_BGR16_LE</>
- * <entry>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</>
- * <entry>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g5&nbsp;g4&nbsp;g3</>
- * <entry></><entry></></row><row><entry>@VBI_PIXFMT_RGB16_BE</>
- * <entry>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g5&nbsp;g4&nbsp;g3</>
- * <entry>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</>
- * <entry></><entry></></row><row><entry>@VBI_PIXFMT_BGR16_BE</>
- * <entry>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g5&nbsp;g4&nbsp;g3</>
- * <entry>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</>
- * <entry></><entry></></row>
- * <row><entry spanname=desc6>Packed 15 bit RGB data. Only the g bits are evaluated.</></row>
- * <row><entry>@VBI_PIXFMT_RGBA15_LE</>
- * <entry>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</>
- * <entry>a0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3</>
- * <entry></><entry></></row><row><entry>@VBI_PIXFMT_BGRA15_LE</>
- * <entry>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</>
- * <entry>a0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3</>
- * <entry></><entry></></row><row><entry>@VBI_PIXFMT_ARGB15_LE</>
- * <entry>g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;a0</>
- * <entry>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3&nbsp;g2</>
- * <entry></><entry></></row><row><entry>@VBI_PIXFMT_ABGR15_LE</>
- * <entry>g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;a0</>
- * <entry>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3&nbsp;g2</>
- * <entry></><entry></></row><row><entry>@VBI_PIXFMT_RGBA15_BE</>
- * <entry>a0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3</>
- * <entry>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</>
- * <entry></><entry></></row><row><entry>@VBI_PIXFMT_BGRA15_BE</>
- * <entry>a0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3</>
- * <entry>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</>
- * <entry></><entry></></row><row><entry>@VBI_PIXFMT_ARGB15_BE</>
- * <entry>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3&nbsp;g2</>
- * <entry>g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;a0</>
- * <entry></><entry></></row><row><entry>@VBI_PIXFMT_ABGR15_BE</>
- * <entry>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3&nbsp;g2</>
- * <entry>g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;a0</>
- * <entry></><entry></></row>
- * </tbody></tgroup></table>
- **/
-/* Attn: keep this in sync with rte, don't change order */
+ * @ingroup Rawdec
+ * @brief Image format used as source to vbi_bit_slice() and vbi_raw_decode().
+ *
+ * @htmlonly
+ * <table border=1>
+ * <tr><th>Symbol</th><th>Byte&nbsp;0</th><th>Byte&nbsp;1</th><th>Byte&nbsp;2</th><th>Byte&nbsp;3</th></tr>
+ * <tr><td colspan=5>Planar YUV 4:2:0 data.</td></tr>
+ * <tr><td>VBI_PIXFMT_YUV420</td><td colspan=4>
+ *  <table>
+ *   <tr><th>Y plane</th><th>U plane</th><th>V plane</th></tr>
+ *   <tr><td><table border=1>
+ *    <tr><td>Y00</td><td>Y01</td><td>Y02</td><td>Y03</td></tr>
+ *    <tr><td>Y10</td><td>Y11</td><td>Y12</td><td>Y13</td></tr>
+ *    <tr><td>Y20</td><td>Y21</td><td>Y22</td><td>Y23</td></tr>
+ *    <tr><td>Y30</td><td>Y31</td><td>Y32</td><td>Y33</td></tr>
+ *   </table></td>
+ *   <td><table border=1>
+ *    <tr><td>Cb00</td><td>Cb01</td></tr>
+ *    <tr><td>Cb10</td><td>Cb11</td></tr>
+ *   </table></td>
+ *   <td><table border=1>
+ *    <tr><td>Cr00</td><td>Cr01</td></tr>
+ *    <tr><td>Cr10</td><td>Cr11</td></tr>
+ *   </table></td>
+ *  </tr></table></td>
+ * </tr>
+ * <tr><td colspan=5>Packed YUV 4:2:2 data.</td></tr>
+ * <tr><td>VBI_PIXFMT_YUYV</td><td>Y0</td><td>Cb</td><td>Y1</td><td>Cr</td></tr>
+ * <tr><td>VBI_PIXFMT_YVYU</td><td>Y0</td><td>Cr</td><td>Y1</td><td>Cb</td></tr>
+ * <tr><td>VBI_PIXFMT_UYVY</td><td>Cb</td><td>Y0</td><td>Cr</td><td>Y1</td></tr>
+ * <tr><td>VBI_PIXFMT_VYUY</td><td>Cr</td><td>Y0</td><td>Cb</td><td>Y1</td></tr>
+ * <tr><td colspan=5>Packed 32 bit RGB data.</td></tr>
+ * <tr><td>VBI_PIXFMT_RGBA32_LE VBI_PIXFMT_ARGB32_BE</td>
+ * <td>r7&nbsp;...&nbsp;r0</td><td>g7&nbsp;...&nbsp;g0</td>
+ * <td>b7&nbsp;...&nbsp;b0</td><td>a7&nbsp;...&nbsp;a0</td></tr>
+ * <tr><td>VBI_PIXFMT_BGRA32_LE VBI_PIXFMT_ARGB32_BE</td>
+ * <td>b7&nbsp;...&nbsp;b0</td><td>g7&nbsp;...&nbsp;g0</td>
+ * <td>r7&nbsp;...&nbsp;r0</td><td>a7&nbsp;...&nbsp;a0</td></tr>
+ * <tr><td>VBI_PIXFMT_ARGB32_LE VBI_PIXFMT_BGRA32_BE</td>
+ * <td>a7&nbsp;...&nbsp;a0</td><td>r7&nbsp;...&nbsp;r0</td>
+ * <td>g7&nbsp;...&nbsp;g0</td><td>b7&nbsp;...&nbsp;b0</td></tr>
+ * <tr><td>VBI_PIXFMT_ABGR32_LE VBI_PIXFMT_RGBA32_BE</td>
+ * <td>a7&nbsp;...&nbsp;a0</td><td>b7&nbsp;...&nbsp;b0</td>
+ * <td>g7&nbsp;...&nbsp;g0</td><td>r7&nbsp;...&nbsp;r0</td></tr>
+ * <tr><td colspan=5>Packed 24 bit RGB data.</td></tr>
+ * <tr><td>VBI_PIXFMT_RGBA24</td>
+ * <td>r7&nbsp;...&nbsp;r0</td><td>g7&nbsp;...&nbsp;g0</td>
+ * <td>b7&nbsp;...&nbsp;b0</td><td>&nbsp;</td></tr>
+ * <tr><td>VBI_PIXFMT_BGRA24</td>
+ * <td>b7&nbsp;...&nbsp;b0</td><td>g7&nbsp;...&nbsp;g0</td>
+ * <td>r7&nbsp;...&nbsp;r0</td><td>&nbsp;</td></tr>
+ * <tr><td colspan=5>Packed 16 bit RGB data.</td></tr>
+ * <tr><td>VBI_PIXFMT_RGB16_LE</td>
+ * <td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
+ * <td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g5&nbsp;g4&nbsp;g3</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGR16_LE</td>
+ * <td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
+ * <td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g5&nbsp;g4&nbsp;g3</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_RGB16_BE</td>
+ * <td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g5&nbsp;g4&nbsp;g3</td>
+ * <td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGR16_BE</td>
+ * <td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g5&nbsp;g4&nbsp;g3</td>
+ * <td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr>
+ * <tr><td colspan=5>Packed 15 bit RGB data.</td></tr>
+ * <tr><td>VBI_PIXFMT_RGBA15_LE</td>
+ * <td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
+ * <td>a0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGRA15_LE</td>
+ * <td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
+ * <td>a0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ARGB15_LE</td>
+ * <td>g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;a0</td>
+ * <td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3&nbsp;g2</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ABGR15_LE</td>
+ * <td>g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;a0</td>
+ * <td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3&nbsp;g2</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_RGBA15_BE</td>
+ * <td>a0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3</td>
+ * <td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGRA15_BE</td>
+ * <td>a0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3</td>
+ * <td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ARGB15_BE</td>
+ * <td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3&nbsp;g2</td>
+ * <td>g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;a0</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ABGR15_BE</td>
+ * <td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3&nbsp;g2</td>
+ * <td>g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;a0</td>
+ * <td>&nbsp;</td><td>&nbsp;</td></tr>
+ * </table>
+ */
+/* Attn: keep this in sync with vbi, don't change order */
 typedef enum {
-  VBI_PIXFMT_YUV420 = 1,
-  VBI_PIXFMT_YUYV,
-  VBI_PIXFMT_YVYU,
-  VBI_PIXFMT_UYVY,
-  VBI_PIXFMT_VYUY,
-  VBI_PIXFMT_RGBA32_LE = 32,
-  VBI_PIXFMT_RGBA32_BE,
-  VBI_PIXFMT_BGRA32_LE,
-  VBI_PIXFMT_BGRA32_BE,
-  VBI_PIXFMT_RGB24,
-  VBI_PIXFMT_BGR24,
-  VBI_PIXFMT_RGB16_LE,
-  VBI_PIXFMT_RGB16_BE,
-  VBI_PIXFMT_BGR16_LE,
-  VBI_PIXFMT_BGR16_BE,
-  VBI_PIXFMT_RGBA15_LE,
-  VBI_PIXFMT_RGBA15_BE,
-  VBI_PIXFMT_BGRA15_LE,
-  VBI_PIXFMT_BGRA15_BE,
-  VBI_PIXFMT_ARGB15_LE,
-  VBI_PIXFMT_ARGB15_BE,
-  VBI_PIXFMT_ABGR15_LE,
-  VBI_PIXFMT_ABGR15_BE
+	VBI_PIXFMT_YUV420 = 1,
+	VBI_PIXFMT_YUYV,
+	VBI_PIXFMT_YVYU,
+	VBI_PIXFMT_UYVY,
+	VBI_PIXFMT_VYUY,
+	VBI_PIXFMT_RGBA32_LE = 32,
+	VBI_PIXFMT_RGBA32_BE,
+	VBI_PIXFMT_BGRA32_LE,
+	VBI_PIXFMT_BGRA32_BE,
+	VBI_PIXFMT_ABGR32_BE = 32, /* synonyms */
+	VBI_PIXFMT_ABGR32_LE,
+	VBI_PIXFMT_ARGB32_BE,
+	VBI_PIXFMT_ARGB32_LE,
+	VBI_PIXFMT_RGB24,
+	VBI_PIXFMT_BGR24,
+	VBI_PIXFMT_RGB16_LE,
+	VBI_PIXFMT_RGB16_BE,
+	VBI_PIXFMT_BGR16_LE,
+	VBI_PIXFMT_BGR16_BE,
+	VBI_PIXFMT_RGBA15_LE,
+	VBI_PIXFMT_RGBA15_BE,
+	VBI_PIXFMT_BGRA15_LE,
+	VBI_PIXFMT_BGRA15_BE,
+	VBI_PIXFMT_ARGB15_LE,
+	VBI_PIXFMT_ARGB15_BE,
+	VBI_PIXFMT_ABGR15_LE,
+	VBI_PIXFMT_ABGR15_BE
 } vbi_pixfmt;
-
-#define VBI_PIXFMT_ABGR32_BE VBI_PIXFMT_RGBA32_LE
-#define VBI_PIXFMT_ARGB32_BE VBI_PIXFMT_BGRA32_LE
-#define VBI_PIXFMT_ABGR32_LE VBI_PIXFMT_RGBA32_BE
-#define VBI_PIXFMT_ARGB32_LE VBI_PIXFMT_BGRA32_BE
 
 /* Private */
 
@@ -169,38 +172,42 @@ typedef enum {
 /* Public */
 
 /**
- * vbi_modulation:
- * @VBI_MODULATION_NRZ_LSB:
- * @VBI_MODULATION_NRZ_MSB:
- *   The data is 'non-return to zero' coded, logical '1' bits
- *   are described by high sample values, logical '0' bits by
- *   low values. The data is either last or most significant
- *   bit first transmitted.
- * @VBI_MODULATION_BIPHASE_LSB:
- * @VBI_MODULATION_BIPHASE_MSB:
- *   The data is 'bi-phase' coded. Each data bit is described
- *   by two complementary signalling elements, a logical '1'
- *   by a sequence of '10' elements, a logical '0' by a '01'
- *   sequence. The data is either last or most significant
- *   bit first transmitted.
- *
- * Modulation of the vbi data.
- **/
+ * @ingroup Rawdec
+ * @brief Modulation used for VBI data transmission.
+ */
 typedef enum {
+	/**
+	 * The data is 'non-return to zero' coded, logical '1' bits
+	 * are described by high sample values, logical '0' bits by
+	 * low values. The data is last significant bit first transmitted.
+	 */
 	VBI_MODULATION_NRZ_LSB,
+	/**
+	 * 'Non-return to zero' coded, most significant bit first
+	 * transmitted.
+	 */
 	VBI_MODULATION_NRZ_MSB,
+	/**
+	 * The data is 'bi-phase' coded. Each data bit is described
+	 * by two complementary signalling elements, a logical '1'
+	 * by a sequence of '10' elements, a logical '0' by a '01'
+	 * sequence. The data is last significant bit first transmitted.
+	 */
 	VBI_MODULATION_BIPHASE_LSB,
+	/**
+	 * 'Bi-phase' coded, most significant bit first transmitted.
+	 */
 	VBI_MODULATION_BIPHASE_MSB
 } vbi_modulation;
 
 /**
- * vbi_bit_slicer:
+ * @ingroup Rawdec
+ * @brief Bit slicer context.
  *
- * Bit slicer context. The contents of the vbi_bit_slicer structure
- * are private, use vbi_bit_slicer_init() to initialize.
- **/
+ * The contents of this structure are private,
+ * use vbi_bit_slicer_init() to initialize.
+ */
 typedef struct vbi_bit_slicer {
-	/*< private >*/
 	vbi_bool	(* func)(struct vbi_bit_slicer *slicer,
 				 uint8_t *raw, uint8_t *buf);
 	unsigned int	cri;
@@ -218,105 +225,113 @@ typedef struct vbi_bit_slicer {
 	int		skip;
 } vbi_bit_slicer;
 
+/**
+ * @addtogroup Rawdec
+ * @{
+ */
 extern void		vbi_bit_slicer_init(vbi_bit_slicer *slicer,
 					    int raw_samples, int sampling_rate,
 					    int cri_rate, int bit_rate,
 					    unsigned int cri_frc, unsigned int cri_mask,
 					    int cri_bits, int frc_bits, int payload,
 					    vbi_modulation modulation, vbi_pixfmt fmt);
-
 /**
- * vbi_bit_slice:
- * @slicer: Pointer to initialized bit slicer object.
- * @raw: Input data. At least the number of pixels or samples
- *  given as 'raw_samples' to vbi_bit_slicer_init().
- * @buf: Output data. This must be large enough to store
- *   the number of bits given as 'payload' to vbi_bit_slicer_init().
+ * @param slicer Pointer to initialized vbi_bit_slicer object.
+ * @param raw Input data. At least the number of pixels or samples
+ *  given as @a raw_samples to vbi_bit_slicer_init().
+ * @param buf Output data. The buffer must be large enough to store
+ *   the number of bits given as @a payload to vbi_bit_slicer_init().
  * 
  * Decode one scan line of raw vbi data. Note the bit slicer tries
  * to adapt to the average signal amplitude, you should avoid
- * using the same #vbi_bit_slicer object for data from different
+ * using the same vbi_bit_slicer object for data from different
  * devices.
  *
- * <important>This is one of the few not reentrant libzvbi functions.
- * When you want to share one vbi_bit_slicer object between
+ * @note As a matter of speed this function does not lock the
+ * @a slicer. When you want to share a vbi_bit_slicer object between
  * multiple threads you must implement your own locking mechanism.
- * </important>
  * 
- * Return value:
- * FALSE if the raw data does not contain the expected
- * information, in particular the CRI/FRC has not been found.
- * This may also be the result of a too weak or noisy signal.
- **/
-static inline vbi_bool
+ * @return
+ * @c FALSE if the raw data does not contain the expected
+ * information, i. e. the CRI/FRC has not been found. This may also
+ * result from a too weak or noisy signal. Error correction must be
+ * implemented at a higher layer.
+ */
+static_inline vbi_bool
 vbi_bit_slice(vbi_bit_slicer *slicer, uint8_t *raw, uint8_t *buf)
 {
 	return slicer->func(slicer, raw, buf);
 }
-
-extern char *			vbi_sliced_name(unsigned int service);
-
-/* Raw vbi decoder */
+/** @} */
 
 /**
- * vbi_raw_decoder:
+ * @ingroup Rawdec
+ * @brief Raw vbi decoder context.
  *
- * Raw vbi decoder object. Only the sampling parameters are public, see
- * vbi_raw_decoder_parameters() and vbi_raw_decoder_add_services() for
- * usage instructions.
- *
- * @scanning: Either 525 (NTSC) or 625 (PAL, SECAM), describing the
- *   scan line system all line numbers refer to.
- *
- * @sampling_format: See #vbi_pixfmt.
- *
- * @sampling_rate: Sampling rate in Hz, the number of samples or pixels
- *   captured per second.
- *
- * @bytes_per_line: Number of samples or pixels captured per scan line,
- *   in bytes. This determines the raw vbi image width and has to be
- *   large enough to cover all data transmitted in the line (with
- *   headroom).
- *
- * @offset: The distance from 0H (leading edge hsync, half amplitude point)
- *   to the first sample/pixel captured, in samples/pixels. This has
- *   to be small enough to pick up the data header.
- *
- * @start: First scan line to be captured, first and second field
- *   respectively, according to the ITU-R line numbering scheme
- *   (see #vbi_sliced). Set to zero if the exact line number isn't
- *   known.
- *
- * @count: Number of scan lines captured, first and second
- *   field respectively. This can be zero if only data from one
- *   field is required. The sum @count[0] + @count[1] determines the
- *   raw vbi image height.
- *
- * @interlaced: In the raw vbi image, normally all lines of the second
- *   field are supposed to follow all lines of the first field. When
- *   this flag is set, the scan lines of first and second field
- *   will be interleaved in memory. This implies @count[0] and @count[1]
- *   are equal.
- *
- * @synchronous: Fields must be stored in temporal order, i. e. as the
- *   lines have been captured. It is assumed that the first field is
- *   also stored first in memory, however if the hardware cannot reliable
- *   distinguish fields this flag shall be cleared, which disables
- *   decoding of data services depending on the field number.
- **/
+ * Only the sampling parameters are public. See
+ * vbi_raw_decoder_parameters() and vbi_raw_decoder_add_services()
+ * for usage.
+ */
 typedef struct vbi_raw_decoder {
-	/*< public >*/
-
 	/* Sampling parameters */
 
+	/**
+	 * Either 525 (NTSC) or 625 (PAL, SECAM), describing the
+	 * scan line system all line numbers refer to.
+	 */
 	int			scanning;
+	/**
+	 * Format of the raw vbi data.
+	 */
 	vbi_pixfmt		sampling_format;
+	/**
+	 * Sampling rate in Hz, the number of samples or pixels
+	 * captured per second.
+	 */
 	int			sampling_rate;		/* Hz */
+	/**
+	 * Number of samples or pixels captured per scan line,
+	 * in bytes. This determines the raw vbi image width and you
+	 * want it large enough to cover all data transmitted in the line (with
+	 * headroom).
+	 */
 	int			bytes_per_line;
+	/**
+	 * The distance from 0H (leading edge hsync, half amplitude point)
+	 * to the first sample/pixel captured, in samples/pixels. You want
+	 * an offset small enough not to miss the start of the data
+	 * transmitted.
+	 */
 	int			offset;			/* 0H, samples */
+	/**
+	 * First scan line to be captured, first and second field
+	 * respectively, according to the ITU-R line numbering scheme
+	 * (see vbi_sliced). Set to zero if the exact line number isn't
+	 * known.
+	 */
 	int			start[2];		/* ITU-R numbering */
+	/**
+	 * Number of scan lines captured, first and second
+	 * field respectively. This can be zero if only data from one
+	 * field is required. The sum @a count[0] + @a count[1] determines the
+	 * raw vbi image height.
+	 */
 	int			count[2];		/* field lines */
+	/**
+	 * In the raw vbi image, normally all lines of the second
+	 * field are supposed to follow all lines of the first field. When
+	 * this flag is set, the scan lines of first and second field
+	 * will be interleaved in memory. This implies @a count[0] and @a count[1]
+	 * are equal.
+	 */
 	vbi_bool		interlaced;
+	/**
+	 * Fields must be stored in temporal order, i. e. as the
+	 * lines have been captured. It is assumed that the first field is
+	 * also stored first in memory, however if the hardware cannot reliable
+	 * distinguish fields this flag shall be cleared, which disables
+	 * decoding of data services depending on the field number.
+	 */
 	vbi_bool		synchronous;
 
 	/*< private >*/
@@ -334,6 +349,10 @@ typedef struct vbi_raw_decoder {
 	}			jobs[8];
 } vbi_raw_decoder;
 
+/**
+ * @addtogroup Rawdec
+ * @{
+ */
 extern void		vbi_raw_decoder_init(vbi_raw_decoder *rd);
 extern void		vbi_raw_decoder_reset(vbi_raw_decoder *rd);
 extern void		vbi_raw_decoder_destroy(vbi_raw_decoder *rd);
@@ -344,8 +363,8 @@ extern unsigned int	vbi_raw_decoder_remove_services(vbi_raw_decoder *rd,
 							unsigned int services);
 extern unsigned int	vbi_raw_decoder_parameters(vbi_raw_decoder *rd, unsigned int services,
 						   int scanning, int *max_rate);
-extern int		vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw,
-				       vbi_sliced *out);
+extern int		vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out);
+/** @} */
 
 /* Private */
 

@@ -20,7 +20,7 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $Id: ure.h,v 1.4 2002/05/23 03:59:46 mschimek Exp $ */
+/* $Id: ure.h,v 1.5 2002/07/16 00:11:36 mschimek Exp $ */
 
 #ifndef _h_ure
 #define _h_ure
@@ -82,30 +82,30 @@ typedef struct _ure_dfa_t *ure_dfa_t;
  *************************************************************************/
   
 /**
- * ure_buffer_create:
+ * @internal
  *
  * Alloc memory for the regex internal buffer, NULL on error.
  * Use ure_buffer_free to free the returned buffer.
  *
- * Return value:
+ * @return
  * ure_buffer_t.
- **/
+ */
 extern ure_buffer_t ure_buffer_create __((void));
 
 extern void ure_buffer_free __((ure_buffer_t buf));
 
 /**
- * ure_compile:
- * @re: Buffer containing the UCS-2 regexp.
- * @relen: Size in characters of the regexp.
- * @casefold: %TRUE for matching disregarding case.
- * @buf: The regexp buffer.
+ * @internal
+ * @param re Buffer containing the UCS-2 regexp.
+ * @param relen Size in characters of the regexp.
+ * @param casefold @c TRUE for matching disregarding case.
+ * @param buf The regexp buffer.
  *
  * Compile the given expression into a dfa.
  *
- * Return value:
- * The compiled DFA, %NULL on error.
- **/
+ * @return
+ * The compiled DFA, @c NULL on error.
+ */
 extern ure_dfa_t ure_compile __((ucs2_t *re, unsigned long relen,
                                  int casefold, ure_buffer_t buf));
 
@@ -114,23 +114,23 @@ extern void ure_dfa_free __((ure_dfa_t dfa));
 extern void ure_write_dfa __((ure_dfa_t dfa, FILE *out));
 
 /**
- * ure_exec:
- * @dfa: The compiled expression.
- * @flags: Or'ed
- *    URE_IGNORED_NONSPACING: Set if nonspacing chars should be ignored.
- *    URE_DOT_MATCHES_SEPARATORS: Set if dot operator matches
+ * @internal
+ * @param dfa The compiled expression.
+ * @param flags Or'ed
+ *    @c URE_IGNORED_NONSPACING: Set if nonspacing chars should be ignored.
+ *    @c URE_DOT_MATCHES_SEPARATORS: Set if dot operator matches
  *    separator characters too.
- * @text: UCS-2 text to run the compiled regexp against.
- * @textlen: Size in characters of the text.
- * @match_start: Index in text of the first matching char.
- * @match_end: Index in text of the first non-matching char after the
+ * @param text UCS-2 text to run the compiled regexp against.
+ * @param textlen Size in characters of the text.
+ * @param match_start Index in text of the first matching char.
+ * @param match_end Index in text of the first non-matching char after the
  *              matching characters.
  *
  * Run the compiled regexp search on the given text.
  *
- * Return value:
- * TRUE if the search suceeded.
- **/
+ * @return
+ * @c TRUE if the search suceeded.
+ */
 extern int ure_exec __((ure_dfa_t dfa, int flags,
                         ucs2_t *text, unsigned long textlen,
                         unsigned long *match_start, unsigned long *match_end));
