@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.1 2004/10/28 03:29:04 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.2 2004/11/04 11:21:21 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>
@@ -41,6 +41,9 @@ do {									\
 #define vbi_inline static __inline__
 #define vbi_rev8(n) vbi_bit_reverse[n]
 
+#define printable(c) \
+	((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
+
 struct wrap {
 	/* Size must be >= maximum consume + maximum lookahead. */
 	uint8_t	*		buffer;
@@ -50,7 +53,7 @@ struct wrap {
 
 	/* See below. */
 	unsigned int		skip;
-	unsigned int		consume;
+     /* unsigned int		consume; */
 	unsigned int		lookahead;
 
 	/* Unconsumed data in buffer, starting at bp[-leftover]. */
@@ -114,7 +117,7 @@ wrap_around			(struct wrap *		w,
 	}
 
 	available = w->leftover + *src_left;
-	required = w->consume + w->lookahead;
+	required = /* w->consume + */ w->lookahead;
 
 	if (required > available || available > src_size) {
 		/* Not enough data at s, or we have bytes left
@@ -154,7 +157,7 @@ wrap_around			(struct wrap *		w,
 			*dst = w->bp - w->leftover;
 			*scan_end = w->bp - w->lookahead;
 
-			w->leftover -= w->consume;
+			/* w->leftover -= w->consume; */
 		}
 	} else {
 		/* All the required bytes are in this frame and
@@ -164,7 +167,7 @@ wrap_around			(struct wrap *		w,
 		*dst = *src - w->leftover;
 		*scan_end = *src + *src_left - w->lookahead;
 
-		if (w->consume > w->leftover) {
+		/* if (w->consume > w->leftover) {
 			unsigned int advance;
 
 			advance = w->consume - w->leftover;
@@ -175,7 +178,7 @@ wrap_around			(struct wrap *		w,
 			w->leftover = 0;
 		} else {
 			w->leftover -= w->consume;
-		}
+		} */
 	}
 
 	return TRUE;
@@ -198,6 +201,9 @@ struct frame {
 	vbi_sliced *		sp;
 
 	unsigned int		last_line;
+
+	/* Number of lines extracted from current packet. */
+	unsigned int		sliced_count;
 
 	uint8_t *		rp;
 	vbi_sliced *		raw_sp;
@@ -282,8 +288,16 @@ line_address			(struct frame *		f,
 			/* EN 301 775 section 4.1: ascending line
 			   order, no line twice. */
 
+			/* When the first line number in a packet is
+			   smaller than the last line number in the
+			   previous packet the frame is complete. */
+			if (0 == f->sliced_count)
+				return NULL;
+
 			log ("Illegal line order %u >= %u\n",
 			     line, f->last_line);
+
+			return NULL;
 
 			for (s = f->sliced_begin; s < f->sp; ++s)
 				if (line <= s->line)
@@ -302,6 +316,10 @@ line_address			(struct frame *		f,
 	} else {
 		/* Unknown line. */
 
+		if (0 == f->sliced_count
+		    && f->last_line > 0)
+			return NULL;
+
 		++f->last_line;
 
 		s = f->sp++;
@@ -309,6 +327,8 @@ line_address			(struct frame *		f,
 
 		f->rp += raw;
 	}
+
+	++f->sliced_count;
 
 	return s;
 }
@@ -326,7 +346,7 @@ discard_raw			(struct frame *		f)
 	f->raw_offset = 0;
 }
 
-static vbi_bool
+static int
 demux_samples			(struct frame *		f,
 				 uint8_t *		p,
 				 unsigned int		system)
@@ -345,7 +365,7 @@ demux_samples			(struct frame *		f,
 
 		discard_raw (f);
 
-		return FALSE;
+		return 0;
 	}
 
 	if (p[2] & (1 << 7)) {
@@ -360,8 +380,12 @@ demux_samples			(struct frame *		f,
 			/* Recoverable error. */
 		}
 
-		if (!(f->raw_sp = line_address (f, p[2], system, TRUE)))
-			return FALSE;
+		if (!(f->raw_sp = line_address (f, p[2], system, TRUE))) {
+			if (0 == f->sliced_count)
+				return -1; /* is a new frame */
+			else
+				return 0; /* bad packet */
+		}
 
 		s->id = VBI_SLICED_NONE;
 	} else {
@@ -374,7 +398,7 @@ demux_samples			(struct frame *		f,
 			     line, offset);
 
 			/* Recoverable error. */
-			return TRUE;
+			return 1;
 		} else if (line != f->raw_sp->line
 			   || offset != f->raw_offset) {
 			log ("Segment(s) missing or out of order, "
@@ -386,7 +410,7 @@ demux_samples			(struct frame *		f,
 			discard_raw (f);
 
 			/* Recoverable error. */
-			return TRUE;
+			return 1;
 		}
 	}
 
@@ -402,15 +426,18 @@ demux_samples			(struct frame *		f,
 	return TRUE;
 }
 
-static vbi_bool
+static int
 demux_data_units		(struct frame *		f,
 				 const uint8_t **	src,
 				 unsigned int *		src_left)
 {
 	const uint8_t *p;
 	const uint8_t *end2;
+	int r;
 
 	assert (*src_left >= 2);
+
+	r = 0; /* bad packet */
 
 	p = *src;
 	end2 = p + *src_left
@@ -424,12 +451,6 @@ demux_data_units		(struct frame *		f,
 		unsigned int i;
 
 		data_unit_id = p[0];
-
-		if (DATA_UNIT_STUFFING == data_unit_id) {
-			++p;
-			continue;
-		}
-
 		data_unit_length = p[1];
 
 		/* EN 301 775 section 4.3.1: Data units
@@ -438,6 +459,9 @@ demux_data_units		(struct frame *		f,
 			goto failure;
 
 		switch (data_unit_id) {
+		case DATA_UNIT_STUFFING:
+			break;
+
 		case DATA_UNIT_EBU_TELETEXT_NON_SUBTITLE:
 		case DATA_UNIT_EBU_TELETEXT_SUBTITLE:
 			if (data_unit_length < 1 + 1 + 42) {
@@ -454,12 +478,19 @@ demux_data_units		(struct frame *		f,
 				break;
 
 			if (!(s = line_address (f, p[2], 1, FALSE)))
-				goto failure;
+				goto no_line;
 
 			s->id = VBI_SLICED_TELETEXT_B;
 
 			for (i = 0; i < 42; ++i)
 				s->data[i] = vbi_rev8 (p[4 + i]);
+
+			if (0) {
+				fprintf (stderr, "DU-TTX %u >", s->line);
+				for (i = 0; i < 42; ++i)
+					fputc (printable (s->data[i]), stderr);
+				fprintf (stderr, "<\n");
+			}
 
 			break;
 
@@ -468,13 +499,13 @@ demux_data_units		(struct frame *		f,
 				goto bad_length;
 
 			if (!(s = line_address (f, p[2], 1, FALSE)))
-				goto failure;
+				goto no_line;
 
 			s->id = (s->line >= 313) ?
 				VBI_SLICED_VPS : VBI_SLICED_VPS;
 
 			for (i = 0; i < 13; ++i)
-				s->data[i] = vbi_rev8 (p[3 + i]);
+				s->data[i] = p[3 + i];
 
 			break;
 
@@ -483,7 +514,7 @@ demux_data_units		(struct frame *		f,
 				goto bad_length;
 
 			if (!(s = line_address (f, p[2], 1, FALSE)))
-				goto failure;
+				goto no_line;
 
 			s->id = VBI_SLICED_WSS_625;
 
@@ -497,13 +528,13 @@ demux_data_units		(struct frame *		f,
 				goto bad_length;
 
 			if (!(s = line_address (f, p[2], 0, FALSE)))
-				goto failure;
+				goto no_line;
 
 			s->id = VBI_SLICED_WSS_CPR1204;
 
-			s->data[0] = vbi_rev8 (p[3]);
-			s->data[1] = vbi_rev8 (p[4]);
-			s->data[2] = vbi_rev8 (p[5]);
+			s->data[0] = p[3];
+			s->data[1] = p[4];
+			s->data[2] = p[5];
 
 			break;
 
@@ -512,7 +543,7 @@ demux_data_units		(struct frame *		f,
 				goto bad_length;
 
 			if (!(s = line_address (f, p[2], 0, FALSE)))
-				goto failure;
+				goto no_line;
 
 			s->id = VBI_SLICED_CAPTION_525;
 
@@ -526,7 +557,7 @@ demux_data_units		(struct frame *		f,
 				goto bad_length;
 
 			if (!(s = line_address (f, p[2], 1, FALSE)))
-				goto failure;
+				goto no_line;
 
 			s->id = VBI_SLICED_CAPTION_625;
 
@@ -546,7 +577,7 @@ demux_data_units		(struct frame *		f,
 				goto failure;
 			}
 
-			if (!demux_samples (f, p, 1))
+			if ((r = demux_samples (f, p, 1)) < 1)
 				goto failure;
 
 			break;
@@ -555,7 +586,7 @@ demux_data_units		(struct frame *		f,
 			if (data_unit_length < 1 + 2 + 1 + p[5])
 				goto bad_sample_length;
 
-			if (!demux_samples (f, p, 0))
+			if ((r = demux_samples (f, p, 0)) < 1)
 				goto failure;
 
 			break;
@@ -569,28 +600,29 @@ demux_data_units		(struct frame *		f,
 		p += data_unit_length + 2;
 	}
 
-	if (DATA_UNIT_STUFFING != *p++)
-		goto failure;
-	if (DATA_UNIT_STUFFING != *p++)
-		goto failure;
-
 	*src = p;
 	*src_left = 0;
 
-	return TRUE;
+	return 1; /* success */
+
+ no_line:
+	if (0 == f->sliced_count)
+		r = -1; /* is a new frame */
 
  failure:
 	*src_left = end2 + 2 - p;
 	*src = p;
 
-	return FALSE;
+	return r;
 }
 
 vbi_inline void
 reset_frame			(struct frame *		f)
 {
 	f->sp = f->sliced_begin;
+
 	f->last_line = 0;
+	f->sliced_count = 0;
 
 	if (f->rp > f->raw) {
 		unsigned int lines;
@@ -611,6 +643,7 @@ reset_frame			(struct frame *		f)
 */
 
 
+#define HEADER_LOOKAHEAD 48
 
 struct _vbi_dvb_demux {
 	/* Must hold one PES packet, at most 6 + 65535 bytes. */
@@ -622,8 +655,10 @@ struct _vbi_dvb_demux {
 
 	struct frame		frame;
 
-	int64_t			next_pts;
-	int64_t			last_pts;
+	int64_t			frame_pts;
+	int64_t			packet_pts;
+
+	vbi_bool		new_frame;
 
 	vbi_dvb_demux_cb *	callback;
 	void *			user_data;
@@ -636,13 +671,24 @@ timestamp			(int64_t *		pts,
 {
 	unsigned int t;
 
-	if (mark != (p[0] & 0xF1))
+	if (mark != (p[0] & 0xF1u))
 		return FALSE;
 
 	t  = p[1] << 22;
 	t |= (p[2] & ~1) << 14;
 	t |= p[3] << 7;
 	t |= p[4] >> 1;
+
+	if (0) {
+		int64_t old_pts;
+		int64_t new_pts;
+
+		old_pts = *pts;
+		new_pts = t | (((int64_t) p[0] & 0x0E) << 29);
+
+		fprintf (stderr, "TS%x 0x%llx %+lld\n",
+			 mark, new_pts, new_pts - old_pts);
+	}
 
 	*pts = t | (((int64_t) p[0] & 0x0E) << 29);
 
@@ -674,20 +720,65 @@ demux_packet			(vbi_dvb_demux *	dx,
 
 		/* Data units */
 
-		if (dx->wrap.consume > 0) {
-			if (dx->next_pts > dx->last_pts) {
-				dx->last_pts = dx->next_pts;
+		if (dx->wrap.lookahead > HEADER_LOOKAHEAD) {
+			unsigned int left;
 
-				/* Must reset up here because we may
-				   "pass by return". */
+			if (dx->new_frame) {
+				/* New frame commences in this packet. */
+
 				reset_frame (&dx->frame);
+
+				dx->frame_pts = dx->packet_pts;
+				dx->new_frame = FALSE;
 			}
 
-			if (!demux_data_units (&dx->frame, &p,
-					       &dx->wrap.consume)) {
-				/* Discard this frame. */
-				dx->last_pts = -1;
+			dx->frame.sliced_count = 0;
+
+			left = dx->wrap.lookahead;
+
+			for (;;) {
+				unsigned int lines;
+				int r;
+
+				r = demux_data_units (&dx->frame, &p, &left);
+
+				if (0 == r) {
+					/* Bad packet, discard. */
+					dx->new_frame = TRUE;
+					break;
+				}
+
+				if (r > 0) {
+					/* Data unit extraction successful.
+					   Packet continues previous frame. */
+					break;
+				}
+
+				/* A new frame commences in this packet.
+				   We must flush dx->frame before we extract
+				   data units from this packet. */
+
+				/* Must not change dx->frame or dx->frame_pts
+				   here to permit "pass by return". */
+				dx->new_frame = TRUE;
+
+				if (!dx->callback)
+					goto failure;
+
+				lines = dx->frame.sliced_begin - dx->frame.sp;
+
+				if (!dx->callback (dx,
+						   dx->user_data,
+						   dx->frame.sliced_begin,
+						   lines,
+						   dx->frame_pts))
+					goto failure;
 			}
+
+			dx->wrap.skip = dx->wrap.lookahead;
+			dx->wrap.lookahead = HEADER_LOOKAHEAD;
+
+			continue;
 		}
 
 		/* Start code scan */
@@ -698,7 +789,7 @@ demux_packet			(vbi_dvb_demux *	dx,
 			/* packet_start_code_prefix [24] == 0x000001,
 			   stream_id [8] == PRIVATE_STREAM_1 */
 
-			if (__builtin_expect (p[2] & ~1, 1)) {
+			if (__builtin_expect (p[2] & ~1, TRUE)) {
 				/* Not 000001 or xx0000 or xxxx00. */
 				p += 3;
 			} else if (0 != (p[0] | p[1]) || 1 != p[2]) {
@@ -712,7 +803,7 @@ demux_packet			(vbi_dvb_demux *	dx,
 				goto outer_continue;
 			}
 
-			if (__builtin_expect (p >= scan_end, 0)) {
+			if (__builtin_expect (p >= scan_end, FALSE)) {
 				dx->wrap.skip = p - scan_begin;
 				goto outer_continue;
 			}
@@ -725,8 +816,8 @@ demux_packet			(vbi_dvb_demux *	dx,
 		dx->wrap.skip = (p - scan_begin) + 6 + packet_length;
 
 		/* EN 300 472 section 4.2: N x 184 - 6. (We'll read
-		   46 bytes without further checks and dx->wrap.consume
-		   must not become <= 0). */
+		   46 bytes without further checks and need at least
+		   one data unit to function properly.) */
 		if (packet_length < 178)
 			continue;
 
@@ -759,41 +850,29 @@ demux_packet			(vbi_dvb_demux *	dx,
 		   PES_CRC_flag, PES_extension_flag */
 		switch (p[7] >> 6) {
 		case 2:	/* PTS 0010 xxx 1 ... */
-			if (!timestamp (&dx->next_pts, 0x21, p + 9))
+			if (!timestamp (&dx->packet_pts, 0x21, p + 9))
 				continue;
 			break;
 
 		case 3:	/* PTS 0011 xxx 1 ... DTS ... */
-			if (!timestamp (&dx->next_pts, 0x31, p + 9))
+			if (!timestamp (&dx->packet_pts, 0x31, p + 9))
 				continue;
 			break;
 
 		default:
+			/* EN 300 472 section 4.2: a VBI PES packet [...]
+			   always carries a PTS. */
+			/* But it doesn't matter if this packet continues
+			   the previous frame. */
+			if (dx->new_frame)
+				continue;
 			break;
 		}
 
 		/* Habemus packet. */
 
 		dx->wrap.skip = (p - scan_begin) + 9 + 36 + 1;
-		dx->wrap.consume = packet_length - 3 - 36 - 1;
-
-		if (dx->next_pts > dx->last_pts) {
-			if (dx->last_pts >= 0) {
-				unsigned int lines;
-
-				if (!dx->callback)
-					goto failure;
-
-				lines = dx->frame.sliced_begin - dx->frame.sp;
-
-				if (!dx->callback (dx,
-						   dx->user_data,
-						   dx->frame.sliced_begin,
-						   lines,
-						   dx->last_pts))
-					goto failure;
-			}
-		}
+		dx->wrap.lookahead = packet_length - 3 - 36 - 1;
 
  outer_continue:
 		;
@@ -829,7 +908,7 @@ _vbi_dvb_demux_cor		(vbi_dvb_demux *	dx,
 	dx->frame.sliced_end = sliced + sliced_lines;
 
 	if (!demux_packet (dx, buffer, buffer_left)) {
-		*pts = dx->last_pts;
+		*pts = dx->frame_pts;
 
 		return dx->frame.sp - dx->frame.sliced_begin;
 	}
@@ -875,16 +954,14 @@ _vbi_dvb_demux_pes_new		(vbi_dvb_demux_cb *	callback,
 	dx->wrap.buffer = dx->buffer;
 	dx->wrap.bp = dx->buffer;
 
-	dx->wrap.lookahead = 48;
+	dx->wrap.lookahead = HEADER_LOOKAHEAD;
 
 	dx->frame.sliced_begin = dx->sliced;
 	dx->frame.sliced_end = dx->sliced + N_ELEMENTS (dx->sliced);
 
-	reset_frame (&dx->frame);
-
 	/* Raw data ignored for now. */
 
-	dx->last_pts = -1;
+	dx->new_frame = TRUE;
 
 	dx->callback = callback;
 	dx->user_data = user_data;
