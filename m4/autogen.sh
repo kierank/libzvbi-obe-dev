@@ -105,7 +105,7 @@ do
     echo processing $dr
     macrodirs=`sed -n -e 's,AM_ACLOCAL_INCLUDE(\(.*\)),\1,gp' < $coin`
     ( cd $dr
-      macrosdir=`find . -name macros -print`
+      macrosdir="`find . -name macros -print` `find . -name macros -print`"
       for i in $macrodirs; do
 	if test -f $i/gnome-gettext.m4; then
 	  DELETEFILES="$DELETEFILES $i/gnome-gettext.m4"
@@ -136,7 +136,7 @@ do
 	  echo "Creating $dr/aclocal.m4 ..."
 	  test -r $dr/aclocal.m4 || touch $dr/aclocal.m4
 	  echo "Running gettextize...  Ignore non-fatal messages."
-	  echo "no" | gettextize --force --copy --intl
+	  echo "no" | gettextize $GETTEXTIZE_FLAGS
 	  echo "Making $dr/aclocal.m4 writable ..."
 	  test -r $dr/aclocal.m4 && chmod u+w $dr/aclocal.m4
         fi
