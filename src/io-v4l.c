@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.15 2003/05/24 12:17:41 tomzo Exp $";
+static char rcsid[] = "$Id: io-v4l.c,v 1.16 2003/06/01 19:34:46 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -73,6 +73,7 @@ typedef struct vbi_capture_v4l {
 	signed char		has_s_fmt;
 	struct video_capability vcap;
 	char		      * p_dev_name;
+	char		      * p_video_name;
 
 	vbi_raw_decoder		dec;
 
@@ -346,6 +347,33 @@ reverse_lookup(vbi_capture_v4l *v, int fd, struct stat *vbi_stat)
 	return TRUE;
 }
 
+static void
+set_scanning_from_mode(vbi_capture_v4l *v, int mode, int * strict)
+{
+	switch (mode) {
+	case VIDEO_MODE_NTSC:
+		printv("Videostandard is NTSC\n");
+		v->dec.scanning = 525;
+		break;
+
+	case VIDEO_MODE_PAL:
+	case VIDEO_MODE_SECAM:
+		printv("Videostandard is PAL/SECAM\n");
+		v->dec.scanning = 625;
+		break;
+
+	default:
+		/*
+		 *  One last chance, we'll try to guess
+		 *  the scanning if GVBIFMT is available.
+		 */
+		printv("Videostandard unknown (%d)\n", mode);
+		v->dec.scanning = 0;
+		*strict = TRUE;
+		break;
+	}
+}
+
 static vbi_bool
 get_videostd(vbi_capture_v4l *v, int fd, int *mode)
 {
@@ -369,21 +397,20 @@ get_videostd(vbi_capture_v4l *v, int fd, int *mode)
 	return FALSE;
 }
 
-static vbi_bool
-probe_video_device(vbi_capture_v4l *v, char *name, struct stat *vbi_stat,
-		   int *mode)
+static int
+probe_video_device(vbi_capture_v4l *v, const char *name, struct stat *vbi_stat )
 {
 	struct stat vid_stat;
-	int fd;
+	int video_fd;
 
 	if (stat(name, &vid_stat) == -1) {
 		printv("stat failed: %d, %s\n",	errno, strerror(errno));
-		return FALSE;
+		return -1;
 	}
 
 	if (!S_ISCHR(vid_stat.st_mode)) {
 		printv("%s is no character special file\n", name);
-		return FALSE;
+		return -1;
 	}
 
 	if (major(vid_stat.st_rdev) != major(vbi_stat->st_rdev)) {
@@ -391,42 +418,106 @@ probe_video_device(vbi_capture_v4l *v, char *name, struct stat *vbi_stat,
 			"%s: %d, %d; vbi: %d, %d\n", name,
 			major(vid_stat.st_rdev), minor(vid_stat.st_rdev),
 			major(vbi_stat->st_rdev), minor(vbi_stat->st_rdev));
-		return FALSE;
+		return -1;
 	}
 
-	if (!(fd = open(name, O_RDONLY | O_TRUNC))) {
+	/* when radio device is opened a running video capture is destroyed (v4l2) @TZO@ */
+	if (minor(vid_stat.st_rdev) >= 64) {
+		printv("Not a v4l video minor device number (i.e. >= 64): "
+			"%s: %d, %d\n", name,
+			major(vid_stat.st_rdev), minor(vid_stat.st_rdev));
+		return -1;
+	}
+
+	video_fd = open(name, O_RDWR);
+	if (video_fd == -1) {
 		printv("Cannot open %s: %d, %s\n", name, errno, strerror(errno));
 		perm_check(v, name);
-		return FALSE;
+		return -1;
 	}
 
-	if (!reverse_lookup(v, fd, vbi_stat)
-	    || !get_videostd(v, fd, mode)) {
-		close(fd);
-		return FALSE;
+	if (!reverse_lookup(v, video_fd, vbi_stat)) {
+		close(video_fd);
+		return -1;
 	}
 
-	close(fd);
+	return video_fd;
+}
 
-	return TRUE;
+static int
+open_video_dev(vbi_capture_v4l *v, struct stat *p_vbi_stat, vbi_bool do_dev_scan)
+{
+	static const char * const video_devices[] = {
+		"/dev/video",
+		"/dev/video0",
+		"/dev/video1",
+		"/dev/video2",
+		"/dev/video3",
+		"/dev/v4l/video",
+		"/dev/v4l/video0",
+		"/dev/v4l/video1",
+		"/dev/v4l/video2",
+		"/dev/v4l/video3",
+	};
+	struct dirent dirent, *pdirent = &dirent;
+	DIR *dir;
+	int video_fd;
+	unsigned int i;
+
+	video_fd = -1;
+
+	for (i = 0; i < sizeof(video_devices) / sizeof(video_devices[0]); i++) {
+		printv("Try %s: ", video_devices[i]);
+
+		video_fd = probe_video_device(v, video_devices[i], p_vbi_stat);
+		if (video_fd != -1) {
+			v->p_video_name = strdup(video_devices[i]);
+			goto done;
+		}
+	}
+
+	if (do_dev_scan) {
+		/* @TOMZO@ note: this is insane - dev directory has typically ~4000 nodes */
+
+		printv("Traversing /dev\n");
+
+		if (!(dir = opendir("/dev"))) {
+			printv("Cannot open /dev: %d, %s\n", errno, strerror(errno));
+			perm_check(v, "/dev");
+			goto done;
+		}
+
+		while (readdir_r(dir, &dirent, &pdirent) == 0 && pdirent) {
+			char name[256];
+
+			snprintf(name, sizeof(name), "/dev/%s", dirent.d_name);
+
+			printv("Try %s: ", name);
+
+			video_fd = probe_video_device(v, name, p_vbi_stat);
+			if (video_fd != -1) {
+				v->p_video_name = strdup(name);
+				closedir(dir);
+				goto done;
+			}
+		}
+		printv("Traversing finished\n");
+
+		closedir(dir);
+	}
+	errno = ENOENT;
+
+done:
+	return video_fd;
 }
 
 static vbi_bool
 guess_bttv_v4l(vbi_capture_v4l *v, int *strict,
 	       int given_fd, int scanning)
 {
-	static char *video_devices[] = {
-		"/dev/video",
-		"/dev/video0",
-		"/dev/video1",
-		"/dev/video2",
-		"/dev/video3",
-	};
-	struct dirent dirent, *pdirent = &dirent;
 	struct stat vbi_stat;
-	DIR *dir;
+	int video_fd;
 	int mode = -1;
-	unsigned int i;
 
 	if (scanning) {
 		v->dec.scanning = scanning;
@@ -468,64 +559,25 @@ guess_bttv_v4l(vbi_capture_v4l *v, int *strict,
 	if (given_fd > -1) {
 		printv("Try suggested corresponding video fd\n");
 
-		if (reverse_lookup(v, given_fd, &vbi_stat))
+		if (reverse_lookup(v, given_fd, &vbi_stat)) {
 			if (get_videostd(v, given_fd, &mode))
 				goto finish;
+		}
 	}
 
-	for (i = 0; i < sizeof(video_devices) / sizeof(video_devices[0]); i++) {
-		printv("Try %s: ", video_devices[i]);
-
-		if (probe_video_device(v, video_devices[i], &vbi_stat, &mode))
-			goto finish;
+	/* find video device path and open the device */
+	video_fd = open_video_dev(v, &vbi_stat, TRUE);
+	if (video_fd != -1) {
+		if (get_videostd(v, video_fd, &mode)) {
+			close(video_fd);
+			return FALSE;
+		}
+		close(video_fd);
 	}
 
-	printv("Traversing /dev\n");
-
-	if (!(dir = opendir("/dev"))) {
-		printv("Cannot open /dev: %d, %s\n", errno, strerror(errno));
-		perm_check(v, "/dev");
-		goto finish;
-	}
-
-	while (readdir_r(dir, &dirent, &pdirent) == 0 && pdirent) {
-		char name[256];
-
-		snprintf(name, sizeof(name), "/dev/%s", dirent.d_name);
-
-		printv("Try %s: ", name);
-
-		if (probe_video_device(v, name, &vbi_stat, &mode))
-			goto finish;
-	}
-
-	closedir(dir);
-
-	printv("Traversing finished\n");
 
  finish:
-	switch (mode) {
-	case VIDEO_MODE_NTSC:
-		printv("Videostandard is NTSC\n");
-		v->dec.scanning = 525;
-		break;
-
-	case VIDEO_MODE_PAL:
-	case VIDEO_MODE_SECAM:
-		printv("Videostandard is PAL/SECAM\n");
-		v->dec.scanning = 625;
-		break;
-
-	default:
-		/*
-		 *  One last chance, we'll try to guess
-		 *  the scanning if GVBIFMT is available.
-		 */
-		printv("Videostandard unknown (%d)\n", mode);
-		v->dec.scanning = 0;
-		*strict = TRUE;
-		break;
-	}
+	set_scanning_from_mode(v, mode, strict);
 
 	return TRUE;
 }
@@ -653,6 +705,12 @@ v4l_delete(vbi_capture *vc)
 	if (v->sliced_buffer.data)
 		free(v->sliced_buffer.data);
 
+	if (v->p_dev_name != NULL)
+		free(v->p_dev_name);
+
+	if (v->p_video_name != NULL)
+		free(v->p_video_name);
+
 	if (v->fd != -1)
 		close(v->fd);
 
@@ -676,6 +734,197 @@ v4l_get_poll_fd(vbi_capture *vc)
 		return v->fd;
 	else
 		return -1;
+}
+
+static int
+v4l_switch_channel(vbi_capture_v4l *v, int fd,
+		   int channel, int freq, int tuner, int * p_mode,
+		   vbi_bool * p_has_tuner, char ** errorstr)
+{
+	struct video_channel vchan;
+	struct video_tuner   vtuner;
+	unsigned long lfreq;
+	int  old_channel = -1;
+	vbi_bool has_tuner = FALSE;
+
+	/* query current params for the given channel */
+	if (channel != -1) {
+		memset(&vchan, 0, sizeof(vchan));
+		vchan.channel = channel;
+		if (IOCTL(fd, VIDIOCGCHAN, &vchan) != 0) {
+			printv("ioctl CGCHAN failed: %d (%s)\n", errno, strerror(errno));
+			vbi_asprintf(errorstr, _("Failed to query channel #%d, "
+						 "probably invalid index."), channel);
+			return -1;
+		}
+		old_channel = vchan.channel;
+
+		if (*p_mode != -1)
+			vchan.norm = *p_mode;
+
+		vchan.channel = channel;
+		if (IOCTL(fd, VIDIOCSCHAN, &vchan) != 0) {
+			printv("ioctl CSCHAN failed for channel #%d, mode=%d: %d (%s)\n",
+			       channel, *p_mode, errno, strerror(errno));
+			vbi_asprintf(errorstr, _("Failed to switch to channel #%d."), channel);
+			return -1;
+		}
+		*p_mode = vchan.norm;
+	}
+
+	if ( (freq != -1) &&
+	     ((vchan.type & VIDEO_TYPE_TV) != 0) &&
+	     ((vchan.flags & VIDEO_VC_TUNER) != 0) )
+	{
+		/* query the settings of tuner with given index */
+		memset(&vtuner, 0, sizeof(vtuner));
+		vtuner.tuner = tuner;
+		if ( (IOCTL(fd, VIDIOCGTUNER, &vtuner) == 0) &&
+		     ( (vtuner.tuner != tuner) ||
+		       ((vtuner.mode != *p_mode) && (*p_mode != -1)) ) )
+		{
+			/* set tuner norm */
+			if (*p_mode != -1)
+				vtuner.mode  = *p_mode;
+
+			vtuner.tuner = tuner;
+			if (IOCTL(fd, VIDIOCSTUNER, &vtuner) != 0) {
+		                printv("ioctl CSTUNER failed for tuner #%d, mode=%d: %d (%s)\n",
+				       tuner, *p_mode, errno, strerror(errno));
+				vbi_asprintf(errorstr, _("Failed to configure norm on tuner #%d."),
+					     tuner);
+				return -1;
+			}
+			*p_mode = vtuner.mode;
+		}
+
+		lfreq = freq;
+		if (IOCTL(fd, VIDIOCSFREQ, &lfreq) != 0) {
+		        printv("ioctl CSFREQ for freq=%d failed: %d (%s)\n",
+			       freq, errno, strerror(errno));
+			vbi_asprintf(errorstr, _("Failed to switch TV frequency"));
+
+			if (old_channel != -1) {
+				/* attempt to set old channel again */
+				vchan.channel = old_channel;
+				if (IOCTL(fd, VIDIOCSCHAN, &vchan) != 0) {
+					printv("ioctl CSCHAN failed to switch to prev. channel #%d: %d (%s)\n",
+					       old_channel, errno, strerror(errno));
+				}
+			}
+			return -1;
+		}
+		/* return info if it's a TV tuner */
+		has_tuner = TRUE;
+	}
+
+	*p_has_tuner = has_tuner;
+
+	printv("Successfully switched channel and/or frequency.\n");
+	return 0;
+}
+
+static int
+v4l_channel_change(vbi_capture *vc,
+		   int chn_flags, int chn_prio,
+		   vbi_channel_desc * p_chn_desc,
+		   vbi_bool * p_has_tuner, int * p_scanning,
+		   char ** errorstr)
+{
+	vbi_capture_v4l *v = PARENT(vc, vbi_capture_v4l, capture);
+	int  mode;
+	int  strict;
+	struct stat vbi_stat;
+	int video_fd = -1;
+	int result = -1;
+
+	if (chn_flags & VBI_CHN_FLUSH_ONLY)
+		goto done;
+
+	if (p_chn_desc->type != 0) {
+		vbi_asprintf(errorstr, _("Not an analog channel descriptor type"));
+		goto failure;
+	}
+
+	/* convert video mode/norm ID to v4l1 */
+	if (p_chn_desc->u.analog.mode_std != -1) {
+		if (p_chn_desc->u.analog.mode_std & 0xff)
+			mode = VIDEO_MODE_PAL;
+		else if (p_chn_desc->u.analog.mode_std & 0xf00)
+			mode = VIDEO_MODE_NTSC;
+		else if (p_chn_desc->u.analog.mode_std & 0xff0000)
+			mode = VIDEO_MODE_SECAM;
+		else
+			mode = VIDEO_MODE_AUTO;
+	}
+	else if (p_chn_desc->u.analog.mode_color != -1) {
+		if (p_chn_desc->u.analog.mode_color <= VIDEO_MODE_AUTO)
+			mode = p_chn_desc->u.analog.mode_color;
+		else
+			mode = VIDEO_MODE_AUTO;
+	}
+	else
+		mode = -1;
+
+	/* if the caller requests a non-background prio, switch through VBI device.
+	** for background we only use the video device because it will only
+	** succeed if no video application is running */
+	if (chn_prio > 0) {
+		printv("Attempt channel switch through VBI device...\n");
+		if (v4l_switch_channel(v, v->fd,
+				       p_chn_desc->u.analog.channel,
+				       p_chn_desc->u.analog.freq,
+				       p_chn_desc->u.analog.tuner,
+				       &mode,
+				       p_has_tuner, errorstr) == 0) {
+
+			set_scanning_from_mode(v, mode, &strict);
+			*p_scanning = v->dec.scanning;
+			goto done;
+		}
+		/* ignore errors (driver may not support channel switching via VBI)
+		** Next try video device */
+	}
+
+	if (v->p_video_name != NULL) {
+		video_fd = open(v->p_video_name, O_RDWR);
+		if (video_fd == -1) {
+			vbi_asprintf(errorstr, _("Failed to open video device '%s': %s"),
+					       errno, strerror(errno));
+			goto failure;
+		}
+	} else if (fstat(v->fd, &vbi_stat) == 0) {
+		/* find video device path and open the device */
+		video_fd = open_video_dev(v, &vbi_stat, FALSE);
+		if (video_fd == -1) {
+			goto failure;
+		}
+	}
+	else {
+		printv("fstat on VBI file handle failed: %d, %s\n", errno, strerror(errno));
+		goto failure;
+	}
+
+	if (v4l_switch_channel(v, video_fd,
+		               p_chn_desc->u.analog.channel,
+			       p_chn_desc->u.analog.freq,
+			       p_chn_desc->u.analog.tuner,
+			       &mode,
+			       p_has_tuner, errorstr) != 0)
+		goto failure;
+
+	set_scanning_from_mode(v, mode, &strict);
+	*p_scanning = v->dec.scanning;
+
+done:
+	v4l_flush(vc);
+	result = 0;
+
+failure:
+	if (video_fd != -1)
+		close(video_fd);
+
+	return result;
 }
 
 static void
@@ -934,15 +1183,15 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 
 	v->do_trace = trace;
 	printv("Try to open v4l vbi device, libzvbi interface rev.\n"
-	       "%s", rcsid);
+	       "%s\n", rcsid);
 
 	v->capture.parameters = v4l_parameters;
 	v->capture._delete = v4l_delete;
 	v->capture.get_fd = v4l_get_read_fd;
 	v->capture.get_poll_fd = v4l_get_poll_fd;
 	v->capture.read = v4l_read;
-	v->capture.flush = v4l_flush;
 	v->capture.add_services = v4l_add_services;
+	v->capture.channel_change = v4l_channel_change;
 
 	v->p_dev_name = strdup(dev_name);
 
@@ -1086,6 +1335,20 @@ vbi_capture_v4l_new(const char *dev_name, int scanning,
 
 #else
 
+/**
+ * @param given_fd File handle of an already open video device,
+ *   usually one of @c /dev/video or @c /dev/video0 and up.
+ *   Must be assorted with the named vbi device, i.e. refer to
+ *   the same driver instance and hardware.
+ *
+ * This functions behaves much like vbi_capture_v4l_new (see there
+ * for a complete parameter description), with the sole difference
+ * that it uses the given file handle to determine the current video
+ * standard if such queries aren't supported by the VBI device.
+ * 
+ * @return
+ * Initialized vbi_capture context, @c NULL on failure.
+ */
 vbi_capture *
 vbi_capture_v4l_sidecar_new(const char *dev_name, int given_fd,
 			    unsigned int *services, int strict,
@@ -1096,6 +1359,27 @@ vbi_capture_v4l_sidecar_new(const char *dev_name, int given_fd,
 	return NULL;
 }
 
+/**
+ * @param dev_name Name of the device to open, usually one of
+ *   @c /dev/vbi or @c /dev/vbi0 and up.
+ * @param scanning Can be used to specify the current TV norm for
+ *   old drivers which don't support ioctls to query the current
+ *   norm.  Value is 625 (PAL/SECAM family) or 525 (NTSC family).
+ *   Set to 0 if you don't know the norm.
+ * @param services This must point to a set of @ref VBI_SLICED_
+ *   symbols describing the
+ *   data services to be decoded. On return the services actually
+ *   decodable will be stored here. See vbi_raw_decoder_add()
+ *   for details. If you want to capture raw data only, set to
+ *   @c VBI_SLICED_VBI_525, @c VBI_SLICED_VBI_625 or both.
+ * @param strict Will be passed to vbi_raw_decoder_add().
+ * @param errorstr If not @c NULL this function stores a pointer to an error
+ *   description here. You must free() this string when no longer needed.
+ * @param trace If @c TRUE print progress messages on stderr.
+ * 
+ * @return
+ * Initialized vbi_capture context, @c NULL on failure.
+ */
 vbi_capture *
 vbi_capture_v4l_new(const char *dev_name, int scanning,
 		     unsigned int *services, int strict,
