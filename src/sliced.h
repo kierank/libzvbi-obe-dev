@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.h,v 1.2 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: sliced.h,v 1.3 2002/10/22 04:42:40 mschimek Exp $ */
 
 #ifndef SLICED_H
 #define SLICED_H
@@ -215,7 +215,7 @@ typedef struct {
 /** @addtogroup Sliced
  * @{
  */
-extern char *			vbi_sliced_name(unsigned int service);
+extern const char *		vbi_sliced_name(unsigned int service);
 /** @} */
 
 /* Private */

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bcd.h,v 1.5 2002/09/28 00:05:08 mschimek Exp $ */
+/* $Id: bcd.h,v 1.6 2002/10/22 04:42:40 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -37,6 +37,7 @@
 /* Public */
 
 #ifndef DOXYGEN_SHOULD_IGNORE_THIS
+/* doxygen omits static objects */
 #define static_inline static inline
 #endif
 
@@ -85,6 +86,7 @@ typedef int vbi_bool;
  *   "Additional text channel"</td></tr>
  * </table>
  */
+/* XXX unsigned? */
 typedef int vbi_pgno;
 
 /**

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.5 2002/09/26 20:49:36 mschimek Exp $ */
+/* $Id: vbi.c,v 1.6 2002/10/22 04:42:40 mschimek Exp $ */
 
 #include "site_def.h"
 #include "../config.h"
@@ -57,7 +57,9 @@
  *
  * The ZVBI library provides routines to access raw VBI sampling devices
  * (currently the Linux <a href="http://roadrunner.swansea.uk.linux.org/v4l.shtml">V4L</a>
- * and <a href="http://www.thedirks.org/v4l2/">V4L2</a> API
+ * and <a href="http://www.thedirks.org/v4l2/">V4L2</a> API and the
+ * FreeBSD, OpenBSD, NetBSD and BSDi
+ * <a href="http://telepresence.dmem.strath.ac.uk/bt848/">bktr driver</a> API
  * are supported), a versatile raw VBI bit slicer,
  * decoders for various data services and basic search,
  * render and export functions for text pages. The library was written for

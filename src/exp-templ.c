@@ -1,10 +1,8 @@
 /*
  *  Template for export modules
- *
- *  Placed in the public domain.
  */
 
-/* $Id: exp-templ.c,v 1.5 2002/10/11 12:31:48 mschimek Exp $ */
+/* $Id: exp-templ.c,v 1.6 2002/10/22 04:42:40 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -36,6 +34,9 @@ typedef struct tmpl_instance
 	int			counter;
 } tmpl_instance;
 
+/* Safer than tmpl_instance *tmpl = (tmpl_instance *)(vbi_export *) e */
+#define TMPL(e)	PARENT(e, tmpl_instance, export);
+
 static vbi_export *
 tmpl_new(void)
 {
@@ -58,9 +59,7 @@ tmpl_new(void)
 static void
 tmpl_delete(vbi_export *e)
 {
-	/* convert e -> tmpl_instance.export to -> tmpl_instance
-           (one could also "tmpl = (tmpl_instance *) e;" but it's less safe) */
-	tmpl_instance *tmpl = PARENT(e, tmpl_instance, export);
+	tmpl_instance *tmpl = TMPL(e);
 
 	/* Uninitialize our private stuff and options */
 
@@ -90,7 +89,7 @@ tmpl_options[] = {
 	VBI_OPTION_BOOL_INITIALIZER
 	  /*
 	   *  Option keywords must be unique within their module
-	   *  and shall contain only "AZaz09-_" (be filesystem safe that is).
+	   *  and shall contain only "AZaz09_" (be filesystem safe that is).
 	   *  Note "network", "creator" and "reveal" are reserved generic
 	   *  options, filtered by the export api functions.
 	   */
@@ -131,27 +130,29 @@ option_enum(vbi_export *e, int index)
 	return tmpl_options + index;
 }
 
+#define KEYWORD(str) (strcmp(keyword, str) == 0)
+
 /*
  *  Get an option (optional if we have no options).
  */
 static vbi_bool
 option_get(vbi_export *e, const char *keyword, vbi_option_value *value)
 {
-	tmpl_instance *tmpl = PARENT(e, tmpl_instance, export);
+	tmpl_instance *tmpl = TMPL(e);
 
-	if (strcmp(keyword, "flip") == 0) {
+	if (KEYWORD("flip")) {
 		value->num = tmpl->flip;
-	} else if (strcmp(keyword, "day") == 0) {
+	} else if (KEYWORD("day")) {
 		value->num = tmpl->day;
-	} else if (strcmp(keyword, "prime") == 0) {
+	} else if (KEYWORD("prime")) {
 		value->num = tmpl->prime;
-	} else if (strcmp(keyword, "quality") == 0) {
+	} else if (KEYWORD("quality")) {
 		value->dbl = tmpl->quality;
-	} else if (strcmp(keyword, "comment") == 0) {
+	} else if (KEYWORD("comment")) {
 		if (!(value->str = vbi_export_strdup(e, NULL,
 			tmpl->comment ? tmpl->comment : "")))
 			return FALSE;
-	} else if (strcmp(keyword, "weekday") == 0) {
+	} else if (KEYWORD("weekday")) {
 		value->num = tmpl->weekday;
 	} else {
 		vbi_export_unknown_option(e, keyword);
@@ -167,11 +168,11 @@ option_get(vbi_export *e, const char *keyword, vbi_option_value *value)
 static vbi_bool
 option_set(vbi_export *e, const char *keyword, va_list args)
 {
-	tmpl_instance *tmpl = PARENT(e, tmpl_instance, export);
+	tmpl_instance *tmpl = TMPL(e);
 
-	if (strcmp(keyword, "flip") == 0) {
+	if (KEYWORD("flip")) {
 		tmpl->flip = !!va_arg(args, int);
-	} else if (strcmp(keyword, "day") == 0) {
+	} else if (KEYWORD("day")) {
 		int day = va_arg(args, int);
 
 		/* or clamp */
@@ -179,11 +180,13 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 			vbi_export_invalid_option(e, keyword, day);
 			return FALSE;
 		}
+
 		tmpl->day = day;
-	} else if (strcmp(keyword, "prime") == 0) {
+
+	} else if (KEYWORD("prime")) {
 		unsigned int i;
-		int value = va_arg(args, int);
 		unsigned int d, dmin = UINT_MAX;
+		int value = va_arg(args, int);
 
 		/* or return an error */
 		for (i = 0; i < elements(int_menu_items); i++)
@@ -191,7 +194,8 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 				tmpl->prime = int_menu_items[i];
 				dmin = d;
 			}
-	} else if (strcmp(keyword, "quality") == 0) {
+
+	} else if (KEYWORD("quality")) {
 		double quality = va_arg(args, double);
 
 		/* or return an error */
@@ -201,13 +205,13 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 			quality = 100;
 
 		tmpl->quality = quality;
-	} else if (strcmp(keyword, "comment") == 0) {
+	} else if (KEYWORD("comment")) {
 		char *comment = va_arg(args, char *);
 
 		/* Note the option remains unchanged in case of error */
 		if (!vbi_export_strdup(e, &tmpl->comment, comment))
 			return FALSE;
-	} else if (strcmp(keyword, "weekday") == 0) {
+	} else if (KEYWORD("weekday")) {
 		int day = va_arg(args, int);
 
 		/* or return an error */
@@ -226,10 +230,10 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 static vbi_bool
 export(vbi_export *e, FILE *fp, vbi_page *pg)
 {
-	tmpl_instance *tmpl = PARENT(e, tmpl_instance, export);
+	tmpl_instance *tmpl = TMPL(e);
 
 	/*
-	 *  Write @pg to @fp, that's all.
+	 *  Write pg to fp, that's all.
 	 */
 
 	tmpl->counter++; /* just for fun */
@@ -253,8 +257,10 @@ export(vbi_export *e, FILE *fp, vbi_page *pg)
 static vbi_export_info
 info_tmpl = {
 	/* The mandatory keyword must be unique and shall
-           contain only "AZaz09-_" */
+           contain only "AZaz09_" */
 	.keyword	= "templ",
+	/* When omitted this module can still be used by
+	   libzvbi clients but won't be listed in a UI. */
 	.label		= N_("Template"),
 	.tooltip	= N_("This is just an export template"),
 
@@ -282,7 +288,7 @@ vbi_export_class_tmpl = {
 
 /*
  *  This is a constructor calling vbi_register_export_module().
- *  (Commented out since we don't want the example module listed.)
+ *  (Commented out since we don't want to register the example module.)
  */
 #if 0
 VBI_AUTOREG_EXPORT_MODULE(vbi_export_class_tmpl)

@@ -1,5 +1,5 @@
 /*
- *  libzvbi - V4L2 interface
+ *  libzvbi - V4L2 (version 2002-10) interface
  *
  *  Copyright (C) 1999, 2000, 2001, 2002 Michael H. Schimek
  *
@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.11 2002/10/22 04:42:40 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2k.c,v 1.1 2002/10/22 04:42:40 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -44,18 +44,12 @@ static char rcsid[] = "$Id: io-v4l2.c,v 1.11 2002/10/22 04:42:40 mschimek Exp $"
 #include <asm/types.h>		/* for videodev2.h */
 #include <pthread.h>
 
-#include "videodev2.h"
+#include "videodev2k.h"
 
 /* same as ioctl(), but repeat if interrupted */
 #define IOCTL(fd, cmd, data)						\
 ({ int __result; do __result = ioctl(fd, cmd, data);			\
    while (__result == -1L && errno == EINTR); __result; })
-
-#define V4L2_LINE 0 /* API rev. Nov 2000 (-1 -> 0) */
-
-#ifndef V4L2_BUF_TYPE_VBI /* API rev. Sep 2000 */
-#define V4L2_BUF_TYPE_VBI V4L2_BUF_TYPE_CAPTURE
-#endif
 
 #undef REQUIRE_SELECT
 #undef REQUIRE_G_FMT		/* before S_FMT */
@@ -73,6 +67,7 @@ typedef struct vbi_capture_v4l2 {
 	vbi_capture		capture;
 
 	int			fd;
+	vbi_bool		close_me;
 	int			btype;			/* v4l2 stream type */
 	vbi_bool		streaming;
 	vbi_bool		select;
@@ -136,7 +131,8 @@ v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
 	if (IOCTL(v->fd, VIDIOC_DQBUF, &vbuf) == -1)
 		return -1;
 
-	time = vbuf.timestamp / 1e9;
+	time = vbuf.timestamp.tv_sec
+		+ vbuf.timestamp.tv_usec * (1 / 1e6);
 
 	if (raw) {
 		if (*raw) {
@@ -271,7 +267,7 @@ v4l2_delete(vbi_capture *vc)
 		else
 			free(v->raw_buffer[v->num_raw_buffers - 1].data);
 
-	if (v->fd != -1)
+	if (v->close_me && v->fd != -1)
 		close(v->fd);
 
 	free(v);
@@ -288,20 +284,25 @@ v4l2_fd(vbi_capture *vc)
 static void
 print_vfmt(char *s, struct v4l2_format *vfmt)
 {
-	fprintf(stderr, "%s%d Hz, %d bpl, offs %d, "
+	fprintf(stderr, "%sformat %08x, %d Hz, %d bpl, offs %d, "
 		"F1 %d+%d, F2 %d+%d, flags %08x\n", s,
+		vfmt->fmt.vbi.sample_format,
 		vfmt->fmt.vbi.sampling_rate, vfmt->fmt.vbi.samples_per_line,
 		vfmt->fmt.vbi.offset,
-		vfmt->fmt.vbi.start[0] - V4L2_LINE, vfmt->fmt.vbi.count[0],
-		vfmt->fmt.vbi.start[1] - V4L2_LINE, vfmt->fmt.vbi.count[1],
+		vfmt->fmt.vbi.start[0], vfmt->fmt.vbi.count[0],
+		vfmt->fmt.vbi.start[1], vfmt->fmt.vbi.count[1],
 		vfmt->fmt.vbi.flags);
 }
 
 /* document below */
 vbi_capture *
-vbi_capture_v4l2_new(const char *dev_name, int buffers,
-		     unsigned int *services, int strict,
-		     char **errorstr, vbi_bool trace)
+vbi_capture_v4l2k_new		(const char *		dev_name,
+				 int			fd,
+				 int			buffers,
+				 unsigned int *		services,
+				 int			strict,
+				 char **		errorstr,
+				 vbi_bool		trace)
 {
 	struct v4l2_capability vcap;
 	struct v4l2_format vfmt;
@@ -316,7 +317,7 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 
 	assert(services && *services != 0);
 
-	printv("Try to open v4l2 vbi device, libzvbi interface rev.\n"
+	printv("Try to open v4l2 (2002-10) vbi device, libzvbi interface rev.\n"
 	       "%s", rcsid);
 
 	if (!(v = calloc(1, sizeof(*v)))) {
@@ -329,32 +330,31 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 	v->capture._delete = v4l2_delete;
 	v->capture.get_fd = v4l2_fd;
 
-	/* O_RDWR required for PROT_WRITE */
-	if ((v->fd = open(dev_name, O_RDWR)) == -1) {
-		if ((v->fd = open(dev_name, O_RDONLY)) == -1) {
+	if (dev_name) {
+		if ((v->fd = open(dev_name, O_RDWR)) == -1) {
 			vbi_asprintf(errorstr, _("Cannot open '%s': %d, %s."),
 				     dev_name, errno, strerror(errno));
 			goto io_error;
 		}
-	}
 
-	printv("Opened %s\n", dev_name);
+		v->close_me = TRUE;
+
+		printv("Opened %s\n", dev_name);
+	} else {
+		v->fd = fd;
+		v->close_me = FALSE;
+
+		printv("Using v4l2k device fd %d\n", fd);
+	}
 
 	if (IOCTL(v->fd, VIDIOC_QUERYCAP, &vcap) == -1) {
 		vbi_asprintf(errorstr, _("Cannot identify '%s': %d, %s."),
 			     dev_name, errno, strerror(errno));
 		guess = _("Probably not a v4l2 device.");
-/*
 		goto io_error;
-*/
-		v4l2_delete (&v->capture);
-
-		/* Try api revision 2002-10 */
-		return vbi_capture_v4l2k_new (dev_name, 0, buffers,
-					      services, strict, errorstr, trace);
 	}
 
-	if (vcap.type != V4L2_TYPE_VBI) {
+	if (!(vcap.capabilities & V4L2_CAP_VBI_CAPTURE)) {
 		vbi_asprintf(errorstr, _("%s (%s) is not a raw vbi device."),
 			     dev_name, vcap.name);
 		goto failure;
@@ -362,7 +362,7 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 
 	printv("%s (%s) is a v4l2 vbi device\n", dev_name, vcap.name);
 
-	v->select = !!(vcap.flags & V4L2_FLAG_SELECT);
+	v->select = TRUE; /* mandatory 2002-10 */
 
 #ifdef REQUIRE_SELECT
 	if (!v->select) {
@@ -387,7 +387,7 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 
 	memset(&vfmt, 0, sizeof(vfmt));
 
-	vfmt.type = v->btype = V4L2_BUF_TYPE_VBI;
+	vfmt.type = v->btype = V4L2_BUF_TYPE_VBI_CAPTURE;
 
 	max_rate = 0;
 
@@ -418,22 +418,22 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 			goto failure;
 		}
 
-		vfmt.fmt.vbi.sample_format	= V4L2_VBI_SF_UBYTE;
+		vfmt.fmt.vbi.sample_format	= V4L2_PIX_FMT_GREY;
 		vfmt.fmt.vbi.sampling_rate	= v->dec.sampling_rate;
 		vfmt.fmt.vbi.samples_per_line	= v->dec.bytes_per_line;
 		vfmt.fmt.vbi.offset		= v->dec.offset;
-		vfmt.fmt.vbi.start[0]		= v->dec.start[0] + V4L2_LINE;
+		vfmt.fmt.vbi.start[0]		= v->dec.start[0];
 		vfmt.fmt.vbi.count[0]		= v->dec.count[1];
-		vfmt.fmt.vbi.start[1]		= v->dec.start[0] + V4L2_LINE;
+		vfmt.fmt.vbi.start[1]		= v->dec.start[0];
 		vfmt.fmt.vbi.count[1]		= v->dec.count[1];
 
 		/* API rev. Nov 2000 paranoia */
 
 		if (!vfmt.fmt.vbi.count[0]) {
-			vfmt.fmt.vbi.start[0] = ((v->dec.scanning == 625) ? 6 : 10) + V4L2_LINE;
+			vfmt.fmt.vbi.start[0] = ((v->dec.scanning == 625) ? 6 : 10);
 			vfmt.fmt.vbi.count[0] = 1;
 		} else if (!vfmt.fmt.vbi.count[1]) {
-			vfmt.fmt.vbi.start[1] = ((v->dec.scanning == 625) ? 318 : 272) + V4L2_LINE;
+			vfmt.fmt.vbi.start[1] = ((v->dec.scanning == 625) ? 318 : 272);
 			vfmt.fmt.vbi.count[1] = 1;
 		}
 
@@ -456,15 +456,7 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 				goto failure;
 
 			case EINVAL:
-				printv("VIDIOC_S_FMT failed, trying bttv2 rev. 021100 workaround\n");
-
-				vfmt.type = v->btype = V4L2_BUF_TYPE_CAPTURE;
-				vfmt.fmt.vbi.start[0] = 0;
-				vfmt.fmt.vbi.count[0] = 16;
-				vfmt.fmt.vbi.start[1] = 313;
-				vfmt.fmt.vbi.count[1] = 16;
-
-				if (IOCTL(v->fd, VIDIOC_S_FMT, &vfmt) == -1) {
+				{
 			default:
 					vbi_asprintf(errorstr, _("Could not set the vbi capture parameters "
 							       "for %s (%s): %d, %s."),
@@ -473,8 +465,8 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 					goto io_error;
 				}
 
-				vfmt.fmt.vbi.start[0] = 7 + V4L2_LINE;
-				vfmt.fmt.vbi.start[1] = 320 + V4L2_LINE;
+				vfmt.fmt.vbi.start[0] = 7;
+				vfmt.fmt.vbi.start[1] = 320;
 
 				break;
 			}
@@ -489,15 +481,15 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 	v->dec.sampling_rate		= vfmt.fmt.vbi.sampling_rate;
 	v->dec.bytes_per_line		= vfmt.fmt.vbi.samples_per_line;
 	v->dec.offset			= vfmt.fmt.vbi.offset;
-	v->dec.start[0] 		= vfmt.fmt.vbi.start[0] - V4L2_LINE;
+	v->dec.start[0] 		= vfmt.fmt.vbi.start[0];
 	v->dec.count[0] 		= vfmt.fmt.vbi.count[0];
-	v->dec.start[1] 		= vfmt.fmt.vbi.start[1] - V4L2_LINE;
+	v->dec.start[1] 		= vfmt.fmt.vbi.start[1];
 	v->dec.count[1] 		= vfmt.fmt.vbi.count[1];
 	v->dec.interlaced		= !!(vfmt.fmt.vbi.flags & V4L2_VBI_INTERLACED);
 	v->dec.synchronous		= !(vfmt.fmt.vbi.flags & V4L2_VBI_UNSYNC);
 	v->time_per_frame 		= (v->dec.scanning == 625) ? 1.0 / 25 : 1001.0 / 30000;
 
-	if (vfmt.fmt.vbi.sample_format != V4L2_VBI_SF_UBYTE) {
+ 	if (vfmt.fmt.vbi.sample_format != V4L2_PIX_FMT_GREY) {
 		vbi_asprintf(errorstr, _("%s (%s) offers unknown vbi sampling format #%d. "
 				       "This may be a driver bug or libzvbi is too old."),
 			     dev_name, vcap.name, vfmt.fmt.vbi.sample_format);
@@ -544,7 +536,8 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 
 	printv("Will decode services 0x%08x\n", *services);
 
-	if (vcap.flags & V4L2_FLAG_STREAMING) {
+	/* FIXME - api revision */
+	if (1 /* vcap.flags & V4L2_FLAG_STREAMING */) {
 		printv("Using streaming interface\n");
 
 		if (!v->select) {
@@ -607,11 +600,11 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 
 			/* bttv 0.8.x wants PROT_WRITE */
 			p = mmap(NULL, vbuf.length, PROT_READ | PROT_WRITE,
-				 MAP_SHARED, v->fd, vbuf.offset); /* MAP_PRIVATE ? */
+				 MAP_SHARED, v->fd, vbuf.m.offset); /* MAP_PRIVATE ? */
 
 			if ((int) p == -1)
 			  p = mmap(NULL, vbuf.length, PROT_READ,
-				   MAP_SHARED, v->fd, vbuf.offset); /* MAP_PRIVATE ? */
+				   MAP_SHARED, v->fd, vbuf.m.offset); /* MAP_PRIVATE ? */
 
 			if ((int) p == -1) {
 				if (errno == ENOMEM && v->num_raw_buffers >= 2) {
@@ -654,7 +647,8 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 
 			v->num_raw_buffers++;
 		}
-	} else if (vcap.flags & V4L2_FLAG_READ) {
+	/* FIXME */
+	} else if (0 /* vcap.flags & V4L2_FLAG_READ */) {
 		printv("Using read interface\n");
 
 		if (!v->select)
@@ -732,9 +726,9 @@ failure:
  * Initialized vbi_capture context, @c NULL on failure.
  */
 vbi_capture *
-vbi_capture_v4l2_new(const char *dev_name, int buffers,
-		     unsigned int *services, int strict,
-		     char **errorstr, vbi_bool trace)
+vbi_capture_v4l2k_new(const char *dev_name, int fd, int buffers,
+		      unsigned int *services, int strict,
+		      char **errorstr, vbi_bool trace)
 {
 	pthread_once (&vbi_init_once, vbi_init);
 	vbi_asprintf(errorstr, _("V4L2 interface not compiled."));

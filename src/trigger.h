@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: trigger.h,v 1.1 2002/01/12 16:19:03 mschimek Exp $ */
+/* $Id: trigger.h,v 1.2 2002/10/22 04:42:40 mschimek Exp $ */
 
 #ifndef TRIGGER_H
 #define TRIGGER_H
@@ -35,6 +35,6 @@ typedef struct vbi_trigger vbi_trigger;
 extern void		vbi_trigger_flush(vbi_decoder *vbi);
 extern void		vbi_deferred_trigger(vbi_decoder *vbi);
 extern void		vbi_eacem_trigger(vbi_decoder *vbi, unsigned char *s);
-extern void		vbi_atvef_trigger(vbi_decoder *vbi, char *s);
+extern void		vbi_atvef_trigger(vbi_decoder *vbi, unsigned char *s);
 
 #endif /* TRIGGER_H */

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.5 2002/09/26 20:48:09 mschimek Exp $ */
+/* $Id: io.h,v 1.6 2002/10/22 04:42:40 mschimek Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -47,16 +47,29 @@ typedef struct vbi_capture vbi_capture;
  * @addtogroup Device
  * @{
  */
-extern vbi_capture *	vbi_capture_v4l2_new(char *dev_name, int buffers,
+extern vbi_capture *	vbi_capture_v4l2_new(const char *dev_name, int buffers,
 					     unsigned int *services, int strict,
 					     char **errorstr, vbi_bool trace);
-extern vbi_capture *	vbi_capture_v4l_new(char *dev_name, int scanning,
+extern vbi_capture *	vbi_capture_v4l2k_new(const char *	dev_name,
+					      int		fd,
+					      int		buffers,
+					      unsigned int *	services,
+					      int		strict,
+					      char **		errorstr,
+					      vbi_bool		trace);
+extern vbi_capture *	vbi_capture_v4l_new(const char *dev_name, int scanning,
 					    unsigned int *services, int strict,
 					    char **errorstr, vbi_bool trace);
-extern vbi_capture *	vbi_capture_v4l_sidecar_new(char *dev_name, int given_fd,
+extern vbi_capture *	vbi_capture_v4l_sidecar_new(const char *dev_name, int given_fd,
 						    unsigned int *services,
 						    int strict, char **errorstr, 
 						    vbi_bool trace);
+extern vbi_capture *	vbi_capture_bktr_new (const char *	dev_name,
+					      int		scanning,
+					      unsigned int *	services,
+					      int		strict,
+					      char **		errstr,
+					      vbi_bool		trace);
 
 extern int		vbi_capture_read_raw(vbi_capture *capture, void *data,
 					     double *timestamp, struct timeval *timeout);

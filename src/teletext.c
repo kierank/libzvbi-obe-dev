@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.6 2002/10/11 12:31:49 mschimek Exp $ */
+/* $Id: teletext.c,v 1.7 2002/10/22 04:42:40 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -388,7 +388,9 @@ top_index(vbi_decoder *vbi, vbi_page *pg, int subno)
 
 	ac.size = VBI_DOUBLE_SIZE;
 
-	/* NLS: Title of TOP Index page, Latin-1 only */
+	/* FIXME */
+	/* TRANSLATORS: Title of TOP Index page,
+	   for now please Latin-1 or ASCII only */
 	index_str = _("TOP Index");
 
 	for (i = 0; index_str[i]; i++) {

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.6 2002/10/11 12:31:48 mschimek Exp $ */
+/* $Id: decoder.c,v 1.7 2002/10/22 04:42:40 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -591,7 +591,7 @@ vbi_services[] = {
  * Name of the @a service, ASCII, or @c NULL if unknown.
  */
 /* XXX make return type const */
-char *
+const char *
 vbi_sliced_name(unsigned int service)
 {
 	int i;

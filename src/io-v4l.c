@@ -17,13 +17,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.7 2002/09/26 20:49:36 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l.c,v 1.8 2002/10/22 04:42:40 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
 #endif
 
 #include "vbi.h"
+#include "io.h"
 
 #ifdef ENABLE_V4L
 
@@ -42,7 +43,6 @@ static char rcsid[] = "$Id: io-v4l.c,v 1.7 2002/09/26 20:49:36 mschimek Exp $";
 #include <sys/mman.h>
 #include <pthread.h>
 
-#include "io.h"
 #include "videodev.h"
 
 /* same as ioctl(), but repeat if interrupted */
@@ -161,7 +161,7 @@ v4l_read(vbi_capture *vc, vbi_capture_buffer **raw,
 #include <sys/sysmacros.h>
 
 static void
-perm_check(char *name, vbi_bool trace)
+perm_check(const char *name, vbi_bool trace)
 {
 	struct stat st;
 	int old_errno = errno;
@@ -397,7 +397,7 @@ guess_bttv_v4l(vbi_capture_v4l *v, int *strict,
 
 static inline vbi_bool
 set_parameters(vbi_capture_v4l *v, struct vbi_format *vfmt, int *max_rate,
-	       char *dev_name, char *driver_name,
+	       const char *dev_name, char *driver_name,
 	       unsigned int *services, int strict,
 	       char **errorstr, vbi_bool trace)
 {
@@ -498,7 +498,7 @@ v4l_fd(vbi_capture *vc)
 }
 
 static vbi_capture *
-v4l_new(char *dev_name, int given_fd, int scanning,
+v4l_new(const char *dev_name, int given_fd, int scanning,
 	unsigned int *services, int strict,
 	char **errorstr, vbi_bool trace)
 {
@@ -835,7 +835,7 @@ io_error:
 }
 
 vbi_capture *
-vbi_capture_v4l_sidecar_new(char *dev_name, int video_fd,
+vbi_capture_v4l_sidecar_new(const char *dev_name, int video_fd,
 			    unsigned int *services, int strict,
 			    char **errorstr, vbi_bool trace)
 {
@@ -844,7 +844,7 @@ vbi_capture_v4l_sidecar_new(char *dev_name, int video_fd,
 }
 
 vbi_capture *
-vbi_capture_v4l_new(char *dev_name, int scanning,
+vbi_capture_v4l_new(const char *dev_name, int scanning,
 		    unsigned int *services, int strict,
 		    char **errorstr, vbi_bool trace)
 {
@@ -855,7 +855,7 @@ vbi_capture_v4l_new(char *dev_name, int scanning,
 #else
 
 vbi_capture *
-vbi_capture_v4l_sidecar_new(char *dev_name, int given_fd,
+vbi_capture_v4l_sidecar_new(const char *dev_name, int given_fd,
 			    unsigned int *services, int strict,
 			    char **errorstr, vbi_bool trace)
 {
@@ -865,7 +865,7 @@ vbi_capture_v4l_sidecar_new(char *dev_name, int given_fd,
 }
 
 vbi_capture *
-vbi_capture_v4l_new(char *dev_name, int scanning,
+vbi_capture_v4l_new(const char *dev_name, int scanning,
 		     unsigned int *services, int strict,
 		     char **errorstr, vbi_bool trace)
 {

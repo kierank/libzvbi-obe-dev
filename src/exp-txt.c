@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.9 2002/10/11 12:31:48 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.10 2002/10/22 04:42:40 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,14 +105,14 @@ color_names[] __attribute__ ((unused)) = {
 
 static const char *
 terminal[] __attribute__ ((unused)) = {
-	/* NLS: Insert terminal control codes */
+	/* TRANSLATORS: Terminal control codes menu */
 	N_("None"), N_("ANSI X3.64 / VT 100"), N_("VT 200")
 };
 
 static vbi_option_info
 text_options[] = {
 	VBI_OPTION_MENU_INITIALIZER
-	  /* NLS: Text export format menu */
+	  /* TRANSLATORS: Text export format (ASCII, Unicode, ...) menu */
 	  ("format", N_("Format"),
 	   0, formats, elements(formats), NULL),
         /* one for users, another for programs */

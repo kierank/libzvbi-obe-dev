@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: tables.c,v 1.3 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: tables.c,v 1.4 2002/10/22 04:42:40 mschimek Exp $ */
 
 #include <stdlib.h>
 
@@ -774,7 +774,7 @@ eia608_program_type[96] =
  * Static pointer to the string (don't free()), or @c NULL if
  * this code is undefined.
  */
-char *
+const char *
 vbi_rating_string(vbi_rating_auth auth, int id)
 {
 	static const char *ratings[4][8] = {
@@ -789,16 +789,16 @@ vbi_rating_string(vbi_rating_auth auth, int id)
 
 	switch (auth) {
 	case VBI_RATING_AUTH_MPAA:
-		return (char *) ratings[0][id];
+		return ratings[0][id];
 
 	case VBI_RATING_AUTH_TV_US:
-		return (char *) ratings[1][id];
+		return ratings[1][id];
 
 	case VBI_RATING_AUTH_TV_CA_EN:
-		return (char *) ratings[2][id];
+		return ratings[2][id];
 
 	case VBI_RATING_AUTH_TV_CA_FR:
-		return (char *) ratings[3][id];
+		return ratings[3][id];
 
 	default:
 		return NULL;
@@ -816,19 +816,19 @@ vbi_rating_string(vbi_rating_auth auth, int id)
  * Static pointer to the string (don't free()), or @c NULL if
  * this code is undefined.
  */
-char *
+const char *
 vbi_prog_type_string(vbi_prog_classf classf, int id)
 {
 	switch (classf) {
 	case VBI_PROG_CLASSF_EIA_608:
 		if (id < 0x20 || id > 0x7F)
 			return NULL;
-		return (char *) eia608_program_type[id - 0x20];
+		return eia608_program_type[id - 0x20];
 
 	case VBI_PROG_CLASSF_ETS_300231:
 		if (id < 0x00 || id > 0x7F)
 			return NULL;
-		return (char *) ets_program_type[0][id];
+		return ets_program_type[0][id];
 
 	default:
 		return NULL;

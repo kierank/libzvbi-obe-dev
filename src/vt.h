@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vt.h,v 1.3 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: vt.h,v 1.4 2002/10/22 04:42:40 mschimek Exp $ */
 
 #ifndef VT_H
 #define VT_H
@@ -431,7 +431,7 @@ extern void		vbi_resolve_home(vbi_page *pg, vbi_link *ld);
 
 extern void		vbi_teletext_init(vbi_decoder *vbi);
 extern void		vbi_teletext_destroy(vbi_decoder *vbi);
-extern vbi_bool		vbi_decode_teletext(vbi_decoder *vbi, unsigned char *p);
+extern vbi_bool		vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p);
 extern void		vbi_teletext_desync(vbi_decoder *vbi);
 extern void             vbi_teletext_channel_switched(vbi_decoder *vbi);
 extern vt_page *	vbi_convert_page(vbi_decoder *vbi, vt_page *vtp,

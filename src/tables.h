@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: tables.h,v 1.2 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: tables.h,v 1.3 2002/10/22 04:42:40 mschimek Exp $ */
 
 #ifndef TABLES_H
 #define TABLES_H
@@ -47,8 +47,8 @@ extern const struct vbi_cni_entry vbi_cni_table[];
  * @addtogroup Event
  * @{
  */
-extern char *		vbi_rating_string(vbi_rating_auth auth, int id);
-extern char *		vbi_prog_type_string(vbi_prog_classf classf, int id);
+extern const char *	vbi_rating_string(vbi_rating_auth auth, int id);
+extern const char *	vbi_prog_type_string(vbi_prog_classf classf, int id);
 /** @} */
 
 /* Private */

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.8 2002/10/11 12:31:48 mschimek Exp $ */
+/* $Id: caption.c,v 1.9 2002/10/22 04:42:40 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -130,7 +130,10 @@ static uint32_t hcrc[128];
 
 static void init_hcrc(void) __attribute__ ((constructor));
 
+
 /*
+http://www.fcc.gov/cgb/statid.html
+ *
  *  XDS has no unique station id as EBU (or is the call sign?)
  *  so we create a checksum over the station name.
  */
