@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.14 2003/05/17 12:59:57 tomzo Exp $";
+static char rcsid[] = "$Id: io-v4l.c,v 1.15 2003/05/24 12:17:41 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -72,7 +72,7 @@ typedef struct vbi_capture_v4l {
 	vbi_bool		do_trace;
 	signed char		has_s_fmt;
 	struct video_capability vcap;
-        char		      * p_dev_name;
+	char		      * p_dev_name;
 
 	vbi_raw_decoder		dec;
 
@@ -172,6 +172,12 @@ v4l_read(vbi_capture *vc, vbi_capture_buffer **raw,
 	vbi_capture_buffer *my_raw = v->raw_buffer;
 	struct timeval tv;
 	int r;
+
+	if (my_raw == NULL) {
+		printv("read buffer not allocated (must add services first)\n");
+		errno = EINVAL;
+		return -1;
+	}
 
 	while (v->has_select) {
 		fd_set fds;
@@ -589,7 +595,7 @@ set_parameters(vbi_capture_v4l *v, struct vbi_format *p_vfmt, int *p_max_rate,
 	if (IOCTL(v->fd, VIDIOCSVBIFMT, p_vfmt) == 0)
 		return TRUE;
 
-        /* XXX correct count */
+	/* XXX correct count */
 	p_vfmt->start[0]		= vfmt_temp.start[0];
 	p_vfmt->start[1]		= vfmt_temp.start[1];
 	if (IOCTL(v->fd, VIDIOCSVBIFMT, p_vfmt) == 0)
@@ -642,6 +648,8 @@ v4l_delete(vbi_capture *vc)
 
 	v4l_read_stop(v);
 
+	vbi_raw_decoder_destroy(&v->dec);
+
 	if (v->sliced_buffer.data)
 		free(v->sliced_buffer.data);
 
@@ -652,11 +660,22 @@ v4l_delete(vbi_capture *vc)
 }
 
 static int
-v4l_fd(vbi_capture *vc)
+v4l_get_read_fd(vbi_capture *vc)
 {
 	vbi_capture_v4l *v = PARENT(vc, vbi_capture_v4l, capture);
 
 	return v->fd;
+}
+
+static int
+v4l_get_poll_fd(vbi_capture *vc)
+{
+	vbi_capture_v4l *v = PARENT(vc, vbi_capture_v4l, capture);
+
+	if (v->has_select)
+		return v->fd;
+	else
+		return -1;
 }
 
 static void
@@ -672,7 +691,8 @@ print_vfmt(const char *s, struct vbi_format *vfmt)
 }
 
 static unsigned int
-v4l_add_services(vbi_capture *vc, vbi_bool commit,
+v4l_add_services(vbi_capture *vc,
+		  vbi_bool reset, vbi_bool commit,
 		  unsigned int services, int strict,
 		  char ** errorstr)
 {
@@ -685,7 +705,9 @@ v4l_add_services(vbi_capture *vc, vbi_bool commit,
 	/* suspend capturing, or driver will return EBUSY */
 	v4l_suspend(v);
 
-	/* May need a rewrite */
+	if (reset)
+		vbi_raw_decoder_reset(&v->dec);
+
 	if (IOCTL(v->fd, VIDIOCGVBIFMT, &vfmt) == 0) {
 		if (v->dec.start[1] > 0 && v->dec.count[1]) {
 			if (v->dec.start[1] >= 286)
@@ -844,6 +866,8 @@ v4l_add_services(vbi_capture *vc, vbi_bool commit,
 
 		printv("Nyquist check passed\n");
 
+		printv("Request decoding of services 0x%08x, strict level %d\n", services, strict);
+
 		/* those services which are already set must be checked for strictness */
 		if ( (strict > 0) && ((services & v->dec.services) != 0) ) {
 			unsigned int tmp_services;
@@ -852,9 +876,12 @@ v4l_add_services(vbi_capture *vc, vbi_bool commit,
 			services &= tmp_services | ~(services & v->dec.services);
 		}
 
-		vbi_raw_decoder_add_services(&v->dec, services & ~ v->dec.services, strict);
+		if ( (services & ~v->dec.services) != 0 )
+		        services &= vbi_raw_decoder_add_services(&v->dec,
+							         services & ~ v->dec.services,
+							         strict);
 
-		if ((v->dec.services & services) == 0) {
+		if (services == 0) {
 			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot "
 						 "capture any of "
 						 "the requested data services."),
@@ -882,7 +909,7 @@ v4l_add_services(vbi_capture *vc, vbi_bool commit,
 	printv("Will decode services 0x%08x, added 0x%0x\n", v->dec.services, services);
 
 failure:
-	return v->dec.services;
+	return services;
 }
 
 static vbi_capture *
@@ -905,13 +932,14 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		return NULL;
 	}
 
-        v->do_trace = trace;
+	v->do_trace = trace;
 	printv("Try to open v4l vbi device, libzvbi interface rev.\n"
 	       "%s", rcsid);
 
 	v->capture.parameters = v4l_parameters;
 	v->capture._delete = v4l_delete;
-	v->capture.get_fd = v4l_fd;
+	v->capture.get_fd = v4l_get_read_fd;
+	v->capture.get_poll_fd = v4l_get_poll_fd;
 	v->capture.read = v4l_read;
 	v->capture.flush = v4l_flush;
 	v->capture.add_services = v4l_add_services;
@@ -972,7 +1000,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 	printv("Hinted video standard %d, guessed %d\n",
 	       scanning, v->dec.scanning);
 
-        *services = v4l_add_services(&v->capture, TRUE,
+	*services = v4l_add_services(&v->capture, FALSE, TRUE,
 				     *services, strict, errorstr);
 
 #ifdef REQUIRE_SELECT
