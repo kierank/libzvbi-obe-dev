@@ -197,9 +197,9 @@ DOT_CLEANUP            = YES
 # Configuration::addtions related to the search engine   
 #---------------------------------------------------------------------------
 SEARCHENGINE           = YES
-CGI_NAME               = search.cgi
+CGI_NAME               = zvbi-search.cgi
 CGI_URL                = http://zapping.sourceforge.net/cgi-bin
-DOC_URL                = http://zapping.sourceforge.net/libzvbi
-DOC_ABSPATH            = /home/groups/z/za/zapping/htdocs/vbi
-BIN_ABSPATH            = /usr/bin
+DOC_URL                = http://zapping.sourceforge.net/doc/libzvbi
+DOC_ABSPATH            = /home/groups/z/za/zapping/htdocs/doc/libzvbi
+BIN_ABSPATH            = /home/groups/z/za/zapping/cgi-bin
 EXT_DOC_PATHS          = 
