@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.5 2005/01/19 04:23:53 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.6 2005/01/24 00:12:05 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>
@@ -345,6 +345,8 @@ line_address			(struct frame *		f,
 	return s;
 }
 
+#if 0 /* not used yet */
+
 static void
 discard_raw			(struct frame *		f)
 {
@@ -366,6 +368,9 @@ demux_samples			(struct frame *		f,
 	vbi_sliced *s;
 	unsigned int offset;
 	unsigned int n_pixels;
+
+	assert (0);
+	s = NULL; /* FIXME */
 
 	offset = p[3] * 256 + p[4];
 	n_pixels = p[5];
@@ -437,6 +442,8 @@ demux_samples			(struct frame *		f,
 
 	return TRUE;
 }
+
+#endif /* 0 */
 
 static int
 demux_data_units		(struct frame *		f,
