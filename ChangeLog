@@ -25,16 +25,6 @@
 
 	* it.po: Italian translation, contributed by Pino Toscano.
 
-2002-12-08	<mschimek@users.sf.net>
-
-	* Branch 0.3.
-	* src/misc.h: Added. vbi_pgno and vbi_subno are now unsigned,
-	  vbi_nuid is 64 bit with different semantics.
-	* src/cache.c, src/cache.h: Rewrote to cache multiple stations
-	  with a memory usage limit. Unref'ing pages didn't do much before,
-	  but is important now. New public functions vbi_cache_max_size
-	  and vbi_cache_max_stations.
-
 2002-11-28	<mschimek@users.sf.net>
 
 	* Release 0.2.3.

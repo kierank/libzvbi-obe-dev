@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: cc.h,v 1.4 2002/12/24 15:44:32 mschimek Exp $ */
+/* $Id: cc.h,v 1.5 2003/02/16 21:11:15 mschimek Exp $ */
 
 #ifndef CC_H
 #define CC_H
@@ -36,7 +36,7 @@ typedef struct vbi_decoder vbi_decoder;
 typedef struct {
 	int			count;
 	int			chksum;
-	char			buffer[32];		/* ASCII */
+	char			buffer[32];
 } xds_sub_packet;
 
 typedef enum {
@@ -54,7 +54,7 @@ typedef struct {
 	int			row, row1;
 	int			roll;
 
-        int			nul_ct;	/* XXX should be 'silence count' */
+	int			nul_ct;	// XXX should be 'silence count'
 	double			time;
 	unsigned char *		language;		/* Latin-1 */
 

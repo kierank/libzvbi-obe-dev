@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.11 2002/12/24 15:44:31 mschimek Exp $ */
+/* $Id: caption.c,v 1.12 2003/02/16 21:11:14 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +69,7 @@ caption_send_event(vbi_decoder *vbi, vbi_event *ev)
 #define XDS_END			15
 
 /* vbi_classify_page, program_info language */
-static const unsigned char *
+static const char *
 language[8] = {
 	"Unknown",
 	"English",
@@ -153,7 +153,7 @@ init_hcrc(void)
 }
 
 static int
-xds_strfu(char *d, const char *s, int len)
+xds_strfu(char *d, char *s, int len)
 {
 	int c, neq = 0;
 
@@ -464,7 +464,7 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			for (i = 0; i < 2; i++) {
 				int l = (buffer[i] >> 3) & 7;
 				vbi_audio_mode m = mode[i][buffer[i] & 7];
-				const unsigned char *s = ((1 << l) & 0xC1) ? NULL : language[l];
+				char *s = ((1 << l) & 0xC1) ? NULL : language[l];
 
 				if (pi->audio[i].mode != m) {
 					neq = 1; pi->audio[i].mode = m;
@@ -490,7 +490,7 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			for (i = 0; i < length; i++) {
 				int ch = buffer[i] & 7;
 				int l = (buffer[i] >> 3) & 7;
-				const unsigned char *s;
+				char *s;
 
 				ch = (ch & 1) * 4 + (ch >> 1);
 
@@ -1659,8 +1659,8 @@ vbi_caption_color_level(vbi_decoder *vbi)
 {
 	int i;
 
-	vbi_transp_colormap (vbi, vbi->cc.channel[0].pg[0].color_map,
-			     default_color_map, 8);
+	vbi_transp_colormap(vbi, vbi->cc.channel[0].pg[0].color_map,
+			    default_color_map, 8);
 
 	for (i = 1; i < 16; i++)
 		memcpy(vbi->cc.channel[i >> 1].pg[i & 1].color_map,

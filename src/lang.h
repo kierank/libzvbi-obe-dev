@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: lang.h,v 1.3 2002/12/24 15:44:32 mschimek Exp $ */
+/* $Id: lang.h,v 1.4 2003/02/16 21:11:27 mschimek Exp $ */
 
 #ifndef LANG_H
 #define LANG_H
@@ -80,7 +80,7 @@ struct vbi_font_descr {
 	vbi_character_set	G0;
 	vbi_character_set	G2;	
 	vbi_national_subset	subset;		/* applies only to LATIN_G0 */
-	const char *		label;		/* Latin-1 */
+	char *			label;		/* Latin-1 */
 };
 
 extern struct vbi_font_descr	vbi_font_descriptors[88];

@@ -1,7 +1,7 @@
 /*
  *  libzvbi - V4L2 (version 2002-10) interface
  *
- *  Copyright (C) 1999, 2000, 2001, 2002 Michael H. Schimek
+ *  Copyright (C) 2002-2003 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2k.c,v 1.4 2003/02/16 18:58:07 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2k.c,v 1.5 2003/02/16 21:11:26 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.h,v 1.6 2002/12/24 15:44:32 mschimek Exp $ */
+/* $Id: vbi.h,v 1.7 2003/02/16 21:11:31 mschimek Exp $ */
 
 #ifndef VBI_H
 #define VBI_H
@@ -53,7 +53,7 @@ struct page_clear {
 };
 
 struct vbi_decoder {
-#if 0 /* obsolete */
+#if 0 // obsolete
 	fifo			*source;
         pthread_t		mainloop_thread_id;
 	int			quit;		/* XXX */
@@ -77,7 +77,7 @@ struct vbi_decoder {
 	struct teletext		vt;
 	struct caption		cc;
 
-	cache *			cache;
+	struct cache		cache;
 
 	struct page_clear	epg_pc[2];
 
@@ -94,7 +94,7 @@ struct vbi_decoder {
 	double			wss_time;
 
 	/* Property of the vbi_push_video caller */
-#if 0 /* obsolete */
+#if 0 // obsolete
 	enum tveng_frame_pixformat
 				video_fmt;
 	int			video_width; 
@@ -199,7 +199,7 @@ extern void		vbi_decode(vbi_decoder *vbi, vbi_sliced *sliced,
 				   int lines, double timestamp);
 extern void             vbi_channel_switched(vbi_decoder *vbi, vbi_nuid nuid);
 extern vbi_page_type	vbi_classify_page(vbi_decoder *vbi, vbi_pgno pgno,
-					  vbi_subno *subno, const char **language);
+					  vbi_subno *subno, char **language);
 /** @} */
 
 /* Private */
@@ -207,10 +207,7 @@ extern vbi_page_type	vbi_classify_page(vbi_decoder *vbi, vbi_pgno pgno,
 extern pthread_once_t	vbi_init_once;
 extern void		vbi_init(void);
 
-extern void		vbi_transp_colormap	(vbi_decoder *		vbi,
-						 vbi_rgba *		d,
-						 const vbi_rgba *	s,
-						 int			entries);
+extern void		vbi_transp_colormap(vbi_decoder *vbi, vbi_rgba *d, vbi_rgba *s, int entries);
 extern void             vbi_chsw_reset(vbi_decoder *vbi, vbi_nuid nuid);
 
 extern void		vbi_asprintf(char **errstr, char *templ, ...);

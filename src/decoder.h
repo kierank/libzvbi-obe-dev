@@ -17,14 +17,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.h,v 1.4 2002/12/24 15:44:32 mschimek Exp $ */
+/* $Id: decoder.h,v 1.5 2003/02/16 21:11:17 mschimek Exp $ */
 
 #ifndef DECODER_H
 #define DECODER_H
 
-#include "../config.h"
+#ifdef HAVE_CONFIG_H
+#  include "../config.h"
+#endif
 
-#include "misc.h"
+#include "bcd.h"
 #include "sliced.h"
 
 /* Public */

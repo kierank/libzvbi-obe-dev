@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.14 2002/12/24 15:16:26 mschimek Exp $ */
+/* $Id: export.c,v 1.15 2003/02/16 21:11:19 mschimek Exp $ */
 
 #include "../config.h"
 
@@ -208,7 +208,7 @@ hexnum(char *buf, unsigned int num)
 }
 
 static char *
-adjust(char *p, const char *str, char fill, int width, int deq)
+adjust(char *p, char *str, char fill, int width, int deq)
 {
     int c, l = width - strlen(str);
 
@@ -224,7 +224,7 @@ adjust(char *p, const char *str, char fill, int width, int deq)
 
 char *
 vbi_export_mkname(vbi_export *e, char *fmt,
-	int pgno, int subno, const char *usr)
+	int pgno, int subno, char *usr)
 {
     char bbuf[1024];
     char *s = bbuf;
@@ -524,7 +524,7 @@ option_string(vbi_export *e, const char *s2)
 vbi_export *
 vbi_export_new(const char *keyword, char **errstr)
 {
-	char key[256];
+	unsigned char key[256];
 	vbi_export_class *xc;
 	vbi_export *e;
 	unsigned int keylen;
@@ -990,7 +990,7 @@ vbi_export_file(vbi_export *export, const char *name,
 		return FALSE;
 	}
 
-	export->name = name;
+	export->name = (char *) name;
 
 	success = export->_class->export(export, fp, pg);
 

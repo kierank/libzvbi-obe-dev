@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.9 2003/01/03 06:18:05 mschimek Exp $ */
+/* $Id: teletext.c,v 1.10 2003/02/16 21:11:29 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -91,7 +91,7 @@ static const vbi_color
 flof_link_col[4] = { VBI_RED, VBI_GREEN, VBI_YELLOW, VBI_CYAN };
 
 static inline void
-flof_navigation_bar(vbi_page *pg, const vt_page *vtp)
+flof_navigation_bar(vbi_page *pg, vt_page *vtp)
 {
 	vbi_char ac;
 	int n, i, k, ii;
@@ -129,7 +129,7 @@ flof_navigation_bar(vbi_page *pg, const vt_page *vtp)
 }
 
 static inline void
-flof_links(vbi_page *pg, const vt_page *vtp)
+flof_links(vbi_page *pg, vt_page *vtp)
 {
 	vbi_char *acp = pg->text + LAST_ROW;
 	int i, j, k, col = -1, start = 0;
@@ -170,95 +170,85 @@ flof_links(vbi_page *pg, const vt_page *vtp)
  *  TOP navigation
  */
 
-static void		character_set_designation (struct vbi_font_descr **	font,
-						   const vt_extension *		ext,
-						   const vt_page *		vtp);
+static void character_set_designation(struct vbi_font_descr **font,
+				      vt_extension *ext, vt_page *vtp);
 static void screen_color(vbi_page *pg, int flags, int color);
 
 static vbi_bool
 top_label(vbi_decoder *vbi, vbi_page *pg, struct vbi_font_descr *font,
 	  int index, int pgno, int foreground, int ff)
 {
-	const ait_entry *ait;
 	int column = index * 13 + 1;
+	vt_page *vtp;
 	vbi_char *acp;
+	ait_entry *ait;
 	int i, j;
 
 	acp = &pg->text[LAST_ROW + column];
 
-	for (i = 0; i < 8; i++) {
-		const vt_page *vtp;
+	for (i = 0; i < 8; i++)
+		if (vbi->vt.btt_link[i].type == 2) {
+			vtp = vbi_cache_get(vbi,
+					    vbi->vt.btt_link[i].pgno,
+					    vbi->vt.btt_link[i].subno, 0x3f7f);
+			if (!vtp) {
+				printv("top ait page %x not cached\n", vbi->vt.btt_link[i].pgno);
+				continue;
+			} else if (vtp->function != PAGE_FUNCTION_AIT) {
+				printv("no ait page %x\n", vtp->pgno);
+				continue;
+			}
 
-		if (vbi->vt.btt_link[i].type != 2)
-			continue;
+			for (ait = vtp->data.ait, j = 0; j < 46; ait++, j++)
+				if (ait->page.pgno == pgno) {
+					pg->nav_link[index].pgno = pgno;
+					pg->nav_link[index].subno = VBI_ANY_SUBNO;
 
-		vtp = vbi_cache_get (vbi, NUID0,
-				     vbi->vt.btt_link[i].pgno,
-				     vbi->vt.btt_link[i].subno, 0x3f7f,
-				     /* user access */ FALSE);
-		if (!vtp) {
-			printv ("top ait page %x not cached\n",
-				vbi->vt.btt_link[i].pgno);
-			continue;
-		} else if (vtp->function != PAGE_FUNCTION_AIT) {
-			printv ("no ait page %x\n", vtp->pgno);
-			goto end;
+					for (i = 11; i >= 0; i--)
+						if (ait->text[i] > 0x20)
+							break;
+
+					if (ff && (i <= (11 - ff))) {
+						acp += (11 - ff - i) >> 1;
+						column += (11 - ff - i) >> 1;
+
+						acp[i + 1].link = TRUE;
+						pg->nav_index[column + i + 1] = index;
+
+						acp[i + 2].unicode = 0x003E;
+						acp[i + 2].foreground = foreground;
+						acp[i + 2].link = TRUE;
+						pg->nav_index[column + i + 2] = index;
+
+						if (ff > 1) {
+							acp[i + 3].unicode = 0x003E;
+							acp[i + 3].foreground = foreground;
+							acp[i + 3].link = TRUE;
+							pg->nav_index[column + i + 3] = index;
+						}
+					} else {
+						acp += (11 - i) >> 1;
+						column += (11 - i) >> 1;
+					}
+
+					for (; i >= 0; i--) {
+						acp[i].unicode = vbi_teletext_unicode(font->G0, font->subset,
+							(ait->text[i] < 0x20) ? 0x20 : ait->text[i]);
+						acp[i].foreground = foreground;
+						acp[i].link = TRUE;
+						pg->nav_index[column + i] = index;
+					}
+
+					return TRUE;
+				}
 		}
 
-		for (ait = vtp->data.ait, j = 0; j < 46; ait++, j++)
-			if (ait->page.pgno == pgno) {
-				pg->nav_link[index].pgno = pgno;
-				pg->nav_link[index].subno = VBI_ANY_SUBNO;
-
-				for (i = 11; i >= 0; i--)
-					if (ait->text[i] > 0x20)
-						break;
-
-				if (ff && (i <= (11 - ff))) {
-					acp += (11 - ff - i) >> 1;
-					column += (11 - ff - i) >> 1;
-
-					acp[i + 1].link = TRUE;
-					pg->nav_index[column + i + 1] = index;
-
-					acp[i + 2].unicode = 0x003E;
-					acp[i + 2].foreground = foreground;
-					acp[i + 2].link = TRUE;
-					pg->nav_index[column + i + 2] = index;
-
-					if (ff > 1) {
-						acp[i + 3].unicode = 0x003E;
-						acp[i + 3].foreground = foreground;
-						acp[i + 3].link = TRUE;
-						pg->nav_index[column + i + 3] = index;
-					}
-				} else {
-					acp += (11 - i) >> 1;
-					column += (11 - i) >> 1;
-				}
-
-				for (; i >= 0; i--) {
-					acp[i].unicode = vbi_teletext_unicode
-						(font->G0, font->subset,
-						 (ait->text[i] < 0x20) ? 0x20 : ait->text[i]);
-					acp[i].foreground = foreground;
-					acp[i].link = TRUE;
-					pg->nav_index[column + i] = index;
-				}
-
-				vbi_cache_unref (vbi, vtp);
-				return TRUE;
-			}
-	end:
-		vbi_cache_unref (vbi, vtp);
-	}
-	
 	return FALSE;
 }
 
 static inline void
 top_navigation_bar(vbi_decoder *vbi, vbi_page *pg,
-		   const vt_page *vtp)
+		   vt_page *vtp)
 {
 	vbi_char ac;
 	int i, got;
@@ -301,59 +291,47 @@ top_navigation_bar(vbi_decoder *vbi, vbi_page *pg,
 		}
 }
 
-static const ait_entry *
-next_ait(vbi_decoder *vbi, int pgno, int subno, const vt_page **mvtp)
+static ait_entry *
+next_ait(vbi_decoder *vbi, int pgno, int subno, vt_page **mvtp)
 {
-	const ait_entry *ait;
-	const ait_entry *mait = NULL;
+	vt_page *vtp;
+	ait_entry *ait, *mait = NULL;
 	int mpgno = 0xFFF, msubno = 0xFFFF;
 	int i, j;
 
 	*mvtp = NULL;
 
 	for (i = 0; i < 8; i++) {
-		const vt_page *vtp, *xvtp = NULL;
+		if (vbi->vt.btt_link[i].type == 2) {
+			vtp = vbi_cache_get(vbi,
+					    vbi->vt.btt_link[i].pgno, 
+					    vbi->vt.btt_link[i].subno, 0x3f7f);
 
-		if (vbi->vt.btt_link[i].type != 2)
-			continue;
-
-		vtp = vbi_cache_get (vbi, NUID0,
-				     vbi->vt.btt_link[i].pgno, 
-				     vbi->vt.btt_link[i].subno, 0x3f7f,
-				     /* user access */ FALSE);
-		if (!vtp) {
-			printv("top ait page %x not cached\n",
-			       vbi->vt.btt_link[i].pgno);
-			continue;
-		} else if (vtp->function != PAGE_FUNCTION_AIT) {
-			printv("no ait page %x\n", vtp->pgno);
-			goto end;
-		}
-
-		for (ait = vtp->data.ait, j = 0; j < 46; ait++, j++) {
-			if (!ait->page.pgno)
-				break;
-
-			if (ait->page.pgno < pgno
-			    || (ait->page.pgno == pgno && ait->page.subno <= subno))
+			if (!vtp) {
+				printv("top ait page %x not cached\n", vbi->vt.btt_link[i].pgno);
 				continue;
-
-			if (ait->page.pgno > mpgno
-			    || (ait->page.pgno == mpgno && ait->page.subno > msubno))
+			} else if (vtp->function != PAGE_FUNCTION_AIT) {
+				printv("no ait page %x\n", vtp->pgno);
 				continue;
+			}
 
-			mait = ait;
-			mpgno = ait->page.pgno;
-			msubno = ait->page.subno;
-			xvtp = vtp;
-		}
+			for (ait = vtp->data.ait, j = 0; j < 46; ait++, j++) {
+				if (!ait->page.pgno)
+					break;
 
-		if (xvtp) {
-			vbi_cache_unref (vbi, *mvtp);
-			*mvtp = xvtp;
-		} else {
-		end:
-			vbi_cache_unref (vbi, vtp);
+				if (ait->page.pgno < pgno
+				    || (ait->page.pgno == pgno && ait->page.subno <= subno))
+					continue;
+
+				if (ait->page.pgno > mpgno
+				    || (ait->page.pgno == mpgno && ait->page.subno > msubno))
+					continue;
+
+				mait = ait;
+				mpgno = ait->page.pgno;
+				msubno = ait->page.subno;
+				*mvtp = vtp;
+			}
 		}
 	}
 
@@ -363,12 +341,12 @@ next_ait(vbi_decoder *vbi, int pgno, int subno, const vt_page **mvtp)
 static int
 top_index(vbi_decoder *vbi, vbi_page *pg, int subno)
 {
-	const vt_page *vtp;
+	vt_page *vtp;
 	vbi_char ac, *acp;
-	const ait_entry *ait;
+	ait_entry *ait;
 	int i, j, k, n, lines;
 	int xpgno, xsubno;
-	const vt_extension *ext;
+	vt_extension *ext;
 	char *index_str;
 
 	pg->vbi = vbi;
@@ -386,8 +364,7 @@ top_index(vbi_decoder *vbi, vbi_page *pg, int subno)
 
 	screen_color(pg, 0, 32 + VBI_BLUE);
 
-	vbi_transp_colormap (vbi, pg->color_map,
-			     ext->color_map, N_ELEMENTS (pg->color_map));
+	vbi_transp_colormap(vbi, pg->color_map, ext->color_map, 40);
 
 	pg->drcs_clut = ext->drcs_clut;
 
@@ -427,8 +404,6 @@ top_index(vbi_decoder *vbi, vbi_page *pg, int subno)
 	lines = 17;
 	xpgno = 0;
 	xsubno = 0;
-
-	vtp = NULL;
 
 	while ((ait = next_ait(vbi, xpgno, xsubno, &vtp))) {
 		xpgno = ait->page.pgno;
@@ -479,9 +454,6 @@ top_index(vbi_decoder *vbi, vbi_page *pg, int subno)
 
 		acp += EXT_COLUMNS;
 	}
-
-	if (vtp)
-		vbi_cache_unref (vbi, vtp);
 
 	return 1;
 }
@@ -588,7 +560,7 @@ bcd2time(int bcd)
 }
 
 static int
-pdc_method_a(vbi_page *pg, const vt_page *vtp, struct program_entry *pe)
+pdc_method_a(vbi_page *pg, vt_page *vtp, struct program_entry *pe)
 {
 	int row, column;
 	int i;
@@ -996,9 +968,7 @@ vbi_resolve_home(vbi_page *pg, vbi_link *ld)
 }
 
 static inline void
-ait_title			(vbi_decoder *		vbi,
-				 const vt_page *	vtp,
-const ait_entry *ait, char *buf)
+ait_title(vbi_decoder *vbi, vt_page *vtp, ait_entry *ait, char *buf)
 {
 	struct vbi_font_descr *font[2];
 	int i;
@@ -1036,41 +1006,31 @@ const ait_entry *ait, char *buf)
 vbi_bool
 vbi_page_title(vbi_decoder *vbi, int pgno, int subno, char *buf)
 {
-	const ait_entry *ait;
+	vt_page *vtp;
+	ait_entry *ait;
 	int i, j;
 
 	if (vbi->vt.top) {
-		for (i = 0; i < 8; i++) {
-			const vt_page *vtp;
+		for (i = 0; i < 8; i++)
+			if (vbi->vt.btt_link[i].type == 2) {
+				vtp = vbi_cache_get(vbi,
+						    vbi->vt.btt_link[i].pgno, 
+						    vbi->vt.btt_link[i].subno, 0x3f7f);
 
-			if (vbi->vt.btt_link[i].type != 2)
-				continue;
-
-			vtp = vbi_cache_get (vbi, NUID0,
-					     vbi->vt.btt_link[i].pgno, 
-					     vbi->vt.btt_link[i].subno, 0x3f7f,
-					     /* user access */ FALSE);
-			if (!vtp) {
-				printv("p/t top ait page %x not cached\n",
-				       vbi->vt.btt_link[i].pgno);
-				continue;
-			}
-
-			if (vtp->function != PAGE_FUNCTION_AIT) {
-				printv("p/t no ait page %x\n", vtp->pgno);
-				goto end;
-			}
-
-			for (ait = vtp->data.ait, j = 0; j < 46; ait++, j++)
-				if (ait->page.pgno == pgno) {
-
-					ait_title(vbi, vtp, ait, buf);
-					vbi_cache_unref (vbi, vtp);
-					return TRUE;
+				if (!vtp) {
+					printv("p/t top ait page %x not cached\n", vbi->vt.btt_link[i].pgno);
+					continue;
+				} else if (vtp->function != PAGE_FUNCTION_AIT) {
+					printv("p/t no ait page %x\n", vtp->pgno);
+					continue;
 				}
-		end:
-			vbi_cache_unref (vbi, vtp);
-		}
+
+				for (ait = vtp->data.ait, j = 0; j < 46; ait++, j++)
+					if (ait->page.pgno == pgno) {
+						ait_title(vbi, vtp, ait, buf);
+						return TRUE;
+					}
+			}
 	} else {
 		/* find a FLOF link and the corresponding label */
 	}
@@ -1083,9 +1043,8 @@ vbi_page_title(vbi_decoder *vbi, int pgno, int subno, char *buf)
  */
 
 static void
-character_set_designation	(struct vbi_font_descr **font,
-				 const vt_extension *	ext,
-				 const vt_page *	vtp)
+character_set_designation(struct vbi_font_descr **font,
+			  vt_extension *ext, vt_page *vtp)
 {
 	int i;
 
@@ -1129,18 +1088,14 @@ screen_color(vbi_page *pg, int flags, int color)
 
 #define elements(array) (sizeof(array) / sizeof(array[0]))
 
-static const vt_page *
-resolve_obj_address		(vbi_decoder *		vbi,
-				 const vt_triplet **	trip,
-				 int *			remaining,
-				 object_type		type,
-				 vbi_pgno		pgno,
-				 object_address		address,
-				 page_function		function)
-				 
+static vt_triplet *
+resolve_obj_address(vbi_decoder *vbi, object_type type,
+	int pgno, object_address address, page_function function,
+	int *remaining)
 {
 	int s1, packet, pointer;
-	const vt_page *vtp;
+	vt_page *vtp;
+	vt_triplet *trip;
 	int i;
 
 	s1 = address & 15;
@@ -1150,24 +1105,24 @@ resolve_obj_address		(vbi_decoder *		vbi,
 	printv("obj invocation, source page %03x/%04x, "
 		"pointer packet %d triplet %d\n", pgno, s1, packet + 1, i);
 
-	if (!(vtp = vbi_cache_get (vbi,
-				   NUID0, pgno, s1, 0x000F,
-				   /* user access */ FALSE))) {
+	vtp = vbi_cache_get(vbi, pgno, s1, 0x000F);
+
+	if (!vtp) {
 		printv("... page not cached\n");
-		return NULL;
+		return 0;
 	}
 
 	if (vtp->function == PAGE_FUNCTION_UNKNOWN) {
-		if (!vbi_convert_cached_page (vbi, &vtp, function)) {
+		if (!(vtp = vbi_convert_page(vbi, vtp, TRUE, function))) {
 			printv("... no g/pop page or hamming error\n");
-			goto failure;
+			return 0;
 		}
-	} else if (vtp->function == PAGE_FUNCTION_POP) {
-		/* vtp->function = function; */ /* POP/GPOP */
-	} else if (vtp->function != function) {
-		printv ("... source page wrong function %d, expected %d\n",
+	} else if (vtp->function == PAGE_FUNCTION_POP)
+		vtp->function = function;
+	else if (vtp->function != function) {
+		printv("... source page wrong function %d, expected %d\n",
 			vtp->function, function);
-		goto failure;
+		return 0;
 	}
 
 	pointer = vtp->data.pop.pointer[packet * 24 + i * 2 + ((address >> 4) & 1)];
@@ -1176,89 +1131,43 @@ resolve_obj_address		(vbi_decoder *		vbi,
 
 	if (pointer > 506) {
 		printv("... triplet pointer out of bounds (%d)\n", pointer);
-		goto failure;
+		return 0;
 	}
 
 	if (DEBUG) {
 		packet = (pointer / 13) + 3;
 
-		if (packet <= 25) {
+		if (packet <= 25)
 			printv("... object start in packet %d, triplet %d (pointer %d)\n",
 				packet, pointer % 13, pointer);
-		} else {
+		else
 			printv("... object start in packet 26/%d, triplet %d (pointer %d)\n",
 				packet - 26, pointer % 13, pointer);	
-		}
 	}
 
-	*trip = vtp->data.pop.triplet + pointer;
+	trip = vtp->data.pop.triplet + pointer;
 	*remaining = elements(vtp->data.pop.triplet) - (pointer+1);
 
 	printv("... obj def: ad 0x%02x mo 0x%04x dat %d=0x%x\n",
-		(*trip)->address, (*trip)->mode, (*trip)->data, (*trip)->data);
+		trip->address, trip->mode, trip->data, trip->data);
 
-	address ^= (*trip)->address << 7;
-	address ^= (*trip)->data;
+	address ^= trip->address << 7;
+	address ^= trip->data;
 
-	if ((*trip)->mode != (type + 0x14) || (address & 0x1FF)) {
+	if (trip->mode != (type + 0x14) || (address & 0x1FF)) {
 		printv("... no object definition\n");
-		goto failure;
+		return 0;
 	}
 
-	*trip += 1;
-
-	return vtp;
-
- failure:
-	vbi_cache_unref (vbi, vtp);
-
-	return NULL;
+	return trip + 1;
 }
-
-static inline const vt_page *
-get_drcs_page			(vbi_decoder *		vbi,
-				 vbi_nuid		nuid,
-				 vbi_pgno		pgno,
-				 vbi_subno		subno,
-				 page_function		function)
-{
-	const vt_page *vtp;
-
-	vtp = vbi_cache_get (vbi, nuid,
-			     pgno, subno, 0x000F,
-			     /* user_access */ FALSE);
-
-	if (!vtp) {
-		printv ("... page not cached\n");
-		return NULL;
-	}
-
-	if (vtp->function == PAGE_FUNCTION_UNKNOWN) {
-		if (!vbi_convert_cached_page (vbi, &vtp, function)) {
-			printv ("... no g/drcs page or hamming error\n");
-			goto failure;
-		}
-	} else if (vtp->function == PAGE_FUNCTION_DRCS) {
-		/* vtp->function = function; */ /* DRCS/GDRCS */
-	} else if (vtp->function != function) {
-		printv ("... source page wrong function %d, expected %d\n",
-			vtp->function, function);
-	}
-
-	return vtp;
-
- failure:
-	vbi_cache_unref (vbi, vtp);
-	return NULL;
-}
-
 
 /* FIXME: panels */
 
 static vbi_bool
-enhance(vbi_decoder *vbi, const vt_magazine *mag, const vt_extension *ext,
-	vbi_page *pg, const vt_page *vtp,
-	object_type type, const vt_triplet *p,
+enhance(vbi_decoder *vbi, vt_magazine *mag, vt_extension *ext,
+	vbi_page *pg, vt_page *vtp,
+	object_type type, vt_triplet *p,
 	int max_triplets,
 	int inv_row, int inv_column,
 	vbi_wst_level max_level, vbi_bool header_only,
@@ -1651,8 +1560,7 @@ enhance(vbi_decoder *vbi, const vt_magazine *mag, const vt_extension *ext,
 			{
 				int source = (p->address >> 3) & 3;
 				object_type new_type = p->mode & 3;
-				const vt_page *trip_vtp = NULL;
-				const vt_triplet *trip;
+				vt_triplet *trip;
 				int remaining_max_triplets = 0;
 
 				if (max_level < VBI_WST_LEVEL_2p5)
@@ -1723,15 +1631,11 @@ enhance(vbi_decoder *vbi, const vt_magazine *mag, const vt_extension *ext,
 
 					printv("... %s obj\n", (source == 3) ? "global" : "public");
 
-					trip_vtp = resolve_obj_address (vbi,
-						&trip,
-						&remaining_max_triplets,
-						new_type,
-						pgno,
-						(p->address << 7) + p->data,
-						function);
+					trip = resolve_obj_address(vbi, new_type, pgno,
+						(p->address << 7) + p->data, function,
+						&remaining_max_triplets);
 
-					if (!trip_vtp)
+					if (!trip)
 						return FALSE;
 				}
 
@@ -1741,15 +1645,8 @@ enhance(vbi_decoder *vbi, const vt_magazine *mag, const vt_extension *ext,
 				if (!enhance(vbi, mag, ext, pg, vtp, new_type, trip,
 					     remaining_max_triplets,
 					     row + offset_row, column + offset_column,
-					     max_level, header_only, NULL)) {
-					if (trip_vtp)
-						vbi_cache_unref (vbi, trip_vtp);
-
+					     max_level, header_only, NULL))
 					return FALSE;
-				}
-
-				if (trip_vtp)
-					vbi_cache_unref (vbi, trip_vtp);
 
 				printv("... object done\n");
 
@@ -1983,7 +1880,7 @@ enhance(vbi_decoder *vbi, const vt_magazine *mag, const vt_extension *ext,
 			{
 				int normal = p->data >> 6;
 				int offset = p->data & 0x3F;
-				const vt_page *dvtp;
+				vt_page *dvtp;
 				page_function function;
 				int pgno, page, i = 0;
 
@@ -2035,20 +1932,34 @@ enhance(vbi_decoder *vbi, const vt_magazine *mag, const vt_extension *ext,
 
 					printv("... %s drcs from page %03x/%04x\n",
 						normal ? "normal" : "global", pgno, drcs_s1[normal]);
-					if (!(dvtp = get_drcs_page (vbi, NUID0,
-								    pgno, drcs_s1[normal],
-								    function)))
+
+					dvtp = vbi_cache_get(vbi,
+						pgno, drcs_s1[normal], 0x000F);
+
+					if (!dvtp) {
+						printv("... page not cached\n");
 						return FALSE;
+					}
+
+					if (dvtp->function == PAGE_FUNCTION_UNKNOWN) {
+						if (!(dvtp = vbi_convert_page(vbi, dvtp, TRUE, function))) {
+							printv("... no g/drcs page or hamming error\n");
+							return FALSE;
+						}
+					} else if (dvtp->function == PAGE_FUNCTION_DRCS) {
+						dvtp->function = function;
+					} else if (dvtp->function != function) {
+						printv("... source page wrong function %d, expected %d\n",
+							dvtp->function, function);
+						return FALSE;
+					}
 
 					if (dvtp->data.drcs.invalid & (1ULL << offset)) {
 						printv("... invalid drcs, prob. tx error\n");
-						vbi_cache_unref (vbi, dvtp);
 						return FALSE;
 					}
 
 					pg->drcs[page] = dvtp->data.drcs.bits[0];
-
-					vbi_cache_unref (vbi, dvtp);
 				}
 
 				unicode = 0xF000 + (page << 6) + offset;
@@ -2235,11 +2146,11 @@ post_enhance(vbi_page *pg, int display_rows)
 }
 
 static inline vbi_bool
-default_object_invocation(vbi_decoder *vbi, const vt_magazine *mag,
-	const vt_extension *ext, vbi_page *pg, const vt_page *vtp,
+default_object_invocation(vbi_decoder *vbi, vt_magazine *mag,
+	vt_extension *ext, vbi_page *pg, vt_page *vtp,
 	vbi_wst_level max_level, vbi_bool header_only)
 {
-	const vt_pop_link *pop;
+	vt_pop_link *pop;
 	int i, order;
 
 	if (!(i = mag->pop_lut[vtp->pgno & 0xFF]))
@@ -2260,8 +2171,7 @@ default_object_invocation(vbi_decoder *vbi, const vt_magazine *mag,
 
 	for (i = 0; i < 2; i++) {
 		object_type type = pop->default_obj[i ^ order].type;
-		const vt_page *trip_vtp;
-		const vt_triplet *trip;
+		vt_triplet *trip;
 		int remaining_max_triplets;
 
 		if (type == OBJ_TYPE_NONE)
@@ -2269,23 +2179,17 @@ default_object_invocation(vbi_decoder *vbi, const vt_magazine *mag,
 
 		printv("default object #%d invocation, type %d\n", i ^ order, type);
 
-		trip_vtp = resolve_obj_address (vbi,
-						&trip,
-						&remaining_max_triplets,
-						type, pop->pgno,
-						pop->default_obj[i ^ order].address,
-						PAGE_FUNCTION_POP);
-		if (!trip_vtp)
+		trip = resolve_obj_address(vbi, type, pop->pgno,
+			pop->default_obj[i ^ order].address, PAGE_FUNCTION_POP,
+			&remaining_max_triplets);
+
+		if (!trip)
 			return FALSE;
 
 		if (!enhance(vbi, mag, ext, pg, vtp, type, trip,
 			     remaining_max_triplets, 0, 0, max_level,
-			     header_only, NULL)) {
-			vbi_cache_unref (vbi, trip_vtp);
+			     header_only, NULL))
 			return FALSE;
-		}
-
-		vbi_cache_unref (vbi, trip_vtp);
 	}
 
 	return TRUE;
@@ -2309,13 +2213,13 @@ default_object_invocation(vbi_decoder *vbi, const vt_magazine *mag,
  */
 int
 vbi_format_vt_page(vbi_decoder *vbi,
-		   vbi_page *pg, const vt_page *vtp,
+		   vbi_page *pg, vt_page *vtp,
 		   vbi_wst_level max_level,
 		   int display_rows, vbi_bool navigation)
 {
 	char buf[16];
-	const vt_magazine *mag;
-	const vt_extension *ext;
+	vt_magazine *mag;
+	vt_extension *ext;
 	int column, row, i;
 
 	if (vtp->function != PAGE_FUNCTION_LOP &&
@@ -2357,8 +2261,7 @@ vbi_format_vt_page(vbi_decoder *vbi,
 
 	screen_color(pg, vtp->flags, ext->def_screen_color);
 
-	vbi_transp_colormap (vbi, pg->color_map,
-			     ext->color_map, N_ELEMENTS (pg->color_map));
+	vbi_transp_colormap(vbi, pg->color_map, ext->color_map, 40);
 
 	pg->drcs_clut = ext->drcs_clut;
 
@@ -2707,8 +2610,7 @@ vbi_fetch_vt_page(vbi_decoder *vbi, vbi_page *pg,
 		  vbi_wst_level max_level,
 		  int display_rows, vbi_bool navigation)
 {
-	const vt_page *vtp;
-	vbi_bool r;
+	vt_page *vtp;
 	int row;
 
 	switch (pgno) {
@@ -2731,16 +2633,12 @@ vbi_fetch_vt_page(vbi_decoder *vbi, vbi_page *pg,
 		return TRUE;
 
 	default:
-		vtp = vbi_cache_get (vbi, NUID0,
-				     pgno, subno, ~0,
-				     /* user access */ FALSE);
+		vtp = vbi_cache_get(vbi, pgno, subno, -1);
+
 		if (!vtp)
 			return FALSE;
 
-		r = vbi_format_vt_page (vbi, pg, vtp, max_level, display_rows, navigation);
-
-		vbi_cache_unref (vbi, vtp);
-
-		return r;
+		return vbi_format_vt_page(vbi, pg, vtp,
+					  max_level, display_rows, navigation);
 	}
 }

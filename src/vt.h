@@ -21,12 +21,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vt.h,v 1.5 2002/12/24 15:44:32 mschimek Exp $ */
+/* $Id: vt.h,v 1.6 2003/02/16 21:11:32 mschimek Exp $ */
 
 #ifndef VT_H
 #define VT_H
 
-#include <string.h>
 #include <inttypes.h>
 
 #include "bcd.h"
@@ -126,32 +125,27 @@ typedef struct {
 	vbi_rgba	color_map[40];
 } vt_extension;
 
-typedef struct vt_triplet vt_triplet;
-typedef struct vt_pagenum pagenum;
-
 /**
  * @internal
  *
  * Packet X/26 code triplet according to ETS 300 706, Section 12.3.1.
  */
-struct vt_triplet {
+typedef struct vt_triplet {
 	unsigned	address : 8;
 	unsigned	mode : 8;
 	unsigned	data : 8;
-} __attribute__ ((packed));
+} __attribute__ ((packed)) vt_triplet;
 
-struct vt_pagenum {
+typedef struct vt_pagenum {
 	unsigned	type : 8;
 	unsigned	pgno : 16;
 	unsigned	subno : 16;
-} __attribute__ ((packed));
+} pagenum;
 
-typedef struct ait_entry ait_entry;
-
-struct ait_entry {
+typedef struct {
 	pagenum	        page;
 	uint8_t		text[12];
-};
+} ait_entry;
 
 typedef vt_triplet enhancement[16 * 13 + 1];
 
@@ -223,7 +217,7 @@ typedef struct vt_page {
 		struct {
 			uint16_t	pointer[96];
 			vt_triplet	triplet[39 * 13 + 1];
-/* XXX preset [+1] mode (not 0xFF) or catch */
+// XXX preset [+1] mode (not 0xFF) or catch
 		}		gpop, pop;
 		struct {
 			uint8_t			raw[26][40];
@@ -249,43 +243,35 @@ typedef struct vt_page {
  * @return Storage size required for the raw Teletext page,
  * depending on its function and the data union member used.
  **/
-static __inline__ unsigned int
-vtp_size			(const vt_page *	vtp)
+static inline int
+vtp_size(vt_page *vtp)
 {
-	const unsigned int header_size = sizeof(*vtp) - sizeof(vtp->data);
-
 	switch (vtp->function) {
 	case PAGE_FUNCTION_UNKNOWN:
 	case PAGE_FUNCTION_LOP:
 		if (vtp->data.lop.ext)
-			return header_size + sizeof(vtp->data.ext_lop);
+			return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.ext_lop);
 		else if (vtp->enh_lines)
-			return header_size + sizeof(vtp->data.enh_lop);
+			return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.enh_lop);
 		else
-			return header_size + sizeof(vtp->data.lop);
+			return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.lop);
 
 	case PAGE_FUNCTION_GPOP:
 	case PAGE_FUNCTION_POP:
-		return header_size + sizeof(vtp->data.pop);
+		return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.pop);
 
 	case PAGE_FUNCTION_GDRCS:
 	case PAGE_FUNCTION_DRCS:
-		return header_size + sizeof(vtp->data.drcs);
+		return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.drcs);
 
 	case PAGE_FUNCTION_AIT:
-		return header_size + sizeof(vtp->data.ait);
+		return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.ait);
 
 	default:
-		return sizeof(*vtp);
+		;
 	}
-}
 
-static __inline__ vt_page *
-copy_vt_page			(vt_page *		tvtp,
-				 const vt_page *	svtp)
-{
-	memcpy (tvtp, svtp, vtp_size (svtp));
-	return tvtp;
+	return sizeof(*vtp);
 }
 
 /**
@@ -398,6 +384,12 @@ struct teletext {
 		unsigned 		subcode : 16;
 	}			page_info[0x800];
 
+	/*
+	 *  Property of cache.c in the network context:
+	 *  0: page not cached, 1-3F80: highest subno + 1
+	 */
+	uint16_t		cached[0x800];
+
 	pagenum		        btt_link[15];
 	vbi_bool		top;			/* use top navigation, flof overrides */
 
@@ -442,26 +434,15 @@ extern void		vbi_teletext_destroy(vbi_decoder *vbi);
 extern vbi_bool		vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p);
 extern void		vbi_teletext_desync(vbi_decoder *vbi);
 extern void             vbi_teletext_channel_switched(vbi_decoder *vbi);
-extern vbi_bool		vbi_convert_cached_page	(vbi_decoder *		vbi,
-						 const vt_page **	vtpp,
-						 page_function		new_function);
+extern vt_page *	vbi_convert_page(vbi_decoder *vbi, vt_page *vtp,
+					 vbi_bool cached, page_function new_function);
 
 extern void		vbi_decode_vps(vbi_decoder *vbi, uint8_t *p);
 
 /* teletext.c */
 
-/* to do */
-typedef enum {
-	VBI_VT_HEADER_ONLY	= (1 << 0),
-	VBI_VT_41_COLUMNS	= (1 << 1),
-	VBI_VT_SMART_LINKS	= (1 << 2),
-	VBI_VT_VPT_LINKS	= (1 << 3),
-	VBI_VT_NAVIGATION	= (1 << 4),
-	VBI_VT_FAKE_FLOF	= (1 << 5), /* when links but no row 25 */
-} vbi_vt_flags;
-
 extern vbi_bool		vbi_format_vt_page(vbi_decoder *, vbi_page *,
-					   const vt_page *, vbi_wst_level max_level,
+					   vt_page *, vbi_wst_level max_level,
 					   int display_rows, vbi_bool navigation);
 
 #endif

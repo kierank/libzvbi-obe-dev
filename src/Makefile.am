@@ -4,13 +4,9 @@ lib_LTLIBRARIES = libzvbi.la
 
 EXTRA_DIST = wstfont2.xbm ccfont2.xbm
 
-INCLUDES  = -W -Wall -Wunused -Wfloat-equal \
-	-Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align \
-	-Wwrite-strings -Winline -Wmissing-prototypes \
-	-Wmissing-declarations
-## -Wpadded -Wconversion 
+INCLUDES  = -Wall -Wunused -Wmissing-prototypes -Wmissing-declarations
 ## -D_XOPEN_SOURCE=500 -D_BSD_SOURCE to enable pthread_rwlocks
-INCLUDES += -D_REENTRANT -D_POSIX_SOURCE
+INCLUDES += -D_REENTRANT -D_XOPEN_SOURCE=500 -D_BSD_SOURCE
 INCLUDES += $(X_CFLAGS) $(UNICODE_CFLAGS)
 
 libzvbi_la_SOURCES = \
@@ -36,7 +32,7 @@ libzvbi_la_SOURCES = \
 	hamm.c hamm.h \
 	lang.c lang.h \
 	tables.c tables.h \
-	misc.h bcd.h
+	bcd.h
 
 libzvbiincludedir = $(includedir)
 libzvbiinclude_HEADERS = libzvbi.h
@@ -46,7 +42,7 @@ libzvbi_la_LDFLAGS = -version-info $(LIBZVBI_SO_VERSION)
 
 BUILT_SOURCES = libzvbi.h
 
-LIBZVBI_HDRS = misc.h bcd.h event.h format.h lang.h export.h cache.h search.h \
+LIBZVBI_HDRS = bcd.h event.h format.h lang.h export.h cache.h search.h \
 	   sliced.h decoder.h io.h exp-gfx.h exp-txt.h cc.h vt.h tables.h \
 	   vbi.h
 

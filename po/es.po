@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
-"POT-Creation-Date: 2003-02-16 19:51+0100\n"
+"POT-Creation-Date: 2003-02-16 21:40+0100\n"
 "PO-Revision-Date: 2002-01-08 14:34+0100\n"
 "Last-Translator: Iñaki García Etxebarria <garetxe@users.sourceforge.net>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -16,7 +16,7 @@ msgstr ""
 
 #. TRANSLATORS: Title of TOP Index page,
 #. for now please Latin-1 or ASCII only
-#: src/teletext.c:417
+#: src/teletext.c:394
 msgid "TOP Index"
 msgstr "Indice TOP"
 
@@ -245,23 +245,23 @@ msgstr "Texto"
 msgid "Export this page as text file"
 msgstr "Exportar la página actual como texto"
 
-#: src/exp-vtx.c:78
+#: src/exp-vtx.c:77
 msgid "Can only export Teletext pages."
 msgstr "Sólo se pueden exportar páginas de Teletexto."
 
-#: src/exp-vtx.c:89
+#: src/exp-vtx.c:85
 msgid "Page is not cached, sorry."
 msgstr "La página no está en la caché, lo siento."
 
-#: src/exp-vtx.c:97
+#: src/exp-vtx.c:95
 msgid "Cannot export this page, not displayable."
 msgstr "No se puede exportar esta página, no se puede mostrar"
 
-#: src/exp-vtx.c:138
+#: src/exp-vtx.c:130
 msgid "VTX"
 msgstr "VTX"
 
-#: src/exp-vtx.c:139
+#: src/exp-vtx.c:131
 msgid ""
 "Export this page as VTX file, the format used by VideoteXt and vbidecode"
 msgstr ""

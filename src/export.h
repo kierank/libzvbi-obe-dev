@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.h,v 1.9 2002/12/24 15:16:26 mschimek Exp $ */
+/* $Id: export.h,v 1.10 2003/02/16 21:11:22 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -315,7 +315,7 @@ struct vbi_export {
 	 * Name of the file we are writing, @c NULL if none (may be
 	 * an anonymous FILE though).
 	 */
-	const char *		name;
+	char *			name;
 	/**
 	 * Generic option: Network name or @c NULL.
 	 */

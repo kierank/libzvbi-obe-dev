@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: event.h,v 1.7 2002/12/24 15:44:32 mschimek Exp $ */
+/* $Id: event.h,v 1.8 2003/02/16 21:11:17 mschimek Exp $ */
 
 #ifndef EVENT_H
 #define EVENT_H
@@ -57,6 +57,15 @@ typedef struct vbi_decoder vbi_decoder;
 
 /**
  * @ingroup Event
+ * @brief Unique network id (a libzvbi thing).
+ *
+ * 0 = unknown network, bit 31 reserved for preliminary nuids.
+ * Other network codes are arbitrary.
+ */
+typedef unsigned int vbi_nuid;
+
+/**
+ * @ingroup Event
  * @brief Network description.
  *
  * All strings are ISO 8859-1, local language, and @c NUL terminated.
@@ -65,8 +74,8 @@ typedef struct vbi_decoder vbi_decoder;
 typedef struct {
 	vbi_nuid		nuid;
 
-	char			name[64];		/* descriptive name */
-	char			call[40];		/* network call letters (XDS) */
+	signed char		name[64];		/* descriptive name */
+	signed char		call[40];		/* network call letters (XDS) */
 
 	int			tape_delay;		/* tape delay, minutes (XDS) */
 
@@ -170,14 +179,14 @@ typedef struct vbi_link {
 	/**
 	 * Some descriptive text, Latin-1, possibly blank.
 	 */
-	char 				name[80];
-	char				url[256];
+	signed char 			name[80];
+	signed char			url[256];
 	/**
 	 * A piece of ECMA script (Javascript), this may be
 	 * used on WebTV or SuperTeletext pages to trigger some action.
 	 * Usually blank.
 	 */
-	char				script[256];
+	signed char			script[256];
 	/**
 	 * Teletext page links (no Closed Caption counterpart) can
 	 * can actually reach across networks. That happens for example
@@ -404,7 +413,7 @@ typedef struct vbi_program_info {
 	/* 03 Program name */
 
 	/* If unknown title[0] == 0 */
-	char			title[64];	/* ASCII + '\0' */
+	signed char		title[64];	/* ASCII + '\0' */
 
 	/* 04 Program type */
 
@@ -442,7 +451,7 @@ typedef struct vbi_program_info {
 		/* If unknown mode == VBI_AUDIO_MODE_UNKNOWN */
 		vbi_audio_mode		mode;
 		/* If unknown language == NULL */
-		const unsigned char *	language; /* Latin-1 */
+		unsigned char *		language; /* Latin-1 */
 	}			audio[2];	/* primary and secondary */
 
 	/* 07 Program Caption Services */
@@ -455,7 +464,7 @@ typedef struct vbi_program_info {
 	 *  If unknown caption_services == -1, _language[] = NULL
 	 */
 	int			caption_services;
-	char *			caption_language[8]; /* Latin-1 */
+	unsigned char *		caption_language[8]; /* Latin-1 */
 
 	/* 08 Copy Generation Management System */
 
@@ -478,7 +487,7 @@ typedef struct vbi_program_info {
 	 *  8 rows of 0...32 ASCII chars + '\0',
 	 *  if unknown description[0...7][0] == 0
 	 */
-	char			description[8][33];
+	signed char		description[8][33];
 } vbi_program_info;
 
 /**

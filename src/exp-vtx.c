@@ -25,7 +25,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-vtx.c,v 1.5 2002/12/24 15:44:32 mschimek Exp $ */
+/* $Id: exp-vtx.c,v 1.6 2003/02/16 21:11:18 mschimek Exp $ */
 
 /*
  *  VTX is the file format used by VideoteXt. It stores Teletext pages in
@@ -37,7 +37,9 @@
  *  encapsulation by fetching a raw copy from the cache. :-(
  */
 
-#include "../config.h"
+#ifdef HAVE_CONFIG_H
+#  include "../config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,7 +47,6 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <assert.h>
 
 #include "vbi.h"	/* cache, vt.h */
 #include "hamm.h"	/* bit_reverse */
@@ -67,68 +68,59 @@ struct header {
  */
 
 static vbi_bool
-export				(vbi_export *		e,
-				 FILE *			fp,
-				 vbi_page *		pg)
+export(vbi_export *e, FILE *fp, vbi_page *pg)
 {
-	const vt_page *vtp;
+	vt_page page, *vtp;
 	struct header h;
 
 	if (pg->pgno < 0x100 || pg->pgno > 0x8FF) {
-		vbi_export_error_printf (e, _("Can only export Teletext pages."));
+		vbi_export_error_printf(e, _("Can only export Teletext pages."));
 		return FALSE;
 	}
 
 	/**/
 
-	assert(pg->vbi != NULL);
-
-	if (!(vtp = vbi_cache_get (pg->vbi, NUID0,
-				   pg->pgno, pg->subno, ~0,
-				   /* user access */ FALSE))) {
-		vbi_export_error_printf (e, _("Page is not cached, sorry."));
+	if (!pg->vbi
+	    || !(vtp = vbi_cache_get(pg->vbi, pg->pgno, pg->subno, -1))) {
+		vbi_export_error_printf(e, _("Page is not cached, sorry."));
 		return FALSE;
 	}
 
+ 	memcpy(&page, vtp, vtp_size(vtp));
+
 	/**/
 
-	if (vtp->function != PAGE_FUNCTION_UNKNOWN
-	    && vtp->function != PAGE_FUNCTION_LOP) {
-		vbi_export_error_printf (e, _("Cannot export this page, not displayable."));
-		goto error;
+	if (page.function != PAGE_FUNCTION_UNKNOWN
+	    && page.function != PAGE_FUNCTION_LOP) {
+		vbi_export_error_printf(e, _("Cannot export this page, not displayable."));
+		return FALSE;
 	}
 
-	memcpy (h.signature, "VTXV4", 5);
+	memcpy(h.signature, "VTXV4", 5);
 
-	h.pagenum_l = vtp->pgno & 0xFF;
-	h.pagenum_h = (vtp->pgno >> 8) & 15;
+	h.pagenum_l = page.pgno & 0xFF;
+	h.pagenum_h = (page.pgno >> 8) & 15;
 
 	h.hour = 0;
 	h.minute = 0;
 
-	h.charset = vtp->national & 7;
+	h.charset = page.national & 7;
 
-	h.wst_flags = vtp->flags & C4_ERASE_PAGE;
-	h.wst_flags |= vbi_bit_reverse[vtp->flags >> 12];
+	h.wst_flags = page.flags & C4_ERASE_PAGE;
+	h.wst_flags |= vbi_bit_reverse[page.flags >> 12];
 	h.vtx_flags = (0 << 7) | (0 << 6) | (0 << 5) | (0 << 4) | (0 << 3);
 	/* notfound, pblf (?), hamming error, virtual, seven bits */
 
-	if (fwrite (&h, sizeof (h), 1, fp) != 1)
+	if (fwrite(&h, sizeof(h), 1, fp) != 1)
 		goto write_error;
 
-	if (fwrite (vtp->data.lop.raw, 40 * 24, 1, fp) != 1)
+	if (fwrite(page.data.lop.raw, 40 * 24, 1, fp) != 1)
 		goto write_error;
-
-	vbi_cache_unref (pg->vbi, vtp);
 
 	return TRUE;
 
- write_error:
-	vbi_export_write_error (e);
-
- error:
-	vbi_cache_unref (pg->vbi, vtp);
-
+write_error:
+	vbi_export_write_error(e);
 	return FALSE;
 }
 
@@ -152,4 +144,4 @@ vbi_export_class_vtx = {
 	.export			= export
 };
 
-VBI_AUTOREG_EXPORT_MODULE (vbi_export_class_vtx)
+VBI_AUTOREG_EXPORT_MODULE(vbi_export_class_vtx)
