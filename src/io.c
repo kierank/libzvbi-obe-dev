@@ -1,7 +1,8 @@
 /*
  *  libzvbi - Device interfaces
  *
- *  Copyright (C) 2002 Michael H. Schimek
+ *  Copyright (C) 2002, 2004 Michael H. Schimek
+ *  Copyright (C) 2003-2004 Tom Zoerner
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -17,11 +18,17 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.9 2003/10/21 20:53:05 mschimek Exp $ */
+/* $Id: io.c,v 1.10 2004/06/18 14:13:08 mschimek Exp $ */
 
 #include <assert.h>
+#include <errno.h>
+#include <unistd.h>		/* close() */
+#include <sys/ioctl.h>		/* ioctl() */
 
 #include "io.h"
+
+/* Preliminary hack for tests. */
+vbi_bool vbi_capture_force_read_mode = FALSE;
 
 /**
  * @addtogroup Device Device interface
@@ -273,6 +280,18 @@ vbi_capture_fd(vbi_capture *capture)
 }
 
 /**
+ * @internal
+ */
+void
+vbi_capture_set_log_fp		(vbi_capture *		capture,
+				 FILE *			fp)
+{
+	assert (NULL != capture);
+
+	capture->sys_log_fp = fp;
+}
+
+/**
  * @param capture Initialized vbi capture context, can be @c NULL.
  * 
  * Free all resources associated with the @a capture context.
@@ -282,4 +301,317 @@ vbi_capture_delete(vbi_capture *capture)
 {
 	if (capture)
 		capture->_delete(capture);
+}
+
+
+/**
+ * @internal
+ * @brief Substract time spent waiting in select from a given max.
+ *   timeout struct.
+ *
+ * @param tv_start Actual time before select() was called.
+ * @param timeout Timeout value given to select, will be reduced by the
+ *   difference since start time.
+ *
+ * This functions is intended for functions which call select() repeatedly
+ * with a given overall timeout.  After each select() call the time already
+ * spent in waiting has to be substracted from the timeout. (Note that we
+ * don't use the Linux select(2) feature to return the time not slept in
+ * the timeout struct, because that's not portable.)
+ * 
+ * @return
+ * Modifes @a timeout value.
+ */
+/* XXX should we use Linux feature if available? */
+void
+vbi_capture_io_update_timeout	(const struct timeval *	tv_start,
+				 struct timeval *	timeout)
+{
+	struct timeval delta;
+	struct timeval tv_stop;
+        int errno_saved;
+
+        errno_saved = errno;
+	gettimeofday(&tv_stop, NULL);
+        errno = errno_saved;
+
+	/* first calculate difference between start and current time */
+	delta.tv_sec = tv_stop.tv_sec - tv_start->tv_sec;
+	if (tv_stop.tv_usec < tv_start->tv_usec) {
+		delta.tv_usec = 1000000 + tv_stop.tv_usec - tv_start->tv_usec;
+		delta.tv_sec += 1;
+	} else {
+		delta.tv_usec = tv_stop.tv_usec - tv_start->tv_usec;
+	}
+
+	assert((delta.tv_sec >= 0) && (delta.tv_usec >= 0));
+
+	/* substract delta from the given max. timeout */
+	timeout->tv_sec -= delta.tv_sec;
+	if (timeout->tv_usec < delta.tv_usec) {
+		timeout->tv_usec = 1000000 + timeout->tv_usec - delta.tv_usec;
+		timeout->tv_sec -= 1;
+	} else {
+		timeout->tv_usec -= delta.tv_usec;
+	}
+
+	/* check if timeout was underrun -> set rest timeout to zero */
+	if ( (timeout->tv_sec < 0) || (timeout->tv_usec < 0) ) {
+		timeout->tv_sec  = 0;
+		timeout->tv_usec = 0;
+	}
+}
+
+/**
+ * @internal
+ * @brief Waits in select() for the given file handle to become readable.
+ *
+ * @param fd file handle
+ * @param timeout maximum time to wait; when the function returns the
+ *   value is reduced by the time spent waiting.
+ *
+ * If the syscall is interrupted by an interrupt, the select() call
+ * is repeated with a timeout reduced by the time already spent
+ * waiting.
+ *
+ * @return
+ * See select(2).
+ */
+int
+vbi_capture_io_select( int fd, struct timeval * timeout )
+{
+	struct timeval tv_start;
+	struct timeval tv;
+	fd_set fds;
+	int ret;
+
+	while (1) {
+		FD_ZERO(&fds);
+		FD_SET(fd, &fds);
+
+		tv = *timeout; /* Linux kernel overwrites this */
+		gettimeofday(&tv_start, NULL);
+
+		ret = select(fd + 1, &fds, NULL, NULL, &tv);
+
+		vbi_capture_io_update_timeout(&tv_start, timeout);
+
+		if ((ret < 0) && (errno == EINTR))
+			continue;
+
+		return ret;
+	}
+}
+
+/* Helper functions to log the communication between the library and drivers.
+   FIXME remove fp arg, call user log function instead (0.3). */
+
+#define MODE_GUESS	0
+#define MODE_ENUM	1
+#define MODE_SET_FLAGS	2
+#define MODE_ALL_FLAGS	3
+
+/**
+ * @internal
+ * @param mode
+ *   - GUESS if value is enumeration or flags (used by structpr.pl)
+ *   - ENUM interpret value as an enumerated item
+ *   - SET_FLAGS interpret value as a set of flags, print set ones
+ *   - ALL_FLAGS interpret value as a set of flags, print all
+ * @param value
+ * @param ... vector of symbol (const char *) and value
+ *   (unsigned long) pairs.  Last parameter must be NULL.
+ */
+void
+fprint_symbolic			(FILE *			fp,
+				 int			mode,
+				 unsigned long		value,
+				 ...)
+{
+	unsigned int i, j = 0;
+	unsigned long v;
+	const char *s;
+	va_list ap;
+
+	if (mode == 0) {
+		unsigned int n[2] = { 0, 0 };
+
+		va_start (ap, value);
+
+		while ((s = va_arg (ap, const char *))) {
+			v = va_arg (ap, unsigned long);
+			n[0 == (v & (v - 1))]++; /* single bit? */
+		}
+
+		mode = MODE_ENUM + (n[1] > n[0]);
+
+		va_end (ap); 
+	}
+
+	va_start (ap, value);
+
+	for (i = 0; (s = va_arg (ap, const char *)); ++i) {
+		v = va_arg (ap, unsigned long);
+
+		if (v == value
+		    || MODE_ALL_FLAGS == mode
+		    || (MODE_SET_FLAGS == mode && 0 != (v & value))) {
+			if (j++ > 0)
+				fputc ('|', fp);
+			if (MODE_ALL_FLAGS == mode && 0 == (v & value))
+				fputc ('!', fp);
+			fputs (s, fp);
+			value &= ~v;
+		}
+	}
+
+	if (0 == value && 0 == j)
+		fputc ('0', fp);
+	else if (value)
+		fprintf (fp, "%s0x%lx", j ? "|" : "", value);
+
+	va_end (ap); 
+}
+
+void
+fprint_unknown_ioctl		(FILE *			fp,
+				 unsigned int		cmd,
+				 void *			arg)
+{
+	fprintf (fp, "<unknown cmd 0x%x %c%c arg=%p size=%u>",
+		 cmd, IOCTL_READ (cmd) ? 'R' : '-',
+		 IOCTL_WRITE (cmd) ? 'W' : '-',
+		 arg, IOCTL_ARG_SIZE (cmd)); 
+}
+
+/**
+ * @internal
+ * Drop-in for open(). Logs the request on fp if given.
+ */
+int
+device_open			(FILE *			fp,
+				 const char *		pathname,
+				 int			flags,
+				 mode_t			mode)
+{
+	int fd;
+
+	fd = open (pathname, flags, mode);
+
+	if (fp)	{
+		int saved_errno;
+
+		saved_errno = errno;
+
+		fprintf (fp, "%d = open (\"%s\", ", fd, pathname);
+		fprint_symbolic (fp, MODE_SET_FLAGS, flags,
+				 "RDONLY", O_RDONLY,
+				 "WRONLY", O_WRONLY,
+				 "RDWR", O_RDWR,
+				 "CREAT", O_CREAT,
+				 "EXCL", O_EXCL,
+				 "TRUNC", O_TRUNC,
+				 "APPEND", O_APPEND,
+				 "NONBLOCK", O_NONBLOCK,
+				 0);
+		fprintf (fp, ", 0%o)", mode);
+
+		if (-1 == fd) {
+			fprintf (fp, ", errno=%d, %s\n",
+				 saved_errno, strerror (saved_errno));
+		} else {
+			fputc ('\n', fp);
+		}
+
+		errno = saved_errno;
+	}
+
+	return fd;
+}
+
+/**
+ * @internal
+ * Drop-in for close(). Logs the request on fp if given.
+ */
+int
+device_close			(FILE *			fp,
+				 int			fd)
+{
+	int err;
+
+	err = close (fd);
+
+	if (err) {
+		int saved_errno;
+
+		saved_errno = errno;
+
+		if (-1 == err) {
+			fprintf (fp, "%d = close (%d), errno=%d, %s\n",
+				 err, fd, saved_errno, strerror (saved_errno));
+		} else {
+			fprintf (fp, "%d = close (%d)\n", err, fd);
+		}
+
+		errno = saved_errno;
+	}
+
+	return err;
+}
+
+/**
+ * @internal
+ * Drop-in for ioctl(). Logs the request on fp if given. You must supply
+ * a function printing the arguments, structpr.pl generates one for you
+ * from a header file.
+ */
+int
+device_ioctl			(FILE *			fp,
+				 ioctl_log_fn *		log_fn,
+				 int			fd,
+				 unsigned int		cmd,
+				 void *			arg)
+{
+	int buf[256];
+	int err;
+
+	if (fp && IOCTL_WRITE (cmd)) {
+		assert (sizeof (buf) >= IOCTL_ARG_SIZE (cmd));
+		memcpy (buf, arg, IOCTL_ARG_SIZE (cmd));
+	}
+
+	do err = ioctl (fd, cmd, arg);
+	while (-1 == err && EINTR == errno);
+
+	if (fp && log_fn) {
+		int saved_errno;
+
+		saved_errno = errno;
+
+		fprintf (fp, "%d = ", err);
+
+		log_fn (fp, cmd, 0, NULL);
+
+		fputc ('(', fp);
+      
+		if (IOCTL_WRITE (cmd))
+			log_fn (fp, cmd, IOCTL_READ (cmd) ? 2 : 0, &buf);
+
+		if (-1 == err) {
+			fprintf (fp, "), errno = %d, %s\n",
+				 errno, strerror (errno));
+		} else {
+			if (IOCTL_READ (cmd)) {
+				fputs (") -> (", fp);
+				log_fn (fp, cmd, IOCTL_WRITE (cmd) ?
+					1 : 0, arg);
+			}
+
+			fputs (")\n", fp);
+		}
+
+		errno = saved_errno;
+	}
+
+	return err;
 }
