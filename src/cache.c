@@ -83,9 +83,10 @@ for ((p) = PARENT((l)->head, typeof(*(p)), _node_);			\
  *
  * Does not free the list object or any nodes.
  */
-static inline void
+static __inline__ void
 destroy_list(list *l)
 {
+	l = l;
 }
 
 /**
