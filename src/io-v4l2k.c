@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.21 2004/10/05 23:46:28 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.22 2004/10/25 16:56:29 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -160,9 +160,9 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 	if (-1 == xioctl (v, VIDIOC_REQBUFS, &vrbuf)) {
 		vbi_asprintf (errorstr,
 			      _("Cannot request streaming i/o buffers "
-				"from %s (%s): %d, %s."),
+				"from %s (%s): %s."),
 			      v->p_dev_name, v->vcap.card,
-			      errno, strerror(errno));
+			      strerror(errno));
 		guess = _("Possibly a driver bug.");
 		goto failure;
 	}
@@ -195,10 +195,9 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 		if (-1 == xioctl (v, VIDIOC_QUERYBUF, &vbuf)) {
 			vbi_asprintf (errorstr,
 				      _("Querying streaming i/o buffer #%d "
-					"from %s (%s) failed: %d, %s."),
+					"from %s (%s) failed: %s."),
 				      v->num_raw_buffers, v->p_dev_name,
-				      v->vcap.card,
-				      errno, strerror(errno));
+				      v->vcap.card, strerror(errno));
 			goto mmap_failure;
 		}
 
@@ -229,9 +228,9 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 			}
 
 			vbi_asprintf(errorstr, _("Memory mapping streaming i/o buffer #%d "
-					       "from %s (%s) failed: %d, %s."),
+					       "from %s (%s) failed: %s."),
 				     v->num_raw_buffers, v->p_dev_name, v->vcap.card,
-				     errno, strerror(errno));
+				     strerror(errno));
 			goto mmap_failure;
 		} else {
 			unsigned int i, s;
@@ -254,10 +253,9 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 		if (-1 == xioctl (v, VIDIOC_QBUF, &vbuf)) {
 			vbi_asprintf (errorstr,
 				      _("Cannot enqueue streaming i/o buffer "
-					"#%d to %s (%s): %d, %s."),
+					"#%d to %s (%s): %s."),
 				      v->num_raw_buffers, v->p_dev_name,
-				      v->vcap.card,
-				      errno, strerror(errno));
+				      v->vcap.card, strerror(errno));
 			guess = _("Probably a driver bug.");
 			goto mmap_failure;
 		}
@@ -693,9 +691,9 @@ v4l2_get_videostd(vbi_capture_v4l2 *v, char ** errorstr)
 	if (-1 == xioctl (v, VIDIOC_G_STD, &stdid)) {
 		vbi_asprintf (errorstr,
 			      _("Cannot query current videostandard "
-				"of %s (%s): %d, %s."),
+				"of %s (%s): %s."),
 			      v->p_dev_name, v->vcap.card,
-			      errno, strerror(errno));
+			      strerror(errno));
 		guess = _("Probably a driver bug.");
 		goto failure;
 	}
@@ -709,8 +707,8 @@ v4l2_get_videostd(vbi_capture_v4l2 *v, char ** errorstr)
 	}
 
 	if (-1 == r) {
-		vbi_asprintf(errorstr, _("Cannot query current videostandard of %s (%s): %d, %s."),
-			     v->p_dev_name, v->vcap.card, errno, strerror(errno));
+		vbi_asprintf(errorstr, _("Cannot query current videostandard of %s (%s): %s."),
+			     v->p_dev_name, v->vcap.card, strerror(errno));
 		guess = _("Probably a driver bug.");
 		goto failure;
 	}
@@ -801,8 +799,8 @@ v4l2_update_services(vbi_capture *vc,
 	if (-1 == g_fmt) {
 		printv("failed\n");
 #ifdef REQUIRE_G_FMT
-		vbi_asprintf(errorstr, _("Cannot query current vbi parameters of %s (%s): %d, %s."),
-			     v->p_dev_name, v->vcap.card, errno, strerror(errno));
+		vbi_asprintf(errorstr, _("Cannot query current vbi parameters of %s (%s): %s."),
+			     v->p_dev_name, v->vcap.card, strerror(errno));
 		goto io_error;
 #else
 		strict = MAX(0, strict);

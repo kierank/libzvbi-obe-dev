@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.17 2003/10/21 20:53:05 mschimek Exp $ */
+/* $Id: export.c,v 1.18 2004/10/25 16:56:28 mschimek Exp $ */
 
 #include "../config.h"
 
@@ -37,7 +37,7 @@
 #include "export.h"
 #include "vbi.h" /* vbi_asprintf */
 
-const char _zvbi_intl_domainname[] = PACKAGE;
+extern const char _zvbi_intl_domainname[];
 
 /**
  * @addtogroup Export Exporting formatted Teletext and Closed Caption pages
@@ -986,8 +986,9 @@ vbi_export_file(vbi_export *export, const char *name,
 	reset_error(export);
 
 	if (!(fp = fopen(name, "w"))) {
-		vbi_export_error_printf(export, _("Cannot create file '%s': Error %d, %s."),
-					name, errno, strerror(errno));
+		vbi_export_error_printf(export,
+					_("Cannot create file '%s': %s."),
+					name, strerror(errno));
 		return FALSE;
 	}
 

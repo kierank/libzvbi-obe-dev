@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: explist.c,v 1.7 2002/11/30 02:37:18 mschimek Exp $ */
+/* $Id: explist.c,v 1.8 2004/10/25 16:56:30 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -35,7 +35,7 @@
 #endif
 #include <locale.h>
 
-#include <libzvbi.h>
+#include "src/libzvbi.h"
 
 #ifndef _
 #ifdef ENABLE_NLS

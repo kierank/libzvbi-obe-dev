@@ -1,8 +1,8 @@
 /* Copyright (C) 2002 Gerd Knorr */
 
-/* $Id: x11font.c,v 1.2 2002/10/22 04:43:46 mschimek Exp $ */
+/* $Id: x11font.c,v 1.3 2004/10/25 16:56:26 mschimek Exp $ */
 
-#include "exp-gfx.c"
+#include "src/exp-gfx.c"
 
 static void print_head(FILE *fp,
 		       char *foundry, char *name, char *slant,

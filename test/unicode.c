@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: unicode.c,v 1.4 2002/10/22 04:43:18 mschimek Exp $ */
+/* $Id: unicode.c,v 1.5 2004/10/25 16:56:30 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <libzvbi.h>
+#include "src/libzvbi.h"
 
 /* Note these are private functions, used here for testing only. */
 

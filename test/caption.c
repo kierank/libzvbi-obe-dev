@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.5 2002/07/16 00:13:57 mschimek Exp $ */
+/* $Id: caption.c,v 1.6 2004/10/25 16:56:30 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -35,9 +35,8 @@
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <X11/Xutil.h>
-//#include <X11/xpm.h>
 
-#include <libzvbi.h>
+#include "src/libzvbi.h"
 
 #define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
 

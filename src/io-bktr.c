@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-bktr.c,v 1.7 2004/10/05 23:46:28 mschimek Exp $";
+"$Id: io-bktr.c,v 1.8 2004/10/25 16:56:29 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -206,8 +206,8 @@ vbi_capture_bktr_new		(const char *		dev_name,
 
 	v->fd = device_open (v->capture.sys_log_fp, dev_name, O_RDONLY, 0);
 	if (-1 == v->fd) {
-		vbi_asprintf(errstr, _("Cannot open '%s': %d, %s."),
-			     dev_name, errno, strerror(errno));
+		vbi_asprintf(errstr, _("Cannot open '%s': %s."),
+			     dev_name, strerror(errno));
 		goto io_error;
 	}
 

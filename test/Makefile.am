@@ -23,7 +23,8 @@ cpptest_SOURCES = cpptest.cc
 
 EXTRA_DIST = $(TESTS) README uclist sim.c
 
-INCLUDES = -I$(top_srcdir)/src $(COMMON_INCLUDES) $(X_CFLAGS) \
-	-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations
+INCLUDES = -I$(top_srcdir) $(COMMON_INCLUDES) $(X_CFLAGS) \
+	-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations \
+	-D_REENTRANT -D_GNU_SOURCE
 
 LDADD = $(top_builddir)/src/.libs/libzvbi.a $(LIBS) $(X_LIBS)

@@ -1,3 +1,27 @@
+2004-10-25    <mschimek@users.sf.net>
+
+	* po/POTFILES.in: Added proxy-client.c, proxy-msg.c.
+	* src/proxy-client.c, src/proxy-msg.c: Massaged error messages.
+	* daemon/Makefile.am: Added zvbi-chains target.
+	* src/Makefile.am: Added libzvbi-chains target.
+	* daemon/chains.c, src/chains.c: Added from proxy-18.bak.
+	* daemon/chains.c (main): Replaced sprintf by asprintf and fixed
+	  p_env3.
+	* configure.in: Added ioctl request type check for chains.
+	* test/README: DVB capture update.
+	* test/capture.c: Extended to create DVB streams.
+	* src/Makefile.am (libzvbi_la_SOURCES): Added dvb.h, dvb_mux.c,
+	  dvb_mux.h.
+	* src/dvb.h: New definitions for DVB-VBI mux/demux.
+	* src/dvb_mux.c, src/dvb_mux.h: Added, experimental.
+	* src/sliced.h: Added vbi_service_set.
+	* configure.in: Added strndup, strlcpy, asprintf checks.
+	* src/misc.h: Added strndup() and asprintf() fallback macros.
+	* src/Makefile.am (libzvbi_la_SOURCES): Added misc.c.
+	* src/vbi.c, src/vbi.h (vbi_asprintf), src/misc.c (_vbi_asprintf):
+	  Moved asprintf() replacement to misc.c and improved the
+	  implementation.
+
 2004-10-24    <tomzo@users.sf.net>
 
 	* daemon/proxyd.c: Added handling of norm changes;

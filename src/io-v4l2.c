@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2.c,v 1.28 2004/10/05 23:46:28 mschimek Exp $";
+"$Id: io-v4l2.c,v 1.29 2004/10/25 16:56:29 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -126,8 +126,9 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 	printv ("Opened %s\n", dev_name);
 
 	if (-1 == xioctl (v, VIDIOC_QUERYCAP, &v->vcap)) {
-		vbi_asprintf (errorstr, _("Cannot identify '%s': %d, %s."),
-			      dev_name, errno, strerror (errno));
+		/* TRANSLATORS: Cannot identify '/dev/some'. */
+		vbi_asprintf (errorstr, _("Cannot identify '%s': %s."),
+			      dev_name, strerror (errno));
 		guess = _("Probably not a v4l2 device.");
 
 		v4l2_delete (&v->capture);

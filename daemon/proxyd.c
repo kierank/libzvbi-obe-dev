@@ -37,6 +37,9 @@
  *
  *
  *  $Log: proxyd.c,v $
+ *  Revision 1.11  2004/10/25 16:56:26  mschimek
+ *  *** empty log message ***
+ *
  *  Revision 1.10  2004/10/24 18:15:33  tomzo
  *  - added handling of norm changes
  *  - adapted for interface change to proxy-msg.c (split socket read/write func)
@@ -44,11 +47,9 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxyd.c,v 1.10 2004/10/24 18:15:33 tomzo Exp $";
+static const char rcsid[] = "$Id: proxyd.c,v 1.11 2004/10/25 16:56:26 mschimek Exp $";
 
-#ifdef HAVE_CONFIG_H
-#  include "../config.h"
-#endif
+#include "config.h"
 
 #ifdef ENABLE_PROXY
 
@@ -67,14 +68,14 @@ static const char rcsid[] = "$Id: proxyd.c,v 1.10 2004/10/24 18:15:33 tomzo Exp 
 #include <assert.h>
 #include <pthread.h>
 
-#include "vbi.h"
-#include "io.h"
-#include "bcd.h"
-#include "proxy-msg.h"
+#include "src/vbi.h"
+#include "src/io.h"
+#include "src/bcd.h"
+#include "src/proxy-msg.h"
 
 #ifdef ENABLE_V4L2
 #include <asm/types.h>
-#include "videodev2k.h"    /* for setting device priority */
+#include "src/videodev2k.h"    /* for setting device priority */
 #endif
 
 #define DBG_MSG 1
@@ -1142,13 +1143,13 @@ static vbi_bool vbi_proxyd_take_service_req( PROXY_CLNT * req,
       else if ( ((*VBI_GET_SERVICE_P(req, new_strict) & new_services) == 0) &&
                 (new_services != 0) )
       {
-         strncpy(errormsg, _("Sorry, proxy cannot capture any of the requested data services."),
+         strncpy(errormsg, "Sorry, proxy cannot capture any of the requested data services.",
                  VBIPROXY_ERROR_STR_MAX_LENGTH);
          errormsg[VBIPROXY_ERROR_STR_MAX_LENGTH - 1] = 0;
       }
       else
       {
-         strncpy(errormsg, _("Internal error in service update."), VBIPROXY_ERROR_STR_MAX_LENGTH);
+         strncpy(errormsg, "Internal error in service update.", VBIPROXY_ERROR_STR_MAX_LENGTH);
          errormsg[VBIPROXY_ERROR_STR_MAX_LENGTH - 1] = 0;
       }
       result = FALSE;
@@ -2051,7 +2052,7 @@ static vbi_bool vbi_proxyd_take_message( PROXY_CLNT *req, VBIPROXY_MSG * pMsg )
             {  /* client uses incompatible protocol version */
                vbi_proxy_msg_fill_magics(&req->msg_buf.body.connect_rej.magics);
                strncpy(req->msg_buf.body.connect_rej.errorstr,
-                       _("Incompatible proxy protocol version"), VBIPROXY_ERROR_STR_MAX_LENGTH);
+                       "Incompatible proxy protocol version", VBIPROXY_ERROR_STR_MAX_LENGTH);
                req->msg_buf.body.connect_rej.errorstr[VBIPROXY_ERROR_STR_MAX_LENGTH - 1] = 0;
                vbi_proxy_msg_write(&req->io, MSG_TYPE_CONNECT_REJ,
                                    sizeof(req->msg_buf.body.connect_rej),
@@ -2876,13 +2877,13 @@ static void vbi_proxyd_kill_daemon( void )
    if ( (vbi_proxyd_check_msg(&msg_buf, FALSE) == FALSE) ||
         (msg_buf.head.type != MSG_TYPE_DAEMON_PID_CNF) )
    {
-      vbi_asprintf(&p_errorstr, "%s", _("Proxy protocol error"));
+      vbi_asprintf(&p_errorstr, "%s", "Proxy protocol error");
       goto failure;
    }
 
    if (kill(msg_buf.body.daemon_pid_cnf.pid, SIGTERM) != 0)
    {
-      vbi_asprintf(&p_errorstr, _("Failed to kill the daemon process (pid %d): %s"),
+      vbi_asprintf(&p_errorstr, "Failed to kill the daemon process (pid %d): %s",
                                 msg_buf.body.daemon_pid_cnf.pid, strerror(errno));
       goto failure;
    }
@@ -2893,7 +2894,7 @@ static void vbi_proxyd_kill_daemon( void )
 
 io_error:
    if (p_errorstr == NULL)
-      vbi_asprintf(&p_errorstr, _("Lost connection to proxy (I/O error)"));
+      vbi_asprintf(&p_errorstr, "Lost connection to proxy (I/O error)");
 
 failure:
    /* failed to establish a connection to the server */

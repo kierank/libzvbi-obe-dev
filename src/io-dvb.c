@@ -22,8 +22,6 @@
 
 #ifdef ENABLE_DVB
 
-#define _GNU_SOURCE /* for memmem() */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
