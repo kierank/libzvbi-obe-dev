@@ -1,16 +1,17 @@
-# Zapping German translation -*- coding: latin-1 -*-
-# Copyright (C) 2000-2001 Michael H. Schimek <mschimek@users.sf.net>
+# Libzvbi German translation -*- coding: latin-1 -*-
+# Copyright (C) 2000-2002 Michael H. Schimek <mschimek@users.sf.net>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Zapping 0.5\n"
-"POT-Creation-Date: 2002-09-26 22:07+0200\n"
+"Project-Id-Version: zvbi 0.2.2\n"
+"POT-Creation-Date: 2002-09-29 17:38+0200\n"
 "PO-Revision-Date: 2002-03-31 22:50+0200\n"
-"Last-Translator: Michael H. Schimek <mschimek@users.sourceforge.net>\n"
+"Last-Translator: Michael H. Schimek <mschimek@users.sf.net>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1\n"
 
 #: src/exp-gfx.c:731
 msgid "Correct aspect ratio"

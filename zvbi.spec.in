@@ -40,10 +40,12 @@ rm -rf %{buildroot}
 %doc AUTHORS BUGS COPYING ChangeLog NEWS README TODO doc/html
 %{_libdir}/libzvbi*
 %{_includedir}/libzvbi.h
+%{_prefix}/share/locale/*/*/*
 
 %changelog
-* Thu Sep 26 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
+* Thu Sep 29 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
 - Had to make unrelocatable: bindtextdomain locale path compiled in.
+- Earlier versions missed the locale files. Oops.
 
 * Tue Jul 18 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
 - Removed gettext requirement

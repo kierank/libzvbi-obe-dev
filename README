@@ -24,8 +24,9 @@
   --------------------------------------------------------------------------
 
   VBI stands for Vertical Blanking Interval, a gap between the image
-  data transmitted in an analog video signal. This gap is used to
-  transmit data for various data services like Teletext and Closed Caption.
+  data transmitted in an analog video signal. Actually this gap is not
+  empty, it is used to transmit data for various services like
+  Teletext and Closed Caption.
 
   The zvbi library provides routines to read from raw VBI sampling
   devices, to demodulate raw to sliced VBI data, and to interpret

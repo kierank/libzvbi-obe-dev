@@ -1,6 +1,7 @@
-TESTS = unicode	glyph explist caption export osc capture
+# We have no automatic tests (make check) yet
+TESTS = 
 
-noinst_PROGRAMS = $(TESTS)
+noinst_PROGRAMS = unicode glyph explist caption export osc capture
 
 EXTRA_DIST = README uclist sim.c
 
