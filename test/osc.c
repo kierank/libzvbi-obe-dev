@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.14 2004/10/25 16:56:30 mschimek Exp $ */
+/* $Id: osc.c,v 1.15 2004/12/13 07:13:45 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -36,6 +36,9 @@
 #endif
 
 #include "src/libzvbi.h"
+
+#define TEST 1
+#include "src/raw_decoder.h"	/* _vbi_service_table[] */
 
 #ifndef X_DISPLAY_MISSING
 
@@ -68,28 +71,6 @@ int			depth;
 int			draw_row, draw_offset;
 int			draw_count = -1;
 int                     cur_x, cur_y;
-
-/* Copied from ../src/decoder.c */
-struct vbi_service_par {
-	unsigned int	id;		/* VBI_SLICED_ */
-	char *		label;
-	int		first[2];	/* scanning lines (ITU-R), max. distribution; */
-	int		last[2];	/*  zero: no data from this field, requires field sync */
-	int		offset;		/* leading edge hsync to leading edge first CRI one bit
-					    half amplitude points, nanoseconds */
-	int		cri_rate;	/* Hz */
-	int		bit_rate;	/* Hz */
-	int		scanning;	/* scanning system: 525 (FV = 59.94 Hz, FH = 15734 Hz),
-							    625 (FV = 50 Hz, FH = 15625 Hz) */
-	unsigned int	cri_frc;	/* Clock Run In and FRaming Code, LSB last txed bit of FRC */
-	unsigned int	cri_mask;	/* cri bits significant for identification, */
-	char		cri_bits;
-	char		frc_bits;	/* cri_bits at cri_rate, frc_bits at bit_rate */
-	short		payload;	/* in bits */
-	char		modulation;	/* payload modulation */
-};
-extern struct vbi_service_par vbi_services[];
-
 
 #include "sim.c"
 
@@ -305,13 +286,13 @@ draw(unsigned char *raw)
 			break;
 	if (i < slines) {
 	   int svc_idx=0;
-	   while (vbi_services[svc_idx].id !=0 && 
-		  vbi_services[svc_idx].id != sliced[i].id)
+	   while (_vbi_service_table[svc_idx].id !=0 && 
+		  _vbi_service_table[svc_idx].id != sliced[i].id)
 	     svc_idx++;
 	   
-	   if (vbi_services[svc_idx].id == sliced[i].id) {
-	      struct vbi_service_par service;
-	      service = vbi_services[svc_idx];
+	   if (_vbi_service_table[svc_idx].id == sliced[i].id) {
+	      struct _vbi_service_par service;
+	      service = _vbi_service_table[svc_idx];
 	      
 	      xti.nchars += snprintf(buf + xti.nchars, 255 - xti.nchars,
 				     " %s (%x) +%dns",
