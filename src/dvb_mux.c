@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_mux.c,v 1.1 2004/10/25 16:54:11 mschimek Exp $ */
+/* $Id: dvb_mux.c,v 1.2 2004/10/28 03:27:32 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>		/* abort() */
@@ -27,6 +27,10 @@
 #include "dvb_mux.h"
 #include "hamm.h"		/* vbi_rev8() */
 #include "misc.h"		/* MIN(), CLEAR() */
+
+#ifndef DVB_MUX_LOG
+#define DVB_MUX_LOG 0
+#endif
 
 #define vbi_rev8(n) vbi_bit_reverse[n]
 
@@ -152,9 +156,10 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 		} else if (s->id & (VBI_SLICED_WSS_CPR1204)) {
 			length = 2 + 1 + 3;
 		} else {
-			if (0)
-				fprintf (stderr, "Skipping sliced id "
-					 "0x%08x\n", s->id);
+			if (DVB_MUX_LOG)
+				fprintf (stderr,
+					 "%s: Skipping sliced id 0x%08x\n",
+					 __FUNCTION__, s->id);
 			goto skip;
 		}
 
@@ -175,10 +180,11 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			/* Unknown line (0) or first field. */
 			p[2] = (3 << 6) + (1 << 5) + s->line;
 		} else if (s->line < f2start) {
-			if (0)
-				fprintf (stderr, "Sliced line %u exceeds "
-					 "limit %u ... %u, %u ... %u\n",
-					 s->line, 0, 31,
+			if (DVB_MUX_LOG)
+				fprintf (stderr,
+					 "%s: Sliced line %u exceeds limit "
+					 "%u ... %u, %u ... %u\n",
+					 __FUNCTION__, s->line, 0, 31,
 					 f2start, f2start + 31);
 			goto skip;
 		} else if (s->line < f2start + 32) {
@@ -186,10 +192,11 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			p[2] = (3 << 6) + (0 << 5)
 				+ s->line - f2start;
 		} else {
-			if (0)
-				fprintf (stderr, "Sliced line %u exceeds "
-					 "limit %u ... %u, %u ... %u\n",
-					 s->line, 0, 31,
+			if (DVB_MUX_LOG)
+				fprintf (stderr,
+					 "%s: Sliced line %u exceeds limit "
+					 "%u ... %u, %u ... %u\n",
+					 __FUNCTION__, s->line, 0, 31,
 					 f2start, f2start + 31);
 			goto skip;
 		}
@@ -248,9 +255,9 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			p[4] = vbi_rev8 (s->data[1]);
 			p[5] = vbi_rev8 (s->data[2]) | 0xF;
 		} else {
-			if (0)
-				fprintf (stderr, "Skipping sliced id "
-					 "0x%08x\n", s->id);
+			if (DVB_MUX_LOG)
+				fprintf (stderr, "%s: Skipping sliced id "
+					 "0x%08x\n", __FUNCTION__, s->id);
 			goto skip;
 		}
 
@@ -499,9 +506,9 @@ struct _vbi_dvb_mux {
 void
 _vbi_dvb_mux_reset		(vbi_dvb_mux *		mx)
 {
-	/* Nothing to do at this time. */
+	assert (NULL != mx);
 
-	mx = mx;
+	/* Nothing to do at this time. */
 }
 
 static void
@@ -612,7 +619,11 @@ _vbi_dvb_mux_mux		(vbi_dvb_mux *		mx,
 void
 _vbi_dvb_mux_delete		(vbi_dvb_mux *		mx)
 {
-	CLEAR (mx);
+	if (NULL == mx)
+		return;
+
+	CLEAR (*mx);
+
 	free (mx);
 }
 
@@ -645,34 +656,34 @@ _vbi_dvb_mux_pes_new		(unsigned int		data_identifier,
 
 	/* packet_start_code_prefix [24] = 0x000001,
 	   stream_id [8] = PRIVATE_STREAM_1 */
-	mx->packet[4] = 0x00;
-	mx->packet[5] = 0x00;
-	mx->packet[6] = 0x01;
-	mx->packet[7] = PRIVATE_STREAM_1;
+	mx->packet[4 + 0] = 0x00;
+	mx->packet[4 + 1] = 0x00;
+	mx->packet[4 + 2] = 0x01;
+	mx->packet[4 + 3] = PRIVATE_STREAM_1;
 
 	packet_length = packet_size - 6;
 
 	/* packet_length[16] */
-	mx->packet[8] = packet_length >> 8;
-	mx->packet[9] = packet_length;
+	mx->packet[4 + 4] = packet_length >> 8;
+	mx->packet[4 + 5] = packet_length;
 
 	/* '10', PES_scrambling_control [2] == 0 (not scrambled), PES_priority,
 	   data_alignment_indicator = 1 (EN 300 472 section 4.2),
 	   copyright = 0 (undefined), original_or_copy = 0 (copy) */
-	mx->packet[10] = (2 << 6) + (1 << 2);
+	mx->packet[4 + 6] = (2 << 6) + (1 << 2);
 
 	/* PTS_DTS_flags [2] = 0 (neither), ESCR_flag, ES_rate_flag,
 	   DSM_trick_mode_flag, additional_copy_info_flag,
 	   PES_CRC_flag, PES_extension_flag */
-	mx->packet[11] = 0;
+	mx->packet[4 + 7] = 0;
 
 	/* PES_header_data_length [8] = 36 (EN 300 472 section 4.2) */
-	mx->packet[12] = 36;
+	mx->packet[4 + 8] = 36;
 
 	/* Stuffing bytes. */
-	memset (&mx->packet[13], 0xFF, 36);
+	memset (&mx->packet[4 + 9], 0xFF, 36);
 
-	mx->packet[45] = data_identifier;
+	mx->packet[4 + 9 + 36] = data_identifier;
 
 	mx->pid = 0;
 	mx->data_identifier = data_identifier;
