@@ -15,9 +15,18 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *
+ *  $Log: io-proxy.c,v $
+ *  Revision 1.4  2003/05/03 12:05:58  tomzo
+ *  - added documentation for vbi_capture_proxy_new()
+ *  - removed swap32 inline function from proxyd.c and io-proxy.c: use new macro
+ *    VBIPROXY_ENDIAN_MISMATCH instead (contains swapped value of endian magic)
+ *  - fixed copyright headers, added description to file headers
+ *
  */
 
-static const char rcsid[] = "$Id: io-proxy.c,v 1.3 2003/04/29 17:55:51 mschimek Exp $";
+static const char rcsid[] = "$Id: io-proxy.c,v 1.4 2003/05/03 12:05:58 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -36,7 +45,6 @@ static const char rcsid[] = "$Id: io-proxy.c,v 1.3 2003/04/29 17:55:51 mschimek 
 #include <fcntl.h>
 #include <unistd.h>
 #include <assert.h>
-/* #include <utils.h> ? */
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -46,31 +54,12 @@ static const char rcsid[] = "$Id: io-proxy.c,v 1.3 2003/04/29 17:55:51 mschimek 
 #include "proxy-msg.h"
 #include "bcd.h"
 
-#ifndef __GNUC__
-#define __inline__
-#endif
-
-static __inline__ const unsigned int
-swap32 (unsigned int x)
-{
-#if __GNUC__ >= 3
-#if #cpu (i686)
-	if (!__builtin_constant_p (x)) {
-		__asm__ __volatile__ ("bswap %0" : "=r" (x) : "0" (x));
-		return x;
-	}
-#endif
-#endif
-	return
-		  (((x) & 0xFFUL) << 24)
-		| (((x) & 0xFF00UL) << 8)
-		| (((x) & 0xFF0000UL) >> 8)
-		| (((x) & 0xFF000000UL) >> 24);
-}
-
 #define dprintf1(fmt, arg...)    if (v->trace) printf("WARN  io-proxy: " fmt, ## arg)
 #define dprintf2(fmt, arg...)    if (v->trace) printf("TRACE io-proxy: " fmt, ## arg)
 
+/* ----------------------------------------------------------------------------
+** Declaration of types of internal state variables
+*/
 typedef enum
 {
         CLNT_STATE_NULL,
@@ -200,7 +189,7 @@ static vbi_bool proxy_client_check_msg( vbi_capture_proxy *v, uint len, VBIPROXY
             {  /* endian type matches -> no swapping required */
                v->endianSwap = FALSE;
             }
-            else if (pBody->connect_cnf.magics.endian_magic == swap32(VBIPROXY_ENDIAN_MAGIC))
+            else if (pBody->connect_cnf.magics.endian_magic == VBIPROXY_ENDIAN_MISMATCH)
             {  /* endian type does not match -> convert "endianess" of all msg elements > 1 byte */
                /* enable byte swapping for all following messages */
                v->endianSwap = TRUE;
@@ -719,6 +708,7 @@ proxy_fd(vbi_capture *vc)
         return v->io.sock_fd;
 }
 
+/* document below */
 vbi_capture *
 vbi_capture_proxy_new(const char *dev_name, int buffers, int scanning,
                       unsigned int *services, int strict,
@@ -734,8 +724,10 @@ vbi_capture_proxy_new(const char *dev_name, int buffers, int scanning,
         if (buffers < 1)
                 buffers = 1;
 
-        if (trace)
+        if (trace) {
                 fprintf(stderr, "Try to connect vbi proxy, libzvbi interface rev.\n%s\n", rcsid);
+                vbi_proxy_msg_set_debug_level(trace);
+        }
 
         v = (vbi_capture_proxy *) calloc(1, sizeof(*v));
         if (v == NULL) {
@@ -755,8 +747,8 @@ vbi_capture_proxy_new(const char *dev_name, int buffers, int scanning,
         v->buffer_count = buffers;
         v->trace        = trace;
 
-        v->p_srv_port = vbi_proxy_msg_get_socket_name(dev_name);
-        v->p_srv_host = NULL;
+        v->p_srv_port   = vbi_proxy_msg_get_socket_name(dev_name);
+        v->p_srv_host   = NULL;
 
         proxy_client_start_acq(v);
 
@@ -780,6 +772,32 @@ vbi_capture_proxy_new(const char *dev_name, int buffers, int scanning,
 
 #else
 
+/**
+ * @param dev_name Name of the device to open, usually one of
+ *   @c /dev/vbi or @c /dev/vbi0 and up.  The proxy daemon must be
+ *   started with the same device name and there must be a proxy
+ *   for each different device.
+ * @param buffers Number of device buffers for raw vbi data, when
+ *   the driver supports streaming. Otherwise one bounce buffer
+ *   is allocated for vbi_capture_pull().
+ * @param scanning This indicates the current norm: 625 for PAL and
+ *   525 for NTSC; set to 0 if you don't know (you should not attempt
+ *   to query the device for the norm, as this parameter is only required
+ *   for v4l1 drivers which don't support video standard query ioctls)
+ * @param services This must point to a set of @ref VBI_SLICED_
+ *   symbols describing the
+ *   data services to be decoded. On return the services actually
+ *   decodable will be stored here. See vbi_raw_decoder_add()
+ *   for details. If you want to capture raw data only, set to
+ *   @c VBI_SLICED_VBI_525, @c VBI_SLICED_VBI_625 or both.
+ * @param strict Will be passed to vbi_raw_decoder_add().
+ * @param errorstr If not @c NULL this function stores a pointer to an error
+ *   description here. You must free() this string when no longer needed.
+ * @param trace If @c TRUE print progress messages on stderr.
+ * 
+ * @return
+ * Initialized vbi_capture context, @c NULL on failure.
+ */
 vbi_capture *
 vbi_capture_proxy_new(const char *dev_name, int buffers, int scanning,
                       unsigned int *services, int strict,
