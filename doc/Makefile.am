@@ -83,7 +83,7 @@ SCANOBJ_FILES = 		\
 	$(DOC_MODULE).signals
 
 if ENABLE_GTK_DOC
-all-local: copytree html-build.stamp
+all-local: html-build.stamp
 
 #### scan ####
 

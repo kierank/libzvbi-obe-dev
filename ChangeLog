@@ -3,6 +3,7 @@
 	* m4, po, config.rpath: Added because cannot use autogen.sh
 	  gettextize --force since gettext 0.11. The fine hack insists
 	  on updating already updated Makefile.am's and configure.in.
+	* po/Rules-quot: s/PACKAGE VERSION/... because msgfmt complains.
 
 2002-06-17  gettextize  <bug-gnu-gettext@gnu.org>
 
