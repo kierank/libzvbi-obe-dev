@@ -1,3 +1,7 @@
+2002-03-16	<mschimek@users.sf.net>
+
+	* src/Makefile.am: Automated libzvbi.h version #defines.
+
 2002-03-10	zapping-Bugs-527984 <mschimek@users.sf.net>
 
 	* src/io-v4l2.c: Added mmap PROT_READ | PROT_WRITE for
