@@ -38,12 +38,17 @@ libzvbiincludedir = $(includedir)
 libzvbiinclude_HEADERS = libzvbi.h
 
 libzvbi_la_LIBADD = $(PTHREAD_LIB) $(PNG_LIB)
-libzvbi_la_LDFLAGS = -version-info 1:2:1
+libzvbi_la_LDFLAGS = -version-info $(LIBZVBI_SO_VERSION)
+
+BUILT_SOURCES = libzvbi.h
+
+LIBZVBI_HDRS = bcd.h event.h format.h lang.h export.h cache.h search.h \
+	   sliced.h decoder.h io.h exp-gfx.h exp-txt.h cc.h vt.h tables.h \
+	   vbi.h
 
 # Concat the header files in this order and filter out all lines
 #   before "^/* Public", after "^/* Private" and between "^/**"..."**/$"
-libzvbi.h: bcd.h event.h format.h lang.h export.h cache.h search.h \
-	   sliced.h decoder.h io.h exp-gfx.h exp-txt.h cc.h vt.h tables.h vbi.h
+libzvbi.h: $(LIBZVBI_HDRS)
 	sed -ne "1,/\*\//p" $(srcdir)/vbi.h > $@
 	echo -e "\n/* Generated file, do not edit! */" >> $@
 	echo -e "\n#ifndef __LIBZVBI_H__\n#define __LIBZVBI_H__" >> $@
@@ -52,7 +57,7 @@ libzvbi.h: bcd.h event.h format.h lang.h export.h cache.h search.h \
 	 | sed "s/\./\\\\\n#define VBI_VERSION_MICRO /"` >> $@
 	echo -e "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n" >> $@
 	echo -e "\ntypedef struct vbi_decoder vbi_decoder;\n" >> $@
-	for fi in $^; do \
+	for fi in $(LIBZVBI_HDRS); do \
 		echo "/* $$fi */" >> $@; \
 		sed -e "/^\/\* Public/,/^\/\* Private/!d;/^\/\* Public/d;/^\/\* Private/d;s/\(\/\*\*.*\*\/\)//;/^[ 	]*\/\*\*/,/\*\/[ 	]*$$/d;" $$fi >> $@; \
 	done

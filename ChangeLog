@@ -1,3 +1,12 @@
+2002-11-28	<mschimek@users.sf.net>
+
+	* Release 0.2.3.
+
+2002-11-28	<mschimek@users.sf.net>
+
+	* src/exp-vtx.c: Segv due to excess read of variable size
+	  cached page structure. Patch #643211 by Art Pogoda.
+
 2002-10-21	<mschimek@users.sf.net>
 
 	* src: A few char* were not const typed.

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.11 2002/10/22 04:42:40 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2.c,v 1.12 2002/11/30 02:37:18 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -35,7 +35,6 @@ static char rcsid[] = "$Id: io-v4l2.c,v 1.11 2002/10/22 04:42:40 mschimek Exp $"
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <getopt.h>
 #include <assert.h>
 #include <sys/time.h>		/* timeval */
 #include <sys/types.h>		/* fd_set */

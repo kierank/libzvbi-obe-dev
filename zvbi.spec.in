@@ -27,6 +27,7 @@ make
 %install
 rm -rf %{buildroot}
 %makeinstall
+%find_lang %{name}
 
 %clean
 rm -rf %{buildroot}
@@ -40,19 +41,7 @@ rm -rf %{buildroot}
 %doc AUTHORS BUGS COPYING ChangeLog NEWS README TODO doc/html
 %{_libdir}/libzvbi*
 %{_includedir}/libzvbi.h
-%{_prefix}/share/locale/*/*/*
 
 %changelog
-* Thu Sep 29 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
-- Had to make unrelocatable: bindtextdomain locale path compiled in.
-- Earlier versions missed the locale files. Oops.
-
-* Tue Jul 18 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
-- Removed gettext requirement
-
-* Tue Jun  4 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
-- Removed libunicode requirement
-- Made package relocatable
-
-* Sat Jan 26 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
-- Created
+* Thu Oct 24 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
+- Added %%find_lang for locale support.

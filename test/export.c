@@ -18,9 +18,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.4 2002/06/07 22:01:23 mschimek Exp $ */
+/* $Id: export.c,v 1.5 2002/11/30 02:37:18 mschimek Exp $ */
 
 #undef NDEBUG
+
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>

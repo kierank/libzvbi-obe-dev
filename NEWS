@@ -1,3 +1,10 @@
+0.2.3
+-----
+Bug fixes, mostly compile problems. This version supports the
+refurbished V4L2 API for Linux 2.5ff and has been ported to
+FreeBSD 4.6, including a bktr driver interface. Basic tests ok,
+remains to be seen how well this works in the field.
+
 0.2.2
 -----
 RH 7.3 build fix (zapping-Bugs-568052) and switch to gettext 0.11.
@@ -23,4 +30,3 @@ Bug fixes.
 ---
 Former module of the Zapping TV viewer, this is the first release
 of the Zapping/Zapzilla vbi decoder as a standalone library.
-

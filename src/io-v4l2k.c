@@ -17,7 +17,15 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2k.c,v 1.1 2002/10/22 04:42:40 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2k.c,v 1.2 2002/11/30 02:37:18 mschimek Exp $";
+
+/*
+ *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
+ *  Linux 2.5/2.6/3.0. There are a few subtle differences, in order to
+ *  keep the source clean this interface has been forked off from the
+ *  old V4L2 interface. "v4l2k" is no official designation, there is
+ *  none, take it as v4l2-kernel or v4l-2000.
+ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -35,7 +43,6 @@ static char rcsid[] = "$Id: io-v4l2k.c,v 1.1 2002/10/22 04:42:40 mschimek Exp $"
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <getopt.h>
 #include <assert.h>
 #include <sys/time.h>		/* timeval */
 #include <sys/types.h>		/* fd_set */
@@ -356,18 +363,19 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 
 	if (!(vcap.capabilities & V4L2_CAP_VBI_CAPTURE)) {
 		vbi_asprintf(errorstr, _("%s (%s) is not a raw vbi device."),
-			     dev_name, vcap.name);
+			     dev_name, vcap.card);
 		goto failure;
 	}
 
-	printv("%s (%s) is a v4l2 vbi device\n", dev_name, vcap.name);
+	printv("%s (%s) is a v4l2 vbi device,\n", dev_name, vcap.card);
+	printv("driver %s, version 0x%08x\n", vcap.driver, vcap.version);
 
 	v->select = TRUE; /* mandatory 2002-10 */
 
 #ifdef REQUIRE_SELECT
 	if (!v->select) {
 		vbi_asprintf(errorstr, _("%s (%s) does not support the select() function."),
-			     dev_name, vcap.name);
+			     dev_name, vcap.card);
 		goto failure;
 	}
 #endif
@@ -375,7 +383,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	/* mandatory, http://www.thedirks.org/v4l2/v4l2dsi.htm */
 	if (IOCTL(v->fd, VIDIOC_G_STD, &vstd) == -1) {
 		vbi_asprintf(errorstr, _("Cannot query current videostandard of %s (%s): %d, %s."),
-			     dev_name, vcap.name, errno, strerror(errno));
+			     dev_name, vcap.card, errno, strerror(errno));
 		guess = _("Probably a driver bug.");
 		goto io_error;
 	}
@@ -397,7 +405,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		printv("failed\n");
 #ifdef REQUIRE_G_FMT
 		vbi_asprintf(errorstr, _("Cannot query current vbi parameters of %s (%s): %d, %s."),
-			     dev_name, vcap.name, errno, strerror(errno));
+			     dev_name, vcap.card, errno, strerror(errno));
 		goto io_error;
 #else
 		strict = MAX(0, strict);
@@ -414,7 +422,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 
 		if (*services == 0) {
 			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of the "
-					       "requested data services."), dev_name, vcap.name);
+					       "requested data services."), dev_name, vcap.card);
 			goto failure;
 		}
 
@@ -452,7 +460,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 #endif
 				vbi_asprintf(errorstr, _("Cannot initialize %s (%s), "
 						       "the device is already in use."),
-					     dev_name, vcap.name);
+					     dev_name, vcap.card);
 				goto failure;
 
 			case EINVAL:
@@ -460,7 +468,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 			default:
 					vbi_asprintf(errorstr, _("Could not set the vbi capture parameters "
 							       "for %s (%s): %d, %s."),
-						     dev_name, vcap.name, errno, strerror(errno));
+						     dev_name, vcap.card, errno, strerror(errno));
 					guess = _("Possibly a driver bug.");
 					goto io_error;
 				}
@@ -492,7 +500,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
  	if (vfmt.fmt.vbi.sample_format != V4L2_PIX_FMT_GREY) {
 		vbi_asprintf(errorstr, _("%s (%s) offers unknown vbi sampling format #%d. "
 				       "This may be a driver bug or libzvbi is too old."),
-			     dev_name, vcap.name, vfmt.fmt.vbi.sample_format);
+			     dev_name, vcap.card, vfmt.fmt.vbi.sample_format);
 		goto failure;
 	}
 
@@ -506,7 +514,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 						 "data services with "
 						 "%s (%s), the sampling frequency "
 						 "%.2f MHz is too low."),
-				     dev_name, vcap.name,
+				     dev_name, vcap.card,
 				     v->dec.sampling_rate / 1e6);
 			goto failure;
 		}
@@ -520,7 +528,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		if (*services == 0) {
 			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of "
 					       "the requested data services."),
-				     dev_name, vcap.name);
+				     dev_name, vcap.card);
 			goto failure;
 		}
 
@@ -543,7 +551,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		if (!v->select) {
 			/* Mandatory; dequeue buffer is non-blocking. */
 			vbi_asprintf(errorstr, _("%s (%s) does not support the select() function."),
-				     dev_name, vcap.name);
+				     dev_name, vcap.card);
 			goto failure;
 		}
 
@@ -560,7 +568,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		if (IOCTL(v->fd, VIDIOC_REQBUFS, &vrbuf) == -1) {
 			vbi_asprintf(errorstr, _("Cannot request streaming i/o buffers "
 					       "from %s (%s): %d, %s."),
-				     dev_name, vcap.name, errno, strerror(errno));
+				     dev_name, vcap.card, errno, strerror(errno));
 			guess = _("Possibly a driver bug.");
 			goto failure;
 		}
@@ -568,7 +576,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		if (vrbuf.count == 0) {
 			vbi_asprintf(errorstr, _("%s (%s) granted no streaming i/o buffers, "
 					       "perhaps the physical memory is exhausted."),
-				     dev_name, vcap.name);
+				     dev_name, vcap.card);
 			goto failure;
 		}
 
@@ -593,7 +601,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 			if (IOCTL(v->fd, VIDIOC_QUERYBUF, &vbuf) == -1) {
 				vbi_asprintf(errorstr, _("Querying streaming i/o buffer #%d "
 						       "from %s (%s) failed: %d, %s."),
-					     v->num_raw_buffers, dev_name, vcap.name,
+					     v->num_raw_buffers, dev_name, vcap.card,
 					     errno, strerror(errno));
 				goto mmap_failure;
 			}
@@ -615,7 +623,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 
 				vbi_asprintf(errorstr, _("Memory mapping streaming i/o buffer #%d "
 						       "from %s (%s) failed: %d, %s."),
-					     v->num_raw_buffers, dev_name, vcap.name,
+					     v->num_raw_buffers, dev_name, vcap.card,
 					     errno, strerror(errno));
 				goto mmap_failure;
 			} else {
@@ -631,7 +639,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 					fprintf(stderr,
 					       "Security warning: driver %s (%s) seems to mmap "
 					       "physical memory uncleared. Please contact the "
-					       "driver author.\n", dev_name, vcap.name);
+					       "driver author.\n", dev_name, vcap.card);
 					exit(EXIT_FAILURE);
 				}
 			}
@@ -639,7 +647,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 			if (IOCTL(v->fd, VIDIOC_QBUF, &vbuf) == -1) {
 				vbi_asprintf(errorstr, _("Cannot enqueue streaming i/o buffer #%d "
 						       "to %s (%s): %d, %s."),
-					     v->num_raw_buffers, dev_name, vcap.name,
+					     v->num_raw_buffers, dev_name, vcap.card,
 					     errno, strerror(errno));
 				guess = _("Probably a driver bug.");
 				goto mmap_failure;
@@ -682,12 +690,12 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	} else {
 		vbi_asprintf(errorstr, _("%s (%s) lacks a vbi read interface, "
 				       "possibly an output only device or a driver bug."),
-			     dev_name, vcap.name);
+			     dev_name, vcap.card);
 		goto failure;
 	}
 
 	printv("Successful opened %s (%s)\n",
-	       dev_name, vcap.name);
+	       dev_name, vcap.card);
 
 	return &v->capture;
 

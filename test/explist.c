@@ -18,18 +18,21 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: explist.c,v 1.6 2002/10/22 04:43:18 mschimek Exp $ */
+/* $Id: explist.c,v 1.7 2002/11/30 02:37:18 mschimek Exp $ */
 
 #undef NDEBUG
 
-#include "../config.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <unistd.h>
+#ifdef HAVE_GETOPT_LONG
 #include <getopt.h>
+#endif
 #include <locale.h>
 
 #include <libzvbi.h>
@@ -494,7 +497,7 @@ list_modules(void)
 	puts("-- end of list --");
 }
 
-const char short_options[] = "c";
+static const char short_options[] = "c";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
