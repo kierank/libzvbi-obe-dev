@@ -17,9 +17,15 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-msg.h,v 1.4 2003/05/24 12:19:29 tomzo Exp $
+ *  $Id: proxy-msg.h,v 1.5 2003/06/01 19:36:23 tomzo Exp $
  *
  *  $Log: proxy-msg.h,v $
+ *  Revision 1.5  2003/06/01 19:36:23  tomzo
+ *  Implemented server-side TV channel switching
+ *  - implemented messages MSG_TYPE_CHN_CHANGE_REQ/CNF/REJ; IND is still TODO
+ *  - removed obsolete PROFILE messages: profile is included with CHN_CHANGE_REQ
+ *  Also: added VBI API identifier and device path to CONNECT_CNF (for future use)
+ *
  *  Revision 1.4  2003/05/24 12:19:29  tomzo
  *  - added VBIPROXY_SERVICE_REQ/_CNF/_REJ messages
  *  - prepared channel change request and profile request
@@ -51,20 +57,22 @@ typedef enum
    MSG_TYPE_SERVICE_REQ,
    MSG_TYPE_SERVICE_REJ,
    MSG_TYPE_SERVICE_CNF,
-#if 0
+
    MSG_TYPE_CHN_CHANGE_REQ,
    MSG_TYPE_CHN_CHANGE_CNF,
    MSG_TYPE_CHN_CHANGE_REJ,
    MSG_TYPE_CHN_CHANGE_IND,
-#endif
-   MSG_TYPE_CHN_PROFILE_REQ,
-   MSG_TYPE_CHN_PROFILE_CNF,
 
    MSG_TYPE_COUNT
 
 } VBIPROXY_MSG_TYPE;
 
-#define VBIPROXY_MSG_MAXSIZE  65536
+typedef enum
+{
+   VBI_API_V4L1,
+   VBI_API_V4L2,
+   VBI_API_BKTR,
+} VBI_API_REV;
 
 typedef struct
 {
@@ -72,6 +80,15 @@ typedef struct
         uint32_t                type;
         uint32_t                reserved;
 } VBIPROXY_MSG_HEADER;
+
+typedef struct
+{
+        uint8_t                 is_valid;       /* boolean: ignore struct unless TRUE */
+        uint8_t                 chn_prio;       /* driver prio: record,interact,background */
+        uint8_t                 sub_prio;       /* background prio: VPS/PDC, initial load, update, check */
+        uint8_t                 allow_suspend;  /* boolean: suspend allowed for checks by other aps */
+        time_t                  duration;       /* min. continuous use of that channel */
+} VBIPROXY_CHN_PROFILE;
 
 #define VBIPROXY_MAGIC_STR                 "LIBZVBI VBIPROXY"
 #define VBIPROXY_MAGIC_LEN                 16
@@ -96,16 +113,18 @@ typedef struct
         VBIPROXY_MAGICS         magics;
         uint8_t                 client_name[VBIPROXY_CLIENT_NAME_MAX_LENGTH];
 
-        /* service request */
         uint32_t                scanning;
+        uint8_t                 buffer_count;
+
         uint32_t                services;
         uint8_t                 strict;
-        uint8_t                 buffer_count;
 } VBIPROXY_CONNECT_REQ;
 
 typedef struct
 {
         VBIPROXY_MAGICS         magics;
+        uint8_t                 dev_vbi_name[VBIPROXY_DEV_NAME_MAX_LENGTH];
+        uint32_t                vbi_api_revision;
         vbi_raw_decoder         dec;            /* req. e.g. for VBI line counts */
 } VBIPROXY_CONNECT_CNF;
 
@@ -142,46 +161,33 @@ typedef struct
         uint8_t                 errorstr[VBIPROXY_ERROR_STR_MAX_LENGTH];
 } VBIPROXY_SERVICE_REJ;
 
-#if 0
 typedef struct
 {
-        uint32_t                channel;
-        uint32_t                freq;
-        uint32_t                tuner;
-        uint32_t                scanning;
+        uint32_t                chn_flags;
+        vbi_channel_desc        chn_desc;
+        VBIPROXY_CHN_PROFILE    chn_profile;
+        uint32_t                serial;
 } VBIPROXY_CHN_CHANGE_REQ;
 
 typedef struct
 {
-        uint32_t                dummy;          /* XXX may include info from scheduler */
+        uint32_t                serial;         /* which request this refers to */
+        uint32_t                scanning;
+        uint8_t                 has_tuner;
 } VBIPROXY_CHN_CHANGE_CNF;
 
 typedef struct
 {
-        uint32_t                cause;          /* device error, drv-prio, busy (v4l1) */
+        uint32_t                serial;         /* which request this refers to */
+        uint32_t                dev_errno;
+        uint8_t                 errorstr[VBIPROXY_ERROR_STR_MAX_LENGTH];
 } VBIPROXY_CHN_CHANGE_REJ;
 
 typedef struct
 {                                               /* note: sent both by client and daemon */
-        uint32_t                channel;
-        uint32_t                freq;
-        uint32_t                tuner;
+        vbi_channel_desc        chn_desc;
         uint32_t                scanning;
 } VBIPROXY_CHN_CHANGE_IND;
-
-typedef struct
-{
-        uint32_t                prio;           /* driver prio: record,interact,background */
-        uint32_t                sub_prio;       /* background prio: initial load, update, check */
-        uint32_t                duration;       /* max. duration */
-        uint32_t                allow_suspend;  /* boolean: suspend allowed for checks by other aps */
-} VBIPROXY_CHN_PROFILE_REQ;
-
-typedef struct
-{
-        uint32_t                cur_max_prio;
-} VBIPROXY_CHN_PROFILE_CNF;
-#endif
 
 typedef union
 {
@@ -194,14 +200,12 @@ typedef union
         VBIPROXY_SERVICE_REQ            service_req;
         VBIPROXY_SERVICE_CNF            service_cnf;
         VBIPROXY_SERVICE_REJ            service_rej;
-#if 0
+
         VBIPROXY_CHN_CHANGE_REQ         chn_change_req;
         VBIPROXY_CHN_CHANGE_CNF         chn_change_cnf;
         VBIPROXY_CHN_CHANGE_REJ         chn_change_rej;
         VBIPROXY_CHN_CHANGE_IND         chn_change_ind;
-        VBIPROXY_CHN_PROFILE_REQ        chn_profile_req;
-        VBIPROXY_CHN_PROFILE_CNF        chn_profile_cnf;
-#endif
+
 } VBIPROXY_MSG_BODY;
 
 /* ----------------------------------------------------------------------------
@@ -221,7 +225,6 @@ typedef struct
         vbi_bool                waitRead;       /* TRUE while length of incoming msg is not completely read */
         uint32_t                readLen;        /* length of incoming message (including itself) */
         uint32_t                readOff;        /* number of already read bytes */
-        uint8_t                 *pReadBuf;      /* msg buffer; allocated after length is read */
         VBIPROXY_MSG_HEADER     readHeader;     /* received message header */
 } VBIPROXY_MSG_STATE;
 
@@ -235,7 +238,9 @@ void     vbi_proxy_msg_set_debug_level( int level );
 
 vbi_bool vbi_proxy_msg_is_idle( VBIPROXY_MSG_STATE * pIO );
 vbi_bool vbi_proxy_msg_check_timeout( VBIPROXY_MSG_STATE * pIO, time_t now );
-vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked, vbi_bool closeOnZeroRead );
+vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO,
+                                  vbi_bool * pBlocked, vbi_bool closeOnZeroRead,
+                                  void * pReadBuf, int max_read_len );
 void     vbi_proxy_msg_close_io( VBIPROXY_MSG_STATE * pIO );
 void     vbi_proxy_msg_fill_magics( VBIPROXY_MAGICS * p_magic );
 void     vbi_proxy_msg_write( VBIPROXY_MSG_STATE * pIO, VBIPROXY_MSG_TYPE type, uint32_t msgLen, void * pMsg, vbi_bool freeBuf );
