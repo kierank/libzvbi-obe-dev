@@ -17,9 +17,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-msg.h,v 1.8 2004/10/04 20:50:24 mschimek Exp $
+ *  $Id: proxy-msg.h,v 1.9 2004/10/24 18:33:47 tomzo Exp $
  *
  *  $Log: proxy-msg.h,v $
+ *  Revision 1.9  2004/10/24 18:33:47  tomzo
+ *  - cleaned up socket I/O interface functions
+ *  - added defines for norm change events
+ *
  *  Revision 1.8  2004/10/04 20:50:24  mschimek
  *  *** empty log message ***
  *
@@ -74,6 +78,10 @@ typedef enum
          * on request of the user (e.g. TV viewer, Radio, teletext reader)
          */
 	VBI_CHN_PRIO_INTERACTIVE = 2,
+        /**
+         * Default priority for client which have not (yet) set a priority.
+         */
+	VBI_CHN_PRIO_DEFAULT     = VBI_CHN_PRIO_INTERACTIVE,
         /**
          * Scheduled recording (e.g. PVR): usually only one application
          * should run at this level (although this is not enforced by
@@ -473,6 +481,7 @@ typedef struct
 
 typedef struct
 {
+        VBI_PROXY_CHN_FLAGS     notify_flags;
         uint32_t                scanning;
         uint8_t                 reserved[32];   /* always zero */
 } VBIPROXY_CHN_CHANGE_IND;
@@ -541,7 +550,6 @@ typedef struct
         VBIPROXY_MSG          * pWriteBuf;      /* data to be written */
         vbi_bool                freeWriteBuf;   /* TRUE if the buffer shall be freed by the I/O handler */
 
-        vbi_bool                waitRead;       /* TRUE while length of incoming msg is not completely read */
         uint32_t                readLen;        /* length of incoming message (including itself) */
         uint32_t                readOff;        /* number of already read bytes */
 } VBIPROXY_MSG_STATE;
@@ -555,11 +563,15 @@ void     vbi_proxy_msg_set_logging( vbi_bool do_logtty, int sysloglev,
 void     vbi_proxy_msg_set_debug_level( int level );
 const char * vbi_proxy_msg_debug_get_type_str( VBIPROXY_MSG_TYPE type );
 
+vbi_bool vbi_proxy_msg_read_idle( VBIPROXY_MSG_STATE * pIO );
+vbi_bool vbi_proxy_msg_write_idle( VBIPROXY_MSG_STATE * pIO );
 vbi_bool vbi_proxy_msg_is_idle( VBIPROXY_MSG_STATE * pIO );
 vbi_bool vbi_proxy_msg_check_timeout( VBIPROXY_MSG_STATE * pIO, time_t now );
-vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO,
-                                  vbi_bool * pBlocked, vbi_bool closeOnZeroRead,
-                                  VBIPROXY_MSG * pReadBuf, int max_read_len );
+vbi_bool vbi_proxy_msg_handle_write( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked );
+void     vbi_proxy_msg_close_read( VBIPROXY_MSG_STATE * pIO );
+vbi_bool vbi_proxy_msg_handle_read( VBIPROXY_MSG_STATE * pIO,
+                                    vbi_bool * pBlocked, vbi_bool closeOnZeroRead,
+                                    VBIPROXY_MSG * pReadBuf, int max_read_len );
 void     vbi_proxy_msg_close_io( VBIPROXY_MSG_STATE * pIO );
 void     vbi_proxy_msg_fill_magics( VBIPROXY_MAGICS * p_magic );
 void     vbi_proxy_msg_write( VBIPROXY_MSG_STATE * p_io, VBIPROXY_MSG_TYPE type,

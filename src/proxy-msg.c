@@ -29,9 +29,13 @@
  *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
  *    the latter ones are currently not officially supported.
  *
- *  $Id: proxy-msg.c,v 1.9 2004/10/04 20:50:24 mschimek Exp $
+ *  $Id: proxy-msg.c,v 1.10 2004/10/24 18:33:47 tomzo Exp $
  *
- *  =Log: proxy-msg.c,v =
+ *  $Log: proxy-msg.c,v $
+ *  Revision 1.10  2004/10/24 18:33:47  tomzo
+ *  - cleaned up socket I/O interface functions
+ *  - added defines for norm change events
+ *
  *  Revision 1.7  2003/06/07 09:42:53  tomzo
  *  Optimized message writing to socket in vbi_proxy_msg_handle_io():
  *  - keep message header and body in one struct VBIPROXY_MSG (for both read and
@@ -332,10 +336,31 @@ const char * vbi_proxy_msg_debug_get_type_str( VBIPROXY_MSG_TYPE type )
 /* ----------------------------------------------------------------------------
 ** Check for incomplete read or write buffer
 */
+vbi_bool vbi_proxy_msg_read_idle( VBIPROXY_MSG_STATE * pIO )
+{
+   assert((pIO->readOff == 0) || (pIO->readOff == pIO->readLen));
+
+   return (pIO->readOff == 0);
+}
+
+vbi_bool vbi_proxy_msg_write_idle( VBIPROXY_MSG_STATE * pIO )
+{
+   return (pIO->writeLen == 0);
+}
+
 vbi_bool vbi_proxy_msg_is_idle( VBIPROXY_MSG_STATE * pIO )
 {
-   return ( (pIO->writeLen == 0) &&
-            (pIO->waitRead == FALSE) && (pIO->readLen == 0) );
+   assert((pIO->readOff == 0) || (pIO->readOff == pIO->readLen));
+
+   return ((pIO->writeLen == 0) && (pIO->readOff == 0));
+}
+
+void vbi_proxy_msg_close_read( VBIPROXY_MSG_STATE * pIO )
+{
+   assert((pIO->readOff == 0) || (pIO->readOff == pIO->readLen));
+
+   pIO->readOff = 0;
+   pIO->readLen = 0;
 }
 
 /* ----------------------------------------------------------------------------
@@ -349,8 +374,64 @@ vbi_bool vbi_proxy_msg_check_timeout( VBIPROXY_MSG_STATE * pIO, time_t now )
 }
 
 /* ----------------------------------------------------------------------------
-** Read or write a message from/to the network socket
-** - only one of read or write is processed at the same time
+** Write a message to the socket
+** - write(2) is called only once per call to this function
+** - after errors the I/O state (indicated by FALSE result) is not reset, because
+**   the caller is expected to close the connection.
+*/
+vbi_bool vbi_proxy_msg_handle_write( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked )
+{
+   ssize_t  len;
+   vbi_bool result = TRUE;
+
+   assert(pIO->writeLen >= sizeof(VBIPROXY_MSG_HEADER));
+   assert(pIO->writeOff < pIO->writeLen);
+
+   *pBlocked = FALSE;
+
+   len = send(pIO->sock_fd, ((char *)pIO->pWriteBuf) + pIO->writeOff,
+                            pIO->writeLen - pIO->writeOff, 0);
+   if (len > 0)
+   {
+      pIO->lastIoTime = time(NULL);
+      pIO->writeOff  += len;
+
+      if (pIO->writeOff >= pIO->writeLen)
+      {  /* all data has been written -> free the buffer; reset write state */
+         if (pIO->freeWriteBuf)
+            free(pIO->pWriteBuf);
+         pIO->freeWriteBuf = FALSE;
+         pIO->pWriteBuf = NULL;
+         pIO->writeLen = 0;
+      }
+      else
+      {  /* not all data could be written */
+         *pBlocked = TRUE;
+      }
+   }
+   else if (len < 0)
+   {
+      if ((errno != EAGAIN) && (errno != EINTR))
+      {  /* network error -> close the connection */
+         dprintf1("handle_io: write error on fd %d: %s\n", pIO->sock_fd, strerror(errno));
+         result = FALSE;
+      }
+      else if (errno == EAGAIN)
+      {
+         *pBlocked = TRUE;
+      }
+   }
+   else /* if (len == 0) */
+   {  /* no data was written (actually in this case -1/EAGAIN should be returned) */
+      *pBlocked = TRUE;
+   }
+
+   return result;
+}
+
+/* ----------------------------------------------------------------------------
+** Read a message from the network socket
+** - read(2) is called only once per call to this function
 ** - reading is done in 2 phases: first the length of the message is read into
 **   a small buffer; then a buffer is allocated for the complete message and the
 **   length variable copied into it and the rest of the message read afterwords.
@@ -360,60 +441,26 @@ vbi_bool vbi_proxy_msg_check_timeout( VBIPROXY_MSG_STATE * pIO, time_t now )
 ** - after errors the I/O state (indicated by FALSE result) is not reset, because
 **   the caller is expected to close the connection.
 */
-vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO,
-                                  vbi_bool * pBlocked, vbi_bool closeOnZeroRead,
-                                  VBIPROXY_MSG * pReadBuf, int max_read_len )
+vbi_bool vbi_proxy_msg_handle_read( VBIPROXY_MSG_STATE * pIO,
+                                    vbi_bool * pBlocked, vbi_bool closeOnZeroRead,
+                                    VBIPROXY_MSG * pReadBuf, int max_read_len )
 {
-   time_t   now;
    ssize_t  len;
-   vbi_bool     err = FALSE;
-   vbi_bool     result = TRUE;
+   vbi_bool err;
+   time_t   now = time(NULL);
+   vbi_bool result = TRUE;
 
-   *pBlocked = FALSE;
-   now = time(NULL);
-   if (pIO->writeLen > 0)
-   {
-      /* write a message */
-      assert(pIO->writeLen >= sizeof(VBIPROXY_MSG_HEADER));
-      if ((err == FALSE) && (pIO->writeOff < pIO->writeLen))
-      {
-         len = send(pIO->sock_fd, ((char *)pIO->pWriteBuf) + pIO->writeOff,
-                                  pIO->writeLen - pIO->writeOff, 0);
-         if (len > 0)
-         {
-            pIO->lastIoTime = now;
-            pIO->writeOff += len;
-         }
-         else
-            err = TRUE;
-      }
+   assert(pIO->writeLen == 0);
 
-      if (err == FALSE)
-      {
-         if (pIO->writeOff >= pIO->writeLen)
-         {  /* all data has been written -> free the buffer; reset write state */
-            if (pIO->freeWriteBuf)
-               free(pIO->pWriteBuf);
-            pIO->pWriteBuf = NULL;
-            pIO->writeLen  = 0;
-         }
-         else if (pIO->writeOff < pIO->writeLen)
-            *pBlocked = TRUE;
-      }
-      else if ((errno != EAGAIN) && (errno != EINTR))
-      {  /* network error -> close the connection */
-         dprintf1("handle_io: write error on fd %d: %s\n", pIO->sock_fd, strerror(errno));
-         result = FALSE;
-      }
-      else if (errno == EAGAIN)
-         *pBlocked = TRUE;
-   }
-   else if ( (pIO->waitRead || (pIO->readLen > 0)) && (pReadBuf != NULL) )
+   if (pReadBuf != NULL)
    {
+      err = FALSE;
       len = 0;  /* compiler dummy */
-      if (pIO->waitRead)
+
+      if (pIO->readOff < sizeof(VBIPROXY_MSG_HEADER))
       {  /* in read phase one: read the message length */
-         assert(pIO->readOff < sizeof(VBIPROXY_MSG_HEADER));
+         assert (pIO->readLen == 0);
+
          len = recv(pIO->sock_fd, (char *)pReadBuf + pIO->readOff,
                                   sizeof(VBIPROXY_MSG_HEADER) - pIO->readOff, 0);
          if (len > 0)
@@ -428,13 +475,10 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO,
                pReadBuf->head.len  = pIO->readLen;
                pReadBuf->head.type = ntohl(pReadBuf->head.type);
                /* dprintf1("handle_io: fd %d: new block: size %d\n", pIO->sock_fd, pIO->readLen); */
-               if ((pIO->readLen <= max_read_len) &&
-                   (pIO->readLen >= sizeof(VBIPROXY_MSG_HEADER)))
-               {  /* message size acceptable -> enter the second phase of the read process */
-                  pIO->waitRead = FALSE;
-               }
-               else
-               {  /* illegal message size -> protocol error */
+               if ((pIO->readLen > max_read_len) ||
+                   (pIO->readLen < sizeof(VBIPROXY_MSG_HEADER)))
+               {
+                  /* illegal message size -> protocol error */
                   dprintf1("handle_io: fd %d: illegal block size %d: outside limits [%d..%d]\n", pIO->sock_fd, pIO->readLen, sizeof(VBIPROXY_MSG_HEADER), max_read_len + sizeof(VBIPROXY_MSG_HEADER));
                   result = FALSE;
                }
@@ -446,8 +490,10 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO,
             err = TRUE;
       }
 
-      if ((err == FALSE) && (pIO->waitRead == FALSE) && (pIO->readLen > sizeof(VBIPROXY_MSG_HEADER)))
+      if ((err == FALSE) && (pIO->readOff >= sizeof(VBIPROXY_MSG_HEADER)))
       {  /* in read phase two: read the complete message into the allocated buffer */
+         assert (pIO->readLen <= max_read_len);
+
          len = recv(pIO->sock_fd, (char*)pReadBuf + pIO->readOff,
                                   pIO->readLen - pIO->readOff, 0);
          if (len > 0)
@@ -480,7 +526,9 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO,
             result = FALSE;
          }
          else if (errno == EAGAIN)
+         {
             *pBlocked = TRUE;
+         }
       }
    }
 
@@ -524,7 +572,7 @@ void vbi_proxy_msg_fill_magics( VBIPROXY_MAGICS * p_magic )
 void vbi_proxy_msg_write( VBIPROXY_MSG_STATE * p_io, VBIPROXY_MSG_TYPE type,
                           uint32_t msgLen, VBIPROXY_MSG * pMsg, vbi_bool freeBuf )
 {
-   assert((p_io->waitRead == FALSE) && (p_io->readLen == 0));  /* I/O must be idle */
+   assert((p_io->readOff == 0) && (p_io->readLen == 0));  /* I/O must be idle */
    assert(p_io->writeLen == 0);
    assert((msgLen == 0) || (pMsg != NULL));
 
