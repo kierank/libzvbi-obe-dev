@@ -103,6 +103,9 @@ capture
 		"./capture <options> --sliced | ./export <options>" or
 		"./capture <options> --sliced | ./caption".
 	-l | --sliced	Write sliced vbi data.
+	DVB format (experimental, for tests):
+	-P | --pes	PES packets.
+	-T | --ts	TS packets with PID 999.
 
 	(--long options are only available on GNU systems.)
 
