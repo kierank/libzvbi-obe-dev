@@ -38,7 +38,9 @@ libzvbi.h: bcd.h event.h format.h lang.h export.h cache.h search.h \
 	sed -ne "1,/\*\//p" vbi.h > $@
 	echo -e "\n/* Generated file, do not edit! */" >> $@
 	echo -e "\n#ifndef __LIBZVBI_H__\n#define __LIBZVBI_H__" >> $@
-	echo -e "\n#define VBI_VERSION_MAJOR 0\n#define VBI_VERSION_MINOR 1" >> $@
+	echo -e "\n#define VBI_VERSION_MAJOR" `echo @VERSION@ \
+	 | sed "s/\./\\\\\n#define VBI_VERSION_MINOR /" \
+	 | sed "s/\./\\\\\n#define VBI_VERSION_MICRO /"` >> $@
 	echo -e "\n#ifdef __cplusplus\nextern "C" {\n#endif\n" >> $@
 	echo -e "\ntypedef struct vbi_decoder vbi_decoder;\n" >> $@
 	for fi in $^; do \
