@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.1 2005/01/15 10:21:56 mschimek Exp $ */
+/* $Id: wss.c,v 1.2 2005/01/20 03:35:38 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -29,6 +29,8 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef ENABLE_V4L2
+
 #include <fcntl.h>		/* low-level i/o */
 #include <unistd.h>
 #include <errno.h>
@@ -38,10 +40,10 @@
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 #ifdef HAVE_GETOPT_LONG
-#include <getopt.h>
+#  include <getopt.h>
 #endif
 
-#include "libzvbi.h"
+#include "src/libzvbi.h"
 
 #include <asm/types.h>		/* for videodev2.h */
 #include "src/videodev2k.h"
@@ -419,7 +421,7 @@ usage				(FILE *			fp)
 		 "-h | --help          Print this message\n"
 		 "-v | --verbose       Increase verbosity\n"
 		 "\n"
-		 "(--long options are only available on GNU systems.)\n",
+		 "(--long options only available on GNU & compatible.)\n",
 		 my_name);
 }
 
@@ -481,3 +483,17 @@ main				(int			argc,
 
 	return 0;
 }
+
+#else /* !ENABLE_V4L2 */
+
+int
+main				(int			argc,
+				 char **		argv)
+{
+	fprintf (stderr, "Sorry, V4L2 only. Patches welcome.\n");
+	exit (EXIT_FAILURE);
+	
+	return 0;
+}
+
+#endif /* !ENABLE_V4L2 */
