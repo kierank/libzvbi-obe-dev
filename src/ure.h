@@ -20,7 +20,7 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $Id: ure.h,v 1.5 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: ure.h,v 1.6 2002/10/22 04:41:27 mschimek Exp $ */
 
 #ifndef _h_ure
 #define _h_ure
@@ -32,7 +32,7 @@
 #if defined(HAVE_GLIBC21) || defined(HAVE_LIBUNICODE)
 
 #include <stdio.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #ifdef __cplusplus
 extern "C" {

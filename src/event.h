@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: event.h,v 1.4 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: event.h,v 1.5 2002/10/22 04:41:18 mschimek Exp $ */
 
 #ifndef EVENT_H
 #define EVENT_H
@@ -35,7 +35,7 @@ typedef struct vbi_decoder vbi_decoder;
 
 /* Public */
 
-#include <stdint.h>
+#include <inttypes.h>
 
 /**
  * @addtogroup Event Events
@@ -321,7 +321,7 @@ typedef enum {
 #define VBI_RATING_V 0x01 /**< "violence" */
 /** @} */
 
-extern char *		vbi_rating_string(vbi_rating_auth auth, int id);
+extern const char *	vbi_rating_string(vbi_rating_auth auth, int id);
 
 /**
  * @ingroup Event
@@ -342,7 +342,7 @@ typedef enum {
  * @addtogroup Event
  * @{
  */
-extern char *		vbi_prog_type_string(vbi_prog_classf classf, int id);
+extern const char *	vbi_prog_type_string(vbi_prog_classf classf, int id);
 /** @} */
 
 /**
