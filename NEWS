@@ -1,3 +1,9 @@
+0.2.4
+-----
+V4L2 (Linux 2.5) devices were not correctly identified because
+the API changed since the interface was first added in version
+0.2.3. This version contains an updated header file. 
+
 0.2.3
 -----
 Bug fixes, mostly compile problems. This version supports the

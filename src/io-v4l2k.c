@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2k.c,v 1.3 2002/12/24 15:16:26 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2k.c,v 1.4 2003/02/16 18:58:07 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -316,9 +316,11 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	struct v4l2_requestbuffers vrbuf;
 	struct v4l2_buffer vbuf;
 	struct v4l2_standard vstd;
+	v4l2_std_id stdid;
 	char *guess = "";
 	vbi_capture_v4l2 *v;
 	int max_rate, g_fmt;
+	int r;
 
 	pthread_once (&vbi_init_once, vbi_init);
 
@@ -380,15 +382,29 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	}
 #endif
 
-	/* mandatory, http://www.thedirks.org/v4l2/v4l2dsi.htm */
-	if (IOCTL(v->fd, VIDIOC_G_STD, &vstd) == -1) {
+	if (-1 == IOCTL(v->fd, VIDIOC_G_STD, &stdid)) {
 		vbi_asprintf(errorstr, _("Cannot query current videostandard of %s (%s): %d, %s."),
 			     dev_name, vcap.card, errno, strerror(errno));
 		guess = _("Probably a driver bug.");
 		goto io_error;
 	}
 
-	printv("Current scanning system is %d\n", vstd.framelines);
+	vstd.index = 0;
+
+	while (0 == (r = IOCTL(v->fd, VIDIOC_ENUMSTD, &vstd))) {
+		if (vstd.id & stdid)
+			break;
+		vstd.index++;
+	}
+
+	if (-1 == r) {
+		vbi_asprintf(errorstr, _("Cannot query current videostandard of %s (%s): %d, %s."),
+			     dev_name, vcap.card, errno, strerror(errno));
+		guess = _("Probably a driver bug.");
+		goto io_error;
+	}
+
+	printv ("Current scanning system is %d\n", vstd.framelines);
 
 	/* add_vbi_services() eliminates non 525/625 */
 	v->dec.scanning = vstd.framelines;

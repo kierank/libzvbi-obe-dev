@@ -1,3 +1,17 @@
+2003-02-16	<mschimek@users.sf.net>
+
+	* Release 0.2.4.
+
+2003-02-15	<mschimek@users.sf.net>
+
+	* src/io-v4l2k.c: Fixed video standard detection.
+
+2003-02-12	<mschimek@users.sf.net>
+
+	* src/videodev2k.h: Updated.
+	* src/Makefile.am: Fixed improper linking of unicode
+	  library, not listed in libzvbi.la dependencies.
+
 2003-01-05	<garetxe@users.sf.net>
 
 	* po/it.po: Update by Pino Toscano.

@@ -41,7 +41,7 @@ libzvbi_la_SOURCES = \
 libzvbiincludedir = $(includedir)
 libzvbiinclude_HEADERS = libzvbi.h
 
-libzvbi_la_LIBADD = $(PTHREAD_LIB) $(PNG_LIB)
+libzvbi_la_LIBADD = $(PTHREAD_LIB) $(PNG_LIB) $(UNICODE_LIBS)
 libzvbi_la_LDFLAGS = -version-info $(LIBZVBI_SO_VERSION)
 
 BUILT_SOURCES = libzvbi.h

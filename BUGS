@@ -1,5 +1,4 @@
-$Id: BUGS,v 1.12 2002/10/22 04:43:46 mschimek Exp $
+$Id: BUGS,v 1.13 2003/02/16 18:57:41 mschimek Exp $
 
 * v4l and v4l2 i/o can ignore timeout parameter
   > maybe a sleep() loop works, but what about timestamping?
-* v4l2k interface is untested
