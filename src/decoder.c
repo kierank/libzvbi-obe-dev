@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.11 2003/04/29 05:50:59 mschimek Exp $ */
+/* $Id: decoder.c,v 1.12 2003/05/17 13:02:04 tomzo Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -761,6 +761,56 @@ vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out)
 	return out - out1;
 }
 
+/**
+ * @param rd Initialized vbi_raw_decoder structure.
+ * @param start Array of start line indices for both fields
+ * @param count Array of line counts for both fields
+ * 
+ * Grows or shrinks the internal state arrays for VBI geometry changes
+ */
+void
+vbi_raw_decoder_resize( vbi_raw_decoder *rd, int * start, unsigned int * count )
+{
+	int8_t * old_pattern;
+	int8_t * base;
+	int8_t * dest;
+	int8_t * src;
+	int      frm;
+	int      line;
+
+	if ( (rd->start[0] == start[0]) && (rd->start[1] == start[1]) &&
+	     (rd->count[0] == count[0]) && (rd->count[1] == count[1]) )
+		return;
+
+	if (rd->pattern != NULL) {
+		old_pattern = rd->pattern;
+
+		rd->pattern = (int8_t *) calloc((count[0] + count[1])
+						* MAX_WAYS, sizeof(rd->pattern[0]));
+
+		base = old_pattern;
+		for (frm = 0; frm < 2; frm++) {
+			for (line = rd->start[frm]; line < rd->start[frm] + rd->count[frm]; line++) {
+				if ((line >= start[frm]) && (line < start[frm] + count[frm])) {
+					dest = rd->pattern + (line - start[frm]) * MAX_WAYS;
+					src  = old_pattern + (line - rd->start[frm]) * MAX_WAYS;
+					memcpy(dest, src, MAX_WAYS * sizeof(*rd->pattern));
+				}
+			}
+			base += rd->count[frm] * MAX_WAYS;
+
+			rd->start[frm] = start[frm];
+			rd->count[frm] = count[frm];
+		}
+
+		free(old_pattern);
+        }
+}
+
+/**
+ *  Helper function for service removal:
+ *  remove one job from one VBI line's pattern array
+ */
 static void
 vbi_raw_decoder_remove_pattern( int job, int8_t * pattern, int pattern_size )
 {
@@ -774,29 +824,11 @@ vbi_raw_decoder_remove_pattern( int job, int8_t * pattern, int pattern_size )
                         if (pat[j] == job + 1) {
                                 ways_left = (MAX_WAYS - 1) - j;
 
-				if (0) {
-					fprintf (stderr, "row %d: %02X%02X%02X%02X%02X%02X%02X%02X\n",
-						 i, pat[0] & 0xff,  pat[1] & 0xff,
-						 pat[2] & 0xff, pat[3] & 0xff,
-						 pat[4] & 0xff, pat[5] & 0xff,
-						 pat[6] & 0xff, pat[7] & 0xff);
-					fprintf (stderr, "row %d: memmove 0x%lX 0x%lX %d\n",
-						 i, (long) &pat[j], (long) &pat[j + 1],
-						 ways_left * sizeof (*pattern));
-				}
-
 				if (ways_left > 0)
                                         memmove(&pat[j], &pat[j + 1],
                                                 ways_left * sizeof(*pattern));
 
                                 pat[MAX_WAYS - 1] = 0;
-
-				if (0)
-					fprintf (stderr, "row %d: %02X%02X%02X%02X%02X%02X%02X%02X\n",
-						 i, pat[0] & 0xff,  pat[1] & 0xff,
-						 pat[2] & 0xff, pat[3] & 0xff,
-						 pat[4] & 0xff, pat[5] & 0xff,
-						 pat[6] & 0xff, pat[7] & 0xff);
                         }
                 }
         }
@@ -848,6 +880,157 @@ vbi_raw_decoder_remove_services(vbi_raw_decoder *rd, unsigned int services)
 }
 
 /**
+ *  Helper function for service add and check functions:
+ *  check if the given service can be decoded with the parameters in rd;
+ *  if yes, return TRUE and line start and count for both fields within
+ *  the range limits of rd.
+ */
+static vbi_bool
+vbi_raw_decoder_check_service(const vbi_raw_decoder *rd, int srv_idx, int strict,
+                              int *row, int *count)
+{
+	double signal;
+	int field;
+	vbi_bool result = FALSE;
+
+	if (vbi_services[srv_idx].scanning != rd->scanning)
+		goto finished;
+
+	if ((vbi_services[srv_idx].id & (VBI_SLICED_CAPTION_525_F1
+				       | VBI_SLICED_CAPTION_525))
+	    && (rd->start[0] <= 0 || rd->start[1] <= 0)) {
+		/*
+		 *  The same format is used on other lines
+		 *  for non-CC data.
+		 */
+		goto finished;
+	}
+
+	signal = vbi_services[srv_idx].cri_bits / (double) vbi_services[srv_idx].cri_rate
+		 + (vbi_services[srv_idx].frc_bits + vbi_services[srv_idx].payload)
+		   / (double) vbi_services[srv_idx].bit_rate;
+
+	if (rd->offset > 0 && strict > 0) {
+		double offset = rd->offset / (double) rd->sampling_rate;
+		double samples_end = (rd->offset + rd->bytes_per_line)
+				     / (double) rd->sampling_rate;
+
+		if (offset > (vbi_services[srv_idx].offset / 1e9 - 0.5e-6)) {
+			ds_diag ("skipping service 0x%08X: H-Off %d = %f > %f\n",
+				vbi_services[srv_idx].id, rd->offset, offset,
+				vbi_services[srv_idx].offset / 1e9 - 0.5e-6);
+			goto finished;
+		}
+
+		if (samples_end < (vbi_services[srv_idx].offset / 1e9
+				   + signal + 0.5e-6)) {
+			ds_diag ("skipping service 0x%08X: sampling window too short: "
+				"end %f < %f = offset %d *10^-9 + %f\n",
+				vbi_services[srv_idx].id, samples_end,
+				vbi_services[srv_idx].offset / 1e9 + signal + 0.5e-6,
+				vbi_services[srv_idx].offset, signal);
+			goto finished;
+		}
+	} else {
+		double samples = rd->bytes_per_line
+				 / (double) rd->sampling_rate;
+
+		if (samples < (signal + 1.0e-6)) {
+			ds_diag ("skipping service 0x%08X: not enough samples\n",
+				vbi_services[srv_idx].id);
+			goto finished;
+		}
+	}
+
+	for (field = 0; field < 2; field++) {
+		int start = rd->start[field];
+		int end = start + rd->count[field] - 1;
+
+		if (!rd->synchronous) {
+			ds_diag ("skipping service 0x%08X: not sync'ed\n",
+				vbi_services[srv_idx].id);
+			goto finished; /* too difficult */
+		}
+
+		if (!(vbi_services[srv_idx].first[field] && vbi_services[srv_idx].last[field])) {
+			count[field] = 0;
+			continue;
+		}
+
+		if (rd->count[field] == 0) {
+			ds_diag ("skipping service 0x%08X: zero count\n",
+				vbi_services[srv_idx].id);
+			goto finished;
+		}
+
+		if (rd->start[field] > 0 && strict > 0) {
+			/*
+			 *  May succeed if not all scanning lines
+			 *  available for the service are actually used.
+			 */
+			if (strict > 1
+			    || (vbi_services[srv_idx].first[field] ==
+				vbi_services[srv_idx].last[field]))
+				if (start > vbi_services[srv_idx].first[field] ||
+				    end < vbi_services[srv_idx].last[field]) {
+					ds_diag ("skipping service 0x%08X: lines not available "
+						"have %d-%d, need %d-%d\n",
+						vbi_services[srv_idx].id, start, end,
+						vbi_services[srv_idx].first[field],
+						vbi_services[srv_idx].last[field]);
+					goto finished;
+				}
+
+			row[field] = MAX(0, (int) vbi_services[srv_idx].first[field] - start);
+			count[field] = MIN(end, vbi_services[srv_idx].last[field])
+				       - (start + row[field]) + 1;
+		} else {
+			row[field] = 0;
+			count[field] = rd->count[field];
+		}
+	}
+	row[1] += rd->count[0];
+
+	result = TRUE;
+
+finished:
+	return result;
+}
+
+
+/**
+ * @param rd Initialized vbi_raw_decoder structure.
+ * @param services Set of @ref VBI_SLICED_ symbols.
+ * @param strict See description of vbi_raw_decoder_add_services()
+ *
+ * Check which of the given services can be decoded with current capture
+ * parameters at a given strictness level.
+ *
+ * @return
+ * Subset of services actually decodable.
+ */
+unsigned int
+vbi_raw_decoder_check_services(vbi_raw_decoder *rd, unsigned int services, int strict)
+{
+	int row[2], count[2];
+	int i;
+
+	services &= ~(VBI_SLICED_VBI_525 | VBI_SLICED_VBI_625);
+
+	for (i = 0; vbi_services[i].id; i++) {
+
+		if ( ((vbi_services[i].id & services) != 0) &&
+		     (vbi_raw_decoder_check_service(rd, i, strict, row, count) == FALSE) ) {
+
+			/* incompatible service */
+			services &= ~ vbi_services[i].id;
+		}
+	}
+	return services;
+}
+
+
+/**
  * @param rd Initialized vbi_raw_decoder structure.
  * @param services Set of @ref VBI_SLICED_ symbols.
  * @param strict A value of 0, 1 or 2 requests loose, reliable or strict
@@ -874,9 +1057,12 @@ unsigned int
 vbi_raw_decoder_add_services(vbi_raw_decoder *rd, unsigned int services, int strict)
 {
 	double off_min = (rd->scanning == 525) ? 7.9e-6 : 8.0e-6;
-	int row[2], count[2], way;
+	double offset = rd->offset / (double) rd->sampling_rate;
 	struct _vbi_raw_decoder_job *job;
 	int8_t *pattern;
+	int row[2], count[2];
+	int skip;
+	int way;
 	int i, j, k;
 
 	pthread_mutex_lock(&rd->mutex);
@@ -888,66 +1074,14 @@ vbi_raw_decoder_add_services(vbi_raw_decoder *rd, unsigned int services, int str
 						* MAX_WAYS, sizeof(rd->pattern[0]));
 
 	for (i = 0; vbi_services[i].id; i++) {
-		double signal;
-		int skip = 0;
-
 		if (rd->num_jobs >= (int) MAX_JOBS)
 			break;
 
-		if (!(vbi_services[i].id & services))
+		if ((vbi_services[i].id & services) == 0)
 			continue;
 
-		if (vbi_services[i].scanning != rd->scanning)
-			goto eliminate;
-
-		if ((vbi_services[i].id & (VBI_SLICED_CAPTION_525_F1
-					   | VBI_SLICED_CAPTION_525))
-		    && (rd->start[0] <= 0 || rd->start[1] <= 0)) {
-			/*
-			 *  The same format is used on other lines
-			 *  for non-CC data.
-			 */
-			goto eliminate;
-		}
-
-		signal = vbi_services[i].cri_bits / (double) vbi_services[i].cri_rate
-			 + (vbi_services[i].frc_bits + vbi_services[i].payload)
-			   / (double) vbi_services[i].bit_rate;
-
-		if (rd->offset > 0 && strict > 0) {
-			double offset = rd->offset / (double) rd->sampling_rate;
-			double samples_end = (rd->offset + rd->bytes_per_line)
-					     / (double) rd->sampling_rate;
-
-			if (offset > (vbi_services[i].offset / 1e9 - 0.5e-6)) {
-                                ds_diag ("skipping service 0x%08X: H-Off %d = %f > %f\n",
-					vbi_services[i].id, rd->offset, offset,
-					vbi_services[i].offset / 1e9 - 0.5e-6);
-				goto eliminate;
-                        }
-
-			if (samples_end < (vbi_services[i].offset / 1e9
-					   + signal + 0.5e-6)) {
-                                ds_diag ("skipping service 0x%08X: sampling window too short: "
-					"end %f < %f = offset %d *10^-9 + %f\n",
-					vbi_services[i].id, samples_end,
-					vbi_services[i].offset / 1e9 + signal + 0.5e-6,
-					vbi_services[i].offset, signal);
-				goto eliminate;
-                        }
-
-			if (offset < off_min) /* skip colour burst */
-				skip = (int)(off_min * rd->sampling_rate);
-		} else {
-			double samples = rd->bytes_per_line
-				         / (double) rd->sampling_rate;
-
-			if (samples < (signal + 1.0e-6)) {
-                                ds_diag ("skipping service 0x%08X: not enough samples\n",
-					vbi_services[i].id);
-				goto eliminate;
-                        }
-		}
+		if (vbi_raw_decoder_check_service(rd, i, strict, row, count) == FALSE)
+			goto finished;
 
 		for (j = 0, job = rd->jobs; j < rd->num_jobs; job++, j++) {
 			unsigned int id = job->id | vbi_services[i].id;
@@ -964,53 +1098,6 @@ vbi_raw_decoder_add_services(vbi_raw_decoder *rd, unsigned int services, int str
 		}
 
 		for (j = 0; j < 2; j++) {
-			int start = rd->start[j];
-			int end = start + rd->count[j] - 1;
-
-			if (!rd->synchronous) {
-                                ds_diag ("skipping service 0x%08X: not sync'ed\n",
-					vbi_services[i].id);
-				goto eliminate; /* too difficult */
-                        }
-
-			if (!(vbi_services[i].first[j] && vbi_services[i].last[j])) {
-				count[j] = 0;
-				continue;
-			}
-
-			if (rd->count[j] == 0) {
-                                ds_diag ("skipping service 0x%08X: zero count\n",
-					vbi_services[i].id);
-				goto eliminate;
-                        }
-
-			if (rd->start[j] > 0 && strict > 0) {
-				/*
-				 *  May succeed if not all scanning lines
-				 *  available for the service are actually used.
-				 */
-				if (strict > 1
-				    || (vbi_services[i].first[j] ==
-					vbi_services[i].last[j]))
-					if (start > vbi_services[i].first[j] ||
-					    end < vbi_services[i].last[j]) {
-                                                ds_diag ("skipping service 0x%08X: lines not available "
-							"have %d-%d, need %d-%d\n",
-							vbi_services[i].id, start, end,
-							vbi_services[i].first[j],
-							vbi_services[i].last[j]);
-						goto eliminate;
-                                        }
-
-				row[j] = MAX(0, (int) vbi_services[i].first[j] - start);
-				count[j] = MIN(end, vbi_services[i].last[j]) - (start + row[j]) + 1;  /* XXX TZ FIX */
-			} else {
-				row[j] = 0;
-				count[j] = rd->count[j];
-			}
-
-			row[1] += rd->count[0];
-
 			for (pattern = rd->pattern + row[j] * MAX_WAYS, k = count[j];
 			     k > 0; pattern += MAX_WAYS, k--) {
 				int free = 0;
@@ -1021,10 +1108,10 @@ vbi_raw_decoder_add_services(vbi_raw_decoder *rd, unsigned int services, int str
 						     == job - rd->jobs));
 
 				if (free <= 1) { /* reserve one NULL way */
-                                        ds_diag ("skipping service 0x%08X: no more patterns free\n",
+					ds_diag ("skipping service 0x%08X: no more patterns free\n",
 						vbi_services[i].id);
-					goto eliminate;
-                                }
+					goto finished;
+				}
 			}
 		}
 
@@ -1040,6 +1127,12 @@ vbi_raw_decoder_add_services(vbi_raw_decoder *rd, unsigned int services, int str
 				pattern[MAX_WAYS - 1] = -128;
 			}
                 }
+
+		/* skip colour burst */
+		if (rd->offset > 0 && strict > 0 && offset < off_min)
+			skip = (int)(off_min * rd->sampling_rate);
+		else
+			skip = 0;
 
 		job->id |= vbi_services[i].id;
 		job->offset = skip;
@@ -1061,7 +1154,7 @@ vbi_raw_decoder_add_services(vbi_raw_decoder *rd, unsigned int services, int str
 			rd->num_jobs++;
 
 		rd->services |= vbi_services[i].id;
-eliminate:
+finished:
 		;
 	}
 
