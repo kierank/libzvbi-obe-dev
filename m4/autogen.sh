@@ -9,11 +9,12 @@ if [ -n "$GNOME2_PATH" ]; then
 	export PATH
 fi
 
-(autoconf --version) < /dev/null > /dev/null 2>&1 || {
+test -n "`autoconf --version </dev/null | grep 2.53`" || {
   echo
-  echo "**Error**: You must have 'autoconf' installed to compile $PACKAGE."
+  echo "**Error**: You must have 'autoconf 2.53' installed to compile $PACKAGE."
   echo "Download the appropriate package for your distribution,"
   echo "or get the source tarball at ftp://ftp.gnu.org/pub/gnu/"
+  echo "(a newer version may work but is not tested)"
   DIE=1
 }
 
@@ -28,42 +29,42 @@ fi
 }
 
 (grep "^AM_PROG_LIBTOOL" $srcdir/configure.in >/dev/null) && {
-  (libtool --version) < /dev/null > /dev/null 2>&1 || {
+  test -n "`libtool --version </dev/null | grep 1.4`" || {
     echo
-    echo "**Error**: You must have 'libtool' installed to compile $PACKAGE."
-    echo "Get ftp://ftp.gnu.org/pub/gnu/libtool-1.4d.tar.gz"
-    echo "(or a newer version if it is available)"
+    echo "**Error**: You must have 'libtool 1.4.2' installed to compile $PACKAGE."
+    echo "Get ftp://ftp.gnu.org/pub/gnu/libtool/libtool-1.4.2.tar.gz"
+    echo "(a newer version may work but is not tested)"
     DIE=1
   }
 }
 
 grep "^AM_GNU_GETTEXT" $srcdir/configure.in >/dev/null && {
   grep "sed.*POTFILES" $srcdir/configure.in >/dev/null || \
-  (gettext --version) < /dev/null > /dev/null 2>&1 || {
+  test -n "`gettext --version </dev/null | grep 0.11`" || {
     echo
-    echo "**Error**: You must have 'gettext' installed to compile $PACKAGE."
-    echo "Get ftp://alpha.gnu.org/gnu/gettext-0.10.36.tar.gz"
-    echo "(or a newer version if it is available)"
+    echo "**Error**: You must have 'gettext 0.11.2' installed to compile $PACKAGE."
+    echo "Get ftp://ftp.gnu.org/pub/gnu/gettext/gettext-0.11.2.tar.gz"
+    echo "(a newer version may work, but is not tested)"
     DIE=1
   }
 }
 
 grep "^AM_GNOME_GETTEXT" $srcdir/configure.in >/dev/null && {
   grep "sed.*POTFILES" $srcdir/configure.in >/dev/null || \
-  (gettext --version) < /dev/null > /dev/null 2>&1 || {
+  test -n "`gettext --version </dev/null | grep 0.11`" || {
     echo
-    echo "**Error**: You must have 'gettext' installed to compile $PACKAGE."
-    echo "Get ftp://alpha.gnu.org/gnu/gettext-0.10.36.tar.gz"
-    echo "(or a newer version if it is available)"
+    echo "**Error**: You must have 'gettext 0.11.2' installed to compile $PACKAGE."
+    echo "Get ftp://ftp.gnu.org/pub/gnu/gettext/gettext-0.11.2.tar.gz"
+    echo "(a newer version may work, but is not tested)"
     DIE=1
   }
 }
 
-(automake --version) < /dev/null > /dev/null 2>&1 || {
+test -n "`automake --version </dev/null | grep 1.6`" || {
   echo
-  echo "**Error**: You must have 'automake' installed to compile $PACKAGE."
-  echo "Get ftp://ftp.gnu.org/pub/gnu/automake-1.6.tar.gz"
-  echo "(or a newer version if it is available)"
+  echo "**Error**: You must have 'automake 1.6' installed to compile $PACKAGE."
+  echo "Get ftp://ftp.gnu.org/pub/gnu/automake/automake-1.6.tar.gz"
+  echo "(a newer version may work, but is not tested)"
   DIE=1
   NO_AUTOMAKE=yes
 }
@@ -73,13 +74,14 @@ test -n "$NO_AUTOMAKE" || (aclocal --version) < /dev/null > /dev/null 2>&1 || {
   echo
   echo "**Error**: Missing 'aclocal'.  The version of 'automake'"
   echo "installed doesn't appear recent enough."
-  echo "Get ftp://ftp.gnu.org/pub/gnu/automake-1.6.tar.gz"
-  echo "(or a newer version if it is available)"
+  echo "Get ftp://ftp.gnu.org/pub/gnu/automake/automake-1.6.tar.gz"
+  echo "(a newer version may work, but is not tested)"
   DIE=1
 }
 
 if test "$DIE" -eq 1; then
-  exit 1
+  read -p "Continue? (y/n) " yesno
+  test "$yesno" == "y" || exit 1
 fi
 
 if test -z "$*"; then
@@ -134,7 +136,7 @@ do
 	  echo "Creating $dr/aclocal.m4 ..."
 	  test -r $dr/aclocal.m4 || touch $dr/aclocal.m4
 	  echo "Running gettextize...  Ignore non-fatal messages."
-	  echo "no" | gettextize --force --copy
+	  echo "no" | gettextize --force --copy --intl
 	  echo "Making $dr/aclocal.m4 writable ..."
 	  test -r $dr/aclocal.m4 && chmod u+w $dr/aclocal.m4
         fi

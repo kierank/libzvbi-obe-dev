@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.h,v 1.3 2002/04/16 05:49:57 mschimek Exp $ */
+/* $Id: export.h,v 1.4 2002/06/18 02:27:34 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -215,24 +215,30 @@ extern char *			vbi_export_errstr(vbi_export *export);
 #include <stddef.h>
 
 #ifndef _
-#ifdef ENABLE_NLS
+#  ifdef ENABLE_NLS
 #    include <libintl.h>
 #    define _(String) gettext (String)
 #    ifdef gettext_noop
-#        define N_(String) gettext_noop (String)
+#      define N_(String) gettext_noop (String)
 #    else
-#        define N_(String) (String)
+#      define N_(String) (String)
 #    endif
-#else
-/* Stubs that do something close enough.  */
-#    define textdomain(String) (String)
-#    define gettext(String) (String)
-#    define dgettext(Domain,Message) (Message)
-#    define dcgettext(Domain,Message,Type) (Message)
-#    define bindtextdomain(Domain,Directory) (Domain)
+#  else /* Stubs that do something close enough.  */
+#    define gettext(Msgid) ((const char *) (Msgid))
+#    define dgettext(Domainname, Msgid) ((const char *) (Msgid))
+#    define dcgettext(Domainname, Msgid, Category) ((const char *) (Msgid))
+#    define ngettext(Msgid1, Msgid2, N) \
+       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
+#    define dngettext(Domainname, Msgid1, Msgid2, N) \
+       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
+#    define dcngettext(Domainname, Msgid1, Msgid2, N, Category) \
+       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
+#    define textdomain(Domainname) ((const char *) (Domainname))
+#    define bindtextdomain(Domainname, Dirname) ((const char *) (Dirname))
+#    define bind_textdomain_codeset(Domainname, Codeset) ((const char *) (Codeset))
 #    define _(String) (String)
 #    define N_(String) (String)
-#endif
+#  endif
 #endif
 
 typedef struct vbi_export_class vbi_export_class;

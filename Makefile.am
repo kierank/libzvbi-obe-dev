@@ -1,5 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 
-EXTRA_DIST = BUGS zvbi.spec.in zvbi.spec autogen.sh depcomp
+EXTRA_DIST = config.rpath BUGS zvbi.spec.in zvbi.spec autogen.sh depcomp
 
-SUBDIRS = src po test doc intl contrib
+DISTCLEANFILES = site_def.h
+
+SUBDIRS = m4 src po test doc contrib
+
+ACLOCAL_AMFLAGS = -I m4

@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: zapping 0.1\n"
-"POT-Creation-Date: 2002-06-04 16:21+0200\n"
+"POT-Creation-Date: 2002-06-17 03:01+0200\n"
 "PO-Revision-Date: 2002-01-08 14:34+0100\n"
 "Last-Translator: Christian Marillat <marillat.christian@wanadoo.fr>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -42,13 +42,11 @@ msgstr "Exporter cette page en une image PPM brute"
 msgid "Unable to allocate %d byte buffer."
 msgstr "Incapable d'allouer %d octets de mémoire tampon."
 
-#. NLS: .png title, must be Latin-1
 #: src/exp-gfx.c:1173 src/exp-html.c:232
 #, c-format
 msgid "Teletext Page %3x.%x"
 msgstr "Page Teletext %3x.%x"
 
-#. NLS: .png title, must be Latin-1
 #: src/exp-gfx.c:1178 src/exp-html.c:235
 #, c-format
 msgid "Teletext Page %3x"
@@ -90,10 +88,6 @@ msgstr "En-tête HTML"
 msgid "Include HTML page header"
 msgstr "Inclure l'entête de page HTML"
 
-#.
-#. *  NLS: "lang=\"en\" refers to the page title "Teletext Page..."
-#. *  below, specify "de", "fr", "es" etc.
-#.
 #: src/exp-html.c:221
 msgid "<title lang=\"en\">"
 msgstr "<title lang=\"fr\">"
@@ -195,7 +189,6 @@ msgstr "Blanc"
 msgid "Any"
 msgstr "N'importe laquelle"
 
-#. NLS: Insert terminal control codes
 #: src/exp-txt.c:109
 msgid "None"
 msgstr "Aucun"
@@ -208,7 +201,6 @@ msgstr "ANSI X3.64 / VT 100"
 msgid "VT 200"
 msgstr "VT 200"
 
-#. NLS: Text export format menu
 #: src/exp-txt.c:116
 msgid "Format"
 msgstr "Format"
@@ -221,7 +213,6 @@ msgstr "Codes de Contrôle"
 msgid "Foreground"
 msgstr "Texte"
 
-#. any
 #: src/exp-txt.c:132
 msgid "Assumed terminal foreground color"
 msgstr "Supposer la couleur du texte du terminal"
@@ -230,7 +221,6 @@ msgstr "Supposer la couleur du texte du terminal"
 msgid "Background"
 msgstr "Fond d'écran"
 
-#. any
 #: src/exp-txt.c:136
 msgid "Assumed terminal background color"
 msgstr "Supposer la couleur du fond d'écran du terminal"
@@ -266,62 +256,62 @@ msgstr ""
 "Exporter cette page en un fichier VTX, le format utilisé par Videotext et "
 "vbidecode"
 
-#: src/export.c:399
+#: src/export.c:404
 #, c-format
 msgid "Invalid option string \"%s\"."
 msgstr "Chaîne d'option invalide \"%s\"."
 
-#: src/export.c:488
+#: src/export.c:493
 #, c-format
 msgid "Unknown export module '%s'."
 msgstr "Module d'export inconnu '%s'."
 
-#: src/export.c:498
+#: src/export.c:503
 #, c-format
 msgid "Cannot initialize export module '%s', probably lack of memory."
 msgstr ""
 "Ne peut initialiser le module d'export '%s', probablement un manque de "
 "mémoire."
 
-#: src/export.c:934
+#: src/export.c:939
 #, c-format
 msgid "Cannot create file '%s': Error %d, %s."
 msgstr "Ne peut créer le fichier '%s' : Erreur %d, %s."
 
-#: src/export.c:1009
+#: src/export.c:1014
 #, c-format
 msgid "Error while writing file '%s'"
 msgstr "Erreur lors de l'écriture du fichier '%s'"
 
-#: src/export.c:1011
+#: src/export.c:1016
 msgid "Error while writing file"
 msgstr "Erreur lors de l'écriture du fichier"
 
-#: src/export.c:1024
+#: src/export.c:1029
 #, c-format
 msgid "Export module '%s' has no option '%s'."
 msgstr "Le module d'export '%s' na pas d'option '%s'."
 
-#: src/export.c:1069
+#: src/export.c:1074
 #, c-format
 msgid "Invalid argument %s for option %s of export module %s."
 msgstr "Argument invalide %s pour l'option %s du module d'export %s."
 
-#: src/export.c:1080
+#: src/export.c:1085
 #, c-format
 msgid "Out of memory in export module '%s'."
 msgstr "Plus de mémoire pour le module d'export '%s'."
 
-#: src/export.c:1110
+#: src/export.c:1115
 msgid "Unknown error."
 msgstr "Erreur inconnue."
 
-#: src/io-v4l.c:519 src/io-v4l.c:783 src/io-v4l.c:801 src/io-v4l2.c:340
-#: src/io-v4l2.c:549 src/io-v4l2.c:597 src/io-v4l2.c:678
+#: src/io-v4l2.c:340 src/io-v4l2.c:549 src/io-v4l2.c:597 src/io-v4l2.c:678
+#: src/io-v4l.c:519 src/io-v4l.c:783 src/io-v4l.c:801
 msgid "Virtual memory exhausted."
 msgstr "Mémoire virtuelle épuisée."
 
-#: src/io-v4l.c:529 src/io-v4l2.c:352
+#: src/io-v4l2.c:352 src/io-v4l.c:529
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Ne peut ouvrir '%s' : %d, %s"
@@ -335,13 +325,12 @@ msgstr "Ne peut identifier '%s' : %d, %s."
 msgid "Probably not a v4l2 device."
 msgstr "Probablement pas un périphérique v4l2."
 
-#: src/io-v4l.c:554 src/io-v4l2.c:368
+#: src/io-v4l2.c:368 src/io-v4l.c:554
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) n'est pas une entrée VBI brute."
 
-#. Mandatory; dequeue buffer is non-blocking.
-#: src/io-v4l.c:705 src/io-v4l2.c:379 src/io-v4l2.c:562
+#: src/io-v4l2.c:379 src/io-v4l2.c:562 src/io-v4l.c:705
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) ne supporte pas la fonction select()."
@@ -360,19 +349,19 @@ msgstr "Probablement un bogue du pilote."
 msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr "Impossible d'obtenir les paramètres vbi courant de %s (%s) : %d, %s."
 
-#: src/io-v4l.c:413 src/io-v4l.c:713 src/io-v4l.c:771 src/io-v4l2.c:426
-#: src/io-v4l2.c:539
+#: src/io-v4l2.c:426 src/io-v4l2.c:539 src/io-v4l.c:413 src/io-v4l.c:713
+#: src/io-v4l.c:771
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr ""
 "Désolé, %s (%s) ne peut capturer aucun des services de données demandé."
 
-#: src/io-v4l.c:450 src/io-v4l2.c:463
+#: src/io-v4l2.c:463 src/io-v4l.c:450
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "Ne peut initialiser %s (%s), le périphérique est déjà utilisé."
 
-#: src/io-v4l.c:456 src/io-v4l2.c:479
+#: src/io-v4l2.c:479 src/io-v4l.c:456
 #, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr ""
@@ -382,7 +371,7 @@ msgstr ""
 msgid "Possibly a driver bug."
 msgstr "Possibilité d'un bogue du pilote."
 
-#: src/io-v4l.c:593 src/io-v4l2.c:511
+#: src/io-v4l2.c:511 src/io-v4l.c:593
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -391,7 +380,7 @@ msgstr ""
 "%s (%s) présente un format inconnu d'échantillon vbi #%d. Ceci peut-être un "
 "bogue du pilote ou une librairies libzvbi trop vieille."
 
-#: src/io-v4l.c:757 src/io-v4l2.c:523
+#: src/io-v4l2.c:523 src/io-v4l.c:757
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -433,7 +422,7 @@ msgstr ""
 "Ne peut mettre dans la queue le flux des tampons e/s #%d vers %s (%s) : %d, %"
 "s."
 
-#: src/io-v4l.c:812 src/io-v4l2.c:689
+#: src/io-v4l2.c:689 src/io-v4l.c:812
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Pas assez de mémoire pour allouer un tampon de capture vbi (%d Ko)."

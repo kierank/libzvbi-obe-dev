@@ -83,7 +83,7 @@ SCANOBJ_FILES = 		\
 	$(DOC_MODULE).signals
 
 if ENABLE_GTK_DOC
-all-local: html-build.stamp
+all-local: copytree html-build.stamp
 
 #### scan ####
 
@@ -98,7 +98,7 @@ scan-build.stamp: $(HFILE_GLOB)
 	    done \
 	fi
 	cd $(srcdir) && \
-	  ./zdoc-scan --module=$(DOC_MODULE)                                --ignore-headers="$(IGNORE_HFILES)" $(SCAN_OPTIONS) $(EXTRA_HFILES)
+	  $(top_srcdir)/doc/zdoc-scan --module=$(DOC_MODULE)                --ignore-headers="$(IGNORE_HFILES)" $(SCAN_OPTIONS) $(EXTRA_HFILES)
 #	  gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="$(IGNORE_HFILES)" $(SCAN_OPTIONS) $(EXTRA_HFILES)
 	touch scan-build.stamp
 

@@ -35,7 +35,7 @@ libzvbi_la_LDFLAGS = -version-info 1:1:1
 #   before "^/* Public", after "^/* Private" and between "^/**"..."**/$"
 libzvbi.h: bcd.h event.h format.h lang.h export.h cache.h search.h \
 	   sliced.h decoder.h io.h exp-gfx.h exp-txt.h cc.h vt.h tables.h vbi.h
-	sed -ne "1,/\*\//p" vbi.h > $@
+	sed -ne "1,/\*\//p" $(srcdir)/vbi.h > $@
 	echo -e "\n/* Generated file, do not edit! */" >> $@
 	echo -e "\n#ifndef __LIBZVBI_H__\n#define __LIBZVBI_H__" >> $@
 	echo -e "\n#define VBI_VERSION_MAJOR" `echo @VERSION@ \
