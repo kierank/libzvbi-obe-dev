@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: tables.c,v 1.4 2002/10/22 04:42:40 mschimek Exp $ */
+/* $Id: tables.c,v 1.5 2003/10/14 20:19:59 mschimek Exp $ */
 
 #include <stdlib.h>
 
@@ -343,7 +343,7 @@ vbi_cni_table[] = {
 	{ 202,	AT, "ORF Tirol",			0x0000, 0x0000, 0x0000, 0x0AD1 },
 	{ 203,	AT, "ORF Vorarlberg",			0x0000, 0x0000, 0x0000, 0x0AD2 },
 	{ 204,	AT, "ORF Wien",				0x0000, 0x0000, 0x0000, 0x0AD3 },
-	{ 205,	AT, "ATV",				0x0000, 0x0000, 0x0000, 0x0ADE },
+	{ 205,	AT, "ATV+",				0x0000, 0x0000, 0x0000, 0x0ADE },
 	/* not in TR 101 231: 0x0ADE */
 
 	/* Table A.1 continued */

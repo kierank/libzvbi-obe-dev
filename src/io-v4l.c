@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.16 2003/06/01 19:34:46 tomzo Exp $";
+static char rcsid[] = "$Id: io-v4l.c,v 1.17 2003/10/14 20:19:59 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -1216,7 +1216,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		 *  v4l ioctls, let's see if we can guess the beast.
 		 */
 		printv("Driver doesn't support VIDIOCGCAP\n");
-		strncpy(v->vcap.name, _("driver unknown"), sizeof(v->vcap.name));
+		strncpy(v->vcap.name, _("driver unknown"), sizeof(v->vcap.name) - 1);
 		v->vcap.name[sizeof(v->vcap.name) - 1] = 0;
 
 		if (!guess_bttv_v4l(v, &strict, given_fd, scanning))
@@ -1225,7 +1225,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		if (v->vcap.name[0] != 0) {
 			printv("Driver name '%s'\n", v->vcap.name);
 		} else {
-			strncpy(v->vcap.name, _("driver unknown"), sizeof(v->vcap.name));
+			strncpy(v->vcap.name, _("driver unknown"), sizeof(v->vcap.name) - 1);
 			v->vcap.name[sizeof(v->vcap.name) - 1] = 0;
 		}
 

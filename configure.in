@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.25 2003/05/03 12:07:08 tomzo Exp $
+dnl $Id: configure.in,v 1.26 2003/10/14 20:19:59 mschimek Exp $
 
 AC_INIT(configure.in)
 AM_INIT_AUTOMAKE(zvbi, 0.2.5)
@@ -190,6 +190,7 @@ AC_OUTPUT([
   src/Makefile
   test/Makefile
   daemon/Makefile
+  daemon/zvbid.init
   doc/Makefile
   doc/Doxyfile
   contrib/Makefile

@@ -10,9 +10,9 @@ INCLUDES += -D_REENTRANT -D_XOPEN_SOURCE=500 -D_BSD_SOURCE
 INCLUDES += $(X_CFLAGS) $(UNICODE_CFLAGS)
 
 if ENABLE_PROXY
-proxy_sources=io-proxy.c proxy-msg.c proxy-msg.h
+proxy_sources = io-proxy.c proxy-msg.c proxy-msg.h
 else
-proxy_sources=
+proxy_sources =
 endif
 
 libzvbi_la_SOURCES = \

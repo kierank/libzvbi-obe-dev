@@ -5,7 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
-"POT-Creation-Date: 2003-04-06 05:52+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2003-10-14 20:00+0200\n"
 "PO-Revision-Date: 2002-01-08 14:34+0100\n"
 "Last-Translator: Iñaki García Etxebarria <garetxe@users.sourceforge.net>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -102,7 +103,7 @@ msgstr "Incluir la cabecera de la página HTML"
 msgid "<title lang=\"en\">"
 msgstr "<title lang=\"es\">"
 
-#: src/exp-html.c:351 src/exp-txt.c:599
+#: src/exp-html.c:351 src/exp-txt.c:602
 #, c-format
 msgid "Character conversion Unicode (UCS-2) to %s not supported."
 msgstr "Conversión de caracter Unicode (UCS-2) -> %s no soportada."
@@ -237,11 +238,11 @@ msgstr "Fondo"
 msgid "Assumed terminal background color"
 msgstr "Color esperado de fondo de la terminal"
 
-#: src/exp-txt.c:648
+#: src/exp-txt.c:651
 msgid "Text"
 msgstr "Texto"
 
-#: src/exp-txt.c:649
+#: src/exp-txt.c:652
 msgid "Export this page as text file"
 msgstr "Exportar la página actual como texto"
 
@@ -322,27 +323,28 @@ msgstr "Error desconocido."
 msgid "BKTR driver"
 msgstr "Controlador BKTR"
 
-#: src/io-bktr.c:202 src/io-bktr.c:280 src/io-bktr.c:298 src/io-v4l2k.c:333
-#: src/io-v4l2k.c:555 src/io-v4l2k.c:604 src/io-v4l2k.c:686 src/io-v4l2.c:322
-#: src/io-v4l2.c:538 src/io-v4l2.c:586 src/io-v4l2.c:667 src/io-v4l.c:521
-#: src/io-v4l.c:785 src/io-v4l.c:803
+#: src/io-bktr.c:202 src/io-bktr.c:280 src/io-bktr.c:298 src/io-v4l2k.c:174
+#: src/io-v4l2k.c:468 src/io-v4l2k.c:814 src/io-v4l2k.c:1051
+#: src/io-v4l2k.c:1063 src/io-v4l2.c:159 src/io-v4l2.c:450 src/io-v4l2.c:888
+#: src/io-v4l2.c:928 src/io-v4l2.c:980 src/io-v4l.c:139 src/io-v4l.c:1149
+#: src/io-v4l.c:1179 src/io-v4l.c:1199
 msgid "Virtual memory exhausted."
 msgstr "Memoria virtual agotada."
 
-#: src/io-bktr.c:212 src/io-v4l2k.c:344 src/io-v4l2.c:334 src/io-v4l.c:531
+#: src/io-bktr.c:212 src/io-v4l2k.c:1077 src/io-v4l2.c:947 src/io-v4l.c:1205
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "No se puede abrir '%s': %d, %s."
 
-#: src/io-bktr.c:268 src/io-v4l2k.c:440 src/io-v4l2k.c:545 src/io-v4l2.c:415
-#: src/io-v4l2.c:528 src/io-v4l.c:413 src/io-v4l.c:715 src/io-v4l.c:773
+#: src/io-bktr.c:268 src/io-v4l2k.c:801 src/io-v4l2.c:875 src/io-v4l.c:613
+#: src/io-v4l.c:1134 src/io-v4l.c:1265
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr ""
 "Lo siento, %s (%s) no puede capturar ninguno de los servicios de datos "
 "solicitados."
 
-#: src/io-bktr.c:309 src/io-v4l2k.c:697 src/io-v4l2.c:678 src/io-v4l.c:814
+#: src/io-bktr.c:309 src/io-v4l2k.c:479 src/io-v4l2.c:461 src/io-v4l.c:150
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "No hay sufficiente memoria para el buffer de captura VBI (%d KB)."
@@ -351,58 +353,70 @@ msgstr "No hay sufficiente memoria para el buffer de captura VBI (%d KB)."
 msgid "bktr interface not compiled."
 msgstr "Interfaz bktr no compilado."
 
-#: src/io-v4l2k.c:360 src/io-v4l2.c:343
+#: src/io-v4l2k.c:155 src/io-v4l2.c:140
 #, c-format
-msgid "Cannot identify '%s': %d, %s."
-msgstr "No se puede identificar '%s': %d, %s."
+msgid "Cannot request streaming i/o buffers from %s (%s): %d, %s."
+msgstr "No se pueden pedir buffers de streaming de %s (%s): %d, %s."
 
-#: src/io-v4l2k.c:362 src/io-v4l2.c:345
-msgid "Probably not a v4l2 device."
-msgstr "Probablemente no es un dispositivo v4l2."
+#: src/io-v4l2k.c:158 src/io-v4l2k.c:726 src/io-v4l2.c:143 src/io-v4l2.c:802
+msgid "Possibly a driver bug."
+msgstr "Posiblemente un fallo del driver."
 
-#: src/io-v4l2k.c:367 src/io-v4l2.c:357 src/io-v4l.c:556
+#: src/io-v4l2k.c:163 src/io-v4l2.c:148
 #, c-format
-msgid "%s (%s) is not a raw vbi device."
-msgstr "%s (%s) no es dispositivo de VBI crudo."
+msgid ""
+"%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
+"exhausted."
+msgstr ""
+"%s (%s) no creó buffers streaming, posiblemente memoria física agotada."
 
-#: src/io-v4l2k.c:379 src/io-v4l2k.c:569 src/io-v4l2.c:368 src/io-v4l2.c:551
-#: src/io-v4l.c:707
+#: src/io-v4l2k.c:188 src/io-v4l2.c:173
 #, c-format
-msgid "%s (%s) does not support the select() function."
-msgstr "%s (%s) no soporta la función select()."
+msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %d, %s."
+msgstr "Fallo al pedir buffer streaming #%d de %s (%s): %d, %s."
 
-#: src/io-v4l2k.c:386 src/io-v4l2k.c:401 src/io-v4l2.c:376
+#: src/io-v4l2k.c:210 src/io-v4l2.c:195
 #, c-format
-msgid "Cannot query current videostandard of %s (%s): %d, %s."
-msgstr "No se pueden obtener el estándar actual de %s (%s): %d, %s."
+msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
+msgstr "Fallo al mapear a memoria el buffer streaming #%d de %s (%s): %d, %s."
 
-#: src/io-v4l2k.c:388 src/io-v4l2k.c:403 src/io-v4l2k.c:668 src/io-v4l2.c:378
-#: src/io-v4l2.c:650
+#: src/io-v4l2k.c:234 src/io-v4l2.c:219
+#, c-format
+msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
+msgstr "Fallo al enviar el buffer streaming #%d a %s (%s): %d, %s."
+
+#: src/io-v4l2k.c:238 src/io-v4l2k.c:1004 src/io-v4l2k.c:1019
+#: src/io-v4l2.c:223 src/io-v4l2.c:999
 msgid "Probably a driver bug."
 msgstr "Probablemente un fallo del controlador."
 
-#: src/io-v4l2k.c:423 src/io-v4l2.c:398
+#: src/io-v4l2k.c:651 src/io-v4l2.c:720
 #, c-format
 msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr ""
 "No se pueden obtener los parámetros de vbi actuales de %s (%s): %d, %s."
 
-#: src/io-v4l2k.c:477 src/io-v4l2.c:452 src/io-v4l.c:450
+#: src/io-v4l2k.c:684
+#, fuzzy, c-format
+msgid ""
+"Sorry, %s (%s) cannot capture any of the requested data services with "
+"scanning %d."
+msgstr ""
+"Lo siento, %s (%s) no puede capturar ninguno de los servicios de datos "
+"solicitados."
+
+#: src/io-v4l2k.c:717 src/io-v4l2.c:783 src/io-v4l.c:664
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "No se puede inicializar %s (%s), ya está siendo utilizado."
 
-#: src/io-v4l2k.c:485 src/io-v4l2.c:468 src/io-v4l.c:456
+#: src/io-v4l2k.c:723 src/io-v4l2.c:799 src/io-v4l.c:678
 #, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr ""
 "No se pudieron establecer los parámetros de captura para %s (%s): %d, %s."
 
-#: src/io-v4l2k.c:488 src/io-v4l2k.c:588 src/io-v4l2.c:471 src/io-v4l2.c:570
-msgid "Possibly a driver bug."
-msgstr "Posiblemente un fallo del driver."
-
-#: src/io-v4l2k.c:517 src/io-v4l2.c:500 src/io-v4l.c:595
+#: src/io-v4l2k.c:764 src/io-v4l2.c:836 src/io-v4l.c:986
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -411,7 +425,7 @@ msgstr ""
 "%s (%s) ofrece un formato de muestreo no reconocido #%d. Esto puede ser un "
 "fallo del controlador o que libzvbi es demasiado vieja."
 
-#: src/io-v4l2k.c:529 src/io-v4l2.c:512 src/io-v4l.c:759
+#: src/io-v4l2k.c:774 src/io-v4l2.c:848 src/io-v4l.c:1107
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -420,35 +434,48 @@ msgstr ""
 "No se pueden capturar los servicios de datos solicitados con %s (%s), la "
 "frecuencia de muestreo %.2f MHz es demasiado baja."
 
-#: src/io-v4l2k.c:585 src/io-v4l2.c:567
-#, c-format
-msgid "Cannot request streaming i/o buffers from %s (%s): %d, %s."
-msgstr "No se pueden pedir buffers de streaming de %s (%s): %d, %s."
-
-#: src/io-v4l2k.c:593 src/io-v4l2.c:575
-#, c-format
-msgid ""
-"%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
-"exhausted."
+#: src/io-v4l2k.c:907 src/io-v4l.c:845
+msgid "Not an analog channel descriptor type"
 msgstr ""
-"%s (%s) no creó buffers streaming, posiblemente memoria física agotada."
 
-#: src/io-v4l2k.c:618 src/io-v4l2.c:600
+#: src/io-v4l2k.c:931
+msgid "Failed to switch video standard"
+msgstr ""
+
+#: src/io-v4l2k.c:940 src/io-v4l.c:756
 #, c-format
-msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %d, %s."
-msgstr "Fallo al pedir buffer streaming #%d de %s (%s): %d, %s."
+msgid "Failed to query channel #%d, probably invalid index."
+msgstr ""
 
-#: src/io-v4l2k.c:640 src/io-v4l2.c:622
+#: src/io-v4l2k.c:951 src/io-v4l.c:769
 #, c-format
-msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
-msgstr "Fallo al mapear a memoria el buffer streaming #%d de %s (%s): %d, %s."
+msgid "Failed to switch to channel #%d."
+msgstr ""
 
-#: src/io-v4l2k.c:664 src/io-v4l2.c:646
+#: src/io-v4l2k.c:967
+msgid "Failed to set TV tuner frequency."
+msgstr ""
+
+#: src/io-v4l2k.c:1002 src/io-v4l2k.c:1017 src/io-v4l2.c:997
 #, c-format
-msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
-msgstr "Fallo al enviar el buffer streaming #%d a %s (%s): %d, %s."
+msgid "Cannot query current videostandard of %s (%s): %d, %s."
+msgstr "No se pueden obtener el estándar actual de %s (%s): %d, %s."
 
-#: src/io-v4l2k.c:707 src/io-v4l2.c:688
+#: src/io-v4l2k.c:1093 src/io-v4l2.c:956
+#, c-format
+msgid "Cannot identify '%s': %d, %s."
+msgstr "No se puede identificar '%s': %d, %s."
+
+#: src/io-v4l2k.c:1095 src/io-v4l2.c:958
+msgid "Probably not a v4l2 device."
+msgstr "Probablemente no es un dispositivo v4l2."
+
+#: src/io-v4l2k.c:1100 src/io-v4l2.c:970 src/io-v4l.c:1234
+#, c-format
+msgid "%s (%s) is not a raw vbi device."
+msgstr "%s (%s) no es dispositivo de VBI crudo."
+
+#: src/io-v4l2k.c:1132 src/io-v4l2.c:1038
 #, c-format
 msgid ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "
@@ -457,20 +484,42 @@ msgstr ""
 "%s (%s) no tiene un interfaz de lectura, posiblemente un dispositivo\n"
 "de sólo salida o un fallo del controlador."
 
-#: src/io-v4l2k.c:758 src/io-v4l2.c:739
+#: src/io-v4l2k.c:1194 src/io-v4l2.c:1088
 msgid "V4L2 interface not compiled."
 msgstr "Interfaz V4L2 no compilado."
 
-#: src/io-v4l.c:507
-msgid "driver unknown"
-msgstr "controlador desconocido"
+#: src/io-v4l2.c:742
+#, fuzzy, c-format
+msgid "Sorry, %s (%s) cannot capture any of the requested data services %d."
+msgstr ""
+"Lo siento, %s (%s) no puede capturar ninguno de los servicios de datos "
+"solicitados."
 
-#: src/io-v4l.c:638
+#: src/io-v4l2.c:989 src/io-v4l2.c:1015 src/io-v4l.c:1257
+#, c-format
+msgid "%s (%s) does not support the select() function."
+msgstr "%s (%s) no soporta la función select()."
+
+#: src/io-v4l.c:794
+#, c-format
+msgid "Failed to configure norm on tuner #%d."
+msgstr ""
+
+#: src/io-v4l.c:805
+msgid "Failed to switch TV frequency"
+msgstr ""
+
+#: src/io-v4l.c:892
+#, c-format
+msgid "Failed to open video device '%s': %s"
+msgstr ""
+
+#: src/io-v4l.c:1034
 #, c-format
 msgid "Cannot capture with %s (%s), has no standard vbi interface."
 msgstr "No se puede capturar con %s (%s), no tiene interfaz vbi estándar."
 
-#: src/io-v4l.c:656
+#: src/io-v4l.c:1052
 #, c-format
 msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
@@ -479,11 +528,15 @@ msgstr ""
 "No se puede identificar %s (%s), el tamaño de cuadro vbi sugiere que no es "
 "un controlador bttv."
 
-#: src/io-v4l.c:672 src/io-v4l.c:732
+#: src/io-v4l.c:1068 src/io-v4l.c:1282
 #, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr "No se puede establecer o determinar el estándar actual de %s (%s)."
 
-#: src/io-v4l.c:862 src/io-v4l.c:872
+#: src/io-v4l.c:1219 src/io-v4l.c:1228
+msgid "driver unknown"
+msgstr "controlador desconocido"
+
+#: src/io-v4l.c:1358 src/io-v4l.c:1389
 msgid "V4L interface not compiled."
 msgstr "Interfaz V4L no compilado."

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.10 2002/10/22 04:42:40 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.11 2003/10/14 20:19:59 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -488,9 +488,12 @@ print_char(text_instance *text, int endian, vbi_page *pg, vbi_char old, vbi_char
 
 	if (text->term > 0) {
 		assert(sizeof(vbi_char) == 8);
+		union { vbi_char c; uint64_t i; } u_old, u_tmp, u_this;
+		u_old.c = old;
+		u_this.c = this;
 
-		*((uint64_t *) &chg) = *((uint64_t *) &old) ^ *((uint64_t *) &this);
-		*((uint64_t *) &off) = *((uint64_t *) &chg) & ~*((uint64_t *) &this);
+		u_tmp.i = u_old.i ^ u_this.i; chg = u_tmp.c;
+		u_tmp.i = u_tmp.i &~u_this.i; off = u_tmp.c;
 
 		/* http://www.cs.ruu.nl/wais/html/na-dir/emulators-faq/part3.html */
 

@@ -28,7 +28,8 @@ v4l2 drivers, where it's no longer possible to determine if a TV app
 is running before switching the channel in a background app (these apps
 relied on the fact that v4l1 devices can be opened only once.)  Hence
 VBI apps currently may annoy v4l2 users by switching the channel while
-you're watching TV.
+you're watching TV. [MHS: In the meantime the v4l2 api defines an
+optional interface allowing apps to set a device access priority.] 
 
 One drawback of the proxy is that it requires to adapt all cooperating
 VBI clients.  For most applications which already use libzvbi the required

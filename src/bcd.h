@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bcd.h,v 1.8 2003/02/16 21:11:12 mschimek Exp $ */
+/* $Id: bcd.h,v 1.9 2003/10/14 20:19:59 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -226,7 +226,9 @@ vbi_is_bcd(unsigned int bcd)
  *  Return a pointer to a structure of @a type from
  *  a @a ptr to one of its @a members.
  */
-#define PARENT(ptr, type, member)					\
-  ((type *)(((char *) ptr) - offsetof(type, member)))
+#define PARENT(_ptr, _type, _member)					\
+	({ char *_p = (char *)(_ptr); (_p != 0) ?			\
+	  (_type *)(_p - offsetof (_type, _member)) : (_type *) 0; })
+/* XXX gcc specific, see zvbi-0.3 for better solution */
 
 #endif /* BCD_H */

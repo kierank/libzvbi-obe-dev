@@ -1,3 +1,18 @@
+2003-10-14      <mschimek@users.sf.net>
+
+	* src/packet.c, src/trigger.c: Fixed unsafe use of strncpy.
+	* daemon/zvbid.init.in: Added. Just an example for
+	  packagers, I cannot create an init script for each distro
+	  out there.
+	* daemon/Makefile.am: Changed target ./proxyd to
+	  @sbindir@/zvbid. 'proxyd' was a bit too general. 
+
+2003-10-09      <mschimek@users.sf.net>
+
+	* src/exp-txt.c, src/io-v4l2.c, src/io-v4l2k.c:
+	  x86-64 fixes by Gwenole Beauchesne, submitted by
+	  Thierry Vignaud of MandrakeSoft.
+
 2003-06-07      <tomzo@users.sf.net>
 
         Periodic check-in for ongoing proxy implementation:
@@ -61,6 +76,11 @@
           complete VBI frame is received or timeout expired; before the
           function returned 0 when only a partial message was received,
           falsely indicating a timeout to the caller
+
+2003-05-04	<mschimek@users.sf.net>
+
+	* src/caption.c (vbi_decode_caption):
+	  s/pthread_mutex_unlock/pthread_mutex_lock.
 
 2003-05-03      <tomzo@users.sf.net>
 
