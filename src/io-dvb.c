@@ -90,6 +90,39 @@ static struct vbi_capture_dvb* dvb_init(char *dev, char **errstr, int debug)
 
 /* ----------------------------------------------------------------------- */
 
+static __inline__ void
+timeval_subtract		(struct timeval *	delta,
+				 const struct timeval *	tv1,
+				 const struct timeval *	tv2)
+{
+	if (tv1->tv_usec < tv2->tv_usec) {
+		delta->tv_sec = tv1->tv_sec - tv2->tv_sec - 1;
+		delta->tv_usec = 1000000 + tv1->tv_usec - tv2->tv_usec;
+	} else {
+		delta->tv_sec = tv1->tv_sec - tv2->tv_sec;
+		delta->tv_usec = tv1->tv_usec - tv2->tv_usec;
+	}
+}
+
+static void
+timeout_subtract		(struct timeval *	timeout,
+				 const struct timeval *	now,
+				 const struct timeval *	start)
+{
+	struct timeval delta;
+
+	timeval_subtract (&delta, now, start);
+
+	if ((delta.tv_sec | delta.tv_usec) >= 0) {
+		timeval_subtract (timeout, timeout, &delta);
+
+		if ((timeout->tv_sec | timeout->tv_usec) < 0) {
+			timeout->tv_sec = 0;
+			timeout->tv_usec = 0;
+		}
+	}
+}
+
 static int dvb_read(vbi_capture *cap,
 		    vbi_capture_buffer **raw,
 		    vbi_capture_buffer **sliced,
@@ -97,6 +130,7 @@ static int dvb_read(vbi_capture *cap,
 {
     struct vbi_capture_dvb *dvb = (struct vbi_capture_dvb*)cap;
     vbi_capture_buffer *sb;
+    struct timeval timeout_left;
     unsigned int n_lines;
     int64_t pts;
 
@@ -105,25 +139,38 @@ static int dvb_read(vbi_capture *cap,
 	sb->data = dvb->sliced_data;
     }
 
+    timeout_left = *timeout;
+
     do {
 	if (0 == dvb->b_left) {
 	    struct timeval tv;
+	    struct timeval start;
 	    fd_set set;
 	    int rc;
 
+	    gettimeofday (&start, NULL);
+
+	retry:
 	    FD_ZERO (&set);
 	    FD_SET (dvb->fd, &set);
 
 	    /* Note Linux select() may change tv. */
-	    tv = *timeout;
+	    tv = timeout_left;
 
 	    rc = select (dvb->fd + 1, &set, NULL, NULL, &tv);
 	    switch (rc) {
 	    case -1:
+	        if (EINTR == errno) {
+		    gettimeofday (&tv, NULL);
+		    timeout_subtract (&timeout_left, &tv, &start);
+		    start = tv;
+		    goto retry;
+	        }
+
 		perror("dvb-vbi: select");
 		return -1; /* error */
 	    case 0:
-		fprintf(stderr,"dvb-vbi: timeout\n");
+	        /* fprintf(stderr,"dvb-vbi: timeout\n"); */
 		return 0; /* timeout */
 	    default:
 		break;
@@ -132,6 +179,7 @@ static int dvb_read(vbi_capture *cap,
 	    rc = read (dvb->fd, dvb->pes_buffer, sizeof (dvb->pes_buffer));
 	    switch (rc) {
 	    case -1:
+	        /* XXX EAGAIN, EINTR? */
 		perror("read");
 		return -1; /* error */
 	    case 0:
@@ -140,14 +188,17 @@ static int dvb_read(vbi_capture *cap,
 		return -1; /* error */
 	    }
 
+	    gettimeofday (&tv, NULL);
+
 	    /* XXX inaccurate. Should be the time when we received the
 	       first byte of the first packet containing data of the
 	       returned frame. Or so. */
-	    gettimeofday (&tv, NULL);
 	    dvb->sample_time = tv.tv_sec + tv.tv_usec * (1 / 1e6);
 
 	    dvb->bp = dvb->pes_buffer;
 	    dvb->b_left = rc;
+
+	    timeout_subtract (&timeout_left, &tv, &start);
 	}
 
 	/* Demultiplexer coroutine. Returns when one frame is complete
