@@ -36,7 +36,7 @@ the proxy daemon opens the VBI device and starts capturing and decoding
 the services requested by the client, e.g. teletext.  So it will not
 forward raw data, but already decoded data.  That way not only the
 bandwidth is reduced, but also if multiple clients request the same
-services, they needs to be decoded only once.
+services, the respective data stream needs to be decoded only once.
 
 One drawback of that solution is that it requires clients to be adapted,
 i.e. instead of opening the device as usual, clients need to connect to
@@ -75,10 +75,10 @@ test sub-directory there's a small programme called "proxy-test.c" which
 allows to dump teletext or VPS via the proxy.  Various parameters can be
 configured by command line options, use -help for a list.
 
-For further demos you get from http://nxtvepg.sourceforge.net/tmp a
-nxtvepg pre-release (enable -DUSE_LIBZVBI in the Makefile) or modify
-alevt-1.6.1 with a patch from the same directory, or use xawdecode from
-http://xawdecode.sourceforge.net/download/
+For further demos get nxtvepg sources from http://nxtvepg.sourceforge.net/
+and enable -DUSE_LIBZVBI in the Makefile, or modify alevt-1.6.1 with a patch
+from http://nxtvepg.sourceforge.net/tmp/ the same directory, or use xawdecode
+from http://xawdecode.sourceforge.net/download/
 
 http://nxtvepg.sourceforge.net/tmp/alevt-1.6.1-libzvbi.diff
 http://nxtvepg.sourceforge.net/tmp/alevtd-3.91-vbiproxy.diff
@@ -87,7 +87,6 @@ Then you can run nxtvepg and alevt in parallel, or multiple instances of
 alevt etc.  The client interface to the proxy will probably not change
 much anymore, so authors could already start to adapt their applications
 if interested.
-
 
 If you've got any questions, feel free to ask.
 
@@ -103,7 +102,6 @@ The list will be updated in CVS along with the implementation.
 - libzvbi.h: should contain HAVE_PROXY macro or other means to query
   if proxy interface is available at compile time; may be mapped to
   a version number check.
-- handling of buffer count in proxy (use max. count of all clients),
 - optimize raw buffer forward, possibly based on shared memory to avoid
   copying -> requires user-space DMA in io-v4l2k (i.e. streaming into
   buffers allocated by the user)
@@ -138,6 +136,7 @@ The list will be updated in CVS along with the implementation.
   + sequence counter instead of time stamp in vbi_capture_buffer (v4l1 bttv)
   + query time between frames; query timestamp from driver or after read()
   + dynamically change buffer count (v4l2 only)
+  + optionally use read even if streaming is available
 - v4l2 API extensions:
   + channel change event notification
   + CGUNIT to check if two nodes refer to the same piece of hardware
