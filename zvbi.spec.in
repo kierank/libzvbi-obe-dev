@@ -9,9 +9,9 @@ Source: http://prdownloads.sourceforge.net/zapping/zvbi-@VERSION@.tar.bz2
 Packager: Michael H. Schimek <mschimek@users.sourceforge.net>
 Buildroot: %{_tmppath}/%{name}-root
 PreReq: /sbin/install-info
+Prefix: %{_prefix}
 Provides: zvbi
 
-Requires: libunicode >= 0.4
 Requires: gettext >= 0.10.36
 
 %description
@@ -48,5 +48,9 @@ rm -rf %{buildroot}
 %{_includedir}/libzvbi.h
 
 %changelog
+* Tue Jun  4 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
+- Removed libunicode requirement
+- Made package relocatable
+
 * Sat Jan 26 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
 - Created
