@@ -23,28 +23,42 @@
 
   --------------------------------------------------------------------------
 
-  VBI stands for Vertical Blanking Interval, a gap between the image
-  data transmitted in an analog video signal. Actually this gap is not
-  empty, it is used to transmit data for various services like
-  Teletext and Closed Caption.
+  Introduction
+  ============
 
-  The zvbi library provides routines to read from raw VBI sampling
-  devices, to demodulate raw to sliced VBI data, and to interpret
-  the data of several popular services. It has been written for
-  the Zapping TV viewer: http://zapping.sourceforge.net.
-  
+  VBI stands for Vertical Blanking Interval, a gap between pictures in an
+  analog video signal. While not containing any picture data this space is
+  still used to transmit test signals and data for various services like
+  Teletext, Closed Caption and interactive TV.
+
+  The zvbi library provides routines to read from raw VBI capture devices,
+  to demodulate raw into sliced VBI data, and to interpret the data of several
+  popular services. Basically zvbi offers all functions needed by vbi
+  applications except for the user interface. The library was written for the
+  Zapping TV viewer http://zapping.sourceforge.net.
+
   For details on using the library see the documentation in doc/html (built
-  only if you have Doxygen) and the files in the test directory.
+  only if you have Doxygen http://www.doxygen.org/) and the files in the
+  test directory.
+
+  Download
+  ========
+  
+  The latest version, sources and RPMs, is available from
+  http://zapping.sourceforge.net. Debian packages are maintained by Christian
+  Marillat, see distribution testing/unstable. 
 
   Installation
   ============
 
-  To build and install ZVBI type "./configure" and "make install". For
-  additional instructions see the INSTALL file.
+  To build and install type "./configure" and "make install". For additional
+  instructions see the INSTALL file.
+
+  The library has been tested on Linux and FreeBSD.
 
   Ideas, questions, patches and bug reports
   =========================================
-  
-  http://sourceforge.net/tracker/?group_id=2599 or e-mail
+
+  http://sourceforge.net/tracker/?group_id=2599 or by e-mail
   mailto:zapping-misc@lists.sourceforge.net, registration is not
   required.

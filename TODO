@@ -1,34 +1,39 @@
-$Id: TODO,v 1.10 2002/10/09 14:28:03 mschimek Exp $
+$Id: TODO,v 1.11 2002/10/22 04:43:46 mschimek Exp $
 
-* io: Add io-dvb. Generally speaking the i/o api is poor,
-  should be improved.
+Version 0.3
+
+* Events suck badly. Change to query functions (fetch page, station
+  name, aspect ratio, ...) and just notify apps of changes.
+* vbi_page split into public and private, allocate when fetched.
+* Finish vbi_fetch_* reference counting.
+* Make Teletext column 41 optional.
 * decoder.c: Having a public vbi_decoder and vbi_bit_slicer is bad.
   Should be both opaque (except slicer in vbi_decoder),
   with new public vbi_sampling_parameters structure.
+* print should translate linefeeds to target charset (wchar...)
+* io: Add io-dvb. Generally speaking the i/o api is poor,
+  should be improved.
 * search.c: Add vbi_wst_level.
-* exp-gfx.c: draw_*_page_region different formats, custom fonts.
 * packet.c: Add filter for data pages (EPG etc).
-* Finish vbi_fetch_* reference counting.
-* Improve TTX page cache.
-* TTX export: Make blockgfx replacement smarter.
-* Streaming subtitles (as opposed to exporting single pages).
-* SGML error reporting. (Not sure anymore if this is
-  really worth the trouble.)
-* Think about ttx header samples (p100) for stations not transmitting
-  a CNI (instead of guessing the name from ttx). May use VTX to create
-  samples.
+* Add VPT decoder.
+* VR triggers from VPS/PDC/XDS.
 * Program info from TTX (8/30 and VPS/PDC).
 * Can we replace ASCII/Latin-1/local by a single char set? Perhaps UTF-8?
 * Suppose Turkish currency sign U+E800 can be replaced by U+20A4,
   Unicode 3.1: "20A4 LIRA SIGN\n* Italy, Turkey"
+* Better interface to language codes.
 * Improve TTX roll header + serial (Mxx increment).
-* Add VPT decoder.
-* Make Teletext column 41 optional.
-* http://telepresence.dmem.strath.ac.uk/bt848/
-* print should translate linefeeds to target charset (wchar...)
-* VR triggers from VPS/PDC/XDS.
-* Not relocatable (bindtextdomain)
 * Spacing ESC
+* Improve TTX page cache.
+* Streaming subtitles (as opposed to exporting single pages).
+* Not relocatable (bindtextdomain)
+* exp-gfx.c: draw_*_page_region different formats, custom fonts.
+* TTX export: Make blockgfx replacement smarter.
+* Think about ttx header samples (p100) for stations not transmitting
+  a CNI (instead of guessing the name from ttx). May use VTX to create
+  samples.
+* SGML error reporting. (Not sure anymore if this is
+  really worth the trouble.)
 
 -------------------------------------------------------------------------------
 Ideas? Drop us a note at http://zapping.sourceforge.net.

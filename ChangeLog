@@ -1,3 +1,28 @@
+2002-10-21	<mschimek@users.sf.net>
+
+	* src: A few char* were not const typed.
+
+2002-10-17	<mschimek@users.sf.net>
+
+	* src/io-v4l2k.c, src/videodev2k.h,
+	  src/io.h (vbi_capture_v4l2k_new): Added. V4l2 api revision
+	  2002-10 for Linux 2.5 (untested, have to wait for drivers :-).
+	* src/io-v4l2.c: Added fallback to v4l2k.c.
+	* src/io-bktr.c: Added interface to FreeBSD/OpenBSD/NetBSD
+	  bktr driver. Seems to work, more or less (bug or feature?).
+	* src/export.c (vbi_ucs2be): Fixed format name UCS-2 (not UCS2).
+	* test (getopt_long): Added fallback to getopt for non-GNU
+	  systems.
+	* configure.in: New *BSD and getopt_long test.
+
+2002-10-15	<mschimek@users.sf.net>
+
+	* src/event.h, src/ure.h: s/stdint.h/inttypes.h/ for BSD.
+	* configure.in, src/Makefile.am, test/Makefile.am:
+	  -lpthread only on Linux.
+	* src/io_v4l.c, src/io_v4l2.c: Did not compile when
+	  v4l/v4l2 disabled.
+
 2002-10-11	<mschimek@users.sf.net>
 
 	* src/packet.c, test/capture.c: Wrong assumption on char signedness.
@@ -256,6 +281,9 @@
 	* Extracted libvbi from Zapping <http://zapping.sf.net>, added
 	  Makefiles and stuff.
 
-;; Local Variables:
-;; coding: utf-8
-;; End:
+Local Variables:
+mode: change-log
+coding: utf-8
+left-margin: 8
+fill-column: 76
+End:
