@@ -1,12 +1,16 @@
 ## Process this file with automake to produce Makefile.in
 
-TESTS = exoptest cpptest
+TESTS = exoptest cpptest raw_decoder
 
 if ENABLE_PROXY
 proxy_programs = proxy-test
 else
 proxy_programs =
 endif
+
+check_PROGRAMS = \
+    cpptest \
+    raw_decoder
 
 noinst_PROGRAMS = \
     unicode \
@@ -16,7 +20,6 @@ noinst_PROGRAMS = \
     export \
     osc \
     capture \
-    cpptest \
     $(proxy_programs)
 
 cpptest_SOURCES = cpptest.cc
