@@ -109,5 +109,9 @@ capture
 
 	(--long options are only available on GNU systems.)
 
+wss
+	Test/demo app capturing a WSS signal from video images (V4L2
+	only).  Type ./wss -h for options.
+
 The ultimate test is http://zapping.sourceforge.net, the TV viewer this
 library was written for.
