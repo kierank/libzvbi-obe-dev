@@ -17,10 +17,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.16 2004/10/14 07:55:53 mschimek Exp $ */
+/* $Id: teletext.c,v 1.17 2004/12/13 07:17:10 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #include "site_def.h"

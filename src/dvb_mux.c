@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_mux.c,v 1.3 2004/11/04 11:20:54 mschimek Exp $ */
+/* $Id: dvb_mux.c,v 1.4 2004/12/13 07:17:07 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>		/* abort() */
@@ -29,7 +29,7 @@
 #include "misc.h"		/* MIN(), CLEAR() */
 
 #ifndef DVB_MUX_LOG
-#define DVB_MUX_LOG 0
+#  define DVB_MUX_LOG 0
 #endif
 
 #define vbi_rev8(n) vbi_bit_reverse[n]

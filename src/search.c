@@ -22,10 +22,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: search.c,v 1.8 2003/02/16 21:11:29 mschimek Exp $ */
+/* $Id: search.c,v 1.9 2004/12/13 07:17:09 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #include <stdlib.h>

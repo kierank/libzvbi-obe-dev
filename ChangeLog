@@ -1,3 +1,45 @@
+2004-12-12    <mschimek@users.sf.net>
+
+	* src/raw_decoder.c (decode_pattern): Disabled blank line
+	  detection. Will be slower now but if the signal inserter is
+	  disabled during silent periods for more than 4-5 seconds we may
+	  miss caption/subtitles.
+	* src/vbi.c (vbi_event_handler_add, vbi_event_handler_remove):
+	  Improved doxumentation.
+	* src/cache.c (vbi_is_cached, vbi_cache_hi_subno): Undoxumented
+	  return value.
+	* src/io-v4l2.c: Removed unnecessary includes.
+	* src/io-bktr.c (vbi_capture_bktr_new), src/io-v4l.c (v4l_new),
+	  src/io-v4l2k.c (vbi_capture_v4l2k_new): Did not initialize
+	  raw_decoder, that worked only by accident.
+	* src/io-bktr.c (bktr_delete): Did not destroy raw_decoder.
+	* src/decoder.h: Added vbi_pixfmt_set macros for raw_decoder test.
+	* test/Makefile.am: Added raw_decoder check. Compile cpptest only
+	  for make check.
+	* test/raw_decoder.c: New raw_decoder.c, bit_slicer.c unit test from
+	  branch 0.3, modified to compile here.
+	* src/exp-gfx.c (vbi_draw_cc_page_region):  Dox completed.
+	* src/exp-txt.c (vbi_print_page_region): Fixed doxumentation of ltr
+	  parameter.
+	* src/io-v4l.c (vbi_capture_v4l_sidecar_new): Dox completed.
+
+2004-12-11    <mschimek@users.sf.net>
+
+	* test/osc.c: vbi_service_table definitions removed, now
+	  semi-public in raw_decoder.h.
+	* src/decoder.c (vbi_raw_decode): No longer YUV420-only. 
+	* src/decoder.c: Raw VBI decoder routines changed to wrappers of
+	  new raw_decoder.c, bit_slicer.c. Old bit slicer remains because
+	  it lacks a destroy function.
+	* src/sliced.h (VBI_SLICED_): Added new services and updated dox
+	  from branch 0.3.
+	* src/Makefile.am (libzvbi_la_SOURCES): Added bit_slicer.c|h,
+	  raw_decoder.c|h, io-sim.c|h.
+	* src/bit_slicer.h, src/bit_slicer.c: New bit slicer from
+	  branch 0.3, modified to compile here.
+	* src/raw_decoder.h, src/raw_decoder.c: New raw VBI decoder from
+	  branch 0.3, modified to compile here.
+
 2004-11-26    <mschimek@users.sf.net>
 
 	* src/misc.h (CONST_PARENT): Added.

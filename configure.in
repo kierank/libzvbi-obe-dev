@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.37 2004/11/26 06:00:00 mschimek Exp $
+dnl $Id: configure.in,v 1.38 2004/12/13 07:17:05 mschimek Exp $
 
 AC_INIT(configure.in)
 AM_INIT_AUTOMAKE(zvbi, 0.2.10)
@@ -33,10 +33,13 @@ test -e site_def.h || cat <<EOF >site_def.h
 
 #ifndef SITE_DEF_H
 #define SITE_DEF_H
+/* #define BIT_SLICER_LOG 1 */
 /* #define CACHE_DEBUG 1 */
 /* #define CACHE_STATUS 1 */
-/* #define DECODER_PATTERN_DUMP 1 */
-/* #define DECODER_SERVICE_DIAG 1 */
+/* #define DVB_DEMUX_LOG 1 */
+/* #define DVB_MUX_LOG 1 */
+/* #define RAW_DECODER_LOG 1 */
+/* #define RAW_DECODER_PATTERN_DUMP 1 */
 #endif /* SITE_DEF_H */
 EOF
 

@@ -29,9 +29,12 @@
  *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
  *    the latter ones are currently not officially supported.
  *
- *  $Id: proxy-msg.c,v 1.11 2004/10/25 16:56:29 mschimek Exp $
+ *  $Id: proxy-msg.c,v 1.12 2004/12/13 07:17:09 mschimek Exp $
  *
  *  $Log: proxy-msg.c,v $
+ *  Revision 1.12  2004/12/13 07:17:09  mschimek
+ *  *** empty log message ***
+ *
  *  Revision 1.11  2004/10/25 16:56:29  mschimek
  *  *** empty log message ***
  *
@@ -68,7 +71,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #ifdef ENABLE_PROXY

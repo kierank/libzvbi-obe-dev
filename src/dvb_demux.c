@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.2 2004/11/04 11:21:21 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.3 2004/12/13 07:17:07 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>
@@ -29,7 +29,7 @@
 #include "misc.h"		/* CLEAR() */
 
 #ifndef DVB_DEMUX_LOG
-#define DVB_DEMUX_LOG 0
+#  define DVB_DEMUX_LOG 0
 #endif
 
 #define log(templ, args...)						\

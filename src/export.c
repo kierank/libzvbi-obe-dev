@@ -21,10 +21,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.19 2004/11/26 05:54:55 mschimek Exp $ */
+/* $Id: export.c,v 1.20 2004/12/13 07:17:08 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #include <stdlib.h>
@@ -738,7 +738,7 @@ vbi_export_option_get(vbi_export *export, const char *keyword,
 /**
  * @param export Pointer to a initialized vbi_export object.
  * @param keyword Keyword identifying the option, as in vbi_option_info.
- * @param Varargs New value to set.
+ * @param ... New value to set.
  *
  * Sets the value of the named option. Make sure the value is casted
  * to the correct type (int, double, char *).

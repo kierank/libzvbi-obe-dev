@@ -19,9 +19,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.c,v 1.1 2004/10/25 16:55:22 mschimek Exp $ */
+/* $Id: misc.c,v 1.2 2004/12/13 07:17:09 mschimek Exp $ */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

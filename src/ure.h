@@ -20,13 +20,13 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $Id: ure.h,v 1.6 2002/10/22 04:41:27 mschimek Exp $ */
+/* $Id: ure.h,v 1.7 2004/12/13 07:17:11 mschimek Exp $ */
 
 #ifndef _h_ure
 #define _h_ure
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #if defined(HAVE_GLIBC21) || defined(HAVE_LIBUNICODE)
