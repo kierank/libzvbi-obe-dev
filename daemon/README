@@ -13,27 +13,32 @@ there's no good reason that only one app should be able to capture VBI,
 since there are many independent data streams, e.g. VPS/PDC (channel
 identification and programme labels for video recoding), WSS (widescreen
 and surround sound signalling), teletext, and inside teletext besides
-the regular pages also subtitles, Nextview Electronic PRogramme Guide,
+the regular pages also subtitles, Nextview Electronic Programme Guide,
 Teleweb (enhanced teletext based on HTML) and possibly more binary coded
 data streams.
 
-In particular there are some TV apps which always open /dev/vbi (for
-subtitles, WSS or whatever) so it's currently impossible to capture
+In particular there are some TV apps which always open the VBI device
+(for subtitles, WSS or whatever) so it's currently impossible to capture
 any of the above data services in the background.
 
 As a second, optional feature, the proxy may in the future be used to
 coordinate channel changes between multiple VBI background applications
 or between video and VBI apps;  the latter is mainly interesting for
 v4l2 drivers, where it's no longer possible to determine if a TV app
-is running before switching the channel in a background app. That's
-because in contrary to v4l1 the video device can be opened in any case.
-Hence VBI currently may annoy v4l2 users by switching the channel
-while you're watching TV.
+is running before switching the channel in a background app (these apps
+relied on the fact that v4l1 devices can be opened only once.)  Hence
+VBI apps currently may annoy v4l2 users by switching the channel while
+you're watching TV.
 
 One drawback of the proxy is that it requires to adapt all cooperating
-VBI clients.  Hopefully the solution will be simple and elegant enough
-to convince many authors to switch to libzvbi, or at least implement
-the protocol.
+VBI clients.  For most applications which already use libzvbi the required
+work is however expected to be minimal: just one additional function call
+before calling the regular device open functions.  Again other applications
+(e.g. alevt) which are still based on v4l1 can be easily changed to use
+libzvbi.  Hopefully the solution will be simple and elegant enough to
+convince the authors to invest the necessary effort to switch to libzvbi
+(or at least implement the protocol) in subsequent releases of their
+software.
 
 
 2003-04-27
@@ -78,26 +83,19 @@ The list will be updated in CVS along with the implementation.
   enough since proxy support might have been disabled config.h)
 - services merge: new function add_services() has been added to io.h;
   still TODO: changing norm or buffer count
+- v4l1: threads are used to block in read: implement regression test
 - add raw buffer forward, possibly based on shared memory to avoid copying
   (mmapped DMA buffers can probably not directly be shared though, so
   one copy will be required in conjunction with streams buffers; copying
   may also be required if the client uses the read() interface; shm should
   still be more efficient than stuffing everything through a socket)
-- add io.c interface function to flush stream buffers & discard the next
-  1-2 frames after a channel change.  Add note to documentation about
-  performance issues, i.e. advise to request raw buffer only if required
+- Add note to documentation about performance issues, i.e. advise to
+  request raw buffer only if required
+- use io.c interface function to flush stream buffers & discard the next
+  1-2 frames after a channel change.
 - startup "rc" script for proxy daemon; add daemon and rc for installation;
   daemon should be renamed to vbiproxyd for installation
 - daemon man page
-- proxy main loop needs to be changed to work with drivers which don't
-  support select on vbi (possibly use an additional thread which blocks
-  in a read on the device)
-- CONNECT_CNF message should include name of assorted video device for
-  clients which might need it for tasks as channel switching (at least
-  with v4l1 drivers the client cannot use the VBI device since it's kept
-  busy by the daemon)
-- add note to documentation that fd returned by capture_get_fd is only
-  for select --> return -1 if select non-supported? (e.g. v4l1)
 - inform clients about video norm changes: e.g. sampling rate may change
   (only relevant for raw data though), number of VBI lines may change,
   client may want to change service IDs.  Probably only for clients
@@ -105,7 +103,9 @@ The list will be updated in CVS along with the implementation.
 - device permissions are implemented by copying group id and access
   mask of the device.  This is not portable however according to man
   socket(7).  Possibly a sub-directory should be used and permissions
-  set on the directory.  On in X11 way a key file could be used.
+  set on the directory. Disadvantage: other people cannot clean up (same
+  for socket file if sticky bit is set). Or an X11 way a key file could 
+  be used.
 - manage channel change requests (see discussion on mailing list)
 - add "-kill" option to daemon: kill already running daemon
 
