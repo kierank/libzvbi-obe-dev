@@ -1,0 +1,337 @@
+<!-- ##### SECTION Title ##### -->
+Page export
+
+<!-- ##### SECTION Short_Description ##### -->
+Exporting formatted Teletext and Closed Caption pages.
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+Once libvbi received, decoded and formatted a Teletext or Closed
+Caption page you will want to render it on screen, print it as
+text or store it in various formats.
+
+Luckily you don't have to do it all by yourself, libvbi provides
+export modules converting a #vbi_page into the desired format or
+rendering directly into memory.
+
+<example><title>A minimalistic export example</title>
+<programlisting>
+static void
+export_my_page(vbi_page *pg)
+{
+	vbi_export *ex;
+
+	if (!(ex = vbi_export_new("html"))) {
+		puts("Cannot export as HTML");
+		return;
+	}
+
+	if (!vbi_export_file(ex, "my_page.html", pg))
+		puts(vbi_export_errstr(ex));
+
+	vbi_export_delete(ex);
+}
+</programlisting>
+</example> 
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### TYPEDEF vbi_export_info ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION vbi_export_info_enum ##### -->
+<para>
+
+</para>
+
+@index: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_export_info_keyword ##### -->
+<para>
+
+</para>
+
+@keyword: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_export_info_export ##### -->
+<para>
+
+</para>
+
+@export: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_export_new ##### -->
+<para>
+
+</para>
+
+@keyword: 
+@errstr: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_export_delete ##### -->
+<para>
+
+</para>
+
+@export: 
+
+
+<!-- ##### ENUM vbi_option_type ##### -->
+<para>
+
+</para>
+
+@VBI_OPTION_BOOL: 
+@VBI_OPTION_INT: 
+@VBI_OPTION_REAL: 
+@VBI_OPTION_STRING: 
+@VBI_OPTION_MENU: 
+
+<!-- ##### TYPEDEF vbi_option_info ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION vbi_export_option_info_enum ##### -->
+<para>
+
+</para>
+
+@export: 
+@index: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_export_option_info_keyword ##### -->
+<para>
+
+</para>
+
+@export: 
+@keyword: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_export_option_get ##### -->
+<para>
+
+</para>
+
+@export: 
+@keyword: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_export_option_set ##### -->
+<para>
+
+</para>
+
+@export: 
+@keyword: 
+@Varargs: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_export_option_menu_get ##### -->
+<para>
+
+</para>
+
+@export: 
+@keyword: 
+@entry: 
+@Returns: 
+<!-- # Unused Parameters # -->
+@index: 
+
+
+<!-- ##### FUNCTION vbi_export_option_menu_set ##### -->
+<para>
+
+</para>
+
+@export: 
+@keyword: 
+@entry: 
+@Returns: 
+<!-- # Unused Parameters # -->
+@index: 
+
+
+<!-- ##### FUNCTION vbi_export_stdio ##### -->
+<para>
+
+</para>
+
+@export: 
+@fp: 
+@pg: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_export_file ##### -->
+<para>
+
+</para>
+
+@export: 
+@name: 
+@pg: 
+@Returns: 
+<!-- # Unused Parameters # -->
+@Param1: 
+@fp: 
+
+
+<!-- ##### FUNCTION vbi_export_errstr ##### -->
+<para>
+
+</para>
+
+@export: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_draw_vt_page_region ##### -->
+<para>
+
+</para>
+
+@pg: 
+@fmt: 
+@canvas: 
+@rowstride: 
+@column: 
+@row: 
+@width: 
+@height: 
+@reveal: 
+@flash_on: 
+<!-- # Unused Parameters # -->
+@Param1: 
+@Param2: 
+@Param3: 
+@Varargs: 
+@Varargs: 
+@Varargs: 
+@Varargs: 
+@Varargs: 
+@Varargs: 
+
+
+<!-- ##### FUNCTION vbi_draw_vt_page ##### -->
+<para>
+
+</para>
+
+@pg: 
+@fmt: 
+@canvas: 
+@reveal: 
+@flash_on: 
+
+
+<!-- ##### FUNCTION vbi_draw_cc_page_region ##### -->
+<para>
+
+</para>
+
+@pg: 
+@fmt: 
+@canvas: 
+@rowstride: 
+@column: 
+@row: 
+@width: 
+@height: 
+<!-- # Unused Parameters # -->
+@Param1: 
+@Param2: 
+@Param3: 
+@Varargs: 
+@Varargs: 
+@Varargs: 
+@Varargs: 
+
+
+<!-- ##### FUNCTION vbi_draw_cc_page ##### -->
+<para>
+
+</para>
+
+@pg: 
+@fmt: 
+@canvas: 
+<!-- # Unused Parameters # -->
+@reveal: 
+@flash_on: 
+
+
+<!-- ##### FUNCTION vbi_get_max_rendered_size ##### -->
+<para>
+
+</para>
+
+@w: 
+@h: 
+
+
+<!-- ##### FUNCTION vbi_get_vt_cell_size ##### -->
+<para>
+
+</para>
+
+@w: 
+@h: 
+
+
+<!-- ##### FUNCTION vbi_print_page_region ##### -->
+<para>
+
+</para>
+
+@pg: 
+@buf: 
+@size: 
+@format: 
+@table: 
+@ltr: 
+@column: 
+@row: 
+@width: 
+@height: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_print_page ##### -->
+<para>
+
+</para>
+
+@pg: 
+@buf: 
+@size: 
+@format: 
+@table: 
+@ltr: 
+@Returns: 
+
+

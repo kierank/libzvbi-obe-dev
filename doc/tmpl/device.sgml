@@ -1,0 +1,128 @@
+<!-- ##### SECTION Title ##### -->
+Device interface
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### TYPEDEF vbi_capture_buffer ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION vbi_capture_v4l2_new ##### -->
+<para>
+
+</para>
+
+@dev_name: 
+@buffers: 
+@services: 
+@strict: 
+@errorstr: 
+@trace: 
+@Returns: 
+<!-- # Unused Parameters # -->
+@errstr: 
+
+
+<!-- ##### FUNCTION vbi_capture_delete ##### -->
+<para>
+
+</para>
+
+@capture: 
+
+
+<!-- ##### FUNCTION vbi_capture_parameters ##### -->
+<para>
+
+</para>
+
+@capture: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_capture_pull_raw ##### -->
+<para>
+
+</para>
+
+@capture: 
+@buffer: 
+@timeout: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_capture_pull_sliced ##### -->
+<para>
+
+</para>
+
+@capture: 
+@buffer: 
+@timeout: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_capture_pull ##### -->
+<para>
+
+</para>
+
+@capture: 
+@raw_buffer: 
+@sliced_buffer: 
+@timeout: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_capture_read_raw ##### -->
+<para>
+
+</para>
+
+@capture: 
+@data: 
+@timestamp: 
+@timeout: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_capture_read_sliced ##### -->
+<para>
+
+</para>
+
+@capture: 
+@data: 
+@lines: 
+@timestamp: 
+@timeout: 
+@Returns: 
+
+
+<!-- ##### FUNCTION vbi_capture_read ##### -->
+<para>
+
+</para>
+
+@capture: 
+@raw_data: 
+@sliced_data: 
+@lines: 
+@timestamp: 
+@timeout: 
+@Returns: 
+
+

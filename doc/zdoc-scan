@@ -1,0 +1,586 @@
+#!/usr/bin/perl -w
+# -*- cperl -*-
+#
+# gtk-doc - GTK DocBook documentation generator.
+# Copyright (C) 1998  Damon Chaplin
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+
+#############################################################################
+# Script      : gtkdoc-scan
+# Description : Extracts declarations of functions, macros, enums, structs
+#		and unions from header files.
+#
+#		It is called with a module name, an optional source directory,
+#		an optional output directory, and the header files to scan.
+#
+#		It outputs all declarations found to a file named
+#		'$MODULE-decl.txt', and the list of decarations to another
+#		file '$MODULE-decl-list.txt'.
+#
+#		This second list file is typically copied to
+#		'$MODULE-sections.txt' and organized into sections ready to
+#		output the SGML pages.
+# Modified 2001-12-17 Michael H. Schimek <mschimek@users.sf.net> for libzvbi
+# * accept more complex return types such as "const struct foo **"
+# * list static inline definitions
+# * list typedef'ed functions (not just *pointers* to functions)
+# * accept typedef struct name { ... } name;
+# * accept more comments in "wrong places" (this script should
+#   really parse preprocessed headers...)
+# * fixed a bug(?) preventing parsing of nested structs with blank lines
+#   following
+#############################################################################
+
+use strict;
+use Getopt::Long;
+
+unshift @INC, "/usr/local/share/gtk-doc";
+require "gtkdoc-common.pl";
+
+# Options
+
+# name of documentation module
+my $MODULE;
+my $OUTPUT_DIR;
+my @SOURCE_DIRS;
+my $IGNORE_HEADERS = "";
+my $PRINT_VERSION;
+# regexp matching cpp symbols which surround deprecated stuff
+# e.g. 'GTK_ENABLE_BROKEN|GTK_DISABLE_DEPRECATED'
+# these are detected if they are used as #if FOO, #ifndef FOO, or #ifdef FOO
+my $DEPRECATED_GUARDS;
+
+my %optctl = (module => \$MODULE,
+	      'source-dir' => \@SOURCE_DIRS,
+	      'ignore-headers' => \$IGNORE_HEADERS,
+	      'output-dir' => \$OUTPUT_DIR,
+	      'version' => \$PRINT_VERSION,
+              'deprecated-guards' => \$DEPRECATED_GUARDS);
+GetOptions(\%optctl, "module=s", "source-dir:s", "ignore-headers:s",
+	   "output-dir:s", "version",
+           "deprecated-guards:s");
+
+if ($PRINT_VERSION) {
+    print "0.7\n";
+    exit 0;
+}
+
+$DEPRECATED_GUARDS = $DEPRECATED_GUARDS ? $DEPRECATED_GUARDS : "does_not_match_any_cpp_symbols_at_all_nope";
+
+$OUTPUT_DIR = $OUTPUT_DIR ? $OUTPUT_DIR : ".";
+
+if (!-d ${OUTPUT_DIR}) {
+    mkdir($OUTPUT_DIR, 0755) || die "Cannot create $OUTPUT_DIR: $!";
+}
+
+my $old_decl_list = "${OUTPUT_DIR}/$MODULE-decl-list.txt";
+my $new_decl_list = "${OUTPUT_DIR}/$MODULE-decl-list.new";
+my $old_decl = "${OUTPUT_DIR}/$MODULE-decl.txt";
+my $new_decl = "${OUTPUT_DIR}/$MODULE-decl.new";
+
+open (DECLLIST, ">$new_decl_list")
+    || die "Can't open $new_decl_list";
+open (DECL, ">$new_decl")
+    || die "Can't open $new_decl";
+
+my $main_list = "";
+my $object_list = "";
+my $file;
+
+# The header files to scan are passed in as command-line args.
+for $file (@ARGV) {
+    &ScanHeader ($file, \$object_list, \$main_list);
+}
+
+for my $dir (@SOURCE_DIRS) {
+    &ScanHeaders ($dir, \$object_list, \$main_list);
+}
+
+print DECLLIST $object_list, $main_list;
+close (DECLLIST);
+close (DECL);
+
+&UpdateFileIfChanged ($old_decl_list, $new_decl_list, 1);
+&UpdateFileIfChanged ($old_decl, $new_decl, 1);
+
+# If there is no MODULE-sections.txt file yet, we copy the MODULE-decl-list.txt
+# file into its place. The user can tweak it later if they want.
+my $sections_file = "${OUTPUT_DIR}/$MODULE-sections.txt";
+if (! -e $sections_file) {
+  `cp $old_decl_list $sections_file`;
+}
+
+
+
+#############################################################################
+# Function    : ScanHeaders
+# Description : This scans a directory tree looking for header files.
+#
+# Arguments   : $source_dir - the directory to scan.
+#		$object_list - a reference to the list of object functions &
+#			declarations.
+#		$main_list - a reference to the list of other declarations.
+#############################################################################
+
+sub ScanHeaders {
+    my ($source_dir, $object_list, $main_list) = @_;
+    print "Scanning source directory: $source_dir\n";
+
+    # This array holds any subdirectories found.
+    my (@subdirs) = ();
+    
+    opendir (SRCDIR, $source_dir)
+	|| die "Can't open source directory $source_dir: $!";
+    my $file;
+    foreach $file (readdir (SRCDIR)) {
+	if ($file eq '.' || $file eq '..' || $file =~ /^\./) {
+	    next;
+	} elsif (-d "$source_dir/$file") {
+	    push (@subdirs, $file);
+	} elsif ($file =~ m/\.h$/) {
+	    &ScanHeader ("$source_dir/$file", $object_list, $main_list);
+	}
+    }
+    closedir (SRCDIR);
+
+    # Now recursively scan the subdirectories.
+    my $dir;
+    foreach $dir (@subdirs) {
+	next if ($IGNORE_HEADERS =~ m/(\s|^)\Q${dir}\E(\s|$)/);
+	&ScanHeaders ("$source_dir/$dir", $object_list, $main_list);
+    }
+}
+
+
+#############################################################################
+# Function    : ScanHeader
+# Description : This scans a header file, looking for declarations of
+#		functions, macros, typedefs, structs and unions, which it
+#		outputs to the DECL file.
+# Arguments   : $input_file - the header file to scan.
+#		$object_list - a reference to the list of object functions &
+#			declarations.
+#		$main_list - a reference to the list of other declarations.
+# Returns     : it adds declarations to the appropriate list.
+#############################################################################
+
+sub ScanHeader {
+    my ($input_file, $object_list, $main_list) = @_;
+    print "DEBUG: Scanning $input_file\n";
+
+    my $list = "";		# Holds the resulting list of declarations.
+    my ($in_comment) = 0;	# True if we are in a comment.
+    my ($in_declaration) = "";	# The type of declaration we are in, e.g.
+				#   'function' or 'macro'.
+    my ($symbol);		# The current symbol being declared.
+    my ($decl);			# Holds the declaration of the current symbol.
+    my ($ret_type);		# For functions and function typedefs this
+				#   holds the function's return type.
+    my ($previous_line) = "";	# The previous line read in - some Gnome
+				#   functions have the return type on one line
+				#   and the rest of the declaration after.
+    my ($first_macro) = 1;	# Used to try to skip the standard #ifdef XXX
+				#   #define XXX at the start of headers.
+    my ($level);		# Used to handle structs which contain nested
+				#   structs or unions.
+    my @objects = ();		# Holds declarations that look like GtkObject
+				#   subclasses, which we remove from the list.
+
+    my $file_basename;
+    
+    my $deprecated_conditional_nest = 0;
+
+    my $deprecated = "";
+
+    if ($input_file =~ m/^.*[\/\\](.*)\.h$/) {
+	$file_basename = $1;
+    } else {
+	print "WARNING: Can't find basename of file $input_file\n";
+	$file_basename = $input_file;
+    }
+
+    # Check if the basename is in the list of headers to ignore.
+    if ($IGNORE_HEADERS =~ m/(\s|^)\Q${file_basename}\E\.h(\s|$)/) {
+	print "DEBUG: File ignored: $input_file\n";
+	return;
+    }
+
+    if (! -f $input_file) {
+	print "File doesn't exist: $input_file\n";
+	return;
+    }
+
+    open(INPUT, $input_file)
+	|| die "Can't open $input_file: $!";
+    while(<INPUT>) {
+	# If this is a private header, skip it.
+	if (m%^\s*/\*\s*<\s*private_header\s*>\s*\*/%) {
+	    last;
+	}
+
+	# Skip to the end of the current comment.
+	if ($in_comment) {
+#	    print "Comment: $_";
+	    if (m%\*/%) {
+		$in_comment = 0;
+	    }
+	    next;
+	}
+
+        # Keep a count of #if, #ifdef, #ifndef nesting,
+        # and if we enter a deprecation-symbol-bracketed
+        # zone, take note.
+        if (m/^\s*#\s*if\w*\s+(\w+)/) {
+            if ($deprecated_conditional_nest == 0 and $1 =~ /$DEPRECATED_GUARDS/) {
+                 $deprecated_conditional_nest = 1;
+            } elsif ($deprecated_conditional_nest > 0) {
+                 $deprecated_conditional_nest += 1;
+            }
+        } elsif (m/^\s*#\sif/) {
+            if ($deprecated_conditional_nest > 0) {
+                 $deprecated_conditional_nest += 1;
+            }
+        } elsif (m/^\s*#endif/) {
+            if ($deprecated_conditional_nest > 0) {
+                $deprecated_conditional_nest -= 1;
+            }
+        }
+
+        # set global that affects AddSymbolToList
+        if ($deprecated_conditional_nest > 0) {
+            $deprecated = "<DEPRECATED/>\n";
+        } else {
+            $deprecated = "";
+        }
+
+	if (!$in_declaration) {
+	    # Skip top-level comments.
+	    if (s%^\s*/\*%%) {
+		if (m%\*/%) {
+#		    print "Found one-line comment: $_";
+		} else {
+		    $in_comment = 1;
+#		    print "Found start of comment: $_";
+		}
+		next;
+	    }
+
+	    # MACROS
+
+	    if (m/^\s*#\s*define\s+(\w+)/) {
+		$symbol = $1;
+		# We assume all macros which start with '_' are private, but
+		# we accept '_' itself which is the standard gettext macro.
+		# We also try to skip the first macro if it looks like the
+		# standard #ifndef HEADER_FILE #define HEADER_FILE etc.
+		# And we only want TRUE & FALSE defined in GLib (libdefs.h in
+		# libgnome also defines them if they are not already defined).
+		if (($symbol !~ m/^_/
+		     && ($previous_line !~ m/#ifndef\s+$symbol/
+			 || $first_macro == 0)
+		     && (($symbol ne 'TRUE' && $symbol ne 'FALSE')
+			 || $MODULE eq 'glib'))
+		    || $symbol eq "_") {
+		    $decl = $_;
+		    $in_declaration = "macro";
+		}
+		$first_macro = 0;
+
+
+	    # TYPEDEF'D FUNCTIONS (i.e. user functions)
+
+#	    } elsif (m/^\s*typedef\s+((const\s+|G_CONST_RETURN\s+)?\w+)\s*(\**)\s*\(\*\s*(\w+)\)\s*\(/) {
+	    } elsif (m/^\s*typedef\s+((\w+\s)+(\*\s*)*)\((\*\s*)*(\w+)\s*\)\s*\(/) {
+		$ret_type = $1;
+		$symbol = $5;
+		$decl = $';
+		$in_declaration = "user_function";
+
+	    # ENUMS
+
+	    } elsif (s/^\s*enum\s+_(\w+)\s+\{/enum $1 {/) {
+		# We assume that 'enum _<enum_name> {' is really the
+		# declaration of enum <enum_name>.
+		$symbol = $1;
+#		print "DEBUG: plain enum: $symbol\n";
+		$decl = $_;
+		$in_declaration = "enum";
+
+	    } elsif (m/^\s*typedef\s+enum\s+_(\w+)\s+\1\s*;/) {
+		# We skip 'typedef <enum_name> _<enum_name>;' as the enum will
+		# be declared elsewhere.
+#		print "DEBUG: skipping enum typedef: $1\n";
+
+	    } elsif (m/^\s*typedef\s+enum/) {
+		$symbol = "";
+		$decl = $_;
+		$in_declaration = "enum";
+
+
+	    #STRUCTS
+
+	    } elsif (m/^\s*typedef\s+struct\s+_(\w+)\s+\1\s*;/) {
+		# We've found a 'typedef struct _<name> <name>;'
+		# This could be an opaque data structure, so we output an
+		# empty declaration. If the structure is actually found that
+		# will override this.
+#		print "DEBUG: struct typedef: $1\n";
+		&AddSymbolToList (\$list, $1);
+		print DECL "<STRUCT>\n<NAME>$1</NAME>\n$deprecated</STRUCT>\n";
+
+	    } elsif (m/^\s*typedef\s+struct(\s+(\w+))?\s*{/) {
+		$symbol = "";
+		$decl = $_;
+		$level = 0;
+		$in_declaration = "struct";
+#		print "DEBUG: in struct typedef <$_>: $2\n";
+
+	    } elsif (m/^\s*struct\s+_(\w+)\s*;/) {
+		# Skip private structs.
+
+	    } elsif (s/^\s*struct\s+_(\w+)/struct $1/) {
+		# We assume that 'struct _<struct_name>' is really the
+		# declaration of struct <struct_name>.
+		$symbol = $1;
+		$decl = $_;
+		$level = 0;
+		$in_declaration = "struct";
+
+
+	    # UNIONS
+
+	    } elsif (s/^\s*union\s+_(\w+)/union $1/) {
+		$symbol = $1;
+		$decl = $_;
+		$in_declaration = "union";
+
+	    } elsif (m/^\s*(G_GNUC_EXTENSION\s+)?typedef\s+(.+[\s\*])(\w\S*);/) {
+		if ($2 !~ m/^struct\s/ && $2 !~ m/^union\s/) {
+#		    print "Found typedef: $_";
+		    &AddSymbolToList (\$list, $3);
+		    print DECL "<TYPEDEF>\n<NAME>$3</NAME>\n$deprecated$_</TYPEDEF>\n";
+		}
+	    } elsif (m/^\s*typedef\s+/) {
+#		print "Skipping typedef: $_";
+
+
+	    # VARIABLES (extern'ed variables)
+
+	    } elsif (m/^\s*(extern|[A-Za-z_]+VAR)\s+((const\s+|unsigned\s+)*\w+)(\s+\*+|\*+|\s)\s*([A-Za-z]\w*)\s*;/) {
+		$symbol = $5;
+	        s/^\s*([A-Za-z_]+VAR)\b/extern/;
+#		print "Possible extern: $_";
+		&AddSymbolToList (\$list, $symbol);
+		print DECL "<VARIABLE>\n<NAME>$symbol</NAME>\n$deprecated$_</VARIABLE>\n";
+
+
+	    # FUNCTIONS
+
+	    # We assume that functions which start with '_' are private, so
+	    # we skip them.
+	    } elsif (m/^\s*(extern)?\s*(G_INLINE_FUNC)?\s*((const\s+|G_CONST_RETURN\s+|unsigned\s+)*\w+)(\s+\*+|\*+|\s)\s*([A-Za-z]\w*)\s*\(/) {
+		$ret_type = "$3 $5";
+		$symbol = $6;
+		$decl = $';
+
+		if ($1) {
+#		    print "Function: $symbol, Returns: $ret_type\n";
+	        }
+		$in_declaration = "function";
+
+	    # Try to catch function declarations which have the return type on
+	    # the previous line. [ But we don't want to catch complete functions
+	    # which have been declared G_INLINE_FUNC, e.g. g_bit_nth_lsf in
+	    # glib, or 'static inline' functions. ]
+	    } elsif (m/^\s*([A-Za-z]\w*)\s*\(/) {
+		$symbol = $1;
+		$decl = $';
+#		if ($previous_line !~ m/^\s*G_INLINE_FUNC/
+#		    && $previous_line !~ m/^\s*static\s+/) {
+#		    if ($previous_line =~ m/^\s*(extern)?\s*((const\s*|G_CONST_RETURN\s*)?\w+)(\s*\*+)?\s*$/) {
+#		    }
+		if ($previous_line =~ m/^\s*(extern\s+|static\s+inline\s+)?((\w+\s)+(\*\s*)*)$/) {
+		    $ret_type = $2;
+#		    print "Function: $symbol, Returns: $ret_type\n";
+		    $in_declaration = "function";
+		}
+
+	    # Try to catch function declarations with the return type and name
+	    # on the previous line, and the start of the parameters on this.
+	    } elsif (m/^\s*\(/) {
+		$decl = $';
+		if ($previous_line =~ m/^\s*(extern)?\s*(G_INLINE_FUNC)?\s*((const\s+|G_CONST_RETURN\s+|unsigned\s+)*\w+)(\s+\*+|\*+|\s)\s*([A-Za-z]\w*)\s*$/) {
+		    $ret_type = "$3 $5";
+		    $symbol = $6;
+#		    print "Function: $symbol, Returns: $ret_type\n";
+		    $in_declaration = "function";
+		}
+
+#	    } elsif (m/^extern\s+/) {
+#		print "Skipping extern: $_";
+
+	    }
+	} else {
+	    # If we were already in the middle of a declaration, we simply add
+	    # the current line onto the end of it.
+	    $decl .= $_;
+	}
+
+	# Note that sometimes functions end in ') G_GNUC_PRINTF (2, 3);'.
+	if ($in_declaration eq 'function') {
+	    if ($decl =~ s/\)\s*(G_GNUC_.*)?(;|{).*$//) {
+		$decl =~ s%/\*.*?\*/%%gs;	# remove comments.
+#		$decl =~ s/^\s+//;		# remove leading whitespace.
+#		$decl =~ s/\s+$//;		# remove trailing whitespace.
+		$decl =~ s/\s*\n\s*//g;		# remove whitespace at start
+						# and end of lines.
+		$ret_type =~ s%/\*.*?\*/%%g;	# remove comments in ret type.
+		&AddSymbolToList (\$list, $symbol);
+		print DECL "<FUNCTION>\n<NAME>$symbol</NAME>\n$deprecated<RETURNS>$ret_type</RETURNS>\n$decl\n</FUNCTION>\n";
+		$in_declaration = "";
+	    }
+	}
+
+	if ($in_declaration eq 'user_function') {
+	    if ($decl =~ s/\).*$//) {
+		&AddSymbolToList (\$list, $symbol);
+		print DECL "<USER_FUNCTION>\n<NAME>$symbol</NAME>\n$deprecated<RETURNS>$ret_type</RETURNS>\n$decl</USER_FUNCTION>\n";
+		$in_declaration = "";
+	    }
+	}
+
+	if ($in_declaration eq 'macro') {
+	    if ($decl !~ m/\\\s*$/) {
+		&AddSymbolToList (\$list, $symbol);
+		print DECL "<MACRO>\n<NAME>$symbol</NAME>\n$deprecated$decl</MACRO>\n";
+		$in_declaration = "";
+	    }
+	}
+
+	if ($in_declaration eq 'enum') {
+	    if ($decl =~ m/\}\s*(\w+)?;\s*$/) {
+		if ($symbol eq "") {
+		    $symbol = $1;
+		}
+		&AddSymbolToList (\$list, $symbol);
+		print DECL "<ENUM>\n<NAME>$symbol</NAME>\n$deprecated$decl</ENUM>\n";
+		$in_declaration = "";
+	    }
+	}
+
+	# We try to handle nested stucts/unions, but unmatched brackets in
+	# comments will cause problems.
+	if ($in_declaration eq 'struct') {
+	    if ($level <= 1 && $_ =~ m/\}\s*(\w*);(\s|\/\/.*|\/\*.*\*\/)*$/) {
+		if ($symbol eq "") {
+		    $symbol = $1;
+		}
+
+		if ($symbol =~ m/^(\S+)Class/
+                    && $1 ne 'GtkStyle' && $1 !~ /^(Pango|Bonobo)/) {
+#		    print "Found object: $1\n";
+		    $list .= "<TITLE>$1</TITLE>\n";
+		    push (@objects, $1);
+		} else {
+
+		    &AddSymbolToList (\$list, $symbol);
+		    if ($decl =~ m/^\s*typedef\s+struct(\s+(\w+))?\s*{/) {
+		      print DECL "<TYPEDEF>\n<NAME>$symbol</NAME>\n$deprecated$decl</TYPEDEF>\n";
+		    } else {
+		      print DECL "<STRUCT>\n<NAME>$symbol</NAME>\n$deprecated$decl</STRUCT>\n";
+		    }
+		}
+		$in_declaration = "";
+	    } else {
+		# We use tr to count the brackets in the line, and adjust
+		# $level accordingly.
+		$level += tr/{//;
+		$level -= tr/}//;
+	    }
+	}
+
+	if ($in_declaration eq 'union') {
+	    if ($decl =~ m/\}\s*;\s*$/) {
+		&AddSymbolToList (\$list, $symbol);
+		print DECL "<UNION>\n<NAME>$symbol</NAME>\n$deprecated$decl</UNION>\n";
+		$in_declaration = "";
+	    }
+	}
+
+	$previous_line = $_;
+    }
+    close(INPUT);
+
+    # Take out any object structs from the list of declarations as we don't
+    # want them included.
+    my ($object);
+    foreach $object (@objects) {
+	$list =~ s/^$object\n//m;
+	$list =~ s/^${object}Class\n//m;
+    }
+
+
+    # Try to separate the standard macros and functions, placing them at the
+    # end of the current section, in a subsection named 'Standard'.
+    my ($class) = "";
+    my ($standard_decl) = "";
+    if ($list =~ m/^\S+_IS_(\S*)_CLASS/m) {
+	$class = $1;
+    } elsif ($list =~ m/^\S+_IS_(\S*)/m) {
+	$class = $1;
+    }
+ 
+    if ($class ne "") {
+	if ($list =~ s/^\S+_IS_$class\n//m)          { $standard_decl .= $&; }
+	if ($list =~ s/^\S+_TYPE_$class\n//m)        { $standard_decl .= $&; }
+	if ($list =~ s/^\S+_.*_get_type\n//m)        { $standard_decl .= $&; }
+	if ($list =~ s/^\S+_${class}_CLASS\n//m)     { $standard_decl .= $&; }
+	if ($list =~ s/^\S+_IS_${class}_CLASS\n//m)  { $standard_decl .= $&; }
+	if ($list =~ s/^\S+_${class}_GET_CLASS\n//m) { $standard_decl .= $&; }
+	if ($list =~ s/^\S+_${class}_GET_IFACE\n//m) { $standard_decl .= $&; }
+
+	# We do this one last, otherwise it tends to be caught by the IS_$class macro
+	if ($list =~ s/^\S+_$class\n//m)             { $standard_decl = $& . $standard_decl; }
+
+        if ($standard_decl ne "") {
+	    $list .= "<SUBSECTION Standard>\n$standard_decl";
+	}
+
+	$$object_list .= "<SECTION>\n<FILE>$file_basename</FILE>\n$list</SECTION>\n\n";
+    } else {
+	$$main_list .= "<SECTION>\n<FILE>$file_basename</FILE>\n$list</SECTION>\n\n";
+    }
+}
+
+
+#############################################################################
+# Function    : AddSymbolToList
+# Description : This adds the symbol to the list of declarations, but only if
+#		it is not already in the list.
+# Arguments   : $list - reference to the list of symbols, one on each line.
+#		$symbol - the symbol to add to the list.
+#############################################################################
+
+sub AddSymbolToList {
+    my ($list, $symbol) = @_;
+
+    if ($$list =~ m/\b\Q$symbol\E\b/) {
+#	print "Symbol $symbol already in list. skipping\n";
+	return;
+    }
+    $$list .= "$symbol\n";
+}

@@ -1,0 +1,519 @@
+# Zapping German translation -*- coding: latin-1 -*-
+# Copyright (C) 2000-2001 Michael H. Schimek <mschimek@users.sf.net>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Zapping 0.5\n"
+"POT-Creation-Date: 2002-01-08 22:01+0100\n"
+"PO-Revision-Date: 2002-01-08 14:33+0100\n"
+"Last-Translator: Michael H. Schimek <mschimek@users.sourceforge.net>\n"
+"Language-Team: German <de@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/exp-gfx.c:722
+msgid "Correct aspect ratio"
+msgstr "Korrektes Seitenverhältnis"
+
+#: src/exp-gfx.c:723
+msgid ""
+"Approach an image aspect ratio similar to a real TV. This will double the "
+"image size."
+msgstr ""
+"Ein Seitenverhältnis entsprechend einem Fernsehbild anstreben, verdoppelt "
+"die Bildgröße"
+
+#: src/exp-gfx.c:796 src/exp-gfx.c:1089
+#, c-format
+msgid "Unable to allocate %d KB image buffer."
+msgstr "Kann keinen %d KB Zwischenspeicher anlegen."
+
+#: src/exp-gfx.c:884
+msgid "PPM"
+msgstr "PPM"
+
+#: src/exp-gfx.c:885
+msgid "Export this page as raw PPM image"
+msgstr "Diese Seite als PPM Grafik ausgeben"
+
+#: src/exp-gfx.c:973
+#, c-format
+msgid "Unable to allocate %d byte buffer."
+msgstr "Kann keinen %d KB Zwischenspeicher anlegen."
+
+#. NLS: HTML export page title
+#: src/exp-gfx.c:1158 src/exp-html.c:235
+#, c-format
+msgid "Teletext Page %3x.%x"
+msgstr "Teletext Seite %3x.%x"
+
+#: src/exp-gfx.c:1162 src/exp-html.c:237
+#, c-format
+msgid "Teletext Page %3x"
+msgstr "Teletext Seite %3x"
+
+#: src/exp-gfx.c:1231
+msgid "PNG"
+msgstr "PNG"
+
+#: src/exp-gfx.c:1232
+msgid "Export this page as PNG image"
+msgstr "Diese Seite als PNG Grafik ausgeben"
+
+#: src/exp-html.c:94 src/exp-txt.c:121
+msgid "Graphics char"
+msgstr "Grafikzeichen"
+
+#: src/exp-html.c:95 src/exp-txt.c:122
+msgid ""
+"Replacement for block graphic characters: a single character or decimal (32) "
+"or hex (0x20) code"
+msgstr ""
+"Ersatz für Blockgrafikzeichen: Ein einzelnes Zeichen oder der Dezimal- (32) "
+"oder Hexadezimal (0x20) Code"
+
+#: src/exp-html.c:98
+msgid "Color (CSS)"
+msgstr "Farbe (CSS)"
+
+#: src/exp-html.c:99
+msgid "Store the page colors using CSS attributes"
+msgstr "Die Textfarbe als CSS Attribut speichern"
+
+#: src/exp-html.c:101
+msgid "HTML header"
+msgstr "HTML Header"
+
+#: src/exp-html.c:102
+msgid "Include HTML page header"
+msgstr "Einen HTML Header erzeugen"
+
+#.
+#. *  NLS: "lang=\"en\" refers to the page title "Teletext Page..."
+#. *  below, specify "de", "fr", "es" etc.
+#.
+#: src/exp-html.c:223
+msgid "<title lang=\"en\">"
+msgstr "<title lang=\"de\">"
+
+#: src/exp-html.c:354 src/exp-txt.c:547
+#, c-format
+msgid "Character conversion Unicode (UCS-2) to %s not supported."
+msgstr "Zeichenumwandlung von Unicode (UCS-2) nach %s ist nicht möglich."
+
+#: src/exp-html.c:433
+msgid "Character conversion failed."
+msgstr "Zeichenumwandlung fehlgeschlagen."
+
+#: src/exp-html.c:722
+msgid "HTML"
+msgstr "HTML"
+
+#: src/exp-html.c:723
+msgid "Export this page as HTML page"
+msgstr "Diese Seite als HTML Seite ausgeben"
+
+#: src/exp-txt.c:79
+msgid "ASCII"
+msgstr "ASCII"
+
+#: src/exp-txt.c:80
+msgid "ISO-8859-1 (Latin-1 Western languages)"
+msgstr "ISO-8859-1 (Latin-1 Westeuropäische Sprachen)"
+
+#: src/exp-txt.c:81
+msgid "ISO-8859-2 (Latin-2 Central and Eastern Europe languages)"
+msgstr "ISO-8859-2 (Latin-2 Zentral- und Osteuropäische Sprachen)"
+
+#: src/exp-txt.c:82
+msgid "ISO-8859-4 (Latin-3 Baltic languages)"
+msgstr "ISO-8859-4 (Latin-3 Baltische Sprachen)"
+
+#: src/exp-txt.c:83
+msgid "ISO-8859-5 (Cyrillic)"
+msgstr "ISO-8859-5 (Kyrillisch)"
+
+#: src/exp-txt.c:84
+msgid "ISO-8859-7 (Greek)"
+msgstr "ISO-8859-7 (Griechisch)"
+
+#: src/exp-txt.c:85
+msgid "ISO-8859-8 (Hebrew)"
+msgstr "ISO-8859-8 (Hebräisch)"
+
+#: src/exp-txt.c:86
+msgid "ISO-8859-9 (Turkish)"
+msgstr "ISO-8859-9 (Türkisch)"
+
+#: src/exp-txt.c:87
+msgid "KOI8-R (Russian and Bulgarian)"
+msgstr "KOI8-R (Russisch und Bulgarisch)"
+
+#: src/exp-txt.c:88
+msgid "KOI8-U (Ukranian)"
+msgstr "KOI8-U (Ukrainisch)"
+
+#: src/exp-txt.c:89
+msgid "ISO-10646/UTF-8 (Unicode)"
+msgstr "ISO-10646/UTF-8 (Unicode)"
+
+# src/frequencies.c:827
+#: src/exp-txt.c:100
+msgid "Black"
+msgstr "Schwarz"
+
+#: src/exp-txt.c:100
+msgid "Red"
+msgstr "Rot"
+
+#: src/exp-txt.c:100
+msgid "Green"
+msgstr "Grün"
+
+#: src/exp-txt.c:100
+msgid "Yellow"
+msgstr "Gelb"
+
+#: src/exp-txt.c:101
+msgid "Blue"
+msgstr "Blau"
+
+#: src/exp-txt.c:101
+msgid "Magenta"
+msgstr "Violett"
+
+#: src/exp-txt.c:101
+msgid "Cyan"
+msgstr "Türkis"
+
+#: src/exp-txt.c:101
+msgid "White"
+msgstr "Weiß"
+
+#: src/exp-txt.c:102
+msgid "Any"
+msgstr "Beliebig"
+
+#. NLS: Insert terminal control codes
+#: src/exp-txt.c:108
+msgid "None"
+msgstr "Keine"
+
+#: src/exp-txt.c:108
+msgid "ANSI X3.64 / VT 100"
+msgstr "ANSI X3.64 / VT 100"
+
+#: src/exp-txt.c:108
+msgid "VT 200"
+msgstr "VT 200"
+
+#. NLS: Text export format menu
+#: src/exp-txt.c:115
+msgid "Format"
+msgstr "Format"
+
+#: src/exp-txt.c:125
+msgid "Control codes"
+msgstr "Kontrollcodes"
+
+#: src/exp-txt.c:129
+msgid "Foreground"
+msgstr "Vordergrund"
+
+#. any
+#: src/exp-txt.c:131
+msgid "Assumed terminal foreground color"
+msgstr "Ursprüngliche Textfarbe der Konsole"
+
+#: src/exp-txt.c:133
+msgid "Background"
+msgstr "Hintergrund"
+
+#. any
+#: src/exp-txt.c:135
+msgid "Assumed terminal background color"
+msgstr "Ursprüngliche Hintergrundfarbe der Konsole"
+
+#: src/exp-txt.c:597
+msgid "Text"
+msgstr "Text"
+
+#: src/exp-txt.c:598
+msgid "Export this page as text file"
+msgstr "Als Textdatei ausgeben"
+
+#: src/exp-vtx.c:77
+msgid "Can only export Teletext pages."
+msgstr "Kann nur Teletext-Seiten ausgeben."
+
+#: src/exp-vtx.c:85
+msgid "Page is not cached, sorry."
+msgstr "Die Seite ist leider nicht im Speicher."
+
+#: src/exp-vtx.c:95
+msgid "Cannot export this page, not displayable."
+msgstr "Kann diese Seite nicht ausgeben, ist nicht darstellbar."
+
+#: src/exp-vtx.c:131
+msgid "VTX"
+msgstr "VTX"
+
+#: src/exp-vtx.c:132
+msgid ""
+"Export this page as VTX file, the format used by VideoteXt and vbidecode"
+msgstr ""
+"Diese Seite als VTX Datei ausgeben, das Format von VideoteXt und vbidecode"
+
+#: src/export.c:388
+#, c-format
+msgid "Invalid option string \"%s\"."
+msgstr "Optionen \"%s\" fehlerhaft."
+
+#: src/export.c:477
+#, c-format
+msgid "Unknown export module '%s'."
+msgstr "Unbekanntes Ausgabemodul '%s'."
+
+#: src/export.c:487
+#, c-format
+msgid "Cannot initialize export module '%s', probably lack of memory."
+msgstr ""
+"Kann Ausgabemodul '%s' nicht initialisieren, vermutlich Speichermangel."
+
+#: src/export.c:886
+#, c-format
+msgid "Cannot create file '%s': Error %d, %s."
+msgstr "Kann Datei '%s' nicht erstellen: Fehler %d, %s."
+
+#: src/export.c:961
+#, c-format
+msgid "Error while writing file '%s'"
+msgstr "Fehler beim Speichern von '%s'"
+
+#: src/export.c:963
+msgid "Error while writing file"
+msgstr "Fehler beim Speichern der Datei"
+
+#: src/export.c:976
+#, c-format
+msgid "Export module '%s' has no option '%s'."
+msgstr "Ausgabemodul '%s' hat keine Option '%s'."
+
+#: src/export.c:985
+#, c-format
+msgid "Invalid argument for option '%s' of export module '%s'."
+msgstr "Fehlerhaftes Argument für Option '%s' von Ausgabemodul '%s'."
+
+#: src/export.c:996
+#, c-format
+msgid "Out of memory in export module '%s'."
+msgstr "Speichermangel in Ausgabemodul '%s'."
+
+#: src/export.c:1025
+msgid "Unknown error."
+msgstr "Unbekannter fehler."
+
+#: src/io-v4l2.c:324 src/io-v4l2.c:526 src/io-v4l2.c:574 src/io-v4l2.c:650
+msgid "Virtual memory exhausted."
+msgstr "Virtueller Speicher erschöpft."
+
+#: src/io-v4l2.c:333
+#, c-format
+msgid "Cannot open '%s': %d, %s."
+msgstr "Kann Gerät '%s' nicht öffnen: %d, %s."
+
+#: src/io-v4l2.c:341
+#, c-format
+msgid "Cannot identify '%s': %d, %s."
+msgstr "Kann Gerät '%s' nicht identifizieren: %d, %s."
+
+#: src/io-v4l2.c:343
+msgid "Probably not a v4l2 device."
+msgstr "Wahrscheinlich kein V4L2 Gerät."
+
+#: src/io-v4l2.c:348
+#, c-format
+msgid "%s (%s) is not a raw vbi device."
+msgstr "%s (%s) ist kein VBI-Gerät."
+
+#. Mandatory; dequeue buffer is non-blocking.
+#: src/io-v4l2.c:359 src/io-v4l2.c:539
+#, c-format
+msgid "%s (%s) does not support the select() function."
+msgstr "%s (%s) unterstützt nicht die select() Funktion."
+
+#. mandatory, http://www.thedirks.org/v4l2/v4l2dsi.htm
+#: src/io-v4l2.c:367
+#, c-format
+msgid "Cannot query current videostandard of %s (%s): %d, %s."
+msgstr ""
+"Kann den gegenwärtigen Videostandard von %s (%s) nicht feststellen: %d, %s."
+
+#: src/io-v4l2.c:369 src/io-v4l2.c:633
+msgid "Probably a driver bug."
+msgstr "Wahrscheinlich ein Fehler im Treiber."
+
+#: src/io-v4l2.c:389
+#, c-format
+msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
+msgstr ""
+"Kann die gegenwärtigen VBI Parameter von %s (%s) nicht feststellen: %d, %s."
+
+#: src/io-v4l2.c:406 src/io-v4l2.c:516
+#, c-format
+msgid "Sorry, %s (%s) cannot capture any of the requested data services."
+msgstr "%s (%s) kann die gewünschten Datendienste leider nicht empfangen."
+
+#: src/io-v4l2.c:443
+#, c-format
+msgid "Cannot initialize %s (%s), the device is already in use."
+msgstr ""
+"Initialisierung von %s (%s) fehlgeschlagen, das Gerät wird bereits benutzt."
+
+#: src/io-v4l2.c:459
+#, c-format
+msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
+msgstr "Kann die VBI Parameter für %s (%s) nicht einstellen: %d, %s."
+
+#: src/io-v4l2.c:462 src/io-v4l2.c:558
+msgid "Possibly a driver bug."
+msgstr "Vielleicht ein Fehler im Treiber."
+
+#: src/io-v4l2.c:491
+#, c-format
+msgid ""
+"%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
+"libzvbi is too old."
+msgstr ""
+"%s (%s) verwendet ein unbekanntes VBI Samplingformat %d. Könnte ein Fehler "
+"im Treiber sein, oder libzvbi ist veraltet."
+
+#: src/io-v4l2.c:503
+#, c-format
+msgid ""
+"Cannot capture the requested data services with %s (%s), the sampling "
+"frequency %.2f MHz is too low."
+msgstr ""
+"Kann die gewünschten Datendienste mit %s (%s) nicht empfangen, die "
+"Samplingfrequenz %.2f MHz ist zu niedrig."
+
+#: src/io-v4l2.c:555
+#, c-format
+msgid "Cannot request streaming i/o buffers from %s (%s): %d, %s."
+msgstr "Streaming I/O Puffer Anfrage an %s (%s) fehlgeschlagen: %d, %s."
+
+#: src/io-v4l2.c:563
+#, c-format
+msgid ""
+"%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
+"exhausted."
+msgstr ""
+"%s (%s) stellt keine Streaming I/O Puffer zur Verfügung, möglicherweise ist "
+"der physische Speicher erschöpft."
+
+#: src/io-v4l2.c:588
+#, c-format
+msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %d, %s."
+msgstr "Kann Streaming I/O Puffer %d von %s (%s) nicht abfragen: %d, %s."
+
+#: src/io-v4l2.c:605
+#, c-format
+msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
+msgstr ""
+"Memory mapping von Streaming I/O Puffer %d von %s (%s) fehlgeschlagen: %d, %"
+"s."
+
+#: src/io-v4l2.c:629
+#, c-format
+msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
+msgstr "Kann Streaming I/O Puffer %d von %s (%s) nicht einreihen: %d, %s."
+
+#: src/io-v4l2.c:661
+#, c-format
+msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
+msgstr "Nicht genug Speicher um VBI Capturepuffer (%d KB) anzulegen."
+
+#: src/io-v4l2.c:671
+#, c-format
+msgid ""
+"%s (%s) lacks a vbi read interface, possibly an output only device or a "
+"driver bug."
+msgstr ""
+"%s (%s) hat keine VBI Leseschnittstelle, möglicherweise ein Ausgabegerät "
+"oder ein Treiber Bug."
+
+#: src/io-v4l2.c:704
+msgid "V4L2 interface not compiled."
+msgstr "V4L2 Schnittstelle nicht kompiliert."
+
+#~ msgid "Character conversion Unicode -> %s not supported"
+#~ msgstr "Zeichenumwandlung von Unicode nach %s ist nicht möglich"
+
+#~ msgid "ANSI colors"
+#~ msgstr "ANSI Farbcodes"
+
+#~ msgid "Insert ANSI color escape codes"
+#~ msgstr "ANSI Farbcodes einfügen"
+
+#~ msgid "Export this page as ASCII text"
+#~ msgstr "Als ASCII Text ausgeben"
+
+#~ msgid "ANSI"
+#~ msgstr "ANS_I"
+
+#~ msgid "Please contact the Zapzilla maintainers at <http://zapping.sf.net>."
+#~ msgstr ""
+#~ "Bitte kontaktieren Sie die Zapzilla Programmierer auf <http://zapping.sf."
+#~ "net>."
+
+#~ msgid "V4L/V4L2 VBI interface: Failed to read from the device"
+#~ msgstr "V4L/V4L2 VBI Schnittstelle: Lesefehler"
+
+#~ msgid "driver unknown"
+#~ msgstr "Treiber unbekannt"
+
+#~ msgid "Sorry, %s (%s) cannot capture the requested data services.\n"
+#~ msgstr "%s (%s) kann die gewünschten Datendienste leider nicht empfangen.\n"
+
+#~ msgid "Cannot capture with %s (%s), has no standard vbi interface.\n"
+#~ msgstr ""
+#~ "Kann keine VBI Daten von %s (%s) lesen, der Treiber verwendet keine "
+#~ "bekannte VBI Schnittstelle.\n"
+
+#~ msgid "Cannot set or determine current videostandard of %s (%s).\n"
+#~ msgstr ""
+#~ "Kann den gegenwärtigen Videostandard von %s (%s) nicht feststellen oder "
+#~ "setzen.\n"
+
+#~ msgid "%s (%s) reports improbable vbi frame size. %s\n"
+#~ msgstr "%s (%s) gibt eine unwahrscheinlichen VBI frame size an. %s\n"
+
+#~ msgid "Not enough memory to allocate vbi data buffers (%d KB).\n"
+#~ msgstr "Nicht genug Speicher um VBI Datenpuffer (%d KB) anzulegen.\n"
+
+#~ msgid "V4L2 VBI interface: Capture stalled, no station tuned in?"
+#~ msgstr ""
+#~ "V4L2 VBI Schnittstelle: Empfang unterbrochen, kein Sender eingestellt?"
+
+#~ msgid "V4L2 VBI interface: Failed to read from the device"
+#~ msgstr "V4L2 VBI Schnittstelle: Lesefehler"
+
+#~ msgid ""
+#~ "V4L2 VBI interface: Cannot dequeue buffer, driver or application bug?"
+#~ msgstr ""
+#~ "V4L2 VBI Schnittstelle: Kann Capturepuffer nicht auslesen, Bug in Treiber "
+#~ "oder Applikation?"
+
+#~ msgid ""
+#~ "V4L2 VBI interface: Cannot enqueue buffer, driver or application bug?"
+#~ msgstr ""
+#~ "V4L2 VBI Schnittstelle: Kann Capturepuffer nicht schreiben, Bug in "
+#~ "Treiber oder Applikation?"
+
+#~ msgid ""
+#~ "Cannot query current videostandard of %s (%s): %d, %s. Probably a driver "
+#~ "bug.\n"
+#~ msgstr ""
+#~ "Kann den gegenwärtigen Videostandard von %s (%s) nicht feststellen: %d, %"
+#~ "s. Wahrscheinlich ein Treiber Bug.\n"

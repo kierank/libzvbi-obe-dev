@@ -1,0 +1,39 @@
+2002-01-12	Imported libzvbi into Zapping CVS <mschimek@users.sf.net>
+
+	* Renamed to libzvbi to avoid a name conflict. VBI is an ubiquitious
+	  acronym and there are at least two other libvbi's around.
+	* libzvbi.h: Now generated at compile time, so we can keep public
+	  and private definitions together, autodocs are filtered out.
+	  Added version #defines.
+	* Separated bcd.h, event.h, search.h. Removed os.h.
+	* Prefixed vbi_ and VBI_ a few remaining symbols, attr_stuff became
+	  vbi_stuff and fmt_page vbi_page. Purpose to avoid name conflicts
+	  since we're going public.
+	* New vbi_char (former attr_char) encodes characters as Unicode
+	  to improve interoperability. Translation TTX/CC->Unicode in
+	  decoder, Unicode->glyph in export functions. This affects TTX
+	  combined glyphs, now only those covered by U+00A0 to U+017F
+	  can be decoded and displayed. Future Latin Ext-B?
+	* exp_gfx.c: Changed PPM color depth from 4 to 8 bits. PNG export
+	  now works with Closed Caption pages.
+	* exp_html.c: Teletext G1/G3 substituting and Network name in
+	  title doesn't exist anymore, XXX should be restored.
+	* exp-txt.c: vbi_print_page replaced the string module used for
+	  cut&paste. ANSI/ASCII modules dropped, the new text module
+	  supports a larger number of character encodings. Improved color
+	  and ANSI/VT100 or VT200 sequences.
+	* export.c: Upgraded the api to that used by rte 0.5+, which
+	  descended from here, so we have roughly the same everywhere.
+	* teletext.c: NLSed TOP index page.
+	* tables.c: Stripped the country table to what's actually needed,
+	  removed the station short names we never used.
+	* cache.c: Added vbi_unref_page().
+	* v4lx.c: Completely replaced by a more generic version.
+	* Copied libzvbi .po entries from Zapping here.
+	* Added /test with various verification utilities.
+	* Added gtk-doc and wrote some autodocs.
+
+2001-11-01	Standalone libvbi <mschimek@users.sf.net>
+
+	* Extracted libvbi from Zapping <http://zapping.sf.net>, added
+	  Makefiles and stuff.

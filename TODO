@@ -1,0 +1,23 @@
+* io: Add io-v4l, io-dvb.
+* decoder.c: Having a public vbi_decoder and vbi_bit_slicer is bad.
+  Should be both opaque (except slicer in vbi_decoder),
+  with new public vbi_sampling_parameters structure.
+* search.c: Add vbi_wst_level.
+* exp-gfx.c: draw_*_page_region different formats, custom fonts.
+* packet.c: Add filter for data pages (EPG etc).
+* Finish vbi_fetch_* reference counting.
+* Improve TTX page cache.
+* TTX export: Make blockgfx replacement smarter.
+* Streaming subtitles (as opposed to exporting single pages).
+* SGML error reporting. (Not sure anymore if this is
+  really worth the trouble.)
+* Think about ttx header samples (p100) for stations not transmitting
+  a CNI (instead of guessing the name from ttx). May use VTX to create
+  samples.
+* Program info from TTX (8/30 and VPS/PDC).
+* Can we replace ASCII/Latin-1/gettext-local by a single char set?
+* Improve TTX roll header + serial (Mxx increment).
+* Check what's wrong on Prime, CNI and Hebrew subtitles.
+
+-------------------------------------------------------------------------------
+Ideas? Drop us a note at http://zapping.sf.net.

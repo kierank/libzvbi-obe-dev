@@ -1,0 +1,37 @@
+Test programs
+
+unicode
+	Prints all Teletext and Closed Caption character sets used
+	by libzvbi in UTF-8 format. Purpose: compare against specifications
+	to verify libzvbi character code to Unicode conversions.
+
+uclist
+	Lists all Unicode characters used in a UTF-8 coded text	on
+	stdin. NB this script needs access to <http://www.unicode.org/
+	Public/UNIDATA/NamesList.txt>. Purpose: verify the libzvbi built-in
+	fonts contain all required glyphs.
+
+glyph
+	Prints all Teletext and Closed Caption character sets used
+	by libzvbi as PPM images. Purpose: compare against specifications
+	to verify libzvbi exp-gfx.c Unicode to glyph conversions.
+
+explist
+	Lists all export modules and their respective options. If option
+	-c/--check given, tests the export [module] api. Use this to test
+	new modules.
+
+export
+	Exports a Teletext page from a TTX sample stream on stdin, eg.
+	export "text;charset=ISO-8859-1,color=1" 100 <samples/s1-swr >foo.txt
+	Purpose: test teletext decoder and export modules.
+
+caption
+	Closed Caption test displaying a hello world message or the
+        CC sample stream on stdin, for debugging the CC decoder.
+	Note this works only on a X11 5:6:5 LE display. 
+
+osc
+	Raw vbi data visualization. Purpose: test vbi device interface,
+	raw vbi decoder. Works only on X11 5:6:5 LE display.
+	-d/--device name (/dev/vbi), -v/--verbose.
