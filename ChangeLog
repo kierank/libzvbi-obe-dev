@@ -1,7 +1,7 @@
 2005-01-09    <mschimek@users.sf.net>
 
-	* test/capture.c: Changed strict param from -1 to 0 for proper
-	  WSS reception (requires programming of sampling params).
+	* test/capture.c, test/osc.c: Changed strict param from -1 to 0
+	  for proper WSS reception (requires programming of sampling params).
 
 2004-12-31    <mschimek@users.sf.net>
 
