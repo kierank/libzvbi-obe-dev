@@ -49,6 +49,14 @@ osc
 	-n | --ntsc	Video standard hint for simulation and v4l.
 			When not given libzvbi may have to guess
 			which can fail. Default is PAL.
+	-1 | --v4l	On Linux, use the bttv / V4L interface if
+			supported by the driver.
+	-2 | --v4l2-read
+			Use V4L2 interface in read mode.
+	-3 | --v4l2-mmap
+			Use V4L2 interface in mmap mode (default).
+	-e | --ignore-error
+			Ignore read errors.
 
 	(--long options are only available on GNU systems.)
 
@@ -61,11 +69,22 @@ capture
 			opening a vbi device, to test decoding in
 			absence of a real source.
 	-v | --verbose	Trace device access on stderr, may reveal
-			why opening a device failed.
+			why opening a device failed. -vv enables
+			ioctl logging.
 	-p | --pal, 
 	-n | --ntsc	Video standard hint for simulation and v4l.
 			When not given libzvbi may have to guess
 			which can fail. Default is PAL.
+	-1 | --v4l	On Linux, use the bttv / V4L interface if
+			supported by the driver.
+	-2 | --v4l2-read
+			Use V4L2 interface in read mode.
+	-3 | --v4l2-mmap
+			Use V4L2 interface in mmap mode (default).
+	-i | --pid n	Use Linux DVB interface instead and filter out
+			VBI packets with this PID.
+	-e | --ignore-error
+			Ignore read errors.
 	--read		Use libzvbi capture read interface (default).
 	--pull		Use libzvbi capture pull interface, to test
 			if it works.
