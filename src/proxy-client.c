@@ -17,10 +17,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-client.c,v 1.1 2004/10/04 20:50:24 mschimek Exp $
+ *  $Id: proxy-client.c,v 1.2 2004/10/24 18:25:39 tomzo Exp $
  */
 
-static const char rcsid[] = "$Id: proxy-client.c,v 1.1 2004/10/04 20:50:24 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-client.c,v 1.2 2004/10/24 18:25:39 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -375,6 +375,7 @@ static vbi_bool proxy_client_take_message( vbi_proxy_client * vpc )
             /* XXX FIXME: if no callback registered reply immediately */
             /* XXX FIXME? handle "has_token == FALSE": reply immediately? */
             vpc->ev_mask |= VBI_PROXY_EV_CHN_RECLAIMED;
+            vpc->ev_mask &= ~VBI_PROXY_EV_CHN_GRANTED;
             result = TRUE;
          }
          break;
@@ -383,8 +384,10 @@ static vbi_bool proxy_client_take_message( vbi_proxy_client * vpc )
          dprintf1("channel change indication: new scanning %d\n", pMsg->chn_change_ind.scanning);
          vpc->chn_scanning = pMsg->chn_change_ind.scanning;
          /* schedule callback to be invoked for this event */
-         /* XXX TODO: handle norm change */
-         vpc->ev_mask |= VBI_PROXY_EV_CHN_CHANGED;
+         if ((pMsg->chn_change_ind.notify_flags & VBI_PROXY_CHN_FLUSH) != 0)
+            vpc->ev_mask |= VBI_PROXY_EV_CHN_CHANGED;
+         if ((pMsg->chn_change_ind.notify_flags & VBI_PROXY_CHN_NORM) != 0)
+            vpc->ev_mask |= VBI_PROXY_EV_NORM_CHANGED;
          result = TRUE;
          break;
 
@@ -473,12 +476,18 @@ static int proxy_client_wait_select( vbi_proxy_client * vpc, struct timeval * ti
          else
             FD_SET(vpc->io.sock_fd, &fd_rd);
 
-         tv = *timeout; /* Linux kernel overwrites this */
-         gettimeofday(&tv_start, NULL);
+         if ( ((vpc->client_flags & VBI_PROXY_CLIENT_NO_TIMEOUTS) == 0) &&
+              ((vpc->daemon_flags & VBI_PROXY_DAEMON_NO_TIMEOUTS) == 0) )
+         {
+            tv = *timeout; /* Linux kernel overwrites this */
+            gettimeofday(&tv_start, NULL);
 
-         ret = select(vpc->io.sock_fd + 1, &fd_rd, &fd_wr, NULL, &tv);
+            ret = select(vpc->io.sock_fd + 1, &fd_rd, &fd_wr, NULL, &tv);
 
-         vbi_capture_io_update_timeout (timeout, &tv_start);
+            vbi_capture_io_update_timeout(timeout, &tv_start);
+         }
+         else
+            ret = select(vpc->io.sock_fd + 1, &fd_rd, &fd_wr, NULL, NULL);
 
       } while ((ret < 0) && (errno == EINTR));
 
@@ -523,7 +532,7 @@ static vbi_bool proxy_client_rpc( vbi_proxy_client * vpc,
       if (proxy_client_wait_select(vpc, &tv) <= 0)
          goto failure;
 
-      if (vbi_proxy_msg_handle_io(&vpc->io, &io_blocked, FALSE, NULL, 0) == FALSE)
+      if (vbi_proxy_msg_handle_write(&vpc->io, &io_blocked) == FALSE)
          goto failure;
 
    } while (vpc->io.writeLen > 0);
@@ -531,27 +540,24 @@ static vbi_bool proxy_client_rpc( vbi_proxy_client * vpc,
    /* wait for reply message */
    while (1)
    {
-      vpc->io.waitRead = TRUE;
-      vpc->io.readLen  = 0;
-      vpc->io.readOff  = 0;
+      assert (vbi_proxy_msg_is_idle(&vpc->io));
+
       do
       {
          if (proxy_client_wait_select(vpc, &tv) <= 0)
             goto failure;
 
-         if (vbi_proxy_msg_handle_io(&vpc->io, &io_blocked, TRUE, vpc->p_client_msg, vpc->max_client_msg_size) == FALSE)
+         if (vbi_proxy_msg_handle_read(&vpc->io, &io_blocked, TRUE, vpc->p_client_msg, vpc->max_client_msg_size) == FALSE)
             goto failure;
 
-         assert((vpc->io.waitRead == FALSE) || (vpc->io.readOff > 0));
-
-      } while (vpc->io.waitRead || (vpc->io.readOff < vpc->io.readLen));
+      } while ((vpc->io.readOff == 0) || (vpc->io.readOff < vpc->io.readLen));
 
       /* perform security checks on received message */
       if (proxy_client_check_msg(vpc, vpc->io.readLen, vpc->p_client_msg) == FALSE)
          goto failure;
 
       vpc->rxTotal += vpc->p_client_msg->head.len;
-      vpc->io.readLen = 0;
+      vbi_proxy_msg_close_read(&vpc->io);
 
       /* if it's the expected reply, we're finished */
       if ( (vpc->p_client_msg->head.type != reply1) &&
@@ -585,17 +591,10 @@ static int proxy_client_read_message( vbi_proxy_client * vpc,
 
    /* simultaneous read and write is not supported */
    assert (vpc->io.writeLen == 0);
+   assert ((vpc->io.readOff == 0) || (vpc->io.readLen < vpc->io.readOff));
 
    if (proxy_client_alloc_msg_buf(vpc) == FALSE)
       goto failure;
-
-   /* new incoming message -> start reading */
-   if (vbi_proxy_msg_is_idle(&vpc->io))
-   {
-      vpc->io.waitRead = TRUE;
-      vpc->io.readLen  = 0;
-      vpc->io.readOff  = 0;
-   }
 
    do
    {
@@ -605,12 +604,10 @@ static int proxy_client_read_message( vbi_proxy_client * vpc,
       if (ret == 0)
          break;
 
-      if (vbi_proxy_msg_handle_io(&vpc->io, &io_blocked, TRUE, vpc->p_client_msg, vpc->max_client_msg_size) == FALSE)
+      if (vbi_proxy_msg_handle_read(&vpc->io, &io_blocked, TRUE, vpc->p_client_msg, vpc->max_client_msg_size) == FALSE)
          goto failure;
 
-      assert((vpc->io.waitRead == FALSE) || (vpc->io.readOff > 0));
-
-   } while (vpc->io.waitRead || (vpc->io.readOff < vpc->io.readLen));
+   } while (vpc->io.readOff < vpc->io.readLen);
 
    if (ret > 0)
    {
@@ -619,15 +616,11 @@ static int proxy_client_read_message( vbi_proxy_client * vpc,
          goto failure;
 
       vpc->rxTotal += vpc->p_client_msg->head.len;
-      vpc->io.readLen = 0;
+      vbi_proxy_msg_close_read(&vpc->io);
 
       /* process the message - frees the buffer if neccessary */
       if (proxy_client_take_message(vpc) == FALSE)
          goto failure;
-   }
-   else if ((ret == 0) && (vpc->io.readLen == 0))
-   {  // no message received -> reset read flag
-      vpc->io.waitRead = FALSE;
    }
 
    return ret;
@@ -648,9 +641,9 @@ static vbi_bool proxy_client_wait_idle( vbi_proxy_client * vpc )
    struct timeval tv;
    vbi_bool io_blocked;
 
-   assert ((vpc->io.writeLen == 0) && (vpc->io.waitRead == FALSE));
+   assert (vpc->io.writeLen == 0);
 
-   if (vpc->io.readLen > 0)
+   if (vpc->io.readOff > 0)
    {
       /* set intermediate state so that incoming data is discarded in the handler */
       tv.tv_sec  = IDLE_TIMEOUT_MSECS / 1000;
@@ -661,13 +654,16 @@ static vbi_bool proxy_client_wait_idle( vbi_proxy_client * vpc )
          if (proxy_client_wait_select(vpc, &tv) <= 0)
             goto failure;
 
-         if (vbi_proxy_msg_handle_io(&vpc->io, &io_blocked, TRUE, vpc->p_client_msg, vpc->max_client_msg_size) == FALSE)
+         if (vbi_proxy_msg_handle_read(&vpc->io, &io_blocked, TRUE, vpc->p_client_msg, vpc->max_client_msg_size) == FALSE)
             goto failure;
       }
 
       /* perform security checks on received message */
       if (proxy_client_check_msg(vpc, vpc->io.readLen, vpc->p_client_msg) == FALSE)
          goto failure;
+
+      vpc->rxTotal += vpc->p_client_msg->head.len;
+      vbi_proxy_msg_close_read(&vpc->io);
 
       old_state = vpc->state;
       vpc->state = CLNT_STATE_WAIT_IDLE;
@@ -994,7 +990,7 @@ vbi_proxy_client_channel_notify( vbi_proxy_client * vpc,
       if (proxy_client_wait_idle(vpc) == FALSE)
          goto failure;
 
-      dprintf1("Channel control: flags 0x%X, scanning %d (prio=%d, has_token=%d)\n", notify_flags, scanning, vpc->chn_prio, vpc->has_token);
+      dprintf1("Send channel notification: flags 0x%X, scanning %d (prio=%d, has_token=%d)\n", notify_flags, scanning, vpc->chn_prio, vpc->has_token);
 
       memset(vpc->p_client_msg, 0, sizeof(vpc->p_client_msg[0]));
       p_msg = &vpc->p_client_msg->body.chn_notify_req;
@@ -1077,6 +1073,7 @@ vbi_proxy_client_device_ioctl( vbi_proxy_client * vpc, int request, void * p_arg
    {
       if (vpc->state == CLNT_STATE_CAPTURING)
       {
+         /* determine size of the argument */
          size = vbi_proxy_msg_check_ioctl(vpc->vbi_api_revision, request, p_arg, &req_perm);
          if (size >= 0)
          {
@@ -1295,7 +1292,7 @@ vbi_proxy_client_set_callback( vbi_proxy_client * vpc,
 vbi_capture *
 vbi_proxy_client_get_capture_if( vbi_proxy_client * vpc )
 {
-   if ( (vpc != NULL) && (vpc->state == CLNT_STATE_CAPTURING) )
+   if (vpc != NULL)
    {
       return &vpc->capt_api;
    }
@@ -1434,7 +1431,6 @@ vbi_proxy_client_read( vbi_capture * vc,
          {  /* not a slicer data unit */
             result = 0;
          }
-
          vbi_proxy_process_callbacks(vpc);
       }
       return result;
