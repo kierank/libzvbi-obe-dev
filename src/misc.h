@@ -18,12 +18,15 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.h,v 1.5 2004/10/25 16:54:47 mschimek Exp $ */
+/* $Id: misc.h,v 1.6 2004/11/26 05:53:01 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
 
-#include "../config.h"
+/* Dox shall be system config independant. */
+#ifdef HAVE_CONFIG_H
+#  include "../config.h"
+#endif
 
 #include <stddef.h>
 #include <string.h>
@@ -40,7 +43,7 @@
  * namespace vbi.
  */
 
-#ifndef DOXYGEN_SHOULD_IGNORE_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /* doxygen omits static objects */
 #define static_inline static __inline__
 #endif
@@ -86,6 +89,14 @@ typedef int vbi_bool;
 	__typeof__ (&((_type *) 0)->_member) _p = (_ptr);		\
 	(_p != 0) ? (_type *)(((char *) _p) - offsetof (_type,		\
 	  _member)) : (_type *) 0;					\
+})
+
+/* Like PARENT(), to be used with const _ptr. */
+#undef CONST_PARENT
+#define CONST_PARENT(_ptr, _type, _member) ({                           \
+        __typeof__ (&((const _type *) 0)->_member) _p = (_ptr);         \
+        (_p != 0) ? (const _type *)(((const char *) _p) - offsetof      \
+         (const _type, _member)) : (const _type *) 0;                   \
 })
 
 #undef ABS
@@ -156,10 +167,20 @@ static char *
 PARENT_HELPER (char *p, unsigned int offset)
 { return (p == 0) ? 0 : p - offset; }
 
+static const char *
+CONST_PARENT_HELPER (const char *p, unsigned int offset)
+{ return (p == 0) ? 0 : p - offset; }
+
 #undef PARENT
-#define PARENT(_ptr, _type, _member)					\
-	((offsetof (_type, _member) == 0) ? (_type *)(_ptr)		\
-	 : (_type *) PARENT_HELPER ((char *)(_ptr), offsetof (_type, _member)))
+#define PARENT(_ptr, _type, _member)                                    \
+        ((offsetof (_type, _member) == 0) ? (_type *)(_ptr)             \
+         : (_type *) PARENT_HELPER ((char *)(_ptr), offsetof (_type, _member)))
+
+#undef CONST_PARENT
+#define CONST_PARENT(_ptr, _type, _member)                              \
+        ((offsetof (const _type, _member) == 0) ? (const _type *)(_ptr) \
+         : (const _type *) CONST_PARENT_HELPER ((const char *)(_ptr),   \
+          offsetof (const _type, _member)))
 
 #undef ABS
 #define ABS(n) (((n) < 0) ? -(n) : (n))
