@@ -1,5 +1,8 @@
 2005-01-20    <mschimek@users.sf.net>
 
+	* src/hamm.c, src/hamm.h: Dox "since" missing.
+	* src/proxy-client.c: Dox update.
+	* src/io-dvb.c: Changed to new version.
 	* configure.in: Replaced uname call by AC_CANONICAL_HOST for
 	  proper cross-compiling.
 	* test/wss.c: Compile only if we ENABLE_V4L2.
