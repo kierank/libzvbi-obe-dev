@@ -18,7 +18,7 @@
  */
 
 static char rcsid[] =
-"$Id: io-bktr.c,v 1.5 2004/06/18 14:14:51 mschimek Exp $";
+"$Id: io-bktr.c,v 1.6 2004/08/13 01:26:04 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -341,9 +341,10 @@ io_error:
  *   description here. You must free() this string when no longer needed.
  * @param trace If @c TRUE print progress messages on stderr.
  * 
- * @bug This seems to work only when video capturing is active
- * (tested with xawtv). Something I overlooked or a driver feature?
- *
+ * @bug You must enable continuous video capturing to read VBI data from
+ * the bktr driver, using an RGB video format, and the VBI device must be
+ * opened before video capturing starts (METEORCAPTUR).
+ * 
  * @return
  * Initialized vbi_capture context, @c NULL on failure.
  */

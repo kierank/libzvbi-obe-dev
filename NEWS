@@ -1,3 +1,8 @@
+0.2.9
+-----
+Improved V4L2 interface with code from proxy branch by Tom Zoerner, and
+added ioctl logging. Extended capture and osc apps for easier i/o testing.
+
 0.2.8
 -----
 Updated the network identification table from TR 101 231 EBU (2004-04a).
