@@ -1,17 +1,16 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.9 2002/06/07 22:01:08 mschimek Exp $
+dnl $Id: configure.in,v 1.10 2002/06/18 02:26:49 mschimek Exp $
 
 AC_INIT(configure.in)
 AM_INIT_AUTOMAKE(zvbi, 0.2.1)
 AM_CONFIG_HEADER(config.h)
 AM_ACLOCAL_INCLUDE(macros)
 
-dnl Inherit -g -m -b -V etc from environment
 test "x`echo $CFLAGS | grep -e -g`" != "x" && CFLAGS="$CFLAGS -O0"
 CFLAGS="-O2 $CFLAGS"
-dnl -fomit-frame-pointer malfunctioned...?
 
 AC_PROG_CC
+
 AM_PROG_LIBTOOL
 
 test -e site_def.h || cat <<EOF >site_def.h
@@ -28,7 +27,7 @@ dnl
 AC_CHECK_FUNCS(program_invocation_name)
 
 dnl
-dnl Check for unicode library.
+dnl Check for unicode library or libc 2.1.
 dnl
 AC_MSG_CHECKING(whether we are using the GNU C Library 2.1 or newer)
 AC_EGREP_CPP([Lucky GNU user],[
@@ -105,19 +104,7 @@ AC_PATH_XTRA
 dnl
 dnl Native language support
 dnl
-ALL_LINGUAS="de es fr nl pl sv"
-AM_GNU_GETTEXT(, [need-ngettext])
-
-saved_ldflags="$LDFLAGS"
-if test "x$USE_INCLUDED_LIBINTL" = "xyes"; then
-LDFLAGS="$LDFLAGS intl/libintl.a"
-else
-LDFLAGS="$LDFLAGS $INTLLIBS"
-fi
-
-AC_CHECK_FUNCS(ngettext)
-
-LDFLAGS="$saved_ldflags"
+AM_GNU_GETTEXT([external], [need-ngettext])
 
 dnl
 dnl Check for gtk-doc
@@ -129,18 +116,11 @@ dnl Output
 dnl
 AC_OUTPUT([
 Makefile
-src/Makefile
-intl/Makefile
+m4/Makefile 
 po/Makefile.in
-po/Makefile
+src/Makefile
 test/Makefile
-zvbi.spec
 doc/Makefile
 contrib/Makefile
+zvbi.spec
 ])
-
-if test ! -r po/Makefile; then
-	PF="POT"
-	PF=$PF"FILES"
-        sed -e "/$PF =/r po/PF" po/Makefile.in > po/Makefile
-fi
