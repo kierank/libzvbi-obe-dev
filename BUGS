@@ -1,5 +1,6 @@
 * "./osc --sim --pal" caption not recognized
 * v4l and v4l2 i/o can ignore timeout parameter
   > maybe a sleep() loop works, but what about timestamping?
-
+* vbi_print_page_region() doesn't work as it should:
+  Try spaces between words and double height rows.
 

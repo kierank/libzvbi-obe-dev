@@ -1,3 +1,10 @@
+2002-03-09	Bugfix <mschimek@users.sf.net>
+
+	* src/search.c: Fixed pattern highlighting, used to still
+	  skip gfx although now searchable. Segv in reverse search.
+	* src/export-txt.c: vbi_print_page_region() return TRUE
+	  instead of actual bytes written.
+
 2002-03-02	Misc <mschimek@users.sf.net>
 
 	* src/bcd.h: Extended vbi_add_bcd() and vbi_is_bcd() from

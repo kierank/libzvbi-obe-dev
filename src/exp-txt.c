@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.4 2002/02/10 11:47:09 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.5 2002/03/09 12:10:11 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -421,11 +421,11 @@ vbi_print_page_region(vbi_page *pg, char *buf, int size,
 	}
 
 	iconv_close(cd);
-	return TRUE;
+	return p - buf;
 
  failure:
 	iconv_close(cd);
-	return FALSE;
+	return 0;
 }
 
 
