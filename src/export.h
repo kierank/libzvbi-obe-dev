@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.h,v 1.5 2002/06/25 04:37:10 mschimek Exp $ */
+/* $Id: export.h,v 1.6 2002/07/16 00:09:55 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -35,159 +35,205 @@
 #include <stdio.h> /* FILE */
 
 /**
- * vbi_export:
+ * @ingroup Export
+ * @brief Export module instance, an opaque object.
  *
- * One instance of an export module, an opaque object. You can
- * allocate any number of instances you need with vbi_export_new().
- **/
+ * Allocate with vbi_export_new().
+ */
 typedef struct vbi_export vbi_export;
 
 /**
- * vbi_export_info:
+ * @ingroup Export
+ * @brief Information about an export module.
  *
  * Although export modules can be accessed by a static keyword (see
  * vbi_export_new()) they are by definition opaque. The client
  * can list export modules for the user and manipulate them without knowing
- * about their presence or purpose. To do so, some amount of information
+ * about their availability or purpose. To do so, information
  * about the module is necessary, given in this structure.
  *
  * You can obtain this information with vbi_export_info_enum().
- *
- * @keyword: Unique (within this library) keyword to identify
- *   this export module. Can be stored in configuration files.
- * @label: Name of the export module to be shown to the user.
- *   This can be %NULL to indicate this module shall not be listed.
- * @tooltip: A brief description (or %NULL) for the user.
- * @mime_type: Description of the export format as MIME type,
- *   for example "text/html". May be %NULL.
- * @extension: Suggested filename extension. Multiple strings are
- *   possible, separated by comma. The first string is preferred.
- *   Example: "html,htm". May be %NULL.
- **/
+ */
 typedef struct vbi_export_info {
+	/**
+	 * Unique (within this library) keyword to identify
+	 * this export module. Can be stored in configuration files.
+	 */
 	char *			keyword;
-	char *			label;		/* or NULL, gettext()ized N_() */
-	char *			tooltip;	/* or NULL, gettext()ized N_() */
-
-	char *			mime_type;	/* or NULL */
-	char *			extension;	/* or NULL */
+	/**
+	 * Name of the export module to be shown to the user.
+	 * Can be @c NULL indicating the module shall not be listed.
+	 * Clients are encouraged to localize this with gettext(label).
+	 */
+	char *			label;
+	/**
+	 * A brief description (or @c NULL) for the user.
+	 * Clients are encouraged to localize this with gettext(label).
+	 */
+	char *			tooltip;
+	/**
+	 * Description of the export format as MIME type,
+	 * for example "text/html". May be @c NULL.
+	 */
+	char *			mime_type;
+	/**
+	 * Suggested filename extension. Multiple strings are
+	 * possible, separated by comma. The first string is preferred.
+	 * Example: "html,htm". May be @c NULL.
+	 */
+	char *			extension;
 } vbi_export_info;
 
 /**
- * vbi_option_type:
- * @VBI_OPTION_BOOL:
- *   A boolean value, either %TRUE (1) or %FALSE (0).
- *   <informaltable frame=none><tgroup cols=2><tbody>
- *   <row><entry>Type:</><entry>int</></row>
- *   <row><entry>Default:</><entry>def.num</></row>
- *   <row><entry>Bounds:</><entry>min.num (0) ... max.num (1), step.num (1)</></row>
- *   <row><entry>Menu:</><entry>%NULL</></row>
- *   </tbody></tgroup></informaltable>
- * @VBI_OPTION_INT:
- *   A signed integer value. When only a few discrete values rather than
- *   a range are permitted @menu points to a vector of integers. Note the
- *   option is still set by value, not by menu index, which may be rejected
- *   or replaced by the closest possible.
- *   <informaltable frame=none><tgroup cols=2><tbody>
- *   <row><entry>Type:</><entry>int</></row>
- *   <row><entry>Default:</><entry>def.num or menu.num[def.num]</></row>
- *   <row><entry>Bounds:</><entry>min.num ... max.num, step.num or menu</></row>
- *   <row><entry>Menu:</><entry>%NULL or menu.num[min.num ... max.num], step.num (1)</></row>
- *   </tbody></tgroup></informaltable>
- * @VBI_OPTION_REAL:
- *   A real value, optional a vector of possible values.
- *   <informaltable frame=none><tgroup cols=2><tbody>
- *   <row><entry>Type:</><entry>double</></row>
- *   <row><entry>Default:</><entry>def.dbl or menu.dbl[def.num]</></row>
- *   <row><entry>Bounds:</><entry>min.dbl ... max.dbl, step.dbl or menu</></row>
- *   <row><entry>Menu:</><entry>%NULL or menu.dbl[min.num ... max.num], step.num (1)</></row>
- *   </tbody></tgroup></informaltable>
- * @VBI_OPTION_STRING:
- *   A null terminated string. Note the menu version differs from
- *   VBI_OPTION_MENU in its argument, which is the string itself. For example:
- *   <programlisting>
- *   menu.str[0] = "red"
- *   menu.str[1] = "blue"
- *   ... and perhaps other colors not explicitely listed
- *   </programlisting>
- *   <informaltable frame=none><tgroup cols=2><tbody>
- *   <row><entry>Type:</><entry>char *</></row>
- *   <row><entry>Default:</><entry>def.str or menu.str[def.num]</></row>
- *   <row><entry>Bounds:</><entry>not applicable</></row>
- *   <row><entry>Menu:</><entry>%NULL or menu.str[min.num ... max.num], step.num (1)</></row>
- *   </tbody></tgroup></informaltable>
- * @VBI_OPTION_MENU:
- *   Choice between a number of named options. For example:
- *   <programlisting>
- *   menu.str[0] = "up"
- *   menu.str[1] = "down"
- *   menu.str[2] = "strange"
- *   </programlisting>
- *   <informaltable frame=none><tgroup cols=2><tbody>
- *   <row><entry>Type:</><entry>int</></row>
- *   <row><entry>Default:</><entry>def.num</></row>
- *   <row><entry>Bounds:</><entry>min.num ... max.num, step.num (1)</></row>
- *   <row><entry>Menu:</><entry>menu.str[min.num ... max.num], step.num (1).
- *      These strings are gettext'ized N_(), see the gettext() manuals for details.</></row>
- *   </tbody></tgroup></informaltable>
- **/
+ * @ingroup Export
+ */
 typedef enum {
+	/**
+	 * A boolean value, either @c TRUE (1) or @c FALSE (0).
+	 * <table>
+	 * <tr><td>Type:</td><td>int</td></tr>
+	 * <tr><td>Default:</td><td>def.num</td></tr>
+	 * <tr><td>Bounds:</td><td>min.num (0) ... max.num (1),
+	 * step.num (1)</td></tr>
+	 * <tr><td>Menu:</td><td>%NULL</td></tr>
+	 * </table>
+	 */
 	VBI_OPTION_BOOL = 1,
+
+	/**
+	 * A signed integer value. When only a few discrete values rather than
+	 * a range are permitted @p menu points to a vector of integers. Note the
+	 * option is still set by value, not by menu index. Setting the value may
+	 * fail, or it may be replaced by the closest possible.
+	 * <table>
+	 * <tr><td>Type:</td><td>int</td></tr>
+	 * <tr><td>Default:</td><td>def.num or menu.num[def.num]</td></tr>
+	 * <tr><td>Bounds:</td><td>min.num ... max.num, step.num or menu</td></tr>
+	 * <tr><td>Menu:</td><td>%NULL or menu.num[min.num ... max.num],
+	 * step.num (1)</td></tr>
+	 * </table>
+	 */
 	VBI_OPTION_INT,
+
+	/**
+	 * A real value, optional a vector of suggested values.
+	 * <table>
+	 * <tr><td>Type:</td><td>double</td></tr>
+	 * <tr><td>Default:</td><td>def.dbl or menu.dbl[def.num]</td></tr>
+	 * <tr><td>Bounds:</td><td>min.dbl ... max.dbl,
+	 * step.dbl or menu</td></tr>
+	 * <tr><td>Menu:</td><td>%NULL or menu.dbl[min.num ... max.num],
+	 * step.num (1)</td></tr>
+	 * </table>
+	 */
 	VBI_OPTION_REAL,
+
+	/**
+	 * A null terminated string. Note the menu version differs from
+	 * VBI_OPTION_MENU in its argument, which is the string itself. For example:
+	 * @code
+	 * menu.str[0] = "red"
+	 * menu.str[1] = "blue"
+	 * ... and the option may accept other color strings not explicitely listed
+	 * @endcode
+	 * <table>
+	 * <tr><td>Type:</td><td>char *</td></tr>
+	 * <tr><td>Default:</td><td>def.str or menu.str[def.num]</td></tr>
+	 * <tr><td>Bounds:</td><td>not applicable</td></tr>
+	 * <tr><td>Menu:</td><td>%NULL or menu.str[min.num ... max.num],
+	 * step.num (1)</td></tr>
+	 * </table>
+	 */
 	VBI_OPTION_STRING,
+
+	/**
+	 * Choice between a number of named options. For example:
+	 * @code
+	 * menu.str[0] = "up"
+	 * menu.str[1] = "down"
+	 * menu.str[2] = "strange"
+	 * @endcode
+	 * <table>
+	 * <tr><td>Type:</td><td>int</td></tr>
+	 * <tr><td>Default:</td><td>def.num</td></tr>
+	 * <tr><td>Bounds:</td><td>min.num (0) ... max.num, 
+	 *    step.num (1)</td></tr>
+	 * <tr><td>Menu:</td><td>menu.str[min.num ... max.num],
+	 *    step.num (1).
+	 * The menu strings are nationalized N_("text"), client
+	 * applications are encouraged to localize with gettext(menu.str[n]).
+	 * For details see info gettext.
+	 * </td></tr>
+	 * </table>
+	 */
 	VBI_OPTION_MENU
 } vbi_option_type;
 
-typedef union vbi_option_value {
+/**
+ * @ingroup Export
+ * @brief Result of an option query.
+ */
+typedef union {
 	int			num;
 	double			dbl;
 	char *			str;
 } vbi_option_value;
 
-typedef union vbi_option_value_ptr {
+/**
+ * @ingroup Export
+ * @brief Option menu types.
+ */
+typedef union {
 	int *			num;
 	double *		dbl;
 	char **			str;
 } vbi_option_value_ptr;
 
 /**
- * vbi_option_info:
+ * @ingroup Export
+ * @brief Information about an export option.
  *
- * Although export options can be accessed by a static keyword (see
- * vbi_export_option_set()) they are by definition opaque. The client
- * can present them to the user and manipulate them without knowing
- * about their presence or purpose. To do so, some amount of information
- * about the option is necessary, given in this structure.
- *
+ * Although export options can be accessed by a static keyword they are
+ * by definition opaque: the client can present them to the user and
+ * manipulate them without knowing about their presence or purpose.
+ * To do so, some information about the option is necessary,
+ * given in this structure.
+ * 
  * You can obtain this information with vbi_export_option_info_enum().
- *
- * @type: Type of the option, see #vbi_option_type for details.
- *
- * @keyword: Unique (within this export module) keyword to identify
- *   this option. Can be stored in configuration files.
- *
- * @label: Name of the option to be shown to the user.
- *   This can be %NULL to indicate this option shall not be listed.
- *   The string can be translated with gettext(), see the gettext manual.
- *
- * @def, @min, @max, @step, @menu: See #vbi_option_type for details.
- *
- * @tooltip: A brief description (or %NULL) for the user.
- *   The string can be translated with gettext(), see the gettext manual.
- **/
-typedef struct vbi_option_info {
-	vbi_option_type		type;
+ */
+typedef struct {
+  	vbi_option_type		type;	/**< @see vbi_option_type */
+
+	/**
+	 * Unique (within the respective export module) keyword to identify
+	 * this option. Can be stored in configuration files.
+	 */
 	char *			keyword;
+
+	/**
+	 * Name of the option to be shown to the user.
+	 * This can be @c NULL to indicate this option shall not be listed.
+	 * Can be localized with gettext(label).
+	 */
 	char *			label;
-	vbi_option_value	def;
-	vbi_option_value	min;
-	vbi_option_value	max;
-	vbi_option_value	step;
-	vbi_option_value_ptr	menu;
+
+	vbi_option_value	def;	/**< @see vbi_option_type */
+	vbi_option_value	min;	/**< @see vbi_option_type */
+	vbi_option_value	max;	/**< @see vbi_option_type */
+	vbi_option_value	step;	/**< @see vbi_option_type */
+	vbi_option_value_ptr	menu;	/**< @see vbi_option_type */
+
+	/**
+	 * A brief description (or @c NULL) for the user.
+	 *  Can be localized with gettext(tooltip).
+	 */
 	char *			tooltip;
 } vbi_option_info;
 
+/**
+ * @addtogroup Export
+ * @{
+ */
 extern vbi_export_info *	vbi_export_info_enum(int index);
 extern vbi_export_info *	vbi_export_info_keyword(const char *keyword);
 extern vbi_export_info *	vbi_export_info_export(vbi_export *);
@@ -208,8 +254,11 @@ extern vbi_bool			vbi_export_stdio(vbi_export *, FILE *fp, vbi_page *pg);
 extern vbi_bool			vbi_export_file(vbi_export *, const char *name, vbi_page *pg);
 
 extern char *			vbi_export_errstr(vbi_export *);
+/** @} */
 
 /* Private */
+
+#ifndef DOXYGEN_SHOULD_IGNORE_THIS
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -241,42 +290,60 @@ extern char *			vbi_export_errstr(vbi_export *);
 #  endif
 #endif
 
+#endif /* !DOXYGEN_SHOULD_IGNORE_THIS */
+
 typedef struct vbi_export_class vbi_export_class;
 
 /**
- * vbi_export:
+ * @ingroup Exmod
  *
- * This is the semi-public (to the library export interface, but not the
- * client) part of an export module instance. Export modules can read, but
- * do not normally write this, as it is maintained by the interface functions.
- **/
+ * Structure representing an export module instance, part of the private
+ * export module interface.
+ *
+ * Export modules can read, but do not normally write its fields, as
+ * they are maintained by the public libzvbi export functions.
+ */
 struct vbi_export {
-	vbi_export_class *	class;
-	char *			errstr;
-
-	char *			name;		/* of the file we're writing,
-						   NULL if unknown */
-	/* Generic options */
-
+	/**
+	 * Points back to export module description.
+	 */
+	vbi_export_class *	_class;
+	char *			errstr;		/**< Frontend private. */
+	/**
+	 * Name of the file we are writing, @c NULL if none (may be
+	 * an anonymous FILE though).
+	 */
+	char *			name;
+	/**
+	 * Generic option: Network name or @c NULL.
+	 */
 	char *			network;	/* network name or NULL */
-	char *			creator;	/* creator name [libzvbi] or NULL */
-	vbi_bool		reveal;		/* reveal hidden chars */
+	/**
+	 * Generic option: Creator name [by default "libzvbi"] or @c NULL.
+	 */
+	char *			creator;
+	/**
+	 * Generic option: Reveal hidden characters.
+	 */
+	vbi_bool		reveal;
 };
 
 /**
- * vbi_export_class:
+ * @ingroup Exmod
  *
- * This is the semi-public (to the library export interface, but not the
- * client) description of the particular export module class. Export modules
- * must initialize these fields (except @next, see exp-tmpl.c for a detailed
- * discussion) and call vbi_export_register_module() to become accessible.
- **/
+ * Structure describing an export module, part of the private
+ * export module interface. One required for each module.
+ *
+ * Export modules must initialize these fields (except @a next, see
+ * exp-tmpl.c for a detailed discussion) and call vbi_export_register_module()
+ * to become accessible.
+ */
 struct vbi_export_class {
 	vbi_export_class *	next;
-	vbi_export_info		public;
+	vbi_export_info		_public;
 
-	vbi_export *		(* new)(void);
-	void			(* delete)(vbi_export *);
+	vbi_export *		(* _new)(void);
+	void			(* _delete)(vbi_export *);
 
 	vbi_option_info *	(* option_enum)(vbi_export *, int index);
 	vbi_bool		(* option_set)(vbi_export *, const char *keyword,
@@ -287,9 +354,22 @@ struct vbi_export_class {
 	vbi_bool		(* export)(vbi_export *, FILE *fp, vbi_page *pg);
 };
 
+/**
+ * @example exp-templ.c
+ * @ingroup Exmod
+ *
+ * Template for internal export module.
+ */
+
 /*
  *  Helper functions
  */
+
+/**
+ * @addtogroup Exmod
+ * @{
+ */
+extern void			vbi_register_export_module(vbi_export_class *);
 
 extern void			vbi_export_write_error(vbi_export *);
 extern void			vbi_export_unknown_option(vbi_export *, const char *keyword);
@@ -297,48 +377,120 @@ extern void			vbi_export_invalid_option(vbi_export *, const char *keyword, ...);
 extern char *			vbi_export_strdup(vbi_export *, char **d, const char *s);
 extern void			vbi_export_error_printf(vbi_export *, const char *templ, ...);
 
-extern void			vbi_register_export_module(vbi_export_class *);
-
 extern int			vbi_ucs2be(void);
 
-/* See exp-templ.c for an example on how to use these. */
+/* Option info building */
 
 #define VBI_OPTION_BOUNDS_INITIALIZER_(type_, def_, min_, max_, step_)	\
   { type_ = def_ }, { type_ = min_ }, { type_ = max_ }, { type_ = step_ }
 
+/**
+ * Helper macro for export modules to build option lists. Use like this:
+ *
+ * @code
+ * vbi_option_info myinfo = VBI_OPTION_BOOL_INITIALIZER
+ *   ("mute", N_("Switch sound on/off"), FALSE, N_("I am a tooltip"));
+ * @endcode
+ *
+ * N_() marks the string for i18n, see info gettext for details.
+ */
 #define VBI_OPTION_BOOL_INITIALIZER(key_, label_, def_, tip_)		\
   { VBI_OPTION_BOOL, key_, label_, VBI_OPTION_BOUNDS_INITIALIZER_(	\
   .num, def_, 0, 1, 1),	{ .num = NULL }, tip_ }
 
+/**
+ * Helper macro for export modules to build option lists. Use like this:
+ *
+ * @code
+ * vbi_option_info myinfo = VBI_OPTION_INT_RANGE_INITIALIZER
+ *   ("sampling", N_("Sampling rate"), 44100, 8000, 48000, 100, NULL);
+ * @endcode
+ *
+ * Here we have no tooltip (@c NULL).
+ */
 #define VBI_OPTION_INT_RANGE_INITIALIZER(key_, label_, def_, min_,	\
   max_,	step_, tip_) { VBI_OPTION_INT, key_, label_,			\
   VBI_OPTION_BOUNDS_INITIALIZER_(.num, def_, min_, max_, step_),	\
   { .num = NULL }, tip_ }
 
+/**
+ * Helper macro for export modules to build option lists. Use like this:
+ *
+ * @code
+ * int mymenu[] = { 29, 30, 31 };
+ *
+ * vbi_option_info myinfo = VBI_OPTION_INT_MENU_INITIALIZER
+ *   ("days", NULL, 1, mymenu, 3, NULL);
+ * @endcode
+ *
+ * No label and tooltip (@c NULL), i. e. this option is not to be
+ * listed in the user interface. Default is entry 1 ("30") of 3 entries. 
+ */
 #define VBI_OPTION_INT_MENU_INITIALIZER(key_, label_, def_,		\
   menu_, entries_, tip_) { VBI_OPTION_INT, key_, label_,		\
   VBI_OPTION_BOUNDS_INITIALIZER_(.num, def_, 0, (entries_) - 1, 1),	\
   { .num = menu_ }, tip_ }
 
+/**
+ * Helper macro for export modules to build option lists. Use like
+ * VBI_OPTION_INT_RANGE_INITIALIZER(), just with doubles but ints.
+ */
 #define VBI_OPTION_REAL_RANGE_INITIALIZER(key_, label_, def_, min_,	\
   max_, step_, tip_) { VBI_OPTION_REAL, key_, label_,			\
   VBI_OPTION_BOUNDS_INITIALIZER_(.dbl, def_, min_, max_, step_),	\
   { .dbl = NULL }, tip_ }
 
+/**
+ * Helper macro for export modules to build option lists. Use like
+ * VBI_OPTION_INT_MENU_INITIALIZER(), just with an array of doubles but ints.
+ */
 #define VBI_OPTION_REAL_MENU_INITIALIZER(key_, label_, def_,		\
   menu_, entries_, tip_) { VBI_OPTION_REAL, key_, label_,		\
   VBI_OPTION_BOUNDS_INITIALIZER_(.num, def_, 0, (entries_) - 1, 1),	\
   { .dbl = menu_ }, tip_ }
 
+/**
+ * Helper macro for export modules to build option lists. Use like this:
+ *
+ * @code
+ * vbi_option_info myinfo = VBI_OPTION_STRING_INITIALIZER
+ *   ("comment", N_("Comment"), "bububaba", "Please enter a string");
+ * @endcode
+ */
 #define VBI_OPTION_STRING_INITIALIZER(key_, label_, def_, tip_)		\
   { VBI_OPTION_STRING, key_, label_, VBI_OPTION_BOUNDS_INITIALIZER_(	\
   .str, def_, NULL, NULL, NULL), { .str = NULL }, tip_ }
 
+/**
+ * Helper macro for export modules to build option lists. Use like this:
+ *
+ * @code
+ * char *mymenu[] = { "txt", "html" };
+ *
+ * vbi_option_info myinfo = VBI_OPTION_STRING_MENU_INITIALIZER
+ *   ("extension", "Ext", 0, mymenu, 2, N_("Select an extension"));
+ * @endcode
+ *
+ * Remember this is like VBI_OPTION_STRING_INITIALIZER() in the sense
+ * that the vbi client can pass any string as option value, not just those
+ * proposed in the menu. In contrast a plain menu option as with
+ * VBI_OPTION_MENU_INITIALIZER() expects menu indices as input.
+ */
 #define VBI_OPTION_STRING_MENU_INITIALIZER(key_, label_, def_,		\
   menu_, entries_, tip_) { VBI_OPTION_STRING, key_, label_,		\
   VBI_OPTION_BOUNDS_INITIALIZER_(.str, def_, 0, (entries_) - 1, 1),	\
-  { .str = (char **)(menu_) }, tip_ }
+  { .str = menu_ }, tip_ }
 
+/**
+ * Helper macro for export modules to build option lists. Use like this:
+ *
+ * @code
+ * char *mymenu[] = { N_("Monday"), N_("Tuesday") };
+ *
+ * vbi_option_info myinfo = VBI_OPTION_MENU_INITIALIZER
+ *   ("weekday", "Weekday, 0, mymenu, 2, N_("Select a weekday"));
+ * @endcode
+ */
 #define VBI_OPTION_MENU_INITIALIZER(key_, label_, def_, menu_,		\
   entries_, tip_) { VBI_OPTION_MENU, key_, label_,			\
   VBI_OPTION_BOUNDS_INITIALIZER_(.num, def_, 0, (entries_) - 1, 1),	\
@@ -346,7 +498,7 @@ extern int			vbi_ucs2be(void);
 
 /* See exp-templ.c for an example */
 
-/* Doesn't work, sigh. */
+/** Doesn't work, sigh. */
 #define VBI_AUTOREG_EXPORT_MODULE(name)
 /*
 #define VBI_AUTOREG_EXPORT_MODULE(name)					\
@@ -355,5 +507,7 @@ static void vbi_autoreg_##name(void) {					\
 	vbi_register_export_module(&name);				\
 }
 */
+
+/** @} */
 
 #endif /* EXPORT_H */
