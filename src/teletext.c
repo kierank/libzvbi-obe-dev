@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.8 2002/12/24 15:44:32 mschimek Exp $ */
+/* $Id: teletext.c,v 1.9 2003/01/03 06:18:05 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -387,7 +387,7 @@ top_index(vbi_decoder *vbi, vbi_page *pg, int subno)
 	screen_color(pg, 0, 32 + VBI_BLUE);
 
 	vbi_transp_colormap (vbi, pg->color_map,
-			     ext->color_map, lengthof (pg->color_map));
+			     ext->color_map, N_ELEMENTS (pg->color_map));
 
 	pg->drcs_clut = ext->drcs_clut;
 
@@ -2358,7 +2358,7 @@ vbi_format_vt_page(vbi_decoder *vbi,
 	screen_color(pg, vtp->flags, ext->def_screen_color);
 
 	vbi_transp_colormap (vbi, pg->color_map,
-			     ext->color_map, lengthof (pg->color_map));
+			     ext->color_map, N_ELEMENTS (pg->color_map));
 
 	pg->drcs_clut = ext->drcs_clut;
 

@@ -1123,7 +1123,7 @@ vbi_cache_put			(vbi_decoder *		vbi,
 		}
 
 		if (__builtin_expect (cp != old_cp, 1)) {
-			assert (dead_count < lengthof (dead_row));
+			assert (dead_count < N_ELEMENTS (dead_row));
 			dead_row[dead_count++] = cp;
 			free_size += vtp_size (&cp->page) + cache_page_overhead;
 		}

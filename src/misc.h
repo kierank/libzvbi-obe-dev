@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.h,v 1.1 2002/12/24 15:44:32 mschimek Exp $ */
+/* $Id: misc.h,v 1.2 2003/01/03 06:18:05 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -69,7 +69,7 @@ typedef unsigned int vbi_nuid;
 
 /* Private */
 
-#define lengthof(array) (sizeof (array) / sizeof (*(array)))
+#define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
 
 #define PARENT(ptr, type, member)					\
   ((type *)(((char *) ptr) - offsetof (type, member)))
