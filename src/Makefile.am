@@ -50,7 +50,7 @@ libzvbi_la_SOURCES = \
 	decoder.c decoder.h sliced.h \
 	dvb.h \
 	dvb_mux.c dvb_mux.h \
-	dvb_demux.c \
+	dvb_demux.c dvb_demux.h \
 	exp-gfx.c exp-gfx.h \
 	exp-html.c \
 	exp-templ.c \
