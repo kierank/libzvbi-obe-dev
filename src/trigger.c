@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: trigger.c,v 1.2 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: trigger.c,v 1.3 2002/10/11 12:31:13 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -450,13 +450,13 @@ parse_atvef(vbi_trigger *t, unsigned char *s1, double now)
 			s++; 
 
 			if (c != ':') {
-				int i;
+				unsigned int i;
 
-				for (i = 1; i < sizeof(type_attrs) / sizeof(type_attrs[0]) - 1; i++)
+				for (i = 1; i < (sizeof(type_attrs) / sizeof(type_attrs[0]) - 1); i++)
 					if (strcasecmp(type_attrs[i], attr) == 0)
 						break;
 
-				if (i < sizeof(type_attrs) / sizeof(type_attrs) - 1) {
+				if (i < (sizeof(type_attrs) / sizeof(type_attrs[0]) - 1)) {
 					t->link.itv_type = i + 1;
 					continue;
 				}
