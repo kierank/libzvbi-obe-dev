@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: search.c,v 1.3 2002/03/06 00:54:51 mschimek Exp $ */
+/* $Id: search.c,v 1.4 2002/03/09 12:09:58 mschimek Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -97,9 +97,6 @@ highlight(struct vbi_search *s, vt_page *vtp,
 					s->col[1] = j + 1;
 				}
 			}
-
-			if (!vbi_is_print(acp->unicode))
-				continue; /* gfx | drcs, insignificant */
 
 			switch (acp->size) {
 			case VBI_DOUBLE_SIZE:
@@ -254,7 +251,7 @@ fprintf(stderr, "exec: %x/%x; start %d,%d; %c%c%c...\n",
 static int
 search_page_rev(void *p, vt_page *vtp, vbi_bool wrapped)
 {
-	vbi_search *s;
+	vbi_search *s = p;
 	vbi_char *acp;
 	int row, this, start, stop;
 	unsigned long ms, me;
