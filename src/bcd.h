@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bcd.h,v 1.1 2002/01/12 16:19:07 mschimek Exp $ */
+/* $Id: bcd.h,v 1.2 2002/03/06 00:11:32 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -119,8 +119,9 @@ vbi_bcd2dec(unsigned int bcd)
  * @b: BCD number.
  * 
  * Adds two bcd numbers, returning a bcd sum. The result will be in
- * range 0x000 ... 0xFFF, discarding carry and extra digits in the inputs.
- * To subtract you can add the two's complement, e. g. -0x001 = +0x999.
+ * range 0x00000000 ... 0xFFFFFFFF, discarding carry and extra digits
+ * in the inputs. To subtract you can add the two's complement,
+ * e. g. -0x1 = +0x99999999.
  * 
  * Return value:
  * BCD number. The result is undefined when the bcd number contains
@@ -137,26 +138,24 @@ vbi_add_bcd(unsigned int a, unsigned int b)
 	b  = (~b & 0x11111110) >> 3;
 	b |= b * 2;
 
-	return (t - b) & 0xFFF;
+	return t - b;
 }
 
 /**
  * vbi_is_bcd:
  * @bcd: BCD number.
  * 
- * Tests if the three last significant digits of @bcd
- * form a valid BCD number.
+ * Tests if @bcd forms a valid BCD number.
  * 
  * Return value:
- * FALSE if the three last significant digits of @bcd
- * contain hex digits 0xA ... 0xF.
+ * FALSE if @bcd contains hex digits 0xA ... 0xF.
  **/
 static inline vbi_bool
 vbi_is_bcd(unsigned int bcd)
 {
 	static const unsigned int x = 0x06666666;
 
-	return (((bcd + x) ^ (bcd ^ x)) & 0x110) == 0;
+	return (((bcd + x) ^ (bcd ^ x)) & 0x11111110) == 0;
 }
 
 /* Private */
