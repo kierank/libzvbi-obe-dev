@@ -1,16 +1,15 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.7 2002/04/18 13:37:16 mschimek Exp $
+dnl $Id: configure.in,v 1.8 2002/05/23 03:59:03 mschimek Exp $
 
 AC_INIT(configure.in)
-AM_INIT_AUTOMAKE(zvbi, 0.1.2)
+AM_INIT_AUTOMAKE(zvbi, 0.2)
 AM_CONFIG_HEADER(config.h)
 AM_ACLOCAL_INCLUDE(macros)
 
-AC_ARG_ENABLE(debugging, [  --enable-debugging      add debugging info],
-        [CFLAGS="-g -O0"
-	 AC_DEFINE(ENABLE_DEBUGGING, 1, [Add debugging info])],
-        CFLAGS="$CFLAGS -O2")
-dnl -fomit-frame-pointer
+dnl Inherit -g -m -b -V etc from environment
+test "x`echo $CFLAGS | grep -e -g`" != "x" && CFLAGS="$CFLAGS -O0"
+CFLAGS="-O2 $CFLAGS"
+dnl -fomit-frame-pointer malfunctioned...?
 
 AC_PROG_CC
 AM_PROG_LIBTOOL
@@ -31,20 +30,34 @@ AC_CHECK_FUNCS(program_invocation_name)
 dnl
 dnl Check for unicode library.
 dnl
-AC_MSG_CHECKING(for unicode library)
-UNICODE_VERSION=`unicode-config --version`
-if test $? -eq 0; then
-	AC_DEFINE(HAVE_LIBUNICODE, 1, [Define if you have libunicode])
-	AC_MSG_RESULT($UNICODE_VERSION)
-	UNICODE_CFLAGS=`unicode-config --cflags`
-	UNICODE_LIBS=`unicode-config --libs`
-	AC_SUBST(UNICODE_CFLAGS)
-	AC_SUBST(UNICODE_LIBS)
-else
-	AC_MSG_RESULT([not present - Teletext search disabled])
-dnl	AC_MSG_ERROR([libunicode is required:
-dnl	ftp://ftp.gnome.org/pub/GNOME/unstable/sources])
-fi
+AC_MSG_CHECKING(whether we are using the GNU C Library 2.1 or newer)
+AC_EGREP_CPP([Lucky GNU user],[
+#include <features.h>
+#ifdef __GNU_LIBRARY__
+ #if (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1) || (__GLIBC__ > 2)
+  Lucky GNU user
+ #endif
+#endif
+],[
+  AC_MSG_RESULT([yes])
+  AC_DEFINE(HAVE_GLIBC21, 1, [Define if you have GNU C Lib 2.1+])
+],[
+  AC_MSG_RESULT([no])
+  AC_MSG_CHECKING(for unicode library)
+  UNICODE_VERSION=`unicode-config --version`
+  if test $? -eq 0; then
+    AC_DEFINE(HAVE_LIBUNICODE, 1, [Define if you have libunicode])
+    AC_MSG_RESULT($UNICODE_VERSION)
+    UNICODE_CFLAGS=`unicode-config --cflags`
+    UNICODE_LIBS=`unicode-config --libs`
+    AC_SUBST(UNICODE_CFLAGS)
+    AC_SUBST(UNICODE_LIBS)
+  else
+    AC_MSG_RESULT([not present - Teletext search disabled])
+dnl AC_MSG_ERROR([libunicode is required:
+dnl ftp://ftp.gnome.org/pub/GNOME/unstable/sources])
+  fi
+])
 
 dnl
 dnl Check for iconv library if not included in libc.
