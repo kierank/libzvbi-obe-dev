@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.c,v 1.2 2004/12/13 07:15:15 mschimek Exp $ */
+/* $Id: bit_slicer.c,v 1.3 2004/12/14 07:30:54 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,9 +54,11 @@ do {									\
  * data services at once.
  */
 
+/* Read a green sample, e.g. rrrrrggg gggbbbbb. endian is const. */
 #define GREEN2(raw, endian)						\
 	(((raw)[0 + endian] + (raw)[1 - endian] * 256) & bs->green_mask)
 
+/* Read a sample with pixfmt conversion. fmt is const. */
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define GREEN(raw, fmt)							\
 	((fmt == VBI_PIXFMT_RGB8) ?					\
@@ -86,7 +88,8 @@ do {									\
 	   (raw)[0])))
 #endif
 
-/* raw0 = raw[index >> 8] */
+/* raw0 = raw[index >> 8], linear interpolated.
+   fmt is const, vbi_pixfmt_bytes_per_pixel(fmt) is const. */
 #define SAMPLE(raw, index, fmt)						\
 do {									\
 	const uint8_t *r;						\
@@ -105,28 +108,33 @@ bit_slicer_##fmt		(vbi3_bit_slicer *	bs,		\
 {									\
 	unsigned int i, j, k;						\
 	unsigned int cl;	/* clock */				\
-	unsigned int thresh0;	/* old 0/1 threshold */			\
-	unsigned int tr;	/* current threshold */			\
+	unsigned int thresh0;	/* old 0/1 threshold (fpt) */		\
+	unsigned int tr;	/* current threshold (integer) */	\
 	unsigned int c;		/* current byte */			\
-	unsigned int t;		/* t = raw[0] * j + raw[1] * (1 - j) */	\
+	unsigned int t;		/* oversampled sample */		\
 	unsigned int raw0;	/* oversampling temporary */		\
 	unsigned int raw1;						\
 	unsigned char b1;	/* previous bit */			\
 									\
 	thresh0 = bs->thresh;						\
-	raw += bs->skip;						\
+	raw += bs->skip;	/* e.g. red byte */			\
 									\
 	cl = 0;								\
 	c = 0;								\
 	b1 = 0;								\
 						                        \
 	for (i = bs->cri_bytes; i > 0; --i) {				\
+		/* chg = abs (raw[1] - raw[0]) / 255; */		\
+		/* thr = thr * (1 - chg) + raw[0] * chg; */		\
 		tr = bs->thresh >> thresh_frac;				\
 		raw0 = GREEN (raw, VBI_PIXFMT_##fmt);			\
 		raw1 = GREEN (raw + vbi_pixfmt_bytes_per_pixel		\
 			      (VBI_PIXFMT_##fmt), VBI_PIXFMT_##fmt);	\
 		raw1 -= raw0;						\
-		bs->thresh += (int)(raw0 - tr) * (int)ABS ((int) raw1);	\
+		bs->thresh += (int)(raw0 - tr) * (int) ABS ((int) raw1); \
+		/* for (j = 0; j < oversampling; ++j) */                \
+		/*   t = (raw[0] * (oversampling - j) + raw[1] * j) */  \
+		/*     / oversampling; */				\
 		t = raw0 * oversampling;				\
 									\
 		for (j = oversampling; j > 0; --j) {			\
@@ -225,14 +233,14 @@ payload:								\
 	return TRUE;							\
 }
 
-BIT_SLICER (Y8, 4, 9)		/* any format with 0 bytes between Y/G */
+BIT_SLICER (Y8, 4, 9)		/* any format with 0 bytes between Y or G */
 BIT_SLICER (YUYV, 4, 9)		/* 1 byte */
 BIT_SLICER (RGB24_LE, 4, 9)	/* 2 bytes */
-BIT_SLICER (RGBA32_LE, 4, 9)	/* 3 bytes */
-BIT_SLICER (RGB16_LE, 4, bs->thresh_frac)
-BIT_SLICER (RGB16_BE, 4, bs->thresh_frac)
+BIT_SLICER (RGBA32_LE, 4, 9)	/* 3 bytes between Y or G */
+BIT_SLICER (RGB16_LE, 4, bs->thresh_frac) /* any 16 bit RGB LE */
+BIT_SLICER (RGB16_BE, 4, bs->thresh_frac) /* any 16 bit RGB BE */
 #if 0 /* XXX not in 0.2.x */
-BIT_SLICER (RGB8, 8, bs->thresh_frac)
+BIT_SLICER (RGB8, 8, bs->thresh_frac) /* any 8 bit RGB */
 #endif
 
 /*
@@ -347,7 +355,7 @@ _vbi3_bit_slicer_init		(vbi3_bit_slicer *	bs,
 	skip = 0;
 
 	/* 0-1 threshold, start value. */
-	bs->thresh = 105 << 9;
+	bs->thresh = 105 << 9; /* fixed point value */
 	bs->thresh_frac = 9;
 
 	switch (sample_format) {
@@ -699,7 +707,7 @@ vbi3_bit_slicer_delete		(vbi3_bit_slicer *	bs)
  * 
  * Allocates and initializes a vbi3_bit_slicer object for use with
  * vbi3_bit_slicer_slice(). This is a low level function, see also
- * vbi_raw_decoder_new().
+ * vbi3_raw_decoder_new().
  *
  * $returns
  * NULL when out of memory or parameters are invalid (e. g.
