@@ -1,3 +1,10 @@
+2004-10-14    <mschimek@users.sf.net>
+
+	* src/wstfont2.xbm: Fixed height of Omega character.
+	* src/packet.c (vbi_teletext_set_default_region): Override
+	  only primary character set code.
+	* src/teletext.c (vbi_format_vt_page): Fixed ESC decoding.
+
 2004-10-05    <mschimek@users.sf.net>
 
 	* src/intl-priv.h: Added from 0.3 branch.
