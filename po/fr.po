@@ -3,10 +3,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: zvbi 0.2.2\n"
+"Project-Id-Version: zvbi 0.2.11\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-30 03:32+0100\n"
-"PO-Revision-Date: 2004-10-25 12:24+0200\n"
+"POT-Creation-Date: 2005-01-19 05:32+0100\n"
+"PO-Revision-Date: 2005-01-17 14:26+0100\n"
 "Last-Translator: Christian Marillat <marillat.christian@wanadoo.fr>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -46,12 +46,12 @@ msgstr "Incapable d'allouer %d octets de mémoire tampon."
 #: src/exp-gfx.c:1176 src/exp-html.c:231
 #, c-format
 msgid "Teletext Page %3x.%x"
-msgstr "Page Teletext %3x.%x"
+msgstr "Page Télétexte %3x.%x"
 
 #: src/exp-gfx.c:1180 src/exp-html.c:233
 #, c-format
 msgid "Teletext Page %3x"
-msgstr "Page Teletext %3x"
+msgstr "Page Télétexte %3x"
 
 #: src/exp-gfx.c:1249
 msgid "PNG"
@@ -151,7 +151,7 @@ msgstr "KOI8-R (Russe et Bulgare)"
 
 #: src/exp-txt.c:88
 msgid "KOI8-U (Ukranian)"
-msgstr "KOI8-U (Ukranien)"
+msgstr "KOI8-U (Ukrainien)"
 
 #: src/exp-txt.c:89
 msgid "ISO-10646/UTF-8 (Unicode)"
@@ -242,7 +242,7 @@ msgstr "Exporter cette page dans un fichier texte"
 #. TRANSLATORS: Not Closed Caption pages.
 #: src/exp-vtx.c:78
 msgid "Can only export Teletext pages."
-msgstr "Ne peut seulement exporter les pages Teletext."
+msgstr "Ne peut seulement exporter les pages Télétexte."
 
 #: src/exp-vtx.c:86
 msgid "Page is not cached, sorry."
@@ -256,7 +256,7 @@ msgstr "Ne peut exporter cette page, non affichable"
 msgid ""
 "Export this page as VTX file, the format used by VideoteXt and vbidecode"
 msgstr ""
-"Exporter cette page en un fichier VTX, le format utilisé par Videotext et "
+"Exporter cette page en un fichier VTX, le format utilisé par Vidéotext et "
 "vbidecode"
 
 #: src/export.c:463
@@ -311,12 +311,12 @@ msgstr "Erreur inconnue."
 
 #: src/io-bktr.c:187
 msgid "BKTR driver"
-msgstr ""
+msgstr "Pilote BKTR"
 
 #: src/io-bktr.c:202 src/io-bktr.c:283 src/io-bktr.c:301 src/io-v4l.c:164
 #: src/io-v4l.c:1086 src/io-v4l.c:1124 src/io-v4l.c:1152 src/io-v4l2.c:105
-#: src/io-v4l2k.c:182 src/io-v4l2k.c:537 src/io-v4l2k.c:977
-#: src/io-v4l2k.c:1101 src/io-v4l2k.c:1116 src/proxy-client.c:198
+#: src/io-v4l2k.c:181 src/io-v4l2k.c:536 src/io-v4l2k.c:991
+#: src/io-v4l2k.c:1115 src/io-v4l2k.c:1133 src/proxy-client.c:198
 #: src/proxy-client.c:1558
 msgid "Virtual memory exhausted."
 msgstr "Mémoire virtuelle épuisée."
@@ -326,13 +326,13 @@ msgstr "Mémoire virtuelle épuisée."
 msgid "Cannot open '%s': %s."
 msgstr "Ne peut ouvrir '%s' : %s."
 
-#: src/io-bktr.c:271 src/io-v4l.c:712 src/io-v4l.c:1071 src/io-v4l2k.c:964
+#: src/io-bktr.c:271 src/io-v4l.c:712 src/io-v4l.c:1071 src/io-v4l2k.c:978
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr ""
 "Désolé, %s (%s) ne peut capturer aucun des services de données demandé."
 
-#: src/io-bktr.c:312 src/io-v4l.c:175 src/io-v4l2k.c:548
+#: src/io-bktr.c:312 src/io-v4l.c:175 src/io-v4l2k.c:547
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Pas assez de mémoire pour allouer un tampon de capture vbi (%d Ko)."
@@ -341,7 +341,7 @@ msgstr "Pas assez de mémoire pour allouer un tampon de capture vbi (%d Ko)."
 msgid "BKTR driver interface not compiled."
 msgstr "L'interface BKTR n'a pas été compilée."
 
-#: src/io-v4l.c:763 src/io-v4l2k.c:879
+#: src/io-v4l.c:763 src/io-v4l2k.c:884
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "Ne peut initialiser %s (%s), le périphérique est déjà utilisé."
@@ -351,7 +351,7 @@ msgstr "Ne peut initialiser %s (%s), le périphérique est déjà utilisé."
 msgid "Could not set the vbi capture parameters for %s (%s): %s."
 msgstr "Ne peut sélectionner les paramètres de capture vbi pour %s (%s) : %s."
 
-#: src/io-v4l.c:915 src/io-v4l2k.c:926
+#: src/io-v4l.c:915 src/io-v4l2k.c:940
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -379,7 +379,7 @@ msgstr ""
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr "Ne peut déterminer ou configurer le standard vidéo courant de %s (%s)."
 
-#: src/io-v4l.c:1043 src/io-v4l2k.c:936
+#: src/io-v4l.c:1043 src/io-v4l2k.c:950
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -388,7 +388,7 @@ msgstr ""
 "Ne peut capturer le service de données demandé avec %s (%s), la fréquence "
 "d'échantillonnage %.2f MHz est trop basse."
 
-#: src/io-v4l.c:1160 src/io-v4l2.c:120 src/io-v4l2k.c:1133
+#: src/io-v4l.c:1160 src/io-v4l2.c:120 src/io-v4l2k.c:1150
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Ne peut ouvrir '%s' : %d, %s"
@@ -397,7 +397,7 @@ msgstr "Ne peut ouvrir '%s' : %d, %s"
 msgid "driver unknown"
 msgstr "pilote inconnu"
 
-#: src/io-v4l.c:1192 src/io-v4l2k.c:1156
+#: src/io-v4l.c:1192 src/io-v4l2k.c:1173
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) n'est pas une entrée VBI brute."
@@ -408,25 +408,23 @@ msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) ne supporte pas la fonction select()."
 
 #: src/io-v4l.c:1346 src/io-v4l.c:1386
-#, fuzzy
 msgid "V4L driver interface not compiled."
-msgstr "L'interface BKTR n'a pas été compilée."
+msgstr "L'interface du pilote V4L n'a pas été compilée."
 
-#: src/io-v4l2.c:207 src/io-v4l2k.c:1271
-#, fuzzy
+#: src/io-v4l2.c:207 src/io-v4l2k.c:1295
 msgid "V4L2 driver interface not compiled."
-msgstr "L'interface V4L2 n'a pas été compilée."
+msgstr "L'interface du pilote V4L2 n'a pas été compilée."
 
-#: src/io-v4l2k.c:162
+#: src/io-v4l2k.c:161
 #, c-format
 msgid "Cannot request streaming i/o buffers from %s (%s): %s."
 msgstr "Ne peut requérir le flux e/s des tampons depuis %s (%s) : %s."
 
-#: src/io-v4l2k.c:166 src/io-v4l2k.c:888
+#: src/io-v4l2k.c:165 src/io-v4l2k.c:893
 msgid "Possibly a driver bug."
 msgstr "Possibilité d'un bogue du pilote."
 
-#: src/io-v4l2k.c:171
+#: src/io-v4l2k.c:170
 #, c-format
 msgid ""
 "%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
@@ -435,62 +433,63 @@ msgstr ""
 "%s (%s) concède plus de flux pour les tampons e/s, peut-être que la mémoire "
 "physique épuisée."
 
-#: src/io-v4l2k.c:197
+#: src/io-v4l2k.c:196
 #, c-format
 msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %s."
 msgstr "Demande de flux des tampons e/s #%d de %s (%s) à échoué : %s."
 
-#: src/io-v4l2k.c:230
+#: src/io-v4l2k.c:229
 #, c-format
 msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %s."
 msgstr ""
 "Organisation de la mémoire pour le flux des tampons e/s #%d de %s (%s) à "
 "échoué : %s."
 
-#: src/io-v4l2k.c:255
+#: src/io-v4l2k.c:254
 #, c-format
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %s."
 msgstr ""
 "Ne peut mettre dans la queue le flux des tampons e/s #%d vers %s (%s) : %s."
 
-#: src/io-v4l2k.c:259 src/io-v4l2k.c:697 src/io-v4l2k.c:713
+#: src/io-v4l2k.c:258 src/io-v4l2k.c:696 src/io-v4l2k.c:712
 msgid "Probably a driver bug."
 msgstr "Probablement un bogue du pilote."
 
-#: src/io-v4l2k.c:693 src/io-v4l2k.c:710
+#: src/io-v4l2k.c:692 src/io-v4l2k.c:709
 #, c-format
 msgid "Cannot query current videostandard of %s (%s): %s."
 msgstr "Impossible d'obtenir le standard vidéo courant de %s (%s) : %s."
 
-#: src/io-v4l2k.c:803
+#: src/io-v4l2k.c:804
 #, c-format
 msgid "Cannot query current vbi parameters of %s (%s): %s."
 msgstr "Impossible d'obtenir les paramètres vbi courant de %s (%s) : %s."
 
-#: src/io-v4l2k.c:841
-#, fuzzy, c-format
+#: src/io-v4l2k.c:842
+#, c-format
 msgid ""
 "Sorry, %s (%s) cannot capture any of the requested data services with "
 "scanning %d."
 msgstr ""
-"Désolé, %s (%s) ne peut capturer aucun des services de données demandé."
+"Désolé, %s (%s) ne peut capturer aucun des services de données demandé en "
+"scannant %d."
 
-#: src/io-v4l2k.c:885
+#: src/io-v4l2k.c:890
 #, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr ""
 "Ne peut sélectionner les paramètres de capture vbi pour %s (%s) : %d, %s."
 
-#: src/io-v4l2k.c:1149
+#: src/io-v4l2k.c:1166
 #, c-format
 msgid "Cannot identify '%s': %d, %s."
 msgstr "Ne peut identifier '%s' : %d, %s."
 
-#: src/io-v4l2k.c:1151
+#: src/io-v4l2k.c:1168
 msgid "Probably not a v4l2 device."
 msgstr "Probablement pas un périphérique v4l2."
 
-#: src/io-v4l2k.c:1187
+#: src/io-v4l2k.c:1211
 #, c-format
 msgid ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "
@@ -501,75 +500,65 @@ msgstr ""
 
 #: src/proxy-client.c:152
 msgid "Server hostname not configured."
-msgstr ""
+msgstr "L'hostname du serveur n'est pas configuré."
 
 #: src/proxy-client.c:154
 msgid "Server port not configured."
-msgstr ""
+msgstr "Le port du serveur n'est pas configuré."
 
 #: src/proxy-client.c:421
 msgid "Protocol error (unexpected message)."
-msgstr ""
+msgstr "Erreur de protocole (message inattendu)."
 
 #: src/proxy-client.c:582 src/proxy-client.c:634
 msgid "Connection lost due to I/O error."
-msgstr ""
+msgstr "Connexion perdue à cause d'une erreur d'entrée/sortie."
 
 #: src/proxy-client.c:755
 #, c-format
 msgid "Incompatible server version %u.%u.%u."
-msgstr ""
+msgstr "Version du serveur incompatible %u.%u.%u."
 
 #: src/proxy-client.c:763
 msgid "Incompatible server architecture (endianess mismatch)."
-msgstr ""
+msgstr "Architecture du serveur incompatible (disparité endianess)."
 
 #: src/proxy-client.c:1863 src/proxy-client.c:1911
-#, fuzzy
 msgid "Proxy client interface not compiled."
-msgstr "L'interface V4L n'a pas été compilée."
+msgstr "L'interface client pour le proxy pas été compilée."
 
 #: src/proxy-msg.c:1197
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot create socket: %s."
-msgstr "Ne peut créer le fichier '%s' : %s."
+msgstr "Ne peut créer le socket : %s."
 
 #: src/proxy-msg.c:1205
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid hostname or port: %s."
-msgstr "Chaîne d'option invalide \"%s\"."
+msgstr "Hostname invalide ou port : %s."
 
 #: src/proxy-msg.c:1225
 msgid "Connection via TCP/IP failed, server not running or unreachable."
 msgstr ""
+"La connexion par TCP/IP a échouée, le serveur ne marche pas ou est "
+"inaccessible."
 
 #: src/proxy-msg.c:1227
 msgid "Connection via socket failed, server not running."
-msgstr ""
+msgstr "La connexion par socket a échoué, le serveur ne marche pas."
 
 #: src/proxy-msg.c:1236 src/proxy-msg.c:1278
 #, c-format
 msgid "Socket I/O error: %s."
-msgstr ""
+msgstr "Erreur socket I/O : %s."
 
 #: src/proxy-msg.c:1271
 #, c-format
 msgid "Cannot connect to server: %s."
-msgstr ""
+msgstr "Ne peut se connecter au serveur : %s."
 
 #. TRANSLATORS: Title of TOP Index page,
 #. for now please Latin-1 or ASCII only
-#: src/teletext.c:409
+#: src/teletext.c:407
 msgid "TOP Index"
-msgstr ""
-
-#~ msgid "Cannot identify '%s': %s."
-#~ msgstr "Ne peut identifier '%s' : %s."
-
-#~ msgid "Cannot query current videostandard of %s (%s): %d, %s."
-#~ msgstr "Impossible d'obtenir le standard vidéo courant de %s (%s) : %d, %s."
-
-#, fuzzy
-#~ msgid "Sorry, %s (%s) cannot capture any of the requested data services %d."
-#~ msgstr ""
-#~ "Désolé, %s (%s) ne peut capturer aucun des services de données demandé."
+msgstr "Haut de l'index"

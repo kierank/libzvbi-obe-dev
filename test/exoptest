@@ -1,3 +1,4 @@
 #!/bin/sh
 # Check export options
-./explist --check
+./explist --check >/dev/null
+
