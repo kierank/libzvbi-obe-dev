@@ -86,15 +86,12 @@ The list will be updated in CVS along with the implementation.
 - startup "rc" script for proxy daemon; add daemon and rc for installation;
   daemon should be renamed to vbiproxyd for installation
 - daemon man page
-- add "-kill" option to daemon: kill already running daemon
 - device permissions are implemented by copying group id and access
   mask of the device.  This is not portable however according to man
   socket(7).  Possibly a sub-directory should be used and permissions
   set on the directory. Disadvantage: other people cannot clean up (same
   for socket file if sticky bit is set). Or an X11 way a key file could 
   be used.
-- test proxy_read() with zero timeout (in case client uses select to poll
-  for incoming data)
 - save errno upon device errors deep down, e.g. in proxy-msg.c into io struct
   to make sure it's not overwritten higher up in the return path
 - automatically reconnect to daemon after error? (optional)
