@@ -1,3 +1,20 @@
+2005-02-25    <mschimek@users.sf.net>
+
+	* src/cache.c (destroy_list): Suppress unused parameter warning.
+	* src/Makefile.am (libzvbi_la_SOURCES): Added pfc_demux.c, pfc_demux.h.
+	(LIBZVBI_HDRS): Added pfc_demux.h.
+	* doc/Doxyfile: Is a built file, removed from CVS.
+	* configure.in: Bumped version number to 0.2.14.
+
+2005-02-20    <mschimek@users.sf.net>
+
+	* test/decode.c: Enabled pfc code.
+	* src/packet.c, src/vbi.h: page_clear code replaced by
+	  _vbi_pfc_demux. Disabled until rewrite and test.
+	* src/event.h: struct pfc_block obsolete, removed.
+	* src/idl_demux.c, src/idl_demux.h: New Teletext page
+	  format clear demultiplexer from branch 0.3.
+
 2005-02-17    <mschimek@users.sf.net>
 
 	* src: Regrouped doxumentation.
@@ -10,7 +27,7 @@
 	  demultiplexer.
 	* src/Makefile.am (libzvbi_la_SOURCES): Added idl_demux.c,
 	  idl_demux.h.
-	  (LIBZVBI_HDRS): Added idl_demux.h.
+	(LIBZVBI_HDRS): Added idl_demux.h.
 	* doc/Doxyfile.in (FILE_PATTERNS): Added idl_demux.h.
 
 2005-01-23    <mschimek@users.sf.net>
@@ -26,7 +43,7 @@
 	* src/dvb_demux.c (demux_samples): Potential deref of uninitialized
 	  vbi_sliced pointer.
 	* src/decoder.c (vbi_raw_decoder_resize), src/caption.c
-	  (xds_separator, itv_separator): Signedness fix.
+	(xds_separator, itv_separator): Signedness fix.
 	* m4/autogen.sh: Made required versions changeable for tests.
 	* src/Makefile.am (INCLUDES), daemon/Makefile.am (INCLUDES),
 	  contrib/Makefile.am (INCLUDES), test/Makefile.am (INCLUDES):

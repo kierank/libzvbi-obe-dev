@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.15 2005/01/19 04:23:53 mschimek Exp $ */
+/* $Id: capture.c,v 1.16 2005/02/25 18:34:47 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -308,20 +308,21 @@ decode_sliced(vbi_sliced *s, double time, int lines)
 {
 	if (dump_sliced) {
 		vbi_sliced *q = s;
-		int i, j;
+		int i;
+		unsigned int j;
 
 		printf("Sliced time: %f\n", time);
 
 		for (i = 0; i < lines; q++, i++) {
 			printf("%04x %3d > ", q->id, q->line);
 
-			for (j = 0; j < sizeof(q->data); j++) {
+			for (j = 0; j < sizeof (q->data); ++j) {
 				printf("%02x ", (uint8_t) q->data[j]);
 			}
 
 			putchar(' ');
 
-			for (j = 0; j < sizeof(q->data); j++) {
+			for (j = 0; j < sizeof (q->data); ++j) {
 				char c = vbi_printable (q->data[j]);
 				putchar(c);
 			}
