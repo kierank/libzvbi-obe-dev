@@ -44,6 +44,7 @@ lib_LTLIBRARIES = libzvbi.la $(proxy_libs)
 
 libzvbi_la_SOURCES = \
 	bcd.h \
+	bit_slicer.c bit_slicer.h \
 	cache.c cache.h \
 	caption.c cc.h \
 	decoder.c decoder.h sliced.h \
@@ -60,6 +61,7 @@ libzvbi_la_SOURCES = \
 	io.c io.h \
 	io-bktr.c \
 	io-dvb.c \
+	io-sim.c io-sim.h \
 	io-v4l.c videodev.h \
 	io-v4l2.c videodev2.h \
 	io-v4l2k.c videodev2k.h \
@@ -67,6 +69,7 @@ libzvbi_la_SOURCES = \
 	misc.c misc.h \
 	packet.c teletext.c vt.h \
 	proxy-client.c proxy-client.h \
+	raw_decoder.c raw_decoder.h \
 	search.c search.h ure.c ure.h \
 	tables.c tables.h \
 	trigger.c trigger.h \
