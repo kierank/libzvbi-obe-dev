@@ -25,7 +25,7 @@
 #  Perl and C gurus cover your eyes. This is one of my first
 #  attempts in this funny tongue and far from a proper C parser.
 
-# $Id: structpr.pl,v 1.2 2004/06/18 14:14:51 mschimek Exp $
+# $Id: structpr.pl,v 1.3 2004/12/30 02:25:16 mschimek Exp $
 
 $number		= '[0-9]+';
 $ident		= '\~?_*[a-zA-Z][a-zA-Z0-9_]*';
@@ -264,6 +264,15 @@ sub add_arg {
 
     $templ .= &field ($item) . "=$template ";
     $args .= "($type) t->" . &trail ($item) . ", ";
+}
+
+# text .= "unsigned int", "structname.field1.flags", "%x"
+sub add_ref_arg {
+    my ($text, $type, $item, $template) = @_;
+    my $flush = 0;
+
+    $templ .= &field ($item) . "=$template ";
+    $args .= "($type) & t->" . &trail ($item) . ", ";
 }
 
 # text .= functions this depends upon, "struct foo", "structname.field1.foo"
@@ -512,7 +521,7 @@ sub aggregate_body {
 	    } elsif ($hint eq "hex") {
 		&add_arg ($text, "unsigned long", $item, "0x%lx");
 	    } elsif ($hint eq "fourcc") {
-		&add_arg ($text, "const char *", $item, "\\\"%.4s\\\"=0x%lx");
+		&add_ref_arg ($text, "const char *", $item, "\\\"%.4s\\\"=0x%lx");
 		$args .= "(unsigned long) t->$field, ";
 	    # Field contains symbols, could be flags or enum or both
 	    } elsif ($hint ne "") {
