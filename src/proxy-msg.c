@@ -1,33 +1,49 @@
 /*
  *  Basic I/O between VBI proxy client & server
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License Version 2 as
- *  published by the Free Software Foundation. You find a copy of this
- *  license in the file COPYRIGHT in the root directory of this release.
+ *  Copyright (C) 2003 Tom Zoerner
  *
- *  THIS PROGRAM IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
- *  BUT WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF
- *  MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
  *  Description:
  *
- *    TODO
+ *    This module contains a collection of functions for lower-level
+ *    socket I/O which are shared between proxy daemon and clients.
+ *    Error output is different for daemon and clients: daemon logs
+ *    to a file or syslog facility, while the client returns error
+ *    strings to the caller, which can be passed to the upper levels
+ *    (e.g. the user interface)
  *
- *  Author:
- *          Tom Zoerner
+ *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
+ *    the latter ones are currently not officially supported.
  *
- *  $Id: proxy-msg.c,v 1.2 2003/04/29 17:12:47 mschimek Exp $
+ *  $Id: proxy-msg.c,v 1.3 2003/05/03 12:05:26 tomzo Exp $
+ *
+ *  $Log: proxy-msg.c,v $
+ *  Revision 1.3  2003/05/03 12:05:26  tomzo
+ *  - use new function vbi_proxy_msg_resolve_symlinks() to get unique device path,
+ *    e.g. allow both /dev/vbi and /dev/vbi0 to work as proxy device args
+ *  - added new func vbi_proxy_msg_set_debug_level()
+ *  - fixed debug output level in various dprintf statements
+ *  - fixed copyright headers, added description to file headers
+ *
  */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
 #endif
-
-#include "vbi.h"
-#include "io.h"
 
 #ifdef ENABLE_PROXY
 
@@ -45,6 +61,7 @@
 #include <sys/utsname.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/param.h>
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -55,17 +72,15 @@
 
 #include "bcd.h"
 #include "vbi.h"
+#include "io.h"
 #include "proxy-msg.h"
 
 #define dprintf1(fmt, arg...)    if (proxy_msg_trace >= 1) printf("proxy_msg: " fmt, ## arg)
 #define dprintf2(fmt, arg...)    if (proxy_msg_trace >= 2) printf("proxy_msg: " fmt, ## arg)
 static int proxy_msg_trace = 1;
 
-#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__)
-#define HAVE_GETADDRINFO
-#endif
 
-
+/* settings for log output - only used by the daemon */
 static struct
 {
    vbi_bool  do_logtty;
@@ -221,6 +236,14 @@ void vbi_proxy_msg_set_logging( vbi_bool do_logtty, int sysloglev,
 }
 
 /* ----------------------------------------------------------------------------
+** Enable debug output
+*/
+void vbi_proxy_msg_set_debug_level( int level )
+{
+   proxy_msg_trace = level;
+}
+
+/* ----------------------------------------------------------------------------
 ** Check for incomplete read or write buffer
 */
 vbi_bool vbi_proxy_msg_is_idle( VBIPROXY_MSG_STATE * pIO )
@@ -303,7 +326,7 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked,
       }
       else if ((errno != EAGAIN) && (errno != EINTR))
       {  /* network error -> close the connection */
-         dprintf2("handle_io: write error on fd %d: %s\n", pIO->sock_fd, strerror(errno));
+         dprintf1("handle_io: write error on fd %d: %s\n", pIO->sock_fd, strerror(errno));
          result = FALSE;
       }
       else if (errno == EAGAIN)
@@ -337,7 +360,7 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked,
                }
                else
                {  /* illegal message size -> protocol error */
-                  dprintf2("handle_io: fd %d: illegal block size %d\n", pIO->sock_fd, pIO->readLen);
+                  dprintf1("handle_io: fd %d: illegal block size %d\n", pIO->sock_fd, pIO->readLen);
                   result = FALSE;
                }
             }
@@ -372,12 +395,12 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked,
       {
          if ((len == 0) && closeOnZeroRead)
          {  /* zero bytes read after select returned readability -> network error or connection closed by peer */
-            dprintf2("handle_io: zero len read on fd %d\n", pIO->sock_fd);
+            dprintf1("handle_io: zero len read on fd %d\n", pIO->sock_fd);
             result = FALSE;
          }
          else if ((len < 0) && (errno != EAGAIN) && (errno != EINTR))
          {  /* network error -> close the connection */
-            dprintf2("handle_io: read error on fd %d: len=%d, %s\n", pIO->sock_fd, len, strerror(errno));
+            dprintf1("handle_io: read error on fd %d: len=%d, %s\n", pIO->sock_fd, len, strerror(errno));
             result = FALSE;
          }
          else if (errno == EAGAIN)
@@ -486,7 +509,7 @@ vbi_bool vbi_proxy_msg_write_queue( VBIPROXY_MSG_STATE * p_io, vbi_bool * p_bloc
       }
       body_size = VBIPROXY_DATA_IND_SIZE(p_data_ind->line_count);
 
-      dprintf2("msg_write_queue: fd %d: write EPG block, msg body size %d\n", p_io->sock_fd, body_size);
+      dprintf2("msg_write_queue: fd %d: msg body size %d\n", p_io->sock_fd, body_size);
       p_io->pWriteBuf        = p_data_ind;
       p_io->freeWriteBuf     = TRUE;
       p_io->writeLen         = sizeof(VBIPROXY_MSG_HEADER) + body_size;
@@ -906,32 +929,117 @@ int vbi_proxy_msg_accept_connection( int listen_fd )
 }
 
 /* ----------------------------------------------------------------------------
-** Attempt to connect to an already running server
+** Follow path through symlinks (in an attempt to get a unique path)
+** - note: "." and ".." in relative symlinks appear to be resolved by Linux
+**   already when creating the symlink
+*/
+static char * vbi_proxy_msg_resolve_symlinks( const char * p_dev_name )
+{
+   struct stat stbuf;
+   char   link_name[MAXPATHLEN + 1];
+   char * p_path;
+   char * p_tmp;
+   char * p_tmp2;
+   int    name_len;
+   int    res;
+   int    slink_idx;
+
+   p_path = strdup(p_dev_name);
+
+   for (slink_idx = 0; slink_idx < 100; slink_idx++)
+   {
+      res = lstat(p_path, &stbuf);
+      if ((res == 0) && S_ISLNK(stbuf.st_mode))
+      {
+         name_len = readlink(p_path, link_name, sizeof(link_name));
+         if ((name_len > 0) && (name_len < sizeof(link_name)))
+         {
+            link_name[name_len] = 0;
+            dprintf2("resolve_symlinks: following symlink %s to: %s\n", p_path, link_name);
+            if (link_name[0] != '/')
+            {  /* relative path -> replace only last path element */
+               p_tmp = malloc(strlen(p_path) + name_len + 1 + 1);
+               p_tmp2 = strrchr(p_path, '/');
+               if (p_tmp2 != NULL)
+               {  /* copy former path up to and including the separator character */
+                  p_tmp2 += 1;
+                  strncpy(p_tmp, p_path, p_tmp2 - p_path);
+               }
+               else
+               {  /* no path separator in the former path -> replace completely */
+                  p_tmp2 = p_path;
+               }
+               /* append the path read from the symlink file */
+               strcpy(p_tmp + (p_tmp2 - p_path), link_name);
+            }
+            else
+            {  /* absolute path -> replace symlink completely */
+               p_tmp = strdup(link_name);
+            }
+
+            free((void *) p_path);
+            p_path = p_tmp;
+         }
+         else
+         {  /* symlink string too long for the buffer */
+            if (name_len > 0)
+            {
+               link_name[sizeof(link_name) - 1] = 0;
+               dprintf1("resolve_symlinks: abort: symlink too long: %s\n", link_name);
+            }
+            else
+               dprintf1("resolve_symlinks: zero length symlink - abort\n");
+            break;
+         }
+      }
+      else
+         break;
+   }
+
+   if (slink_idx >= 100)
+      dprintf1("resolve_symlinks: symlink level too deep: abort after %d\n", slink_idx);
+
+   return p_path;
+}
+
+/* ----------------------------------------------------------------------------
+** Derive file name for socket from device path
 */
 char * vbi_proxy_msg_get_socket_name( const char * p_dev_name )
 {
+   char * p_real_dev_name;
    char * p_sock_path;
    char * po;
    const char * ps;
    char   c;
    int    name_len;
 
-   name_len = strlen(SRV_CLNT_SOCK_BASE_PATH) + strlen(p_dev_name) + 1;
-   p_sock_path = malloc(name_len);
-   if (p_sock_path != NULL)
+   if (p_dev_name != NULL)
    {
-      strcpy(p_sock_path, SRV_CLNT_SOCK_BASE_PATH);
-      po = p_sock_path + strlen(SRV_CLNT_SOCK_BASE_PATH);
-      ps = p_dev_name;
-      while ((c = *(ps++)) != 0)
+      p_real_dev_name = vbi_proxy_msg_resolve_symlinks(p_dev_name);
+
+      name_len = strlen(SRV_CLNT_SOCK_BASE_PATH) + strlen(p_real_dev_name) + 1;
+      p_sock_path = malloc(name_len);
+      if (p_sock_path != NULL)
       {
-         if (c == '/')
-            *(po++) = '-';
-         else
-            *(po++) = c;
+         strcpy(p_sock_path, SRV_CLNT_SOCK_BASE_PATH);
+         po = p_sock_path + strlen(SRV_CLNT_SOCK_BASE_PATH);
+         ps = p_real_dev_name;
+         while ((c = *(ps++)) != 0)
+         {
+            if (c == '/')
+               *(po++) = '-';
+            else
+               *(po++) = c;
+         }
+         *po = 0;
       }
-      *po = 0;
+
+      free(p_real_dev_name);
    }
+   else
+      p_sock_path = NULL;
+
    return p_sock_path;
 }
 
@@ -1025,13 +1133,13 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
          sock_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
          if (sock_fd == -1)
          {
-            dprintf2("socket (ipv4): %s\n", strerror(errno));
+            dprintf1("socket (ipv4): %s\n", strerror(errno));
             vbi_asprintf(ppErrorText, "%s: %s (%d)", _("Cannot create network socket"), strerror(errno), errno);
          }
       }
       else
       {
-         dprintf2("getaddrinfo (ipv4): %s\n", gai_strerror(rc));
+         dprintf1("getaddrinfo (ipv4): %s\n", gai_strerror(rc));
          vbi_asprintf(ppErrorText, "%s: %s", _("Invalid hostname or service/port"), gai_strerror(rc));
       }
    }
@@ -1049,7 +1157,7 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
          }
          else
          {
-            dprintf2("connect: %s\n", strerror(errno));
+            dprintf1("connect: %s\n", strerror(errno));
             if (use_tcp_ip)
                vbi_asprintf(ppErrorText, "%s: %s (%d)", _("Server not running or not reachable: connect via TCP/IP failed"), strerror(errno), errno);
             else
@@ -1060,7 +1168,7 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
       }
       else
       {
-         dprintf2("fcntl (F_SETFL=O_NONBLOCK): %s\n", strerror(errno));
+         dprintf1("fcntl (F_SETFL=O_NONBLOCK): %s\n", strerror(errno));
          vbi_asprintf(ppErrorText, "%s: %s (%d)", _("Failed to set socket non-blocking"), strerror(errno), errno);
          close(sock_fd);
          sock_fd = -1;
@@ -1100,7 +1208,7 @@ vbi_bool vbi_proxy_msg_finish_connect( int sock_fd, char ** ppErrorText )
    }
    else
    {
-      dprintf2("finish_connect: getsockopt: %s\n", strerror(errno));
+      dprintf1("finish_connect: getsockopt: %s\n", strerror(errno));
       vbi_asprintf(ppErrorText, "%s: %s (%d)", _("Failed to query socket connect result"), strerror(errno), errno);
    }
 
