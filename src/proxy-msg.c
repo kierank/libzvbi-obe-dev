@@ -29,9 +29,12 @@
  *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
  *    the latter ones are currently not officially supported.
  *
- *  $Id: proxy-msg.c,v 1.3 2003/05/03 12:05:26 tomzo Exp $
+ *  $Id: proxy-msg.c,v 1.4 2003/05/10 13:30:51 tomzo Exp $
  *
  *  $Log: proxy-msg.c,v $
+ *  Revision 1.4  2003/05/10 13:30:51  tomzo
+ *  Reduced default debug level of proxy_msg_trace from 1 to 0
+ *
  *  Revision 1.3  2003/05/03 12:05:26  tomzo
  *  - use new function vbi_proxy_msg_resolve_symlinks() to get unique device path,
  *    e.g. allow both /dev/vbi and /dev/vbi0 to work as proxy device args
@@ -77,7 +80,7 @@
 
 #define dprintf1(fmt, arg...)    if (proxy_msg_trace >= 1) printf("proxy_msg: " fmt, ## arg)
 #define dprintf2(fmt, arg...)    if (proxy_msg_trace >= 2) printf("proxy_msg: " fmt, ## arg)
-static int proxy_msg_trace = 1;
+static int proxy_msg_trace = 0;
 
 
 /* settings for log output - only used by the daemon */
