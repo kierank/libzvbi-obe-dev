@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
+/* $Id: caption.c,v 1.3 2002/04/10 04:18:35 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1532,7 +1532,7 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 		for (i = 0; i < 2; i++) {
 			char ci = vbi_parity(buf[i]) & 0x7F; /* 127 if bad */
 
-			if (ci == 0)
+			if (ci <= 0x20) /* 0x00 no char, 0x01 ... 0x1F invalid */
 				continue;
 
 			if (ch == cc->channel + 5) // 'T2'
