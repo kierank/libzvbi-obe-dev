@@ -59,6 +59,7 @@ libzvbi_la_SOURCES = \
 	exp-vtx.c \
 	export.c export.h format.h \
 	hamm.c hamm.h \
+	idl_demux.c idl_demux.h \
 	io.c io.h \
 	io-bktr.c \
 	io-dvb.c \
@@ -102,6 +103,7 @@ LIBZVBI_HDRS = \
 	sliced.h \
 	decoder.h \
 	dvb_demux.h \
+	idl_demux.h \
 	io.h \
 	proxy-msg.h \
 	proxy-client.h \
