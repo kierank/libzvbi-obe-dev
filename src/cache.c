@@ -326,7 +326,8 @@ vbi_cache_get(vbi_decoder *vbi, int pgno, int subno, int subno_mask)
  * will change, making the result volatile in a multithreaded
  * environment.
  * 
- * @return 
+ * @returns
+ * @c TRUE if the given page is cached.
  */
 int
 vbi_is_cached(vbi_decoder *vbi, int pgno, int subno)
@@ -471,7 +472,8 @@ vbi_cache_foreach(vbi_decoder *vbi, int pgno, int subno,
  * 
  * @deprecated Rationale same as vbi_is_cached().
  * 
- * @return
+ * @returns
+ * Highest cached subpage of this page.
  */
 int
 vbi_cache_hi_subno(vbi_decoder *vbi, int pgno)
