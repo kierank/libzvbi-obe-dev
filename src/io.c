@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.5 2003/05/17 13:01:10 tomzo Exp $ */
+/* $Id: io.c,v 1.6 2003/05/24 12:18:32 tomzo Exp $ */
 
 #include <assert.h>
 
@@ -74,6 +74,10 @@ vbi_capture_read_raw(vbi_capture *capture, void *data,
  * 
  * Read a sliced vbi frame, that is an array of vbi_sliced structures,
  * from the capture device. 
+ *
+ * Note: it's generally more efficient to use vbi_capture_pull_sliced()
+ * instead, as that one may avoid having to copy sliced data into the
+ * given buffer (e.g. for the VBI proxy)
  * 
  * @return
  * -1 on error, examine @c errno for details. 0 on timeout, 1 on success.
@@ -115,6 +119,12 @@ vbi_capture_read_sliced(vbi_capture *capture, vbi_sliced *data, int *lines,
  * Read a raw vbi frame from the capture device, decode to sliced data
  * and also read the sliced vbi frame, that is an array of vbi_sliced
  * structures, from the capture device.
+ *
+ * Note: depending on the driver, captured raw data may have to be copied
+ * from the capture buffer into the given buffer (e.g. for v4l2 streams which
+ * use memory mapped buffers.)  It's generally more efficient to use one of
+ * the vbi_capture_pull() interfaces, especially if you don't require access
+ * to raw data at all.
  * 
  * @return
  * -1 on error, examine @c errno for details. The function also fails if vbi data
@@ -213,7 +223,7 @@ vbi_capture_pull_sliced(vbi_capture *capture, vbi_capture_buffer **buffer,
  * times the size of the vbi_sliced structure.
  *
  * The raw and sliced data remains valid
- * until the next vbi_capture_pull_raw() call and must be read only.
+ * until the next vbi_capture_pull() call and must be read only.
  * 
  * @return
  * -1 on error, examine @c errno for details. The function also fails if vbi data
@@ -257,11 +267,15 @@ vbi_capture_parameters(vbi_capture *capture)
 
 /**
  * @param capture Initialized vbi capture context.
- * @param commit TRUE to apply all previously added services to
+ * @param reset @c TRUE to clear all previous services before adding
+ *   new ones (by invoking vbi_raw_decoder_reset() at the appripriate
+ *   time.)
+ * @param commit @c TRUE to apply all previously added services to
  *   the device; when doing subsequent calls of this function,
- *   commit should be set TRUE for the last call.  Reading data
+ *   commit should be set @c TRUE for the last call.  Reading data
  *   cannot continue before changes were commited (because capturing
- *   has to be suspended to allow resizing the VBI image.)
+ *   has to be suspended to allow resizing the VBI image.)  Note this
+ *   flag is ignored when using the VBI proxy.
  * @param services This must point to a set of @ref VBI_SLICED_
  *   symbols describing the
  *   data services to be decoded. On return the services actually
@@ -278,19 +292,23 @@ vbi_capture_parameters(vbi_capture *capture)
  * Internally the function will restart parameter negotiation with the
  * VBI device driver and then call vbi_raw_decoder_add_services().
  * You may call vbi_raw_decoder_reset() before using this function
- * to rebuild your service mask from scratch.
+ * to rebuild your service mask from scratch.  Note that the number of
+ * VBI lines may change with this call (even if a negative result is
+ * returned) so you have to check the size of your buffers.
  *
  * @return
- * Bitmask of supported services, including previously added services.
+ * Bitmask of supported services among those requested (not including
+ * previously added services.)
  */
 unsigned int
-vbi_capture_add_services(vbi_capture *capture, vbi_bool commit,
-                         unsigned int services, int strict,
-                         char ** errorstr)
+vbi_capture_add_services(vbi_capture *capture,
+			 vbi_bool reset, vbi_bool commit,
+			 unsigned int services, int strict,
+			 char ** errorstr)
 {
 	assert (capture != NULL);
 
-	return capture->add_services(capture, commit, services, strict, errorstr);
+	return capture->add_services(capture, reset, commit, services, strict, errorstr);
 }
 
 /**
@@ -298,14 +316,31 @@ vbi_capture_add_services(vbi_capture *capture, vbi_bool commit,
  * 
  * @return
  * The file descriptor used to read from the device. If not
- * applicable or the @a capture context is invalid -1
- * will be returned.
+ * applicable (e.g. when using the proxy) or the @a capture context is
+ * invalid -1 will be returned.
  */
 int
 vbi_capture_fd(vbi_capture *capture)
 {
 	if (capture)
 		return capture->get_fd(capture);
+	else
+		return -1;
+}
+
+/**
+ * @param capture Initialized vbi capture context, can be @c NULL.
+ * 
+ * @return
+ * A file descriptor which can be used in poll or select system calls
+ * to wait for VBI data.  If the device does not support this, value -1
+ * will be returned.
+ */
+int
+vbi_capture_get_poll_fd(vbi_capture *capture)
+{
+	if (capture)
+		return capture->get_poll_fd(capture);
 	else
 		return -1;
 }
