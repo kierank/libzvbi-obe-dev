@@ -1,7 +1,8 @@
-# We have no automatic tests (make check) yet
-TESTS = 
+## Process this file with automake to produce Makefile.in
 
-noinst_PROGRAMS = unicode glyph explist caption export osc capture
+TESTS = exoptest cpptest
+noinst_PROGRAMS = unicode glyph explist caption export osc capture cpptest
+cpptest_SOURCES = cpptest.cc
 
 EXTRA_DIST = README uclist sim.c
 

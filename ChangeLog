@@ -1,6 +1,12 @@
+2002-10-01	<mschimek@users.sf.net>
+
+	* m4: Removed gtk-doc.m4, no longer needed.
+	* Makefile.am: m4 in the dist. Thought it's unnecessary, but what
+	  the heck, it's not that much.
+	* configure.in, test: Added two checks.
+
 2002-09-28	<mschimek@users.sf.net>
 
-	* test/Makefile.am: No automatic tests.
 	* po/fr.po: Updated by Christian Marillat.
 
 2002-09-26	<mschimek@users.sf.net>
