@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.7 2004/10/25 16:56:30 mschimek Exp $ */
+/* $Id: export.c,v 1.8 2004/10/28 03:28:19 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -32,11 +32,16 @@
 
 #include "src/libzvbi.h"
 
+#define TEST 1
+#include "src/dvb_demux.h"
+
 vbi_decoder *		vbi;
 vbi_bool		quit = FALSE;
 vbi_pgno		pgno;
 vbi_export *		ex;
 char *			extension;
+int			cr;
+vbi_dvb_demux *		dx;
 
 static void
 handler(vbi_event *ev, void *unused)
@@ -44,7 +49,8 @@ handler(vbi_event *ev, void *unused)
 	FILE *fp;
 	vbi_page page;
 
-	fprintf(stderr, "\rPage %03x.%02x ",
+	fprintf(stderr, "%cPage %03x.%02x ",
+		cr,
 		ev->ev.ttx_page.pgno,
 		ev->ev.ttx_page.subno & 0xFF);
 
@@ -89,6 +95,40 @@ handler(vbi_event *ev, void *unused)
 		assert(fclose(fp) == 0);
 	else
 		quit = TRUE;
+}
+
+static void
+pes_mainloop			(void)
+{
+	uint8_t buffer[2048];
+
+	while (1 == fread (buffer, sizeof (buffer), 1, stdin)) {
+		const uint8_t *bp;
+		unsigned int left;
+
+		bp = buffer;
+		left = sizeof (buffer);
+
+		while (left > 0) {
+			vbi_sliced sliced[64];
+			unsigned int lines;
+			int64_t pts;
+
+			lines = _vbi_dvb_demux_cor (dx,
+						    sliced, 64,
+						    &pts,
+						    &bp, &left);
+			if (lines > 0) {
+				vbi_decode (vbi, sliced, lines,
+					    pts / 90000.0);
+			}
+
+			if (quit)
+				return;
+		}
+	}
+
+	fprintf(stderr, "\rEnd of stream, page %03x not found\n", pgno);
 }
 
 static void
@@ -166,6 +206,7 @@ main(int argc, char **argv)
 {
 	char *module, *t;
 	vbi_export_info *xi;
+	int c;
 
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s module[;options] pgno <vbi data >file\n"
@@ -179,6 +220,7 @@ main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
+	cr = isatty (STDERR_FILENO) ? '\r' : '\n';
 
 	module = argv[1];
 	pgno = strtol(argv[2], NULL, 16);
@@ -196,11 +238,19 @@ main(int argc, char **argv)
 
 	assert((vbi = vbi_decoder_new()));
 
-vbi_teletext_set_default_region(vbi,48);
-
 	assert(vbi_event_handler_add(vbi, VBI_EVENT_TTX_PAGE, handler, NULL)); 
 
-	stream();
+	c = getchar ();
+	ungetc (c, stdin);
+
+	if (0 == c) {
+		dx = _vbi_dvb_demux_pes_new (/* callback */ NULL, NULL);
+		assert (NULL != dx);
+
+		pes_mainloop ();
+	} else {
+		stream ();
+	}
 
 	exit(EXIT_SUCCESS);
 }
