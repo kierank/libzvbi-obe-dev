@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.5\n"
-"POT-Creation-Date: 2002-03-28 13:39+0100\n"
-"PO-Revision-Date: 2002-01-08 14:33+0100\n"
+"POT-Creation-Date: 2002-04-01 00:18+0200\n"
+"PO-Revision-Date: 2002-03-31 22:50+0200\n"
 "Last-Translator: Michael H. Schimek <mschimek@users.sourceforge.net>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -50,7 +50,7 @@ msgstr "Teletext Seite %3x.%x"
 
 #. NLS: .png title, must be Latin-1
 #: src/exp-gfx.c:1178 src/exp-html.c:235
-#, c-format, ycp-format
+#, c-format
 msgid "Teletext Page %3x"
 msgstr "Teletext Seite %3x"
 
@@ -302,9 +302,9 @@ msgid "Export module '%s' has no option '%s'."
 msgstr "Ausgabemodul '%s' hat keine Option '%s'."
 
 #: src/export.c:1070
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid argument %s for option %s of export module %s."
-msgstr "Fehlerhaftes Argument für Option '%s' von Ausgabemodul '%s'."
+msgstr "Fehlerhaftes Argument %s für Option %s von Ausgabemodul %s."
 
 #: src/export.c:1081
 #, c-format
@@ -460,11 +460,11 @@ msgid ""
 msgstr "Kann %s (%s) nicht identifizieren, vermutlich kein BTTV Treiber."
 
 #: src/io-v4l.c:661 src/io-v4l.c:721
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr ""
 "Kann den gegenwärtigen Videostandard von %s (%s) nicht feststellen oder "
-"setzen.\n"
+"ändern."
 
 #: src/io-v4l.c:748
 #, c-format

@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.5\n"
-"POT-Creation-Date: 2002-03-28 13:39+0100\n"
+"POT-Creation-Date: 2002-04-01 00:18+0200\n"
 "PO-Revision-Date: 2002-01-08 14:34+0100\n"
 "Last-Translator: Iñaki García Etxebarria <garetxe@users.sourceforge.net>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -23,8 +23,8 @@ msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
 msgstr ""
-"Aproximar una relación de tamaños similar a una TV real, esto duplicará "
-"el tamaño de la imagen."
+"Aproximar una relación de tamaños similar a una TV real, esto duplicará el "
+"tamaño de la imagen."
 
 #: src/exp-gfx.c:807 src/exp-gfx.c:1103
 #, c-format
@@ -52,7 +52,7 @@ msgstr "Página de Teletexto %3x.%x"
 
 #. NLS: .png title, must be Latin-1
 #: src/exp-gfx.c:1178 src/exp-html.c:235
-#, c-format, ycp-format
+#, c-format
 msgid "Teletext Page %3x"
 msgstr "Página de Teletexto %3x"
 
@@ -282,8 +282,8 @@ msgstr "Módulo de exportación desconocido '%s'."
 #, c-format
 msgid "Cannot initialize export module '%s', probably lack of memory."
 msgstr ""
-"No se puede iniciar el módulo de exportación '%s', "
-"probablemente falta de memoria."
+"No se puede iniciar el módulo de exportación '%s', probablemente falta de "
+"memoria."
 
 #: src/export.c:935
 #, c-format
@@ -352,8 +352,7 @@ msgstr "%s (%s) no soporta la función select()."
 #: src/io-v4l2.c:375
 #, c-format
 msgid "Cannot query current videostandard of %s (%s): %d, %s."
-msgstr ""
-"No se pueden obtener el estándar actual de %s (%s): %d, %s."
+msgstr "No se pueden obtener el estándar actual de %s (%s): %d, %s."
 
 #: src/io-v4l2.c:377 src/io-v4l2.c:642
 msgid "Probably a driver bug."
@@ -394,8 +393,8 @@ msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
 msgstr ""
-"%s (%s) ofrece un formato de muestreo no reconocido #%d. Esto puede "
-"ser un fallo del controlador o que libzvbi es demasiado vieja."
+"%s (%s) ofrece un formato de muestreo no reconocido #%d. Esto puede ser un "
+"fallo del controlador o que libzvbi es demasiado vieja."
 
 #: src/io-v4l2.c:559
 #, c-format
@@ -458,8 +457,8 @@ msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
 msgstr ""
-"No se puede identificar %s (%s), el tamaño de cuadro vbi sugiere que no "
-"es un controlador bttv."
+"No se puede identificar %s (%s), el tamaño de cuadro vbi sugiere que no es "
+"un controlador bttv."
 
 #: src/io-v4l.c:661 src/io-v4l.c:721
 #, c-format
@@ -472,8 +471,8 @@ msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
 "frequency %.2f MHz is too low."
 msgstr ""
-"No se pueden capturar los servicios de datos solicitados con %s (%s), "
-"la frecuencia de muestreo %.2f MHz es demasiado baja."
+"No se pueden capturar los servicios de datos solicitados con %s (%s), la "
+"frecuencia de muestreo %.2f MHz es demasiado baja."
 
 #: src/io-v4l.c:850 src/io-v4l.c:859
 msgid "V4L interface not compiled."

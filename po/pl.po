@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.5\n"
-"POT-Creation-Date: 2002-03-28 13:39+0100\n"
+"POT-Creation-Date: 2002-04-01 00:18+0200\n"
 "PO-Revision-Date: 2002-01-08 14:41+0100\n"
 "Last-Translator: Pawe³ Sakowski <pawel@sakowski.eu.org>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -20,8 +20,7 @@ msgstr "Popraw proporcje ekranu"
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
-msgstr ""
-"Zbli¿a proporcje obrazu do prawdziwej TV. Podwoi to rozmiar obrazu."
+msgstr "Zbli¿a proporcje obrazu do prawdziwej TV. Podwoi to rozmiar obrazu."
 
 #: src/exp-gfx.c:807 src/exp-gfx.c:1103
 #, c-format
@@ -49,7 +48,7 @@ msgstr "Strona teletekstu %3x.%x"
 
 #. NLS: .png title, must be Latin-1
 #: src/exp-gfx.c:1178 src/exp-html.c:235
-#, c-format, ycp-format
+#, c-format
 msgid "Teletext Page %3x"
 msgstr "Strona teletekstu %3x"
 
@@ -446,8 +445,7 @@ msgstr "sterownik nieznany"
 #, c-format
 msgid "Cannot capture with %s (%s), has no standard vbi interface."
 msgstr ""
-"Nie mogê przechwytywaæ u¿ywaj±c %s (%s), nie ma standardowego interfejsu "
-"VBI."
+"Nie mogê przechwytywaæ u¿ywaj±c %s (%s), nie ma standardowego interfejsu VBI."
 
 #: src/io-v4l.c:645
 #, c-format
@@ -469,8 +467,8 @@ msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
 "frequency %.2f MHz is too low."
 msgstr ""
-"Nie mogê przechwytywaæ ¿±danych us³ug danych u¿ywaj±c %s (%s), "
-"czêstotliwo¶æ próbkowania %.2f MHz jest za niska."
+"Nie mogê przechwytywaæ ¿±danych us³ug danych u¿ywaj±c %s (%s), czêstotliwo¶æ "
+"próbkowania %.2f MHz jest za niska."
 
 #: src/io-v4l.c:850 src/io-v4l.c:859
 msgid "V4L interface not compiled."

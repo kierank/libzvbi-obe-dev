@@ -1,3 +1,11 @@
+2002-04-01	Release 0.1.1 <mschimek@users.sf.net>
+
+	* po/de.po: Updated.
+	* po/es.po: Updated by Iñaki G. Etxebarria.
+	* po/pl.po: Updated by Pawel Sakowski.
+	* Removed the version number from the library name,
+	  was a bad idea.
+
 2002-03-19	Christian Marillat
 
 	* po/fr.po: Updated.

@@ -29,7 +29,8 @@ libzvbiincludedir = $(includedir)
 libzvbiinclude_HEADERS = libzvbi.h
 
 libzvbi_la_LIBADD = -lpthread $(PNG_LIB)
-libzvbi_la_LDFLAGS = -release @VERSION@ -version-info 0:1:0
+libzvbi_la_LDFLAGS = -version-info 0:2:0
+# -release @VERSION@
 
 # Concat the header files in this order and filter out all lines
 #   before "^/* Public", after "^/* Private" and between "^/**"..."**/$"

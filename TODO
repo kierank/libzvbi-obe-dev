@@ -16,9 +16,10 @@
   a CNI (instead of guessing the name from ttx). May use VTX to create
   samples.
 * Program info from TTX (8/30 and VPS/PDC).
-* Can we replace ASCII/Latin-1/gettext-local by a single char set?
+* Can we replace ASCII/Latin-1/local by a single char set?
 * Improve TTX roll header + serial (Mxx increment).
 * Check what's wrong on Prime, CNI and Hebrew subtitles.
+* Add VPT decoder.
 
 -------------------------------------------------------------------------------
 Ideas? Drop us a note at http://zapping.sf.net.

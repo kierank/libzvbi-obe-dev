@@ -1,0 +1,40 @@
+
+  libzvbi - VBI decoding library
+
+  Copyright (C) 2000, 2001, 2002 Michael H. Schimek
+  Copyright (C) 2000, 2001 Iñaki García Etxebarria
+
+  Based on AleVT 1.5.1
+  Copyright (C) 1998, 1999 Edgar Toernig <froese@gmx.de>
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+  --------------------------------------------------------------------------
+
+  VBI stands for Vertical Blanking Interval, a gap between the image
+  data transmitted in an analog video signal. This gap is used to
+  transmit AM modulated data for various data services like Teletext
+  and Closed Caption.
+
+  The zvbi library provides routines to read from raw VBI sampling
+  devices, to demodulate raw to sliced VBI data, and to interpret
+  the data of several popular services. It has been written for
+  the Zapping TV viewer <http://zapping.sourceforge.net>.
+
+  For installation details see the file INSTALL. Information for
+  application writers is available in the doc and test directories.
+  Send ideas, questions and bug reports to
+  <mailto:zapping-misc@lists.sourceforge.net>, registration is not
+  required.
