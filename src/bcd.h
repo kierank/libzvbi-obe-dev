@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bcd.h,v 1.2 2002/03/06 00:11:32 mschimek Exp $ */
+/* $Id: bcd.h,v 1.3 2002/04/16 05:49:57 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -85,7 +85,7 @@ typedef int vbi_subno;
  * @dec: Decimal number.
  * 
  * Converts a decimal number between 0 ... 999 to a bcd number in range
- * number 0x000 ... 0x999. Extra digits in the input will be discarded.
+ * 0x000 ... 0x999. Extra digits in the input will be discarded.
  * 
  * Return value:
  * BCD number.

@@ -6,11 +6,11 @@ Exporting formatted Teletext and Closed Caption pages.
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
-Once libvbi received, decoded and formatted a Teletext or Closed
+Once libzvbi received, decoded and formatted a Teletext or Closed
 Caption page you will want to render it on screen, print it as
 text or store it in various formats.
 
-Luckily you don't have to do it all by yourself, libvbi provides
+Fortunately you don't have to do it all by yourself, libzvbi provides
 export modules converting a #vbi_page into the desired format or
 rendering directly into memory.
 

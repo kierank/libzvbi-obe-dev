@@ -6,10 +6,10 @@ Converting raw vbi samples into bits and bytes.
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
-The libvbi already offers hardware interfaces to obtain
+The libzvbi already offers hardware interfaces to obtain
 sliced vbi data for further processing. However if you
 want to write your own interface or decode data services
-not covered by libvbi you will welcome these functions.
+not covered by libzvbi you will welcome these functions.
 </para>
 
 <!-- ##### SECTION See_Also ##### -->

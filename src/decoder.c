@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.1 2002/01/12 16:18:36 mschimek Exp $ */
+/* $Id: decoder.c,v 1.2 2002/04/16 05:49:57 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -269,7 +269,8 @@ bit_slicer_565_be(vbi_bit_slicer *d, uint8_t *raw, uint8_t *buf)
  * vbi_bit_slicer_init:
  * @slicer: Pointer to #vbi_bit_slicer object to be initialized. 
  * @raw_samples: Number of samples or pixels in one raw vbi line
- *   later passed to vbi_bit_slice(). This sets a scan limit. 
+ *   later passed to vbi_bit_slice(). This limits the number of
+ *   bytes read from the sample buffer.
  * @sampling_rate: Raw vbi sampling rate in Hz, that is the number of
  *   samples or pixels sampled per second by the hardware. 
  * @cri_rate: The Clock Run In is a NRZ modulated sequence of '0' and

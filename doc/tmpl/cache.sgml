@@ -2,7 +2,7 @@
 Page cache
 
 <!-- ##### SECTION Short_Description ##### -->
-Where libvbi stores all the decoded text.
+Where libzvbi stores decoded text.
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

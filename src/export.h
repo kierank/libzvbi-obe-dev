@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.h,v 1.2 2002/02/10 11:47:09 mschimek Exp $ */
+/* $Id: export.h,v 1.3 2002/04/16 05:49:57 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -169,12 +169,12 @@ typedef union vbi_option_value_ptr {
  *
  * @label: Name of the option to be shown to the user.
  *   This can be %NULL to indicate this option shall not be listed.
- *   gettext()ized N_(), see the gettext manual.
+ *   The string can be translated with gettext(), see the gettext manual.
  *
  * @def, @min, @max, @step, @menu: See #vbi_option_type for details.
  *
  * @tooltip: A brief description (or %NULL) for the user.
- *   gettext()ized N_(), see the gettext manual.
+ *   The string can be translated with gettext(), see the gettext manual.
  **/
 typedef struct vbi_option_info {
 	vbi_option_type		type;

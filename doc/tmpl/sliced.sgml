@@ -7,7 +7,7 @@ Input to the vbi decoder.
 <!-- ##### SECTION Long_Description ##### -->
 <para>
 The vbi decoder accepts vbi data in binary format. This is the
-output of the libvbi raw vbi decoder and hardware interfaces,
+output of the libzvbi raw vbi decoder and hardware interfaces,
 but also very similar to vbi transmitted with digital TV.
 </para>
 

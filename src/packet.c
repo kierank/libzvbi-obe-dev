@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.1 2002/01/12 16:18:52 mschimek Exp $ */
+/* $Id: packet.c,v 1.2 2002/04/16 05:49:57 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2525,7 +2525,7 @@ default_color_map[40] = {
 };
 
 /**
- * vbi_set_default_region:
+ * vbi_teletext_set_default_region:
  * @vbi: Initialized vbi decoding context.
  * @default_region: A value between 0 ... 80, index into
  *   the Teletext character set table according to ETS 300 706,

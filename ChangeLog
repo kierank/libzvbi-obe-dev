@@ -1,3 +1,11 @@
+2002-04-16	<mschimek@users.sf.net>
+
+	* src/caption.c: Corrected string length assertion in xds_decoder.
+
+2002-04-13	<mschimek@users.sf.net>
+
+	* Corrected a few typographical errors in the docs.
+
 2002-04-11	<mschimek@users.sf.net>
 
 	* src/io-v4l2.c: Gerd Knorr says bttv 0.8.x needs O_RDWR to

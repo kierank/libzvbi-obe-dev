@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.h,v 1.1 2002/01/12 16:19:12 mschimek Exp $ */
+/* $Id: exp-txt.h,v 1.2 2002/04/16 05:49:57 mschimek Exp $ */
 
 #ifndef EXP_TXT_H
 #define EXP_TXT_H
@@ -44,7 +44,7 @@ extern int		vbi_print_page_region(vbi_page *pg, char *buf, int size,
  *   for example "ISO-8859-1".
  * @table: When FALSE, runs of spaces at the start and
  *   end of rows will be collapsed into single spaces.
- * @ltr: Currently ignored, please set to FALSE.
+ * @ltr: Currently ignored, please set to TRUE.
  * 
  * Print a Teletext or Closed Caption #vbi_page, rows separated
  * by linefeeds "\n", in the desired format. All character attributes

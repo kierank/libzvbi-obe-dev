@@ -10,11 +10,11 @@ Event handlers are called by the vbi decoder when new information
 is available. You can register any number of handlers you need,
 and also different handlers for the same event.
 
-Handlers will be called in turn, in the order registered, from the
-vbi_push_vbi() or vbi_push_video() function. Since they block
-decoding, they should return as soon as possible. The event
-structure and all data pointed to from there must be read only,
-no access permitted after the handler returned.
+Handlers will be called in the order registered from the
+vbi_decode() function. Since they block decoding, they should
+return as soon as possible. The event structure and all data
+pointed to from there must be read only, after the handler
+returned access is no longer permitted.
 </para>
 
 <!-- ##### SECTION See_Also ##### -->

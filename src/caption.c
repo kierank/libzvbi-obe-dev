@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.3 2002/04/10 04:18:35 mschimek Exp $ */
+/* $Id: caption.c,v 1.4 2002/04/16 05:49:57 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -188,7 +188,7 @@ xds_decoder(vbi_decoder *vbi, int class, int type,
 	int neq, i;
 	vbi_event e;
 
-	assert(length > 0 && length < 32);
+	assert(length > 0 && length <= 32);
 
 // XXX we have no indication how long the program info applies.
 //     It will be canceled on channel switch, but who knows
