@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.4 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: teletext.c,v 1.5 2002/09/26 20:48:22 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -39,10 +39,12 @@
 #include "hamm.h"
 #include "lang.h"
 
+extern const char _zvbi_intl_domainname[];
+
 #ifndef _
 #  ifdef ENABLE_NLS
 #    include <libintl.h>
-#    define _(String) gettext (String)
+#    define _(String) dgettext (_zvbi_intl_domainname, String)
 #    ifdef gettext_noop
 #      define N_(String) gettext_noop (String)
 #    else

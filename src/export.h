@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.h,v 1.6 2002/07/16 00:09:55 mschimek Exp $ */
+/* $Id: export.h,v 1.7 2002/09/26 20:48:01 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -63,12 +63,12 @@ typedef struct vbi_export_info {
 	/**
 	 * Name of the export module to be shown to the user.
 	 * Can be @c NULL indicating the module shall not be listed.
-	 * Clients are encouraged to localize this with gettext(label).
+	 * Clients are encouraged to localize this with dgettext("zvbi", label).
 	 */
 	char *			label;
 	/**
 	 * A brief description (or @c NULL) for the user.
-	 * Clients are encouraged to localize this with gettext(label).
+	 * Clients are encouraged to localize this with dgettext("zvbi", label).
 	 */
 	char *			tooltip;
 	/**
@@ -161,7 +161,7 @@ typedef enum {
 	 * <tr><td>Menu:</td><td>menu.str[min.num ... max.num],
 	 *    step.num (1).
 	 * The menu strings are nationalized N_("text"), client
-	 * applications are encouraged to localize with gettext(menu.str[n]).
+	 * applications are encouraged to localize with dgettext("zvbi", menu.str[n]).
 	 * For details see info gettext.
 	 * </td></tr>
 	 * </table>
@@ -213,7 +213,7 @@ typedef struct {
 	/**
 	 * Name of the option to be shown to the user.
 	 * This can be @c NULL to indicate this option shall not be listed.
-	 * Can be localized with gettext(label).
+	 * Can be localized with dgettext("zvbi", label).
 	 */
 	char *			label;
 
@@ -225,7 +225,7 @@ typedef struct {
 
 	/**
 	 * A brief description (or @c NULL) for the user.
-	 *  Can be localized with gettext(tooltip).
+	 *  Can be localized with dgettext("zvbi", tooltip).
 	 */
 	char *			tooltip;
 } vbi_option_info;
@@ -263,10 +263,12 @@ extern char *			vbi_export_errstr(vbi_export *);
 #include <stdarg.h>
 #include <stddef.h>
 
+extern const char _zvbi_intl_domainname[];
+
 #ifndef _
 #  ifdef ENABLE_NLS
 #    include <libintl.h>
-#    define _(String) gettext (String)
+#    define _(String) dgettext (_zvbi_intl_domainname, String)
 #    ifdef gettext_noop
 #      define N_(String) gettext_noop (String)
 #    else
@@ -488,7 +490,7 @@ extern int			vbi_ucs2be(void);
  * char *mymenu[] = { N_("Monday"), N_("Tuesday") };
  *
  * vbi_option_info myinfo = VBI_OPTION_MENU_INITIALIZER
- *   ("weekday", "Weekday, 0, mymenu, 2, N_("Select a weekday"));
+ *   ("weekday", "Weekday", 0, mymenu, 2, N_("Select a weekday"));
  * @endcode
  */
 #define VBI_OPTION_MENU_INITIALIZER(key_, label_, def_, menu_,		\

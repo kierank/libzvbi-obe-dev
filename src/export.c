@@ -21,11 +21,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.9 2002/07/16 00:10:04 mschimek Exp $ */
+/* $Id: export.c,v 1.10 2002/09/26 20:47:52 mschimek Exp $ */
 
-#ifdef HAVE_CONFIG_H
-#  include "../config.h"
-#endif
+#include "../config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -37,6 +35,8 @@
 
 #include "export.h"
 #include "vbi.h" /* vbi_asprintf */
+
+const char _zvbi_intl_domainname[] = PACKAGE;
 
 /**
  * @addtogroup Export Exporting formatted Teletext and Closed Caption pages
@@ -143,6 +143,8 @@ initialize(void)
 	};
 
 	vbi_export_class **xcp;
+
+	pthread_once (&vbi_init_once, vbi_init);
 
 	if (!vbi_export_modules)
 		for (xcp = modules; *xcp; xcp++)
@@ -509,7 +511,7 @@ option_string(vbi_export *e, const char *s2)
  * initialize options by appending to the @param keyword like this:
  * 
  * @code
- * vbi_export_new ("keyword; quality=75.5, comment=@"example@"");
+ * vbi_export_new ("keyword; quality=75.5, comment=\"example text\"");
  * @endcode
  * 
  * @return
