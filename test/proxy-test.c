@@ -25,6 +25,11 @@
  *    for a list of possible options.
  *
  *  $Log: proxy-test.c,v $
+ *  Revision 1.6  2003/06/01 19:36:42  tomzo
+ *  Added tests for TV channel switching
+ *  - added new command line options -channel, -freq, -chnprio
+ *  - use new func vbi_capture_channel_change()
+ *
  *  Revision 1.5  2003/05/24 12:19:57  tomzo
  *  - added dynamic service switch to test add_service() interface: new function
  *    read_service_string() reads service requests from stdin
@@ -42,11 +47,12 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxy-test.c,v 1.5 2003/05/24 12:19:57 tomzo Exp $";
+static const char rcsid[] = "$Id: proxy-test.c,v 1.6 2003/06/01 19:36:42 tomzo Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 #include <time.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -73,6 +79,9 @@ static PROXY_TEST_API opt_api = TEST_API_PROXY;
 static unsigned int   opt_services;
 static int            opt_strict;
 static int            opt_debug_level;
+static int            opt_channel;
+static int            opt_frequency;
+static int            opt_chnprio;
 
 /* ----------------------------------------------------------------------------
 ** Resolve parity on an array in-place
@@ -273,6 +282,9 @@ static void usage_exit( const char *argv0, const char *argvn, const char * reaso
                    "       -dev <path>         : device path\n"
                    "       -api <type>         : v4l API: proxy|v4l2|v4l\n"
                    "       -strict <level>     : service strictness level: 0..2\n"
+                   "       -channel <index>    : switch video input channel\n"
+                   "       -freq <kHz * 16>    : switch TV tuner frequency\n"
+                   "       -chnprio <0..4>     : channel switch priority\n"
                    "       -debug <level>      : enable debug output: 1=warnings, 2=all\n"
                    "       -help               : this message\n"
                    "You can also type service requests to stdin at runtime:\n"
@@ -310,6 +322,9 @@ static void parse_argv( int argc, char * argv[] )
    opt_debug_level = 0;
    opt_services = 0;
    opt_strict = 0;
+   opt_channel = -1;
+   opt_frequency = -1;
+   opt_chnprio = 0;
 
    while (arg_idx < argc)
    {
@@ -390,6 +405,36 @@ static void parse_argv( int argc, char * argv[] )
          else
             usage_exit(argv[0], argv[arg_idx], "missing strict level after");
       }
+      else if (strcasecmp(argv[arg_idx], "-channel") == 0)
+      {
+         if ((arg_idx + 1 < argc) && parse_argv_numeric(argv[arg_idx + 1], &arg_val))
+         {
+            opt_channel = arg_val;
+            arg_idx += 2;
+         }
+         else
+            usage_exit(argv[0], argv[arg_idx], "missing channel index after");
+      }
+      else if (strcasecmp(argv[arg_idx], "-freq") == 0)
+      {
+         if ((arg_idx + 1 < argc) && parse_argv_numeric(argv[arg_idx + 1], &arg_val))
+         {
+            opt_frequency = arg_val;
+            arg_idx += 2;
+         }
+         else
+            usage_exit(argv[0], argv[arg_idx], "missing frequency value after");
+      }
+      else if (strcasecmp(argv[arg_idx], "-chnprio") == 0)
+      {
+         if ((arg_idx + 1 < argc) && parse_argv_numeric(argv[arg_idx + 1], &arg_val))
+         {
+            opt_chnprio = arg_val;
+            arg_idx += 2;
+         }
+         else
+            usage_exit(argv[0], argv[arg_idx], "missing priority level after");
+      }
       else if (strcasecmp(argv[arg_idx], "-help") == 0)
       {
          usage_exit(argv[0], "", "the following options are available");
@@ -440,6 +485,31 @@ int main ( int argc, char ** argv )
       {
          lastLineCount = 0;
 
+         /* switch to the requested channel */
+         if ( (opt_channel != -1) || (opt_frequency != -1))
+         {
+	    vbi_channel_desc cd;
+	    vbi_bool         has_tuner;
+	    int	             new_scanning;
+
+	    memset(&cd, 0, sizeof(cd));
+	    cd.u.analog.channel    = opt_channel;
+	    cd.u.analog.freq       = opt_frequency;
+	    cd.u.analog.mode_color = 0; /* PAL */
+	    cd.u.analog.mode_std   = -1;
+            pErr = NULL;
+            if (vbi_capture_channel_change(pVbiCapt, FALSE, opt_chnprio, &cd,
+                                           &has_tuner, &new_scanning, &pErr) != 0)
+            {
+               if (pErr != NULL)
+               {
+                  fprintf(stderr, "libzvbi error: %s\n", pErr);
+                  free(pErr);
+                  pErr = NULL;
+               }
+            }
+         }
+
          while(1)
          {
             new_services = read_service_string();
@@ -459,7 +529,7 @@ int main ( int argc, char ** argv )
             res = vbi_capture_pull_sliced(pVbiCapt, &pVbiBuf, &timeout);
             if (res < 0)
             {
-               perror("VBI read");
+               fprintf(stderr, "VBI read error: %d (%s)\n", errno, strerror(errno));
                break;
             }
             else if ((res > 0) && (pVbiBuf != NULL))
