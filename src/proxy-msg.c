@@ -29,9 +29,12 @@
  *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
  *    the latter ones are currently not officially supported.
  *
- *  $Id: proxy-msg.c,v 1.12 2004/12/13 07:17:09 mschimek Exp $
+ *  $Id: proxy-msg.c,v 1.13 2004/12/30 02:25:29 mschimek Exp $
  *
  *  $Log: proxy-msg.c,v $
+ *  Revision 1.13  2004/12/30 02:25:29  mschimek
+ *  printf ptrdiff_t fixes.
+ *
  *  Revision 1.12  2004/12/13 07:17:09  mschimek
  *  *** empty log message ***
  *
@@ -486,7 +489,11 @@ vbi_bool vbi_proxy_msg_handle_read( VBIPROXY_MSG_STATE * pIO,
                    (pIO->readLen < sizeof(VBIPROXY_MSG_HEADER)))
                {
                   /* illegal message size -> protocol error */
-                  dprintf1("handle_io: fd %d: illegal block size %d: outside limits [%d..%d]\n", pIO->sock_fd, pIO->readLen, sizeof(VBIPROXY_MSG_HEADER), max_read_len + sizeof(VBIPROXY_MSG_HEADER));
+                  dprintf1("handle_io: fd %d: illegal block size %d: "
+		           "outside limits [%ld..%ld]\n",
+			   pIO->sock_fd, pIO->readLen,
+			   (long) sizeof(VBIPROXY_MSG_HEADER),
+			   max_read_len + (long) sizeof(VBIPROXY_MSG_HEADER));
                   result = FALSE;
                }
             }
@@ -523,7 +530,7 @@ vbi_bool vbi_proxy_msg_handle_read( VBIPROXY_MSG_STATE * pIO,
       {
          if ((len == 0) && closeOnZeroRead)
          {  /* zero bytes read after select returned readability -> network error or connection closed by peer */
-            dprintf1("handle_io: zero len read on fd %d\n", pIO->sock_fd);
+            dprintf1("handle_io: zero len read on fd %d\n", (int) pIO->sock_fd);
             errno  = ECONNRESET;
             result = FALSE;
          }
@@ -583,7 +590,9 @@ void vbi_proxy_msg_write( VBIPROXY_MSG_STATE * p_io, VBIPROXY_MSG_TYPE type,
    assert(p_io->writeLen == 0);
    assert((msgLen == 0) || (pMsg != NULL));
 
-   dprintf2("write: len %d, msg type %d (%s)\n", sizeof(VBIPROXY_MSG_HEADER) + msgLen, type, vbi_proxy_msg_debug_get_type_str(type));
+   dprintf2("write: len %ld, msg type %d (%s)\n",
+            (long) sizeof(VBIPROXY_MSG_HEADER) + msgLen, type,
+	    vbi_proxy_msg_debug_get_type_str(type));
 
    p_io->pWriteBuf    = pMsg;
    p_io->freeWriteBuf = freeBuf;
@@ -1283,31 +1292,31 @@ vbi_proxy_msg_v4l_ioctl( int request, void * p_arg, vbi_bool * req_perm )
    {
 #ifdef ENABLE_V4L
       case VIDIOCGCAP:
-         dprintf2("v4l_ioctl CGCAP, arg size %d\n", sizeof(struct video_capability));
+         dprintf2("v4l_ioctl CGCAP, arg size %ld\n", (long) sizeof(struct video_capability));
          return sizeof(struct video_capability);
       case VIDIOCGCHAN:
-         dprintf2("v4l_ioctl CGCHAN, arg size %d\n", sizeof(struct video_channel));
+         dprintf2("v4l_ioctl CGCHAN, arg size %ld\n", (long) sizeof(struct video_channel));
          return sizeof(struct video_channel);
       case VIDIOCSCHAN:
-         dprintf2("v4l_ioctl CSCHAN, arg size %d\n", sizeof(struct video_channel));
+         dprintf2("v4l_ioctl CSCHAN, arg size %ld\n", (long) sizeof(struct video_channel));
          *req_perm = TRUE;
          return sizeof(struct video_channel);
       case VIDIOCGTUNER:
-         dprintf2("v4l_ioctl CGTUNER, arg size %d\n", sizeof(struct video_tuner));
+         dprintf2("v4l_ioctl CGTUNER, arg size %ld\n", (long) sizeof(struct video_tuner));
          return sizeof(struct video_tuner);
       case VIDIOCSTUNER:
-         dprintf2("v4l_ioctl CSTUNER, arg size %d\n", sizeof(struct video_tuner));
+         dprintf2("v4l_ioctl CSTUNER, arg size %ld\n", (long) sizeof(struct video_tuner));
          *req_perm = TRUE;
          return sizeof(struct video_tuner);
       case VIDIOCGFREQ:
-         dprintf2("v4l_ioctl CGFREQ, arg size %d\n", sizeof(unsigned long));
+         dprintf2("v4l_ioctl CGFREQ, arg size %ld\n", (long) sizeof(unsigned long));
          return sizeof(unsigned long);
       case VIDIOCSFREQ:
-         dprintf2("v4l_ioctl CSFREQ, arg size %d\n", sizeof(unsigned long));
+         dprintf2("v4l_ioctl CSFREQ, arg size %ld\n", (long) sizeof(unsigned long));
          *req_perm = TRUE;
          return sizeof(unsigned long);
       case VIDIOCGUNIT:
-         dprintf2("v4l_ioctl CGUNIT, arg size %d\n", sizeof(struct video_unit));
+         dprintf2("v4l_ioctl CGUNIT, arg size %ld\n", (long) sizeof(struct video_unit));
          return sizeof(struct video_unit);
 #endif
       default:
@@ -1325,62 +1334,62 @@ vbi_proxy_msg_v4l2_ioctl( int request, void * p_arg, vbi_bool * req_perm )
    {
 #ifdef ENABLE_V4L2
       case VIDIOC_QUERYCAP:
-         dprintf2("v4l2_ioctl QUERYCAP, arg size %d\n", sizeof(struct v4l2_capability));
+         dprintf2("v4l2_ioctl QUERYCAP, arg size %ld\n", (long) sizeof(struct v4l2_capability));
          return sizeof(struct v4l2_capability);
       case VIDIOC_QUERYSTD:
-         dprintf2("v4l2_ioctl QUERYSTD, arg size %d\n", sizeof(v4l2_std_id));
+         dprintf2("v4l2_ioctl QUERYSTD, arg size %ld\n", (long) sizeof(v4l2_std_id));
          return sizeof(v4l2_std_id);
       case VIDIOC_G_STD:
-         dprintf2("v4l2_ioctl G_STD, arg size %d\n", sizeof(v4l2_std_id));
+         dprintf2("v4l2_ioctl G_STD, arg size %ld\n", (long) sizeof(v4l2_std_id));
          return sizeof(v4l2_std_id);
       case VIDIOC_S_STD:
-         dprintf2("v4l2_ioctl S_STD, arg size %d\n", sizeof(v4l2_std_id));
+         dprintf2("v4l2_ioctl S_STD, arg size %ld\n", (long) sizeof(v4l2_std_id));
          *req_perm = TRUE;
          return sizeof(v4l2_std_id);
       case VIDIOC_ENUMSTD:
-         dprintf2("v4l2_ioctl ENUMSTD, arg size %d\n", sizeof(struct v4l2_standard));
+         dprintf2("v4l2_ioctl ENUMSTD, arg size %ld\n", (long) sizeof(struct v4l2_standard));
          return sizeof(struct v4l2_standard);
       case VIDIOC_ENUMINPUT:
-         dprintf2("v4l2_ioctl ENUMINPUT, arg size %d\n", sizeof(struct v4l2_input));
+         dprintf2("v4l2_ioctl ENUMINPUT, arg size %ld\n", (long) sizeof(struct v4l2_input));
          return sizeof(struct v4l2_input);
       case VIDIOC_G_CTRL:
-         dprintf2("v4l2_ioctl G_CTRL, arg size %d\n", sizeof(struct v4l2_control));
+         dprintf2("v4l2_ioctl G_CTRL, arg size %ld\n", (long) sizeof(struct v4l2_control));
          return sizeof(struct v4l2_control);
       case VIDIOC_S_CTRL:
-         dprintf2("v4l2_ioctl S_CTRL, arg size %d\n", sizeof(struct v4l2_control));
+         dprintf2("v4l2_ioctl S_CTRL, arg size %ld\n", (long) sizeof(struct v4l2_control));
          return sizeof(struct v4l2_control);
       case VIDIOC_G_TUNER:
-         dprintf2("v4l2_ioctl G_TUNER, arg size %d\n", sizeof(struct v4l2_tuner));
+         dprintf2("v4l2_ioctl G_TUNER, arg size %ld\n", (long) sizeof(struct v4l2_tuner));
          return sizeof(struct v4l2_tuner);
       case VIDIOC_S_TUNER:
-         dprintf2("v4l2_ioctl S_TUNER, arg size %d\n", sizeof(struct v4l2_tuner));
+         dprintf2("v4l2_ioctl S_TUNER, arg size %ld\n", (long) sizeof(struct v4l2_tuner));
          *req_perm = TRUE;
          return sizeof(struct v4l2_tuner);
       case VIDIOC_QUERYCTRL:
-         dprintf2("v4l2_ioctl QUERYCTRL, arg size %d\n", sizeof(struct v4l2_queryctrl));
+         dprintf2("v4l2_ioctl QUERYCTRL, arg size %ld\n", (long) sizeof(struct v4l2_queryctrl));
          return sizeof(struct v4l2_queryctrl);
       case VIDIOC_QUERYMENU:
-         dprintf2("v4l2_ioctl QUERYMENU, arg size %d\n", sizeof(struct v4l2_querymenu));
+         dprintf2("v4l2_ioctl QUERYMENU, arg size %ld\n", (long) sizeof(struct v4l2_querymenu));
          return sizeof(struct v4l2_querymenu);
       case VIDIOC_G_INPUT:
-         dprintf2("v4l2_ioctl G_INPUT, arg size %d\n", sizeof(int));
+         dprintf2("v4l2_ioctl G_INPUT, arg size %ld\n", (long) sizeof(int));
          return sizeof(int);
       case VIDIOC_S_INPUT:
-         dprintf2("v4l2_ioctl S_INPUT, arg size %d\n", sizeof(int));
+         dprintf2("v4l2_ioctl S_INPUT, arg size %ld\n", (long) sizeof(int));
          *req_perm = TRUE;
          return sizeof(int);
       case VIDIOC_G_MODULATOR:
-         dprintf2("v4l2_ioctl G_MODULATOR, arg size %d\n", sizeof(struct v4l2_modulator));
+         dprintf2("v4l2_ioctl G_MODULATOR, arg size %ld\n", (long) sizeof(struct v4l2_modulator));
          return sizeof(struct v4l2_modulator);
       case VIDIOC_S_MODULATOR:
-         dprintf2("v4l2_ioctl S_MODULATOR, arg size %d\n", sizeof(struct v4l2_modulator));
+         dprintf2("v4l2_ioctl S_MODULATOR, arg size %ld\n", (long) sizeof(struct v4l2_modulator));
          *req_perm = TRUE;
          return sizeof(struct v4l2_modulator);
       case VIDIOC_G_FREQUENCY:
-         dprintf2("v4l2_ioctl G_FREQUENCY, arg size %d\n", sizeof(struct v4l2_frequency));
+         dprintf2("v4l2_ioctl G_FREQUENCY, arg size %ld\n", (long) sizeof(struct v4l2_frequency));
          return sizeof(struct v4l2_frequency);
       case VIDIOC_S_FREQUENCY:
-         dprintf2("v4l2_ioctl S_FREQUENCY, arg size %d\n", sizeof(struct v4l2_frequency));
+         dprintf2("v4l2_ioctl S_FREQUENCY, arg size %ld\n", (long) sizeof(struct v4l2_frequency));
          *req_perm = TRUE;
          return sizeof(struct v4l2_frequency);
 #endif
