@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: trigger.c,v 1.3 2002/10/11 12:31:13 mschimek Exp $ */
+/* $Id: trigger.c,v 1.4 2002/10/22 04:42:00 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -679,7 +679,7 @@ vbi_eacem_trigger(vbi_decoder *vbi, unsigned char *s)
  * may fire immediately or at a later time).
  **/
 void
-vbi_atvef_trigger(vbi_decoder *vbi, char *s)
+vbi_atvef_trigger(vbi_decoder *vbi, unsigned char *s)
 {
 	vbi_trigger t;
 
