@@ -50,7 +50,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxy-test.c,v 1.9 2004/10/04 20:50:25 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-test.c,v 1.10 2004/10/05 12:07:20 mschimek Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
