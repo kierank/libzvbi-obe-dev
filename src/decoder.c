@@ -17,7 +17,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.14 2004/10/04 20:50:23 mschimek Exp $ */
+/* $Id: decoder.c,v 1.15 2004/11/07 10:52:25 mschimek Exp $ */
+
+#include "site_def.h"
 
 #include <stdio.h>
 #include <stdlib.h>
