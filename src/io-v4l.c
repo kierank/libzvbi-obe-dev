@@ -1,7 +1,8 @@
 /*
  *  libzvbi - V4L interface
  *
- *  Copyright (C) 1999, 2000, 2001, 2002 Michael H. Schimek
+ *  Copyright (C) 1999-2004 Michael H. Schimek
+ *  Copyright (C) 2003, 2004 Tom Zoerner
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -17,8 +18,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] =
-"$Id: io-v4l.c,v 1.22 2004/10/04 20:50:23 mschimek Exp $";
+static const char rcsid [] =
+"$Id: io-v4l.c,v 1.23 2004/10/05 23:46:28 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -35,23 +36,35 @@ static char rcsid[] =
 #include <string.h>
 #include <math.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
+//#include <fcntl.h>
+#include <unistd.h>		/* read(), dup2(), getuid() */
 #include <assert.h>
 #include <sys/time.h>		/* timeval */
-#include <sys/types.h>		/* fd_set */
-#include <sys/ioctl.h>
-#include <sys/mman.h>
+#include <sys/types.h>		/* fd_set, uid_t */
+#include <sys/ioctl.h>		/* for (_)videodev.h */
+//#include <sys/mman.h>
 #include <pthread.h>
 
 #include "videodev.h"
+#include "_videodev.h"
 
-/* same as ioctl(), but repeat if interrupted */
-#define IOCTL(fd, cmd, data)						\
-({ int __result; do __result = ioctl(fd, cmd, data);			\
-   while (__result == -1L && errno == EINTR); __result; })
+/* This macro checks at compile time if the arg type is correct,
+   device_ioctl() repeats the ioctl if interrupted (EINTR) and logs
+   the args and result if sys_log_fp is non-zero. */
+#define xioctl(v, cmd, arg)						\
+(IOCTL_ARG_TYPE_CHECK_ ## cmd (arg),					\
+ device_ioctl (v->capture.sys_log_fp, fprint_ioctl_arg, v->fd,		\
+               cmd, (void *)(arg)))
 
+#define xioctl_fd(v, fd, cmd, arg)					\
+(IOCTL_ARG_TYPE_CHECK_ ## cmd (arg),					\
+ device_ioctl (v->capture.sys_log_fp, fprint_ioctl_arg, fd,		\
+               cmd, (void *)(arg)))
+
+/* Custom ioctl of the bttv driver. */
 #define BTTV_VBISIZE		_IOR('v' , BASE_VIDIOCPRIVATE+8, int)
+static __inline__ void IOCTL_ARG_TYPE_CHECK_BTTV_VBISIZE
+  (const int *arg __attribute__ ((unused))) {}
 
 #undef REQUIRE_SELECT
 #undef REQUIRE_SVBIFMT		/* else accept current parameters */
@@ -61,7 +74,7 @@ static char rcsid[] =
 
 #define printv(format, args...)						\
 do {									\
-	if (v->do_trace) {							\
+	if (v->do_trace) {						\
 		fprintf(stderr, format ,##args);			\
 		fflush(stderr);						\
 	}								\
@@ -81,7 +94,7 @@ typedef struct vbi_capture_v4l {
         int                     fd_video;
 
 	vbi_raw_decoder		dec;
-        unsigned int            services;               /* all services, including raw */
+        unsigned int            services; /* all services, including raw */
 
 	double			time_per_frame;
 
@@ -117,17 +130,22 @@ v4l_suspend(vbi_capture_v4l *v)
 	if (v->read_active) {
 		printv("Suspending read: re-open device...\n");
 
-		/* hack: cannot suspend read to allow SVBIFMT, need to close device */
-		fd = open(v->p_dev_name, O_RDWR);
-		if (fd == -1) {
-			printv("v4l2-suspend: failed to re-open VBI device: %d: %s\n", errno, strerror(errno));
+		/* hack: cannot suspend read to allow SVBIFMT,
+		   need to close device */
+		fd = device_open (v->capture.sys_log_fp,
+				  v->p_dev_name, O_RDWR, 0);
+		if (-1 == fd) {
+			printv ("v4l2-suspend: failed to re-open "
+				"VBI device: %d: %s\n",
+				errno, strerror(errno));
 			return -1;
 		}
 
-		/* use dup2() to keep the same fd, which may be used by our client */
-		close(v->fd);
-		dup2(fd, v->fd);
-		close(fd);
+		/* use dup2() to keep the same fd,
+		   which may be used by our client */
+		device_close (v->capture.sys_log_fp, v->fd);
+		dup2 (fd, v->fd);
+		device_close (v->capture.sys_log_fp, fd);
 
 		v->read_active = FALSE;
 	}
@@ -336,8 +354,9 @@ reverse_lookup(vbi_capture_v4l *v, int fd, struct stat *vbi_stat)
 	struct video_capability vcap;
 	struct video_unit vunit;
 
-	if (IOCTL(fd, VIDIOCGCAP, &vcap) != 0) {
-		printv("Driver doesn't support VIDIOCGCAP, probably not v4l\n");
+	if (-1 == xioctl_fd (v, fd, VIDIOCGCAP, &vcap)) {
+		printv ("Driver doesn't support VIDIOCGCAP, "
+			"probably not V4L API\n");
 		return FALSE;
 	}
 
@@ -346,8 +365,8 @@ reverse_lookup(vbi_capture_v4l *v, int fd, struct stat *vbi_stat)
 		return FALSE;
 	}
 
-	if (IOCTL(fd, VIDIOCGUNIT, &vunit) != 0) {
-		printv("Driver doesn't support VIDIOCGUNIT\n");
+	if (-1 == xioctl_fd (v, fd, VIDIOCGUNIT, &vunit)) {
+		printv ("Driver doesn't support VIDIOCGUNIT\n");
 		return FALSE;
 	}
 
@@ -397,12 +416,13 @@ get_videostd(vbi_capture_v4l *v, int fd, int *mode)
 	memset(&vtuner, 0, sizeof(vtuner));
 	memset(&vchan, 0, sizeof(vchan));
 
-	if (IOCTL(fd, VIDIOCGTUNER, &vtuner) != -1) {
-		printv("Driver supports VIDIOCGTUNER: mode %d (0=PAL, 1=NTSC, 2=SECAM)\n", vtuner.mode);
+	if (0 == xioctl_fd (v, fd, VIDIOCGTUNER, &vtuner)) {
+		printv ("Driver supports VIDIOCGTUNER: "
+			"mode %d (0=PAL, 1=NTSC, 2=SECAM)\n", vtuner.mode);
 		*mode = vtuner.mode;
 		return TRUE;
-	} else if (IOCTL(fd, VIDIOCGCHAN, &vchan) != -1) {
-		printv("Driver supports VIDIOCGCHAN: norm %d\n", vchan.norm);
+	} else if (0 == xioctl_fd (v, fd, VIDIOCGCHAN, &vchan)) {
+		printv ("Driver supports VIDIOCGCHAN: norm %d\n", vchan.norm);
 		*mode = vchan.norm;
 		return TRUE;
 	} else
@@ -443,15 +463,16 @@ probe_video_device(vbi_capture_v4l *v, const char *name, struct stat *vbi_stat )
 		return -1;
 	}
 
-	video_fd = open(name, O_RDWR);
-	if (video_fd == -1) {
-		printv("Cannot open %s: %d, %s\n", name, errno, strerror(errno));
+	video_fd = device_open (v->capture.sys_log_fp, name, O_RDWR, 0);
+	if (-1 == video_fd) {
+		printv ("Cannot open %s: %d, %s\n",
+			name, errno, strerror(errno));
 		perm_check(v, name);
 		return -1;
 	}
 
 	if (!reverse_lookup(v, video_fd, vbi_stat)) {
-		close(video_fd);
+		device_close (v->capture.sys_log_fp, video_fd);
 		return -1;
 	}
 
@@ -584,10 +605,10 @@ guess_bttv_v4l(vbi_capture_v4l *v, int *strict,
 	video_fd = open_video_dev(v, &vbi_stat, TRUE);
 	if (video_fd != -1) {
 		if (get_videostd(v, video_fd, &mode)) {
-			close(video_fd);
+			device_close (v->capture.sys_log_fp, video_fd);
 			return FALSE;
 		}
-		close(video_fd);
+		device_close (v->capture.sys_log_fp, video_fd);
 	}
 
 
@@ -610,13 +631,14 @@ v4l_update_scanning(vbi_capture_v4l *v, int * p_strict)
 
         } else if (v->p_video_name != NULL) {
 
-                video_fd = open(v->p_video_name, O_RDWR);
-                if (video_fd != -1) {
+                video_fd = device_open (v->capture.sys_log_fp,
+					v->p_video_name, O_RDWR, 0);
+                if (-1 != video_fd) {
 
                         if (get_videostd(v, video_fd, &mode)) {
                                 result = TRUE;
                         }
-                        close(video_fd);
+                        device_close (v->capture.sys_log_fp, video_fd);
                 } else {
                         printv("Failed to open video device '%d': %s", errno, strerror(errno));
                 }
@@ -665,8 +687,10 @@ set_parameters(vbi_capture_v4l *v, struct vbi_format *p_vfmt, int *p_max_rate,
 	/* check if the driver supports CSVBIFMT: try with unchanged parameters */
 	if (v->has_s_fmt == -1) {
 		vfmt_temp = *p_vfmt;
-		v->has_s_fmt = ((IOCTL(v->fd, VIDIOCSVBIFMT, &vfmt_temp) == 0) || (errno == EBUSY));
-		printv("Driver does%s support VIDIOCSVBIFMT\n", v->has_s_fmt ? "" : " not");
+		v->has_s_fmt = (0 == xioctl (v, VIDIOCSVBIFMT, &vfmt_temp)
+				|| errno == EBUSY);
+		printv ("Driver does%s support VIDIOCSVBIFMT\n",
+			v->has_s_fmt ? "" : " not");
 	}
 
 	if (v->has_s_fmt == 0)
@@ -710,18 +734,18 @@ set_parameters(vbi_capture_v4l *v, struct vbi_format *p_vfmt, int *p_max_rate,
 		p_vfmt->count[1] = 1;
 	}
 
-	if (IOCTL(v->fd, VIDIOCSVBIFMT, p_vfmt) == 0)
+	if (0 == xioctl (v, VIDIOCSVBIFMT, p_vfmt))
 		return TRUE;
 
 	p_vfmt->sampling_rate		= vfmt_temp.sampling_rate;
 	p_vfmt->samples_per_line	= vfmt_temp.samples_per_line;
-	if (IOCTL(v->fd, VIDIOCSVBIFMT, p_vfmt) == 0)
+	if (0 == xioctl (v, VIDIOCSVBIFMT, p_vfmt))
 		return TRUE;
 
 	/* XXX correct count */
 	p_vfmt->start[0]		= vfmt_temp.start[0];
 	p_vfmt->start[1]		= vfmt_temp.start[1];
-	if (IOCTL(v->fd, VIDIOCSVBIFMT, p_vfmt) == 0)
+	if (0 == xioctl (v, VIDIOCSVBIFMT, p_vfmt))
 		return TRUE;
 
 	switch (errno) {
@@ -782,8 +806,8 @@ v4l_delete(vbi_capture *vc)
 	if (v->p_video_name != NULL)
 		free(v->p_video_name);
 
-	if (v->fd != -1)
-		close(v->fd);
+	if (-1 != v->fd)
+		device_close (v->capture.sys_log_fp, v->fd);
 
 	free(v);
 }
@@ -856,7 +880,7 @@ v4l_update_services(vbi_capture *vc,
                 v->services = 0;
         }
 
-	if (IOCTL(v->fd, VIDIOCGVBIFMT, &vfmt) == 0) {
+	if (0 == xioctl (v, VIDIOCGVBIFMT, &vfmt)) {
 		if (v->dec.start[1] > 0 && v->dec.count[1]) {
 			if (v->dec.start[1] >= 286)
 				v->dec.scanning = 625;
@@ -942,20 +966,23 @@ v4l_update_services(vbi_capture *vc,
 
 		printv("Attempt to determine vbi frame size\n");
 
-		if ((size = IOCTL(v->fd, BTTV_VBISIZE, 0)) == -1) {
-			printv("Driver does not support BTTV_VBISIZE, "
+		size = xioctl (v, BTTV_VBISIZE, 0);
+		if (-1 == size) {
+			printv ("Driver does not support BTTV_VBISIZE, "
 				"assume old BTTV driver\n");
 			v->dec.count[0] = 16;
 			v->dec.count[1] = 16;
 		} else if (size % 2048) {
-			vbi_asprintf(errorstr, _("Cannot identify %s (%s), reported "
-						 "vbi frame size suggests this is "
-						 "not a bttv driver."),
-				     v->p_dev_name, v->vcap.name);
+			vbi_asprintf (errorstr,
+				      _("Cannot identify %s (%s), reported "
+					"vbi frame size suggests this is "
+					"not a bttv driver."),
+				      v->p_dev_name, v->vcap.name);
 			goto io_error;
 		} else {
-			printv("Driver supports BTTV_VBISIZE: %d bytes, "
-			       "assume top field dominance and 2048 bpl\n", size);
+			printv ("Driver supports BTTV_VBISIZE: %d bytes, "
+				"assume top field dominance and 2048 bpl\n",
+				size);
 			size /= 2048;
 			v->dec.count[0] = size >> 1;
 			v->dec.count[1] = size - v->dec.count[0];
@@ -1084,8 +1111,9 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 	}
 
 	v->do_trace = trace;
-	printv("Try to open v4l vbi device, libzvbi interface rev.\n"
-	       "%s\n", rcsid);
+
+	printv ("Try to open v4l vbi device, "
+		"libzvbi interface rev.\n  %s\n", rcsid);
 
 	v->capture.parameters = v4l_parameters;
 	v->capture._delete = v4l_delete;
@@ -1105,9 +1133,11 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		goto failure;
 	}
 
-	if ((v->fd = open(v->p_dev_name, O_RDONLY)) == -1) {
-		vbi_asprintf(errorstr, _("Cannot open '%s': %d, %s."),
-			     v->p_dev_name, errno, strerror(errno));
+	v->fd = device_open (v->capture.sys_log_fp,
+			     v->p_dev_name, O_RDONLY, 0);
+	if (-1 == v->fd) {
+		vbi_asprintf (errorstr, _("Cannot open '%s': %d, %s."),
+			      v->p_dev_name, errno, strerror(errno));
 		perm_check(v, v->p_dev_name);
 		goto io_error;
 	}
@@ -1117,7 +1147,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
         /* used to store given_fd if necessary */
 	v->fd_video = -1;
 
-	if (IOCTL(v->fd, VIDIOCGCAP, &v->vcap) == -1) {
+	if (-1 == xioctl (v, VIDIOCGCAP, &v->vcap)) {
 		/*
 		 *  Older bttv drivers don't support any
 		 *  v4l ioctls, let's see if we can guess the beast.
@@ -1298,8 +1328,13 @@ vbi_capture_v4l_new(const char *dev_name, int scanning,
 		     unsigned int *services, int strict,
 		     char **errorstr, vbi_bool trace)
 {
+	if (0) /* unused, no warning please */
+		fputs (rcsid, stderr);
+
 	pthread_once (&vbi_init_once, vbi_init);
-	vbi_asprintf(errorstr, _("V4L driver interface not compiled."));
+
+	vbi_asprintf (errorstr, _("V4L driver interface not compiled."));
+
 	return NULL;
 }
 

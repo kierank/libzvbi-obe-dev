@@ -17,8 +17,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] =
-"$Id: io-bktr.c,v 1.6 2004/08/13 01:26:04 mschimek Exp $";
+static const char rcsid [] =
+"$Id: io-bktr.c,v 1.7 2004/10/05 23:46:28 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -34,13 +34,13 @@ static char rcsid[] =
 #include <string.h>
 #include <math.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
+//#include <fcntl.h>
+//#include <unistd.h>
 #include <assert.h>
 #include <sys/time.h>		/* timeval */
 #include <sys/select.h>		/* fd_set */
-#include <sys/ioctl.h>
-#include <sys/mman.h>
+//#include <sys/ioctl.h>
+//#include <sys/mman.h>
 #include <pthread.h>
 
 #define printv(format, args...)						\
@@ -162,8 +162,8 @@ bktr_delete(vbi_capture *vc)
 	for (; v->num_raw_buffers > 0; v->num_raw_buffers--)
 		free(v->raw_buffer[v->num_raw_buffers - 1].data);
 
-	if (v->fd != -1)
-		close(v->fd);
+	if (-1 != v->fd)
+		device_close (v->capture.sys_log_fp, v->fd);
 
 	free(v);
 }
@@ -191,8 +191,8 @@ vbi_capture_bktr_new		(const char *		dev_name,
 
 	assert(services && *services != 0);
 
-	printv("Try to open bktr vbi device, libzvbi interface rev.\n"
-	       "%s", rcsid);
+	printv ("Try to open bktr vbi device, "
+		"libzvbi interface rev.\n%s\n", rcsid);
 
 	if (!(v = (vbi_capture_bktr *) calloc(1, sizeof(*v)))) {
 		vbi_asprintf(errstr, _("Virtual memory exhausted."));
@@ -204,7 +204,8 @@ vbi_capture_bktr_new		(const char *		dev_name,
 	v->capture._delete = bktr_delete;
 	v->capture.get_fd = bktr_fd;
 
-	if ((v->fd = open(dev_name, O_RDONLY)) == -1) {
+	v->fd = device_open (v->capture.sys_log_fp, dev_name, O_RDONLY, 0);
+	if (-1 == v->fd) {
 		vbi_asprintf(errstr, _("Cannot open '%s': %d, %s."),
 			     dev_name, errno, strerror(errno));
 		goto io_error;
@@ -361,7 +362,7 @@ vbi_capture_bktr_new		(const char *		dev_name,
 
 	pthread_once (&vbi_init_once, vbi_init);
 
-	vbi_asprintf(errstr, _("BKTR driver interface not compiled."));
+	vbi_asprintf (errstr, _("BKTR driver interface not compiled."));
 
 	return NULL;
 }

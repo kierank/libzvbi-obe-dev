@@ -1,3 +1,12 @@
+2004-10-05    <mschimek@users.sf.net>
+
+	* src/intl-priv.h: Added from 0.3 branch.
+	* src/io-v4l2.c: V4L2 0.20 API still recognized for debugging
+	  but no longer supported. 
+	* src/io-v4l.c, src/io-v4l2.c, src/io-bktr.c: Added ioctl logging.
+	* src/io-v4l2k.c: Log mmap and munmap calls.
+	* src/io.c, src/io.h: Added mmap, munmap log wrappers.
+
 2004-10-04    <mschimek@users.sf.net>
 
 	* m4/autogen.sh: Updated to recognize newer automake.

@@ -18,8 +18,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] =
-"$Id: io-v4l2k.c,v 1.20 2004/10/04 20:50:24 mschimek Exp $";
+static const char rcsid [] =
+"$Id: io-v4l2k.c,v 1.21 2004/10/05 23:46:28 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -43,14 +43,15 @@ static char rcsid[] =
 #include <string.h>
 #include <math.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
+//#include <fcntl.h>
+#include <unistd.h>		/* read(), dup2() */
 #include <assert.h>
 #include <sys/time.h>		/* timeval */
 #include <sys/types.h>		/* fd_set */
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <asm/types.h>		/* for videodev2.h */
+//#include <sys/ioctl.h>
+#include <sys/ioctl.h>		/* for (_)videodev2k.h */
+#include <sys/mman.h>		/* PROT_READ, MAP_SHARED */
+#include <asm/types.h>		/* for videodev2k.h */
 #include <pthread.h>
 
 #include "videodev2k.h"
@@ -125,8 +126,9 @@ v4l2_stream_stop(vbi_capture_v4l2 *v)
 	}
 
 	for (; v->num_raw_buffers > 0; v->num_raw_buffers--) {
-		munmap(v->raw_buffer[v->num_raw_buffers - 1].data,
-		       v->raw_buffer[v->num_raw_buffers - 1].size);
+		device_munmap (v->capture.sys_log_fp,
+			       v->raw_buffer[v->num_raw_buffers - 1].data,
+			       v->raw_buffer[v->num_raw_buffers - 1].size);
 	}
 
 	if (v->raw_buffer != NULL) {
@@ -200,13 +202,24 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 			goto mmap_failure;
 		}
 
-		/* bttv 0.8.x wants PROT_WRITE */
-		p = mmap(NULL, vbuf.length, PROT_READ | PROT_WRITE,
-			 MAP_SHARED, v->fd, vbuf.m.offset); /* MAP_PRIVATE ? */
+		p = device_mmap (v->capture.sys_log_fp,
+				 /* start any */ NULL,
+				 vbuf.length,
+				 PROT_READ | PROT_WRITE,
+				 MAP_SHARED, /* MAP_PRIVATE ? */
+				 v->fd,
+				 vbuf.m.offset);
 
+		/* V4L2 spec requires PROT_WRITE regardless if we write
+		   buffers, but broken drivers might reject it. */
 		if (MAP_FAILED == p)
-		  p = mmap(NULL, vbuf.length, PROT_READ,
-			   MAP_SHARED, v->fd, vbuf.m.offset); /* MAP_PRIVATE ? */
+			p = device_mmap (v->capture.sys_log_fp,
+					 /* start any */ NULL,
+					 vbuf.length,
+					 PROT_READ,
+					 MAP_SHARED,
+					 v->fd,
+					 vbuf.m.offset);
 
 		if (MAP_FAILED == p) {
 			if (errno == ENOMEM && v->num_raw_buffers >= 2) {
@@ -1083,8 +1096,9 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	}
 
 	v->do_trace = trace;
-	printv("Try to open v4l2 (2002-10) vbi device, "
-	       "libzvbi interface rev.\n%s\n", rcsid);
+
+	printv ("Try to open V4L2 2.6 VBI device, "
+		"libzvbi interface rev.\n  %s\n", rcsid);
 
 	v->p_dev_name = strdup(dev_name);
 
@@ -1231,7 +1245,9 @@ vbi_capture_v4l2k_new(const char *dev_name, int fd, int buffers,
 		fputs (rcsid, stderr);
 
 	pthread_once (&vbi_init_once, vbi_init);
-	vbi_asprintf(errorstr, _("V4L2 driver interface not compiled."));
+
+	vbi_asprintf (errorstr, _("V4L2 driver interface not compiled."));
+
 	return NULL;
 }
 

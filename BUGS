@@ -1,10 +1,7 @@
-$Id: BUGS,v 1.16 2004/08/13 01:26:03 mschimek Exp $
+$Id: BUGS,v 1.17 2004/10/05 23:46:28 mschimek Exp $
 
+* "./proxy-test -dev /dev/vbi vps" no workee. ttx ok, ttx + vps
+  (1 or 2 clients) ok. bttv 0.9.x.
 * v4l and v4l2 i/o can ignore timeout parameter
   > maybe a sleep() loop works, but what about timestamping?
-* drose:
-  "It turns out that zapping was pointing to /dev/vbi0, a symlink to
-   v4l/vbi0 and would never give me any pages.  Changing the link to
-   /dev/v4l/vbi0 (absolute reference) fixed the problem."
-  Maybe v4l device probing.
 * vbi_page.text[1056] < 26 * 41. D'oh! (fixed in 0.3)
