@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.13 2003/10/21 20:53:05 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.14 2004/12/13 07:13:32 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -320,7 +320,7 @@ print_unicode(iconv_t cd, int endian, int unicode, char **p, int n)
  *   full pg->columns width. In this mode runs of spaces at
  *   the start and end of rows are collapsed into single spaces,
  *   blank lines are suppressed.
- * @param ltr Currently ignored, please set to @c TRUE.
+ * @param rtl Currently ignored.
  * @param column First source column, 0 ... pg->columns - 1.
  * @param row First source row, 0 ... pg->rows - 1.
  * @param width Number of columns to print, 1 ... pg->columns.
