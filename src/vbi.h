@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.h,v 1.8 2003/04/06 06:11:06 mschimek Exp $ */
+/* $Id: vbi.h,v 1.9 2004/10/25 16:55:10 mschimek Exp $ */
 
 #ifndef VBI_H
 #define VBI_H
@@ -210,7 +210,5 @@ extern void		vbi_init(void);
 
 extern void		vbi_transp_colormap(vbi_decoder *vbi, vbi_rgba *d, vbi_rgba *s, int entries);
 extern void             vbi_chsw_reset(vbi_decoder *vbi, vbi_nuid nuid);
-
-extern void		vbi_asprintf(char **errstr, char *templ, ...);
 
 #endif /* VBI_H */
