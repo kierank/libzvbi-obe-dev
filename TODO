@@ -1,4 +1,4 @@
-$Id: TODO,v 1.14 2003/10/20 22:51:31 mschimek Exp $
+$Id: TODO,v 1.15 2003/10/20 23:50:38 mschimek Exp $
 
 Version 0.3
 
@@ -39,6 +39,7 @@ Version 0.3
   samples.
 * SGML error reporting. (Not sure anymore if this is
   really worth the trouble.)
+* i18n: exporting static strings N_("foo") is a bad idea.
 
 -------------------------------------------------------------------------------
 Ideas? Drop us a note at http://zapping.sourceforge.net.
