@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.32 2004/06/18 14:14:21 mschimek Exp $
+dnl $Id: configure.in,v 1.33 2004/10/04 20:48:34 mschimek Exp $
 
 AC_INIT(configure.in)
 AM_INIT_AUTOMAKE(zvbi, 0.2.9)
@@ -12,6 +12,8 @@ AC_SUBST(LIBZVBI_SO_VERSION, [3:3:3])
 AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_LIBTOOL
+
+LIBS="$LIBS -lm"
 
 test -e site_def.h || cat <<EOF >site_def.h
 /* Site specific definitions */
@@ -84,14 +86,12 @@ dnl
 dnl Check for png library.
 dnl (PNG page export)
 dnl
-PNG_LIB=""
 HAVE_PNG="yes"
 AC_CHECK_LIB(png, png_destroy_write_struct,
-  PNG_LIB="-lpng -lz -lm", HAVE_PNG="no", -lz -lm)
+  LIBS="$LIBS -lpng -lz", HAVE_PNG="no", -lz -lm)
 if test "$HAVE_PNG" = yes; then
   AC_DEFINE(HAVE_LIBPNG, 1, [Define if you have libpng])
 fi
-AC_SUBST(PNG_LIB)
 
 dnl
 dnl X libraries.
@@ -106,11 +106,11 @@ dnl (Test programs)
 dnl
 AC_CHECK_FUNCS(getopt_long)
 
-dnl
+dnl 
 dnl getaddrinfo
 dnl (Proxy service via TCP/IP)
 dnl
-dnl AC_CHECK_FUNCS()
+AC_CHECK_FUNCS(getaddrinfo)
 
 dnl
 dnl Enable OS dependent device interfaces.
@@ -166,17 +166,17 @@ fi
 dnl
 dnl Enable vbi proxy
 dnl
-dnl AC_MSG_CHECKING([whether to build the vbi proxy daemon and interface])
-dnl AC_ARG_ENABLE(proxy,
-dnl   AC_HELP_STRING([--enable-proxy],
-dnl   [Build the vbi proxy daemon and interface (yes)]),,
-dnl   enable_proxy=yes)
-dnl AC_MSG_RESULT($enable_proxy)
-dnl if test "$enable_proxy" = yes; then
-dnl   AC_DEFINE(ENABLE_PROXY, 1,
-dnl   [Define to build proxy daemon and and interface])
-dnl fi
-dnl AM_CONDITIONAL(ENABLE_PROXY, [test "$enable_proxy" = yes])
+AC_MSG_CHECKING([whether to build the vbi proxy daemon and interface])
+AC_ARG_ENABLE(proxy,
+  AC_HELP_STRING([--enable-proxy],
+  [Build the vbi proxy daemon and interface (yes)]),,
+  enable_proxy=yes)
+AC_MSG_RESULT($enable_proxy)
+if test "$enable_proxy" = yes; then
+  AC_DEFINE(ENABLE_PROXY, 1,
+  [Define to build proxy daemon and and interface])
+fi
+AM_CONDITIONAL(ENABLE_PROXY, [test "$enable_proxy" = yes])
 
 dnl
 dnl Native language support.
@@ -197,19 +197,18 @@ dnl
 AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, yes, no)
 AM_CONDITIONAL(HAVE_DOXYGEN, [test "$HAVE_DOXYGEN" = yes])
 
-dnl See proxy branch
-dnl daemon/Makefile
-dnl daemon/zvbid.init
-
 AC_OUTPUT([
   Makefile
   po/Makefile.in
   src/Makefile
   src/dvb/Makefile
+  daemon/Makefile
+  daemon/zvbid.init
   test/Makefile
   doc/Makefile
   doc/Doxyfile
   contrib/Makefile
   m4/Makefile
   zvbi.spec
+  zvbi-0.2.pc
 ])
