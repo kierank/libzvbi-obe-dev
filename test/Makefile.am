@@ -3,8 +3,8 @@
 TESTS = exoptest cpptest raw_decoder
 
 check_PROGRAMS = \
-    cpptest \
-    raw_decoder
+	cpptest \
+	raw_decoder
 
 cpptest_SOURCES = cpptest.cc
 
@@ -21,13 +21,14 @@ x_programs =
 endif
 
 noinst_PROGRAMS = \
-    unicode \
-    glyph \
-    explist \
-    export \
-    capture \
-    $(x_programs) \
-    $(proxy_programs)
+	unicode \
+	glyph \
+	explist \
+	export \
+	capture \
+	wss \
+	$(x_programs) \
+	$(proxy_programs)
 
 EXTRA_DIST = README exoptest uclist sim.c
 
