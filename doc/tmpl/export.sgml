@@ -69,8 +69,10 @@ export_my_page(vbi_page *pg)
 
 </para>
 
-@export: 
+@Param1: 
 @Returns: 
+<!-- # Unused Parameters # -->
+@export: 
 
 
 <!-- ##### FUNCTION vbi_export_new ##### -->
@@ -88,6 +90,8 @@ export_my_page(vbi_page *pg)
 
 </para>
 
+@Param1: 
+<!-- # Unused Parameters # -->
 @export: 
 
 
@@ -113,9 +117,11 @@ export_my_page(vbi_page *pg)
 
 </para>
 
-@export: 
+@Param1: 
 @index: 
 @Returns: 
+<!-- # Unused Parameters # -->
+@export: 
 
 
 <!-- ##### FUNCTION vbi_export_option_info_keyword ##### -->
@@ -123,9 +129,11 @@ export_my_page(vbi_page *pg)
 
 </para>
 
-@export: 
+@Param1: 
 @keyword: 
 @Returns: 
+<!-- # Unused Parameters # -->
+@export: 
 
 
 <!-- ##### FUNCTION vbi_export_option_get ##### -->
@@ -133,10 +141,12 @@ export_my_page(vbi_page *pg)
 
 </para>
 
-@export: 
+@Param1: 
 @keyword: 
 @value: 
 @Returns: 
+<!-- # Unused Parameters # -->
+@export: 
 
 
 <!-- ##### FUNCTION vbi_export_option_set ##### -->
@@ -144,10 +154,12 @@ export_my_page(vbi_page *pg)
 
 </para>
 
-@export: 
+@Param1: 
 @keyword: 
 @Varargs: 
 @Returns: 
+<!-- # Unused Parameters # -->
+@export: 
 
 
 <!-- ##### FUNCTION vbi_export_option_menu_get ##### -->
@@ -155,11 +167,12 @@ export_my_page(vbi_page *pg)
 
 </para>
 
-@export: 
+@Param1: 
 @keyword: 
 @entry: 
 @Returns: 
 <!-- # Unused Parameters # -->
+@export: 
 @index: 
 
 
@@ -168,11 +181,12 @@ export_my_page(vbi_page *pg)
 
 </para>
 
-@export: 
+@Param1: 
 @keyword: 
 @entry: 
 @Returns: 
 <!-- # Unused Parameters # -->
+@export: 
 @index: 
 
 
@@ -181,10 +195,12 @@ export_my_page(vbi_page *pg)
 
 </para>
 
-@export: 
+@Param1: 
 @fp: 
 @pg: 
 @Returns: 
+<!-- # Unused Parameters # -->
+@export: 
 
 
 <!-- ##### FUNCTION vbi_export_file ##### -->
@@ -192,12 +208,12 @@ export_my_page(vbi_page *pg)
 
 </para>
 
-@export: 
+@Param1: 
 @name: 
 @pg: 
 @Returns: 
 <!-- # Unused Parameters # -->
-@Param1: 
+@export: 
 @fp: 
 
 
@@ -206,8 +222,10 @@ export_my_page(vbi_page *pg)
 
 </para>
 
-@export: 
+@Param1: 
 @Returns: 
+<!-- # Unused Parameters # -->
+@export: 
 
 
 <!-- ##### FUNCTION vbi_draw_vt_page_region ##### -->

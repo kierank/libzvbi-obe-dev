@@ -2,6 +2,8 @@
 
 	* doc/Makefile.am: Modified to permit building libzvbi in
 	  a separate directory.
+	* src/Makefile.am: Forgot to escape extern "C".
+	* src/export.h: Removed C++ reserved export identifier.
 
 2002-06-17	<mschimek@users.sf.net>
 
