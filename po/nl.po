@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.6.1\n"
-"POT-Creation-Date: 2002-07-07 02:20+0200\n"
+"POT-Creation-Date: 2002-08-04 21:31+0200\n"
 "PO-Revision-Date: 2002-01-08 14:34+0100\n"
 "Last-Translator: Ime Smits <ime@iae.nl>\n"
 "Language-Team: Dutch <ime@iae.nl>\n"
@@ -94,7 +94,7 @@ msgstr "HTML-kop invoegen"
 msgid "<title lang=\"en\">"
 msgstr "<title lang=\"nl\">"
 
-#: src/exp-html.c:352 src/exp-txt.c:550
+#: src/exp-html.c:352 src/exp-txt.c:599
 #, c-format
 msgid "Character conversion Unicode (UCS-2) to %s not supported."
 msgstr "Geen ondersteuning voor tekenconversie van unicode (UCS-2) naar %s."
@@ -228,11 +228,11 @@ msgstr "Achtergrond"
 msgid "Assumed terminal background color"
 msgstr "Aangenomen achtergrondkleur van terminal"
 
-#: src/exp-txt.c:600
+#: src/exp-txt.c:649
 msgid "Text"
 msgstr ""
 
-#: src/exp-txt.c:601
+#: src/exp-txt.c:650
 #, fuzzy
 msgid "Export this page as text file"
 msgstr "Exporteren als ANSI-tekst"
@@ -309,12 +309,12 @@ msgstr ""
 msgid "Unknown error."
 msgstr ""
 
-#: src/io-v4l.c:519 src/io-v4l.c:783 src/io-v4l.c:801 src/io-v4l2.c:320
-#: src/io-v4l2.c:529 src/io-v4l2.c:577 src/io-v4l2.c:658
+#: src/io-v4l2.c:320 src/io-v4l2.c:529 src/io-v4l2.c:577 src/io-v4l2.c:658
+#: src/io-v4l.c:519 src/io-v4l.c:783 src/io-v4l.c:801
 msgid "Virtual memory exhausted."
 msgstr "Geen virtueel geheugen beschikbaar."
 
-#: src/io-v4l.c:529 src/io-v4l2.c:332
+#: src/io-v4l2.c:332 src/io-v4l.c:529
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Kan apparaat '%s' niet openen: %d, %s."
@@ -328,12 +328,12 @@ msgstr "Kan apparaat '%s' niet openen: %d, %s."
 msgid "Probably not a v4l2 device."
 msgstr ""
 
-#: src/io-v4l.c:554 src/io-v4l2.c:348
+#: src/io-v4l2.c:348 src/io-v4l.c:554
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) is geen VBI-apparaat."
 
-#: src/io-v4l.c:705 src/io-v4l2.c:359 src/io-v4l2.c:542
+#: src/io-v4l2.c:359 src/io-v4l2.c:542 src/io-v4l.c:705
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr ""
@@ -352,18 +352,18 @@ msgstr ""
 msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr "Kan de huidige VBI-parameters van %s (%s) niet uitlezen: %d, %s."
 
-#: src/io-v4l.c:413 src/io-v4l.c:713 src/io-v4l.c:771 src/io-v4l2.c:406
-#: src/io-v4l2.c:519
+#: src/io-v4l2.c:406 src/io-v4l2.c:519 src/io-v4l.c:413 src/io-v4l.c:713
+#: src/io-v4l.c:771
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "%s (%s) kan de gewenste datadienst helaas niet ontvangen."
 
-#: src/io-v4l.c:450 src/io-v4l2.c:443
+#: src/io-v4l2.c:443 src/io-v4l.c:450
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "%s (%s) is al in gebruik."
 
-#: src/io-v4l.c:456 src/io-v4l2.c:459
+#: src/io-v4l2.c:459 src/io-v4l.c:456
 #, fuzzy, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr "Kan de VBI-parameters voor %s (%s) niet activeren: %d, %s."
@@ -372,14 +372,14 @@ msgstr "Kan de VBI-parameters voor %s (%s) niet activeren: %d, %s."
 msgid "Possibly a driver bug."
 msgstr "Mogelijk een bug in de drivers."
 
-#: src/io-v4l.c:593 src/io-v4l2.c:491
+#: src/io-v4l2.c:491 src/io-v4l.c:593
 #, fuzzy, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
 msgstr "%s (%s) biedt een onbekend VBI-formaat #%d aan."
 
-#: src/io-v4l.c:757 src/io-v4l2.c:503
+#: src/io-v4l2.c:503 src/io-v4l.c:757
 #, fuzzy, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -416,10 +416,10 @@ msgstr "mmap() van streaming I/O buffer #%d van %s (%s) mislukt: %d, %s."
 #, c-format
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
 msgstr ""
-"Kan streaming I/O buffer #%d van %s (%s) niet in de wachtrij plaatsen: %d, "
-"%s."
+"Kan streaming I/O buffer #%d van %s (%s) niet in de wachtrij plaatsen: %d, %"
+"s."
 
-#: src/io-v4l.c:812 src/io-v4l2.c:669
+#: src/io-v4l2.c:669 src/io-v4l.c:812
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Niet genoeg geheugen om VBI-capturebuffer (%d kB) te reserveren."
@@ -480,8 +480,8 @@ msgstr ""
 
 #~ msgid "Please contact the Zapzilla maintainers at <http://zapping.sf.net>."
 #~ msgstr ""
-#~ "Neem a.u.b. contact op met de Zapzilla maintainers via "
-#~ "<http://zapping.sf.net>."
+#~ "Neem a.u.b. contact op met de Zapzilla maintainers via <http://zapping.sf."
+#~ "net>."
 
 #~ msgid "V4L/V4L2 VBI interface: Failed to read from the device"
 #~ msgstr "V4L/V4L2 VBI-interface: Leesfout"
@@ -511,8 +511,8 @@ msgstr ""
 #~ msgid ""
 #~ "V4L2 VBI interface: Cannot enqueue buffer, driver or application bug?"
 #~ msgstr ""
-#~ "V4L2 VBI-interface: Kan niet schrijven naar de capturebuffer, bug in driver "
-#~ "of applicatie?"
+#~ "V4L2 VBI-interface: Kan niet schrijven naar de capturebuffer, bug in "
+#~ "driver of applicatie?"
 
 #~ msgid ""
 #~ "Cannot query current videostandard of %s (%s): %d, %s. Probably a driver "

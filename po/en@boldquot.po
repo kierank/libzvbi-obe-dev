@@ -30,8 +30,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.1\n"
-"POT-Creation-Date: 2002-07-07 02:20+0200\n"
-"PO-Revision-Date: 2002-07-07 02:20+0200\n"
+"POT-Creation-Date: 2002-08-04 21:31+0200\n"
+"PO-Revision-Date: 2002-08-04 21:31+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -119,7 +119,7 @@ msgstr "Include HTML page header"
 msgid "<title lang=\"en\">"
 msgstr "<title lang=“[1men[0m”>"
 
-#: src/exp-html.c:352 src/exp-txt.c:550
+#: src/exp-html.c:352 src/exp-txt.c:599
 #, c-format
 msgid "Character conversion Unicode (UCS-2) to %s not supported."
 msgstr "Character conversion Unicode (UCS-2) to %s not supported."
@@ -252,11 +252,11 @@ msgstr "Background"
 msgid "Assumed terminal background color"
 msgstr "Assumed terminal background color"
 
-#: src/exp-txt.c:600
+#: src/exp-txt.c:649
 msgid "Text"
 msgstr "Text"
 
-#: src/exp-txt.c:601
+#: src/exp-txt.c:650
 msgid "Export this page as text file"
 msgstr "Export this page as text file"
 
@@ -330,12 +330,12 @@ msgstr "Out of memory in export module '%s'."
 msgid "Unknown error."
 msgstr "Unknown error."
 
-#: src/io-v4l.c:519 src/io-v4l.c:783 src/io-v4l.c:801 src/io-v4l2.c:320
-#: src/io-v4l2.c:529 src/io-v4l2.c:577 src/io-v4l2.c:658
+#: src/io-v4l2.c:320 src/io-v4l2.c:529 src/io-v4l2.c:577 src/io-v4l2.c:658
+#: src/io-v4l.c:519 src/io-v4l.c:783 src/io-v4l.c:801
 msgid "Virtual memory exhausted."
 msgstr "Virtual memory exhausted."
 
-#: src/io-v4l.c:529 src/io-v4l2.c:332
+#: src/io-v4l2.c:332 src/io-v4l.c:529
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Cannot open '%s': %d, %s."
@@ -349,12 +349,12 @@ msgstr "Cannot identify '%s': %d, %s."
 msgid "Probably not a v4l2 device."
 msgstr "Probably not a v4l2 device."
 
-#: src/io-v4l.c:554 src/io-v4l2.c:348
+#: src/io-v4l2.c:348 src/io-v4l.c:554
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) is not a raw vbi device."
 
-#: src/io-v4l.c:705 src/io-v4l2.c:359 src/io-v4l2.c:542
+#: src/io-v4l2.c:359 src/io-v4l2.c:542 src/io-v4l.c:705
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) does not support the select() function."
@@ -373,18 +373,18 @@ msgstr "Probably a driver bug."
 msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr "Cannot query current vbi parameters of %s (%s): %d, %s."
 
-#: src/io-v4l.c:413 src/io-v4l.c:713 src/io-v4l.c:771 src/io-v4l2.c:406
-#: src/io-v4l2.c:519
+#: src/io-v4l2.c:406 src/io-v4l2.c:519 src/io-v4l.c:413 src/io-v4l.c:713
+#: src/io-v4l.c:771
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "Sorry, %s (%s) cannot capture any of the requested data services."
 
-#: src/io-v4l.c:450 src/io-v4l2.c:443
+#: src/io-v4l2.c:443 src/io-v4l.c:450
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "Cannot initialize %s (%s), the device is already in use."
 
-#: src/io-v4l.c:456 src/io-v4l2.c:459
+#: src/io-v4l2.c:459 src/io-v4l.c:456
 #, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr "Could not set the vbi capture parameters for %s (%s): %d, %s."
@@ -393,7 +393,7 @@ msgstr "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgid "Possibly a driver bug."
 msgstr "Possibly a driver bug."
 
-#: src/io-v4l.c:593 src/io-v4l2.c:491
+#: src/io-v4l2.c:491 src/io-v4l.c:593
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -402,7 +402,7 @@ msgstr ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
 
-#: src/io-v4l.c:757 src/io-v4l2.c:503
+#: src/io-v4l2.c:503 src/io-v4l.c:757
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -440,7 +440,7 @@ msgstr "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
 msgstr "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
 
-#: src/io-v4l.c:812 src/io-v4l2.c:669
+#: src/io-v4l2.c:669 src/io-v4l.c:812
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Not enough memory to allocate vbi capture buffer (%d KB)."

@@ -101,9 +101,9 @@ xlc )
 esac
 
 if test x$NORECURSIVE = x; then
-  configure_files=$srcdir/configure.in
-else
   configure_files="`find $srcdir -name configure.in -print`"
+else
+  configure_files=$srcdir/configure.in
 fi
 
 for coin in $configure_files
