@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.3 2002/02/10 11:47:10 mschimek Exp $ */
+/* $Id: osc.c,v 1.4 2002/04/09 12:29:17 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -34,7 +34,7 @@
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <X11/Xutil.h>
-#include <X11/xpm.h>
+//#include <X11/xpm.h>
 
 vbi_capture *		cap;
 vbi_raw_decoder *	par;

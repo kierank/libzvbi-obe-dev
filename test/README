@@ -25,7 +25,8 @@ export
 	Exports a Teletext page from a TTX sample stream on stdin, eg.
 	export "text;charset=ISO-8859-1,control=1" 100 <samples/s1-swr >foo.txt
 	capture --sim --pal --sliced | export "png" 100 >foo.png
-	Purpose: test teletext decoder and export modules.
+	Purpose: test teletext decoder and export modules. (Sample streams
+	are in CVS zapping/libvbi/samples.)
 
 caption
 	Closed Caption test displaying a hello world message or the
