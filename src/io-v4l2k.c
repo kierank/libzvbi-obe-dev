@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.22 2004/10/25 16:56:29 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.23 2004/11/26 05:53:42 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -308,7 +308,7 @@ restart_stream			(vbi_capture_v4l2 *	v)
 
 static int
 v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
-	    vbi_capture_buffer **sliced, struct timeval *timeout_orig)
+	    vbi_capture_buffer **sliced, const struct timeval *timeout_orig)
 {
 	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
 	struct timeval timeout = *timeout_orig;
@@ -600,7 +600,7 @@ v4l2_read_frame(vbi_capture_v4l2 *v, vbi_capture_buffer *raw, struct timeval *ti
 
 static int
 v4l2_read(vbi_capture *vc, vbi_capture_buffer **raw,
-	  vbi_capture_buffer **sliced, struct timeval *timeout)
+	  vbi_capture_buffer **sliced, const struct timeval *timeout)
 {
 	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
 	vbi_capture_buffer *my_raw = v->raw_buffer;

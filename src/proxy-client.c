@@ -17,12 +17,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-client.c,v 1.5 2004/11/11 05:34:34 mschimek Exp $
+ *  $Id: proxy-client.c,v 1.6 2004/11/26 05:53:26 mschimek Exp $
  */
 
-static const char rcsid[] = "$Id: proxy-client.c,v 1.5 2004/11/11 05:34:34 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-client.c,v 1.6 2004/11/26 05:53:26 mschimek Exp $";
 
-#include "../config.h"
+#ifdef HAVE_CONFIG_H
+#  include "../config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1215,7 +1217,7 @@ static int
 vbi_proxy_client_read( vbi_capture * vc,
                        struct vbi_capture_buffer **pp_raw_buf,
                        struct vbi_capture_buffer **pp_slice_buf,
-                       struct timeval     * p_timeout )
+                       const struct timeval     * p_timeout )
 {
    vbi_proxy_client * vpc = PARENT(vc, vbi_proxy_client, capt_api);
    struct timeval timeout = *p_timeout;
@@ -1577,6 +1579,8 @@ vbi_proxy_client_create( const char *p_dev_name, const char *p_client_name,
  * @param p_chn_profile Channel profile for scheduling at background
  *   priority level.
  *
+ * @since 0.2.9
+ *
  * This function is used to request permission to switch channels or norm.
  * Since the VBI device can be shared with other proxy clients, clients should
  * wait for permission, so that the proxy daemon can fairly schedule channel
@@ -1626,6 +1630,8 @@ vbi_proxy_client_channel_request( vbi_proxy_client * vpc,
  * Send channel control request to proxy daemon.
  * See description of the flags for details.
  *
+ * @since 0.2.9
+ *
  * @return
  * 0 upon success, -1 on error, examine @c errno for details.
  */
@@ -1644,6 +1650,8 @@ vbi_proxy_client_channel_notify( vbi_proxy_client * vpc,
  *
  * Request to temporarily suspend capturing
  *
+ * @since 0.2.9
+ *
  * @return
  * 0 upon success, -1 on error, examine @c errno for details.
  */
@@ -1661,6 +1669,8 @@ vbi_proxy_client_channel_suspend( vbi_proxy_client * vpc,
  * @param p_arg Ioctl argument to be passed to driver
  *
  * @brief Wrapper for ioctl requests on the VBI device
+ *
+ * @since 0.2.9
  *
  * This function allows to manipulate parameters of the underlying
  * VBI device.  Not all ioctls are allowed here.  It's mainly intended
@@ -1687,6 +1697,8 @@ vbi_proxy_client_device_ioctl( vbi_proxy_client * vpc,
  * @param p_granted Returns@c TRUE if client is currently allowed to
  *   switch channels
  *
+ * @since 0.2.9
+ *
  * Retrieve info sent by the proxy daemon in a channel change indication.
  *
  * @return
@@ -1705,6 +1717,8 @@ vbi_proxy_client_get_channel_desc( vbi_proxy_client * vpc,
  *
  * @brief Query if the client is currently allowed to switch channels
  *
+ * @since 0.2.9
+ *
  * @return
  * Returns @c TRUE if client is currently allowed to switch channels.
  */
@@ -1718,6 +1732,8 @@ vbi_proxy_client_has_channel_control( vbi_proxy_client * vpc )
  * @param vpc Pointer to initialized proxy client context
  *
  * @brief Returns the driver type behind the actual capture device
+ *
+ * @since 0.2.9
  *
  * This function can be used to query which driver is behind the
  * device which is currently opened by the VBI proxy daemon.
@@ -1744,6 +1760,8 @@ vbi_proxy_client_get_driver_api( vbi_proxy_client * vpc )
  *   callback function unmodified.
  *
  * @brief Installs callback function for asynchronous events
+ *
+ * @since 0.2.9
  *
  * This function installs a callback function which will be invoked
  * upon asynchronous events (e.g. channel changes by other clients.)
@@ -1783,6 +1801,8 @@ vbi_proxy_client_set_callback( vbi_proxy_client * vpc,
  * need not store it.  This pointer is required for function calls
  * through the capture device API (e.g. reading raw or sliced data)
  *
+ * @since 0.2.9
+ *
  * @return
  * Pointer to a vbi_capture structure, should be treated as void * by
  * caller, i.e. acessed neither for read nor write.  Returns @c NULL
@@ -1815,6 +1835,8 @@ vbi_proxy_client_get_capture_if( vbi_proxy_client * vpc )
  * @param pp_errorstr If not @c NULL this function stores a pointer to an error
  *   description here. You must free() this string when no longer needed.
  *
+ * @since 0.2.9
+ *
  * Open a new connection to a VBI proxy to open a VBI device for the
  * given services.  On side of the proxy one of the regular v4l_new()
  * functions is invoked and if it succeeds, data slicing is started
@@ -1826,7 +1848,7 @@ vbi_proxy_client_get_capture_if( vbi_proxy_client * vpc )
  * started the proxy daemon) applications should automatically fall back
  * to opening the device directly.
  *
- * @since 0.3.0
+ * @since 0.2.9
  * 
  * @return
  * Initialized vbi_capture context, @c NULL on failure.
@@ -1844,6 +1866,8 @@ vbi_capture_proxy_new( struct vbi_proxy_client *p_proxy_client,
 
 /**
  * @param vpc Pointer to initialized proxy client context
+ *
+ * @since 0.2.9
  *
  * This function closes the connection to the proxy daemon and frees
  * all resources.  The given context must no longer be used after this
@@ -1870,6 +1894,8 @@ vbi_proxy_client_destroy( vbi_proxy_client * vpc )
  *   description here. You must free() this string when no longer needed.
  * @param trace_level Enable debug output to stderr if non-zero.
  *   Larger values produce more output.
+ *
+ * @since 0.2.9
  *
  * This function initializes a proxy daemon client context with the given
  * parameters.  (Note this function does not yet connect the daemon.)

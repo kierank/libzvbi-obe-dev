@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l.c,v 1.25 2004/11/07 10:52:46 mschimek Exp $";
+"$Id: io-v4l.c,v 1.26 2004/11/26 05:53:56 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -227,7 +227,7 @@ v4l_read_frame(vbi_capture_v4l *v, vbi_capture_buffer *raw, struct timeval *time
 
 static int
 v4l_read(vbi_capture *vc, vbi_capture_buffer **raw,
-	 vbi_capture_buffer **sliced, struct timeval *timeout_orig)
+	 vbi_capture_buffer **sliced, const struct timeval *timeout_orig)
 {
 	vbi_capture_v4l *v = PARENT(vc, vbi_capture_v4l, capture);
 	vbi_capture_buffer *my_raw = v->raw_buffer;

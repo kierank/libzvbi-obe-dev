@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.15 2004/10/05 23:45:52 mschimek Exp $ */
+/* $Id: io.h,v 1.16 2004/11/26 05:54:27 mschimek Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -100,6 +100,13 @@ extern int		vbi_capture_dvb_filter(vbi_capture *cap, int pid);
 extern vbi_capture*	vbi_capture_dvb_new(char *dev, int scanning,
 				        unsigned int *services, int strict,
 				        char **errstr, vbi_bool trace);
+extern int64_t
+vbi_capture_dvb_last_pts	(const vbi_capture *	cap);
+extern vbi_capture *
+vbi_capture_dvb_new2		(const char *		device_name,
+				 unsigned int		pid,
+				 char **		errstr,
+				 vbi_bool		trace);
 
 struct vbi_proxy_client;
  
@@ -138,7 +145,7 @@ extern VBI_CAPTURE_FD_FLAGS vbi_capture_get_fd_flags(vbi_capture *capture);
 
 /* Private */
 
-#ifndef DOXYGEN_SHOULD_IGNORE_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -248,14 +255,16 @@ vbi_capture_set_log_fp		(vbi_capture *		capture,
 /* Preliminary hack for tests. */
 extern vbi_bool vbi_capture_force_read_mode;
 
-#endif /* !DOXYGEN_SHOULD_IGNORE_THIS */
+#endif /* !DOXYGEN_SHOULD_SKIP_THIS */
 
 /**
  * @ingroup Devmod
  */
 struct vbi_capture {
-	vbi_bool		(* read)(vbi_capture *, vbi_capture_buffer **,
-					 vbi_capture_buffer **, struct timeval *);
+	vbi_bool		(* read)(vbi_capture *,
+					 vbi_capture_buffer **,
+					 vbi_capture_buffer **,
+					 const struct timeval *);
 	vbi_raw_decoder *	(* parameters)(vbi_capture *);
         unsigned int            (* update_services)(vbi_capture *,
                                          vbi_bool, vbi_bool,
