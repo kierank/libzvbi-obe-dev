@@ -5,30 +5,39 @@ lib_LTLIBRARIES = libzvbi.la
 EXTRA_DIST = wstfont2.xbm ccfont2.xbm
 
 INCLUDES  = -Wall -Wunused -Wmissing-prototypes -Wmissing-declarations
+## -D_XOPEN_SOURCE=500 -D_BSD_SOURCE to enable pthread_rwlocks
 INCLUDES += -D_REENTRANT -D_XOPEN_SOURCE=500 -D_BSD_SOURCE
 INCLUDES += $(X_CFLAGS) $(UNICODE_CFLAGS)
 
 libzvbi_la_SOURCES = \
 	decoder.c decoder.h sliced.h \
-	io.c io.h io-v4l2.c io-v4l.c videodev.h videodev2.h \
+	io.c io.h \
+	io-bktr.c \
+	io-v4l2k.c videodev2k.h \
+	io-v4l2.c videodev2.h \
+	io-v4l.c videodev.h \
 	vbi.c vbi.h event.h \
 	packet.c teletext.c vt.h \
 	caption.c cc.h \
 	trigger.c trigger.h \
+	wss.c wss.h \
 	search.c search.h ure.c ure.h \
 	cache.c cache.h \
 	export.c export.h format.h \
-	exp-html.c exp-txt.c exp-txt.h \
-	exp-vtx.c exp-gfx.c exp-gfx.h exp-templ.c \
+	exp-txt.c exp-txt.h \
+	exp-gfx.c exp-gfx.h \
+	exp-html.c \
+	exp-vtx.c \
+	exp-templ.c \
 	hamm.c hamm.h \
 	lang.c lang.h \
-	tables.c tables.h bcd.h \
-	wss.c wss.h
+	tables.c tables.h \
+	bcd.h
 
 libzvbiincludedir = $(includedir)
 libzvbiinclude_HEADERS = libzvbi.h
 
-libzvbi_la_LIBADD = -lpthread $(PNG_LIB)
+libzvbi_la_LIBADD = $(PTHREAD_LIB) $(PNG_LIB)
 libzvbi_la_LDFLAGS = -version-info 1:2:1
 
 # Concat the header files in this order and filter out all lines
