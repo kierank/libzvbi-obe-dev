@@ -7,6 +7,8 @@ structpr = structpr.pl
 BUILT_SOURCES = \
 	libzvbi.h \
 	version.h \
+	_videodev.h \
+	_videodev2.h \
 	_videodev2k.h
 
 EXTRA_DIST = \
