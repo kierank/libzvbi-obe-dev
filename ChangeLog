@@ -1,3 +1,18 @@
+2003-05-17      <tomzo@users.sf.net>
+
+        * src/io.c: Added new interface function vbi_capture_add_services();
+          also prepared for new interface function vbi_capture_flush()
+        * src/io-v4l.c, io-v4l2.c, io-v4l2k.c: Implemented new interface
+          add_services(): add one or more services to an already initialized
+          capture context; large internal changes, but existing interface
+          functions should remain fully backwards compatible; also prepared
+          for new interface function flush()
+	* src/decoder.c: added new interface functions, required by io.c's
+          new add_services(): vbi_raw_decoder_resize() to adapt for VBI
+          geometry changes and vbi_raw_decoder_check_services() to check
+          which of the given services can be decoded with current parameters
+        * daemon/proxyd.c: uses new IO API function vbi_capture_add_services()
+
 2003-05-10      <tomzo@users.sf.net>
 
         * daemon/proxyd.c: bugfix: busy loop until the first client connect
