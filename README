@@ -35,11 +35,18 @@
   various test signals, closed captioning, and other digital data can be
   sent during this time period. 
 
-  The zvbi library provides routines to read from raw VBI capture devices,
-  to demodulate raw to sliced VBI data in software, and to interpret the
-  data of several popular services. Basically zvbi offers all functions
-  needed by VBI applications except for the user interface. The library
-  was written for the Zapping TV viewer http://zapping.sourceforge.net.
+  The zvbi library provides functions to read from Linux V4L, V4L2 and
+  FreeBSD BKTR raw VBI capture devices, from Linux DVB devices and from a
+  VBI proxy to share V4L and V4L2 VBI devices between multiple applications.
+
+  It can demodulate raw to sliced VBI data in software, with support for
+  a wide range of formats, has functions to decode several popular services
+  including Teletext and Closed Caption, a Teletext cache with search
+  function, various text export and rendering functions.
+
+  Basically zvbi offers all functions needed by VBI applications except for
+  the user interface. The library was written for the Zapping TV viewer
+  http://zapping.sourceforge.net.
 
   For details on using the library see the documentation in doc/html (built
   only if you have Doxygen http://www.doxygen.org/) and the files in the
@@ -64,9 +71,21 @@
   Ideas, questions, patches and bug reports
   =========================================
 
-  http://sourceforge.net/tracker/?group_id=2599 or by e-mail
-  mailto:zapping-misc@lists.sourceforge.net, registration is not
-  required.
+  Sourceforge tracker:
 
-  Primary author and maintainer of this library is Michael Schimek
-  mschimek@users.sourceforge.net. Public key: gpg --import <AUTHORS
+    https://sourceforge.net/tracker/?group_id=2599
+
+  Please leave an e-mail address for questions and progress notification.
+  Or send a message to the Zapping mailing list:
+
+    zapping-misc@lists.sourceforge.net
+
+  Subscribe at:
+
+    http://lists.sourceforge.net/lists/listinfo/zapping-misc
+
+  Subscription is not necessary, but the spam checker might delay
+  your messages. Primary author and maintainer of this library is
+
+    Michael Schimek <mschimek@users.sourceforge.net>
+    Public key: gpg --import <AUTHORS

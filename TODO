@@ -1,21 +1,8 @@
-$Id: TODO,v 1.16 2004/08/13 01:26:03 mschimek Exp $
+$Id: TODO,v 1.17 2004/11/11 05:33:27 mschimek Exp $
 
 Version 0.3
 
-* Events suck badly. Change to query functions (fetch page, station
-  name, aspect ratio, ...) and just notify apps of changes.
-* Improve i/o API, add proxy (CVS proxy branch).
-* packet.c: Add filter for data pages (EPG etc).
-* Program info from TTX (8/30 and VPS/PDC).
-* Not relocatable (bindtextdomain)
-* exp-gfx.c: draw_*_page_region different formats, custom fonts.
-* TTX export: Make blockgfx replacement smarter.
-* Think about ttx header samples (p100) for stations not transmitting
-  a CNI (instead of guessing the name from ttx). May use VTX to create
-  samples.
-* SGML error reporting. (Not sure anymore if this is
-  really worth the trouble.)
-* i18n: exporting static strings N_("foo") is a bad idea.
+* Improve i/o API.
 
 -------------------------------------------------------------------------------
 Ideas? Drop us a note at http://zapping.sourceforge.net.

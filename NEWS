@@ -1,7 +1,23 @@
 0.2.9
 -----
-Improved V4L2 interface with code from proxy branch by Tom Zoerner, and
-added ioctl logging. Extended capture and osc apps for easier i/o testing.
+This version contains the VBI proxy code by Tom Zoerner. With the proxy
+multiple applications can share a V4L or V4L2 VBI device. For details see
+daemon/README.
+
+Distro packagers please consider adding the proxy daemon to the system
+init sequence.
+
+Other changes:
+- Libzvbi now installs a zvbi-0.2.pc (pkg-config) file.
+- Added ioctl logging to V4L and V4L2 interface for tests.
+- Extended capture and osc apps for easier i/o testing.
+- Added experimental DVB mux & demux. Not yet supported by the
+  DVB driver interface due to lack of testing but test/capture
+  and test/export use it.
+
+Fixes:
+- Teletext decoder: switching between primary and secondary character
+  set did not work right.
 
 0.2.8
 -----
