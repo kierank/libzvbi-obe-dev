@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.h,v 1.7 2002/09/26 20:48:01 mschimek Exp $ */
+/* $Id: export.h,v 1.8 2002/10/02 20:59:25 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -342,7 +342,7 @@ struct vbi_export {
  */
 struct vbi_export_class {
 	vbi_export_class *	next;
-	vbi_export_info		_public;
+	vbi_export_info	*	_public;
 
 	vbi_export *		(* _new)(void);
 	void			(* _delete)(vbi_export *);

@@ -4,7 +4,7 @@ TESTS = exoptest cpptest
 noinst_PROGRAMS = unicode glyph explist caption export osc capture cpptest
 cpptest_SOURCES = cpptest.cc
 
-EXTRA_DIST = README uclist sim.c
+EXTRA_DIST = $(TESTS) README uclist sim.c
 
 INCLUDES = -I$(top_srcdir)/src $(COMMON_INCLUDES) $(X_CFLAGS) \
 	-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations

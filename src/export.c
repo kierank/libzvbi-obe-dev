@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.10 2002/09/26 20:47:52 mschimek Exp $ */
+/* $Id: export.c,v 1.11 2002/10/02 20:59:25 mschimek Exp $ */
 
 #include "../config.h"
 
@@ -109,10 +109,10 @@ vbi_register_export_module(vbi_export_class *new_module)
 
 	if (0)
 		fprintf(stderr, "libzvbi:vbi_register_export_module(\"%s\")\n",
-		        new_module->_public.keyword);
+		        new_module->_public->keyword);
 
 	for (xcp = &vbi_export_modules; *xcp; xcp = &(*xcp)->next)
-		if (strcmp(new_module->_public.keyword, (*xcp)->_public.keyword) < 0)
+		if (strcmp(new_module->_public->keyword, (*xcp)->_public->keyword) < 0)
 			break;
 
 	new_module->next = *xcp;
@@ -319,7 +319,7 @@ vbi_export_info_enum(int index)
 
 	for (xc = vbi_export_modules; xc && index > 0; xc = xc->next, index--);
 
-	return xc ? &xc->_public : NULL;
+	return xc ? xc->_public : NULL;
 }
 
 /**
@@ -350,8 +350,8 @@ vbi_export_info_keyword(const char *keyword)
 			break;
 
 	for (xc = vbi_export_modules; xc; xc = xc->next)
-		if (strncmp(keyword, xc->_public.keyword, keylen) == 0)
-			return &xc->_public;
+		if (strncmp(keyword, xc->_public->keyword, keylen) == 0)
+			return xc->_public;
 
 	return NULL;
 }
@@ -372,7 +372,7 @@ vbi_export_info_export(vbi_export *export)
 	if (!export)
 		return NULL;
 
-	return &export->_class->_public;
+	return export->_class->_public;
 }
 
 static void
@@ -539,7 +539,7 @@ vbi_export_new(const char *keyword, char **errstr)
 	key[keylen] = 0;
 
 	for (xc = vbi_export_modules; xc; xc = xc->next)
-		if (strcmp(key, xc->_public.keyword) == 0)
+		if (strcmp(key, xc->_public->keyword) == 0)
 			break;
 
 	if (!xc) {
@@ -555,7 +555,7 @@ vbi_export_new(const char *keyword, char **errstr)
 	if (!e) {
 		vbi_asprintf(errstr, _("Cannot initialize export module '%s', "
 				       "probably lack of memory."),
-			     xc->_public.label ? xc->_public.label : keyword);
+			     xc->_public->label ? xc->_public->label : keyword);
 		return NULL;
 	}
 
@@ -1069,10 +1069,10 @@ module_name			(vbi_export *		export)
 {
 	vbi_export_class *xc = export->_class;
 
-	if (xc->_public.label)
-		return _(xc->_public.label);
+	if (xc->_public->label)
+		return _(xc->_public->label);
 	else
-		return xc->_public.keyword;
+		return xc->_public->keyword;
 }
 
 /**

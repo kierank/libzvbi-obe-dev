@@ -30,8 +30,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
-"POT-Creation-Date: 2002-10-01 12:57+0200\n"
-"PO-Revision-Date: 2002-09-29 17:38+0200\n"
+"POT-Creation-Date: 2002-10-02 07:16+0200\n"
+"PO-Revision-Date: 2002-10-02 07:16+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -51,39 +51,39 @@ msgstr ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
 
-#: src/exp-gfx.c:805 src/exp-gfx.c:1101
+#: src/exp-gfx.c:805 src/exp-gfx.c:1103
 #, c-format
 msgid "Unable to allocate %d KB image buffer."
 msgstr "Unable to allocate %d KB image buffer."
 
-#: src/exp-gfx.c:895
+#: src/exp-gfx.c:894
 msgid "PPM"
 msgstr "PPM"
 
-#: src/exp-gfx.c:896
+#: src/exp-gfx.c:895
 msgid "Export this page as raw PPM image"
 msgstr "Export this page as raw PPM image"
 
-#: src/exp-gfx.c:984
+#: src/exp-gfx.c:986
 #, c-format
 msgid "Unable to allocate %d byte buffer."
 msgstr "Unable to allocate %d byte buffer."
 
-#: src/exp-gfx.c:1171 src/exp-html.c:232
+#: src/exp-gfx.c:1173 src/exp-html.c:232
 #, c-format
 msgid "Teletext Page %3x.%x"
 msgstr "Teletext Page %3x.%x"
 
-#: src/exp-gfx.c:1176 src/exp-html.c:235
+#: src/exp-gfx.c:1178 src/exp-html.c:235
 #, c-format
 msgid "Teletext Page %3x"
 msgstr "Teletext Page %3x"
 
-#: src/exp-gfx.c:1245
+#: src/exp-gfx.c:1246
 msgid "PNG"
 msgstr "PNG"
 
-#: src/exp-gfx.c:1246
+#: src/exp-gfx.c:1247
 msgid "Export this page as PNG image"
 msgstr "Export this page as PNG image"
 
@@ -128,11 +128,11 @@ msgstr "Character conversion Unicode (UCS-2) to %s not supported."
 msgid "Character conversion failed."
 msgstr "Character conversion failed."
 
-#: src/exp-html.c:720
+#: src/exp-html.c:719
 msgid "HTML"
 msgstr "HTML"
 
-#: src/exp-html.c:721
+#: src/exp-html.c:720
 msgid "Export this page as HTML page"
 msgstr "Export this page as HTML page"
 
@@ -252,11 +252,11 @@ msgstr "Background"
 msgid "Assumed terminal background color"
 msgstr "Assumed terminal background color"
 
-#: src/exp-txt.c:649
+#: src/exp-txt.c:648
 msgid "Text"
 msgstr "Text"
 
-#: src/exp-txt.c:650
+#: src/exp-txt.c:649
 msgid "Export this page as text file"
 msgstr "Export this page as text file"
 
@@ -272,11 +272,11 @@ msgstr "Page is not cached, sorry."
 msgid "Cannot export this page, not displayable."
 msgstr "Cannot export this page, not displayable."
 
-#: src/exp-vtx.c:131
+#: src/exp-vtx.c:130
 msgid "VTX"
 msgstr "VTX"
 
-#: src/exp-vtx.c:132
+#: src/exp-vtx.c:131
 msgid ""
 "Export this page as VTX file, the format used by VideoteXt and vbidecode"
 msgstr ""
