@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.14 2002/09/26 20:49:17 mschimek Exp $
+dnl $Id: configure.in,v 1.15 2002/10/02 02:18:29 mschimek Exp $
 
 AC_INIT(configure.in)
 AM_INIT_AUTOMAKE(zvbi, 0.2.2)
@@ -7,6 +7,7 @@ AM_CONFIG_HEADER(config.h)
 AM_ACLOCAL_INCLUDE(m4)
 
 AC_PROG_CC
+AC_PROG_CXX dnl just for test
 AM_PROG_LIBTOOL
 
 test -e site_def.h || cat <<EOF >site_def.h
