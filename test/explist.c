@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: explist.c,v 1.1 2002/01/12 16:19:31 mschimek Exp $ */
+/* $Id: explist.c,v 1.2 2002/01/13 09:54:58 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -206,6 +206,7 @@ test_set_entry(vbi_export *ex, vbi_option_info *oi,
 		break;
 	case 2:
 		printf("unexpected success.");
+		break;
 	default:
 		printf("success.");
 	}
@@ -284,7 +285,7 @@ dump_option_info(vbi_export *ex, vbi_option_info *oi)
 	TYPE_STR(VBI_OPTION_MENU);
 	default:
 		printf("  * Option %s has invalid type %d\n", oi->keyword, oi->type);
-		return;
+		exit(EXIT_FAILURE);
 	}
 
 	printf("  * type=%s keyword=%s label=\"%s\" tooltip=\"%s\"\n",

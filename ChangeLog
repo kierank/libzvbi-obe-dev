@@ -1,3 +1,10 @@
+2002-01-13	Fixes <mschimek@users.sf.net>
+
+	* test/explist.h: Option type check.
+	* doc/tmpl/sliced.sgml: Corrected .gif names.
+	* src/export.c: Fixed vbi_export_option_menu_set(), didn't check
+	  for entry < 0.
+
 2002-01-12	Imported libzvbi into Zapping CVS <mschimek@users.sf.net>
 
 	* Renamed to libzvbi to avoid a name conflict. VBI is an ubiquitious
