@@ -1,3 +1,18 @@
+2005-02-17    <mschimek@users.sf.net>
+
+	* src: Regrouped doxumentation.
+	* test/decode.c: New low level VBI decoder from branch 0.3.
+	  Commented out future stuff, made a few corrections and
+	  added vbi_idl_demux routines.
+	* test/README: Added decode blurb.
+	* test/Makefile.am (noinst_PROGRAMS): Added decode.
+	* src/idl_demux.c, src/idl_demux.h: New Teletext packet IDL
+	  demultiplexer.
+	* src/Makefile.am (libzvbi_la_SOURCES): Added idl_demux.c,
+	  idl_demux.h.
+	  (LIBZVBI_HDRS): Added idl_demux.h.
+	* doc/Doxyfile.in (FILE_PATTERNS): Added idl_demux.h.
+
 2005-01-23    <mschimek@users.sf.net>
 
 	* Release 0.2.13.

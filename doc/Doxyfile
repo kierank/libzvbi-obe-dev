@@ -60,6 +60,7 @@ FILE_PATTERNS          = *.c \
                          cc.h \
                          decoder.h \
 			 dvb_demux.h \
+			 idl_demux.h \
                          event.h \
                          exp-gfx.h \
                          exp-txt.h \
@@ -68,6 +69,7 @@ FILE_PATTERNS          = *.c \
                          hamm.h \
                          io.h \
                          lang.h \
+			 misc.h \
                          proxy-msg.h \
                          proxy-client.h \
                          search.h \
