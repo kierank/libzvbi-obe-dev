@@ -1,3 +1,11 @@
+2004-10-24    <tomzo@users.sf.net>
+
+	* daemon/proxyd.c: Added handling of norm changes;
+	  improved debug level handling.
+	* src/proxy-msg.c: Cleaned up socket I/O interface functions.
+	* src/proxy-client.c: Added handling of norm changes.
+	* text/proxy-test.c: Added test support for norm change handling.
+
 2004-10-14    <mschimek@users.sf.net>
 
 	* src/wstfont2.xbm: Fixed height of Omega character.
