@@ -1,3 +1,18 @@
+2003-05-24      <tomzo@users.sf.net>
+
+        Periodic check-in for ongoing proxy implementation:
+        * daemon/proxyd.c: allow multiple -dev arguments on the command line
+          and serve all the given devices through multiple sockets in /tmp;
+          added support for v4l drivers without select() by using threads to
+          block in read(); handle SERVICE_REQ messages from proxy clients to
+          support add_service() capture interface in io-proxy.c
+        * src/io-proxy.c: Implemented new capture interfaces: add_services()
+          and added get_poll_fd(), prepared flush()
+        * src/io.c, src/io-v4l.c, io-v4l2.c, io-v4l2k.c: Added v4l_get_poll_fd()
+          to return file handle only if driver supports poll() and select()
+        * test/proxy-test.c: added dynamic service switch to test add_service() interface: new function;
+          added new service closed caption
+
 2003-05-17      <tomzo@users.sf.net>
 
         * src/io.c: Added new interface function vbi_capture_add_services();
