@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.10 2003/10/16 18:16:11 mschimek Exp $ */
+/* $Id: vbi.c,v 1.11 2003/10/21 20:53:05 mschimek Exp $ */
 
 #include "site_def.h"
 #include "../config.h"
@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>

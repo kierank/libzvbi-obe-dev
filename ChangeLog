@@ -1,8 +1,15 @@
+2003-10-21	<mschimek@users.sf.net>
+
+	* Release 0.2.5.
+
 2003-10-20	<mschimek@users.sf.net>
 
 	* configure.in, Makefile.am, src/Makefile.am, daemon:
 	  Proxy code is not ready for release, moved to a separate
 	  branch.
+	* src/io-v4l2.c: No workee. Restored 0.2.4 i/o code.
+	* src/caption.c, src/teletext.c, src/vbi.c,
+	  src/io-bktr.c: FreeBSD 5 compile fixes.
 	* Cleanup.
 
 2003-10-16	<mschimek@users.sf.net>

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.10 2003/02/16 21:11:29 mschimek Exp $ */
+/* $Id: teletext.c,v 1.11 2003/10/21 20:53:05 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h> /* strncasecmp */
 #include <ctype.h>
 #include <assert.h>
 

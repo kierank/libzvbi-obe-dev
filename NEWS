@@ -1,14 +1,10 @@
 0.2.5
 -----
-Hello World. New this time is a vbi_version() function to
-query the version of the library. If your application uses
-autoconf to configure you can test for its presence with
-the AC_CHECK_LIB macro. The remaining changes are bug fixes,
-read about the gory details in ChangeLog.
-
-Special thanks go to Tom Zoerner for reviewing and brushing
-up the capture routines. Unfortunately his VBI proxy is not
-yet ready for release, maybe next time.
+New this time is a vbi_version() function to query the version
+of the library at runtime. If your application uses autoconf to
+configure you can test for its presence with the AC_CHECK_LIB
+macro. The remaining changes are bug fixes, read about the
+details in ChangeLog.
 
 0.2.4
 -----

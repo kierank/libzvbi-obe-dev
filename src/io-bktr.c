@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-bktr.c,v 1.3 2003/10/16 18:16:11 mschimek Exp $";
+static char rcsid[] = "$Id: io-bktr.c,v 1.4 2003/10/21 20:53:05 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -37,7 +37,7 @@ static char rcsid[] = "$Id: io-bktr.c,v 1.3 2003/10/16 18:16:11 mschimek Exp $";
 #include <unistd.h>
 #include <assert.h>
 #include <sys/time.h>		/* timeval */
-#include <sys/types.h>		/* fd_set */
+#include <sys/select.h>		/* fd_set */
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <pthread.h>

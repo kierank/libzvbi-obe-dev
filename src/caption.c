@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.13 2003/10/14 20:19:59 mschimek Exp $ */
+/* $Id: caption.c,v 1.14 2003/10/21 20:53:05 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -464,7 +464,7 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			for (i = 0; i < 2; i++) {
 				int l = (buffer[i] >> 3) & 7;
 				vbi_audio_mode m = mode[i][buffer[i] & 7];
-				char *s = ((1 << l) & 0xC1) ? NULL : language[l];
+				const char *s = ((1 << l) & 0xC1) ? NULL : language[l];
 
 				if (pi->audio[i].mode != m) {
 					neq = 1; pi->audio[i].mode = m;
@@ -490,15 +490,15 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			for (i = 0; i < length; i++) {
 				int ch = buffer[i] & 7;
 				int l = (buffer[i] >> 3) & 7;
-				char *s;
+				const char *s;
 
 				ch = (ch & 1) * 4 + (ch >> 1);
 
 				services |= 1 << ch;
 				s = ((1 << l) & 0xC1) ? NULL : language[l];
 
-				if (pi->caption_language[ch] != s) {
-					neq = 1; pi->caption_language[ch] = s;
+				if (pi->caption_language[ch] != (unsigned char *) s) {
+					neq = 1; pi->caption_language[ch] = (unsigned char *) s;
 				}
 
 				if (_class == XDS_CURRENT)

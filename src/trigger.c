@@ -22,11 +22,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: trigger.c,v 1.7 2003/10/14 20:18:55 mschimek Exp $ */
+/* $Id: trigger.c,v 1.8 2003/10/21 20:53:05 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 #include <time.h>
 #include <limits.h>
