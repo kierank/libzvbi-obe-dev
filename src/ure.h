@@ -20,10 +20,16 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $Id: ure.h,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
+/* $Id: ure.h,v 1.3 2002/03/06 00:54:51 mschimek Exp $ */
 
 #ifndef _h_ure
 #define _h_ure
+
+#ifdef HAVE_CONFIG_H
+#  include "../config.h"
+#endif
+
+#ifdef HAVE_LIBUNICODE
 
 #include <stdio.h>
 #include <unicode.h>
@@ -134,5 +140,7 @@ extern int ure_exec __((ure_dfa_t dfa, int flags,
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* HAVE_LIBUNICODE */
 
 #endif /* _h_ure */

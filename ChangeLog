@@ -1,3 +1,12 @@
+2002-03-02	Misc <mschimek@users.sf.net>
+
+	* src/bcd.h: Extended vbi_add_bcd() and vbi_is_bcd() from
+	  3 to 8 digits.
+	* src/export.c: strncpy() fix in vbi_export_invalid_option().
+	* Dropped the libunicode requirement. Is only needed for
+	  ure.c which is needed by search.c. Search is now disabled
+	  when unicode is not installed.
+
 2002-02-08	I/O stuff <mschimek@users.sf.net>
 
 	* src/io-v4l.c: Enabled select() for bttv.

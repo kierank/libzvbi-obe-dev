@@ -1,7 +1,7 @@
 /*
  *  libzvbi - Teletext page cache search functions
  *
- *  Copyright (C) 2000, 2001 Michael H. Schimek
+ *  Copyright (C) 2000, 2001, 2002 Michael H. Schimek
  *  Copyright (C) 2000, 2001 Iñaki G. Etxebarria
  *
  *  Based on code from AleVT 1.5.1
@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: search.c,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
+/* $Id: search.c,v 1.3 2002/03/06 00:54:51 mschimek Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +33,8 @@
 #include "search.h"
 #include "ure.h"
 #include "vbi.h"
+
+#ifdef HAVE_LIBUNICODE
 
 struct vbi_search {
 	vbi_decoder *		vbi;
@@ -612,3 +614,17 @@ vbi_search_next(vbi_search *search, vbi_page **pg, int dir)
 
 	return VBI_SEARCH_ERROR;
 }
+
+#else /* !HAVE_LIBUNICODE */
+
+vbi_search *
+vbi_search_new(vbi_decoder *vbi,
+	       vbi_pgno pgno, vbi_subno subno,
+	       uint16_t *pattern,
+	       vbi_bool casefold, vbi_bool regexp,
+	       int (* progress)(vbi_page *pg))
+{
+	return NULL;
+}
+
+#endif /* !HAVE_LIBUNICODE */

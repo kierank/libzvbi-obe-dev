@@ -28,9 +28,13 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#if 0
-static char rcsid[] = "$Id: ure.c,v 1.2 2002/01/21 07:57:10 mschimek Exp $";
+/* $Id: ure.c,v 1.3 2002/03/06 00:54:51 mschimek Exp $ */
+
+#ifdef HAVE_CONFIG_H
+#  include "../config.h"
 #endif
+
+#ifdef HAVE_LIBUNICODE
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -2323,3 +2327,5 @@ ure_exec(ure_dfa_t dfa, int flags, ucs2_t *text, unsigned long textlen,
 
   return (ms != ~0) ? 1 : 0;
 }
+
+#endif /* HAVE_LIBUNICODE */

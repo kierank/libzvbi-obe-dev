@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.5\n"
-"POT-Creation-Date: 2002-01-26 12:30+0100\n"
+"POT-Creation-Date: 2002-03-05 23:34+0100\n"
 "PO-Revision-Date: 2002-01-08 14:33+0100\n"
 "Last-Translator: Michael H. Schimek <mschimek@users.sourceforge.net>\n"
 "Language-Team: German <de@li.org>\n"
@@ -301,21 +301,21 @@ msgstr "Fehler beim Speichern der Datei"
 msgid "Export module '%s' has no option '%s'."
 msgstr "Ausgabemodul '%s' hat keine Option '%s'."
 
-#: src/export.c:1034
-#, c-format
-msgid "Invalid argument for option '%s' of export module '%s'."
+#: src/export.c:1070
+#, fuzzy, c-format
+msgid "Invalid argument %s for option %s of export module %s."
 msgstr "Fehlerhaftes Argument für Option '%s' von Ausgabemodul '%s'."
 
-#: src/export.c:1045
+#: src/export.c:1081
 #, c-format
 msgid "Out of memory in export module '%s'."
 msgstr "Speichermangel in Ausgabemodul '%s'."
 
-#: src/export.c:1075
+#: src/export.c:1111
 msgid "Unknown error."
 msgstr "Unbekannter fehler."
 
-#: src/io-v4l.c:506 src/io-v4l.c:767 src/io-v4l.c:785 src/io-v4l2.c:325
+#: src/io-v4l.c:506 src/io-v4l.c:769 src/io-v4l.c:787 src/io-v4l2.c:325
 #: src/io-v4l2.c:523 src/io-v4l2.c:571 src/io-v4l2.c:647
 msgid "Virtual memory exhausted."
 msgstr "Virtueller Speicher erschöpft."
@@ -340,7 +340,7 @@ msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) ist kein VBI-Gerät."
 
 #. Mandatory; dequeue buffer is non-blocking.
-#: src/io-v4l.c:554 src/io-v4l2.c:360 src/io-v4l2.c:536
+#: src/io-v4l.c:691 src/io-v4l2.c:360 src/io-v4l2.c:536
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) unterstützt nicht die select() Funktion."
@@ -362,7 +362,7 @@ msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr ""
 "Kann die gegenwärtigen VBI Parameter von %s (%s) nicht feststellen: %d, %s."
 
-#: src/io-v4l.c:408 src/io-v4l.c:697 src/io-v4l.c:755 src/io-v4l2.c:407
+#: src/io-v4l.c:408 src/io-v4l.c:699 src/io-v4l.c:757 src/io-v4l2.c:407
 #: src/io-v4l2.c:513
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
@@ -383,7 +383,7 @@ msgstr "Kann die VBI Parameter für %s (%s) nicht einstellen: %d, %s."
 msgid "Possibly a driver bug."
 msgstr "Vielleicht ein Fehler im Treiber."
 
-#: src/io-v4l.c:588 src/io-v4l2.c:492
+#: src/io-v4l.c:579 src/io-v4l2.c:492
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -423,7 +423,7 @@ msgstr ""
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
 msgstr "Kann Streaming I/O Puffer %d von %s (%s) nicht einreihen: %d, %s."
 
-#: src/io-v4l.c:796 src/io-v4l2.c:658
+#: src/io-v4l.c:798 src/io-v4l2.c:658
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Nicht genug Speicher um VBI Capturepuffer (%d KB) anzulegen."
@@ -445,28 +445,28 @@ msgstr "V4L2 Schnittstelle nicht kompiliert."
 msgid "driver unknown"
 msgstr "Treiber unbekannt"
 
-#: src/io-v4l.c:629
+#: src/io-v4l.c:622
 #, c-format
 msgid "Cannot capture with %s (%s), has no standard vbi interface."
 msgstr ""
 "Kann keine VBI Daten von %s (%s) lesen, der Treiber verwendet keine bekannte "
 "VBI Schnittstelle."
 
-#: src/io-v4l.c:647
+#: src/io-v4l.c:640
 #, c-format
 msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
 msgstr "Kann %s (%s) nicht identifizieren, vermutlich kein BTTV Treiber."
 
-#: src/io-v4l.c:663 src/io-v4l.c:714
+#: src/io-v4l.c:656 src/io-v4l.c:716
 #, fuzzy, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr ""
 "Kann den gegenwärtigen Videostandard von %s (%s) nicht feststellen oder "
 "setzen.\n"
 
-#: src/io-v4l.c:741
+#: src/io-v4l.c:743
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -475,7 +475,7 @@ msgstr ""
 "Kann die gewünschten Datendienste mit %s (%s) nicht empfangen, die "
 "Samplingfrequenz %.2f MHz ist zu niedrig."
 
-#: src/io-v4l.c:843 src/io-v4l.c:852
+#: src/io-v4l.c:845 src/io-v4l.c:854
 msgid "V4L interface not compiled."
 msgstr "V4L Schnittstelle nicht kompiliert."
 

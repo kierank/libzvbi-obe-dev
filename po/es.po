@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.5\n"
-"POT-Creation-Date: 2002-01-26 12:30+0100\n"
+"POT-Creation-Date: 2002-03-05 23:34+0100\n"
 "PO-Revision-Date: 2002-01-08 14:34+0100\n"
 "Last-Translator: Iñaki García Etxebarria <garetxe@users.sourceforge.net>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -305,21 +305,21 @@ msgstr ""
 msgid "Export module '%s' has no option '%s'."
 msgstr ""
 
-#: src/export.c:1034
+#: src/export.c:1070
 #, c-format
-msgid "Invalid argument for option '%s' of export module '%s'."
+msgid "Invalid argument %s for option %s of export module %s."
 msgstr ""
 
-#: src/export.c:1045
+#: src/export.c:1081
 #, c-format
 msgid "Out of memory in export module '%s'."
 msgstr ""
 
-#: src/export.c:1075
+#: src/export.c:1111
 msgid "Unknown error."
 msgstr ""
 
-#: src/io-v4l.c:506 src/io-v4l.c:767 src/io-v4l.c:785 src/io-v4l2.c:325
+#: src/io-v4l.c:506 src/io-v4l.c:769 src/io-v4l.c:787 src/io-v4l2.c:325
 #: src/io-v4l2.c:523 src/io-v4l2.c:571 src/io-v4l2.c:647
 msgid "Virtual memory exhausted."
 msgstr "Memoria virtual agotada."
@@ -344,7 +344,7 @@ msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) no es dispositivo de VBI crudo."
 
 #. Mandatory; dequeue buffer is non-blocking.
-#: src/io-v4l.c:554 src/io-v4l2.c:360 src/io-v4l2.c:536
+#: src/io-v4l.c:691 src/io-v4l2.c:360 src/io-v4l2.c:536
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr ""
@@ -366,7 +366,7 @@ msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr ""
 "No se pueden obtener los parámetros de vbi actuales de %s (%s): %d, %s."
 
-#: src/io-v4l.c:408 src/io-v4l.c:697 src/io-v4l.c:755 src/io-v4l2.c:407
+#: src/io-v4l.c:408 src/io-v4l.c:699 src/io-v4l.c:757 src/io-v4l2.c:407
 #: src/io-v4l2.c:513
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
@@ -389,7 +389,7 @@ msgstr ""
 msgid "Possibly a driver bug."
 msgstr "Posiblemente un fallo del driver."
 
-#: src/io-v4l.c:588 src/io-v4l2.c:492
+#: src/io-v4l.c:579 src/io-v4l2.c:492
 #, fuzzy, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -424,7 +424,7 @@ msgstr "Fallo al mapear a memoria el buffer streaming #%d de %s (%s): %d, %s."
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
 msgstr "Fallo al enviar el buffer streaming #%d a %s (%s): %d, %s."
 
-#: src/io-v4l.c:796 src/io-v4l2.c:658
+#: src/io-v4l.c:798 src/io-v4l2.c:658
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "No hay sufficiente memoria para el buffer de captura VBI (%d KB)."
@@ -446,24 +446,24 @@ msgstr ""
 msgid "driver unknown"
 msgstr "controlador desconocido"
 
-#: src/io-v4l.c:629
+#: src/io-v4l.c:622
 #, c-format
 msgid "Cannot capture with %s (%s), has no standard vbi interface."
 msgstr "No se puede capturar con %s (%s), no tiene interfaz vbi estándar."
 
-#: src/io-v4l.c:647
+#: src/io-v4l.c:640
 #, c-format
 msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
 msgstr ""
 
-#: src/io-v4l.c:663 src/io-v4l.c:714
+#: src/io-v4l.c:656 src/io-v4l.c:716
 #, fuzzy, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr "No se puede establecer o determinar el estándar actual de %s (%s).\n"
 
-#: src/io-v4l.c:741
+#: src/io-v4l.c:743
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -472,7 +472,7 @@ msgstr ""
 "No se pueden capturar los servicios de datos solicitados con %s (%s),\n"
 "la frecuencia de muestreo %.2f MHz es demasiado baja."
 
-#: src/io-v4l.c:843 src/io-v4l.c:852
+#: src/io-v4l.c:845 src/io-v4l.c:854
 msgid "V4L interface not compiled."
 msgstr ""
 

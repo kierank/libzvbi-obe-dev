@@ -1,15 +1,15 @@
-Name: libzvbi
+Name: zvbi
 Version: @VERSION@
 Release: 1
 Summary: Raw VBI, Teletext and Closed Caption decoding library
 Copyright: GPL
 Group: Applications/Multimedia
 Url: http://zapping.sourceforge.net/
-Source: http://prdownloads.sourceforge.net/zapping/libzvbi-@VERSION@.tar.bz2
+Source: http://prdownloads.sourceforge.net/zapping/zvbi-@VERSION@.tar.bz2
 Packager: Michael H. Schimek <mschimek@users.sourceforge.net>
 Buildroot: %{_tmppath}/%{name}-root
 PreReq: /sbin/install-info
-Provides: libzvbi
+Provides: zvbi
 
 Requires: libunicode >= 0.4
 Requires: gettext >= 0.10.36
