@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.4 2002/03/19 19:27:40 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2.c,v 1.5 2002/04/12 12:10:58 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -337,10 +337,13 @@ vbi_capture_v4l2_new(char *dev_name, int buffers,
 	v->capture.parameters = v4l2_parameters;
 	v->capture.delete = v4l2_delete;
 
-	if ((v->fd = open(dev_name, O_RDONLY)) == -1) {
-		vbi_asprintf(errorstr, _("Cannot open '%s': %d, %s."),
-			     dev_name, errno, strerror(errno));
-		goto io_error;
+	/* O_RDWR required for PROT_WRITE */
+	if ((v->fd = open(dev_name, O_RDWR)) == -1) {
+		if ((v->fd = open(dev_name, O_RDONLY)) == -1) {
+			vbi_asprintf(errorstr, _("Cannot open '%s': %d, %s."),
+				     dev_name, errno, strerror(errno));
+			goto io_error;
+		}
 	}
 
 	printv("Opened %s\n", dev_name);
@@ -370,8 +373,8 @@ vbi_capture_v4l2_new(char *dev_name, int buffers,
 	}
 #endif
 
+	/* mandatory, http://www.thedirks.org/v4l2/v4l2dsi.htm */
 	if (IOCTL(v->fd, VIDIOC_G_STD, &vstd) == -1) {
-		/* mandatory, http://www.thedirks.org/v4l2/v4l2dsi.htm */
 		vbi_asprintf(errorstr, _("Cannot query current videostandard of %s (%s): %d, %s."),
 			     dev_name, vcap.name, errno, strerror(errno));
 		guess = _("Probably a driver bug.");
@@ -505,9 +508,16 @@ vbi_capture_v4l2_new(char *dev_name, int buffers,
 	v->dec.sampling_format = VBI_PIXFMT_YUV420;
 
 	if (*services & ~(VBI_SLICED_VBI_525 | VBI_SLICED_VBI_625)) {
-		/* Nyquist */
+		/* Nyquist (we're generous at 1.5) */
 
 		if (v->dec.sampling_rate < max_rate * 3 / 2) {
+			vbi_asprintf(errorstr, _("Cannot capture the requested "
+						 "data services with "
+						 "%s (%s), the sampling frequency "
+						 "%.2f MHz is too low."),
+				     dev_name, vcap.name,
+				     v->dec.sampling_rate / 1e6);
+			goto failure;
 		}
 
 		printv("Nyquist check passed\n");

@@ -1,3 +1,10 @@
+2002-04-11	<mschimek@users.sf.net>
+
+	* src/io-v4l2.c: Gerd Knorr says bttv 0.8.x needs O_RDWR to
+	  PROT_WRITE. Nyquist check was missing.
+	* test/capture.c: Gerd found missing timeval init. Miracle
+	  how it worked up to this point remains unsolved.
+
 2002-04-09	<mschimek@users.sf.net>
 
 	* src/caption.c: Added ASCII range check before Unicode txl,
