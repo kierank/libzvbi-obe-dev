@@ -1,3 +1,21 @@
+2005-01-15    <mschimek@users.sf.net>
+
+	* test/wss.c: New test/demo capturing a WSS signal from video images.
+	* test/README: Added wss.
+	* test/Makefile.am (noinst_PROGRAMS): Added wss.
+	* src/teletext.c (enhance), src/packet.c (parse_28_29),
+	  src/exp-gfx.c (png_export): Nested func fix for gcc 4.0,
+	  Debian bug #290444.
+	
+2005-01-13    <mschimek@users.sf.net>
+
+	* src/raw_decoder.c: VBI_SLICED_TELETEXT_B_L10_625 had incorrect F2
+	  range 319-334, bug compatible with bttv. Corrected to 320-335.
+	* src/io-v4l2k.c: Added bug workaround for bttv < 0.9.15, saa7134
+	  which capture PAL/SECAM F2 line numbers one higher than reported.
+	* src/raw_decoder.h, src/raw_decoder.c: s/uint/int strict for
+	  compatibility with ancient libzvbi 0.2 apps.
+
 2005-01-09    <mschimek@users.sf.net>
 
 	* test/capture.c, test/osc.c: Changed strict param from -1 to 0

@@ -1,9 +1,9 @@
 
   libzvbi - VBI decoding library
 
-  Copyright (C) 2000-2003 Michael H. Schimek
-  Copyright (C) 2000, 2001 Iñaki García Etxebarria
-  Copyright (C) 2003 Tom Zoerner
+  Copyright (C) 2000-2005 Michael H. Schimek
+  Copyright (C) 2000-2001 Iñaki García Etxebarria
+  Copyright (C) 2003-2004 Tom Zoerner
 	
   Based on AleVT 1.5.1
   Copyright (C) 1998, 1999 Edgar Toernig
