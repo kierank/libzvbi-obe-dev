@@ -40,24 +40,11 @@
     - The newest subpage is at the front.
 
     Hmm... maybe a tree would be better...
+
+
+  **NOTE**: This code is obsolete, see CVS branch-0-3 
+
 */
-
-/*
-  Priority
-  0 - attic2
-  1 - attic3
-  2 - ordinary pages
-  3 - pages x00 and xzy with x=y=z, shared pages (objs, drcs),
-      subpages, visited pages
-  4 - locked pages
-
-  Reception: -> 2 or 3
-  Channel switch: all 2 -> 0, 3 -> 1, end of list.
-  Fetch: -> 4.
-  Unref: -> 3.
-  No memory: recycle start of list, 0 - 3.
- */
-
 
 /**
  * @addtogroup Cache Page cache

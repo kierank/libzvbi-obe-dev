@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.12 2003/02/16 21:11:25 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l.c,v 1.13 2003/04/29 05:51:29 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -452,6 +452,14 @@ set_parameters(vbi_capture_v4l *v, struct vbi_format *vfmt, int *max_rate,
 			     dev_name, driver_name);
 		break;
 
+	case EINVAL:
+                if (strict < 2) {
+		        printv("VIDIOCSVBIFMT returned EINVAL, "
+		               "will try the current parameters\n");
+                        *vfmt = vfmt_temp;
+                        return TRUE;
+                }
+		break;
 	default:
 		vbi_asprintf(errorstr, _("Could not set the vbi "
 					 "capture parameters for %s (%s): %d, %s."),
@@ -494,6 +502,18 @@ v4l_fd(vbi_capture *vc)
 	vbi_capture_v4l *v = PARENT(vc, vbi_capture_v4l, capture);
 
 	return v->fd;
+}
+
+static void
+print_vfmt(const char *s, struct vbi_format *vfmt)
+{
+	fprintf(stderr, "%sformat %08x, %d Hz, %d bpl, "
+		"F1 %d+%d, F2 %d+%d, flags %08x\n", s,
+		vfmt->sample_format,
+		vfmt->sampling_rate, vfmt->samples_per_line,
+		vfmt->start[0], vfmt->count[0],
+		vfmt->start[1], vfmt->count[1],
+		vfmt->flags);
 }
 
 static vbi_capture *
@@ -582,6 +602,9 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		printv("Driver supports VIDIOCGVBIFMT, "
 		       "guessed videostandard %d\n", v->dec.scanning);
 
+		if (trace)
+			print_vfmt("VBI capture parameters supported: ", &vfmt);
+
 		if (strict >= 0 && v->dec.scanning)
 			if (!set_parameters(v, &vfmt, &max_rate,
 					    dev_name, driver_name,
@@ -603,7 +626,8 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		v->dec.sampling_rate		= vfmt.sampling_rate;
 		v->dec.bytes_per_line 		= vfmt.samples_per_line;
 		if (v->dec.scanning == 625)
-			v->dec.offset 		= (int)(10.2e-6 * vfmt.sampling_rate);
+			/* v->dec.offset 		= (int)(10.2e-6 * vfmt.sampling_rate); */
+			v->dec.offset           = (int)(6.8e-6 * vfmt.sampling_rate);  /* XXX TZ FIX */
 		else if (v->dec.scanning == 525)
 			v->dec.offset		= (int)(9.2e-6 * vfmt.sampling_rate);
 		else /* we don't know */
@@ -684,7 +708,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		case 625:
 			/* Not confirmed */
 			v->dec.sampling_rate = 35468950;
-			v->dec.offset = (int)(10.2e-6 * 35468950);
+			v->dec.offset = (int)(9.2e-6 * 35468950);  /* XXX TZ FIX */
 			v->dec.start[0] = 22 + 1 - v->dec.count[0];
 			v->dec.start[1] = 335 + 1 - v->dec.count[1];
 			break;

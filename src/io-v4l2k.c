@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2k.c,v 1.5 2003/02/16 21:11:26 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2k.c,v 1.6 2003/04/29 05:51:29 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -428,6 +428,9 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 #endif
 	} else {
 		printv("success\n");
+
+		if (trace)
+			print_vfmt("VBI capture parameters supported: ", &vfmt);
 	}
 
 	if (strict >= 0) {
