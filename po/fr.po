@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-11-03 16:47+0100\n"
+"POT-Creation-Date: 2004-11-11 01:05+0100\n"
 "PO-Revision-Date: 2004-10-25 12:24+0200\n"
 "Last-Translator: Christian Marillat <marillat.christian@wanadoo.fr>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -309,49 +309,49 @@ msgstr "Plus de mémoire pour le module d'export '%s'."
 msgid "Unknown error."
 msgstr "Erreur inconnue."
 
-#: src/io-bktr.c:187
+#: src/io-bktr.c:184
 msgid "BKTR driver"
 msgstr ""
 
-#: src/io-bktr.c:198 src/io-bktr.c:277 src/io-bktr.c:295 src/io-v4l.c:164
-#: src/io-v4l.c:1076 src/io-v4l.c:1108 src/io-v4l.c:1131 src/io-v4l2.c:105
+#: src/io-bktr.c:195 src/io-bktr.c:274 src/io-bktr.c:292 src/io-v4l.c:164
+#: src/io-v4l.c:1086 src/io-v4l.c:1118 src/io-v4l.c:1144 src/io-v4l2.c:105
 #: src/io-v4l2k.c:182 src/io-v4l2k.c:537 src/io-v4l2k.c:975
-#: src/io-v4l2k.c:1091 src/io-v4l2k.c:1104 src/proxy-client.c:198
-#: src/proxy-client.c:1785
+#: src/io-v4l2k.c:1091 src/io-v4l2k.c:1104 src/proxy-client.c:196
+#: src/proxy-client.c:1556
 msgid "Virtual memory exhausted."
 msgstr "Mémoire virtuelle épuisée."
 
-#: src/io-bktr.c:209
+#: src/io-bktr.c:206
 #, c-format
 msgid "Cannot open '%s': %s."
 msgstr "Ne peut ouvrir '%s' : %s."
 
-#: src/io-bktr.c:265 src/io-v4l.c:708 src/io-v4l.c:1061 src/io-v4l2k.c:962
+#: src/io-bktr.c:262 src/io-v4l.c:712 src/io-v4l.c:1071 src/io-v4l2k.c:962
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr ""
 "Désolé, %s (%s) ne peut capturer aucun des services de données demandé."
 
-#: src/io-bktr.c:306 src/io-v4l.c:175 src/io-v4l2k.c:548
+#: src/io-bktr.c:303 src/io-v4l.c:175 src/io-v4l2k.c:548
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Pas assez de mémoire pour allouer un tampon de capture vbi (%d Ko)."
 
-#: src/io-bktr.c:365
+#: src/io-bktr.c:362
 msgid "BKTR driver interface not compiled."
 msgstr "L'interface BKTR n'a pas été compilée."
 
-#: src/io-v4l.c:759 src/io-v4l2k.c:877
+#: src/io-v4l.c:763 src/io-v4l2k.c:877
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "Ne peut initialiser %s (%s), le périphérique est déjà utilisé."
 
-#: src/io-v4l.c:773
+#: src/io-v4l.c:777
 #, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %s."
 msgstr "Ne peut sélectionner les paramètres de capture vbi pour %s (%s) : %s."
 
-#: src/io-v4l.c:909 src/io-v4l2k.c:924
+#: src/io-v4l.c:915 src/io-v4l2k.c:924
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -360,12 +360,12 @@ msgstr ""
 "%s (%s) présente un format inconnu d'échantillon vbi #%d. Ceci peut-être un "
 "bogue du pilote ou une librairies libzvbi trop vieille."
 
-#: src/io-v4l.c:957
+#: src/io-v4l.c:967
 #, c-format
 msgid "Cannot capture with %s (%s), has no standard vbi interface."
 msgstr "Ne peut capturer avec %s (%s), n'a pas une interface vbi standard."
 
-#: src/io-v4l.c:977
+#: src/io-v4l.c:987
 #, c-format
 msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
@@ -374,12 +374,12 @@ msgstr ""
 "Ne peut identifier %s (%s), la frame vbi retourné suggère que ce n'est pas "
 "un pilote bttv."
 
-#: src/io-v4l.c:994 src/io-v4l.c:1221
+#: src/io-v4l.c:1004 src/io-v4l.c:1234
 #, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr "Ne peut déterminer ou configurer le standard vidéo courant de %s (%s)."
 
-#: src/io-v4l.c:1033 src/io-v4l2k.c:934
+#: src/io-v4l.c:1043 src/io-v4l2k.c:934
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -388,26 +388,26 @@ msgstr ""
 "Ne peut capturer le service de données demandé avec %s (%s), la fréquence "
 "d'échantillonnage %.2f MHz est trop basse."
 
-#: src/io-v4l.c:1139 src/io-v4l2.c:120 src/io-v4l2k.c:1121
+#: src/io-v4l.c:1152 src/io-v4l2.c:120 src/io-v4l2k.c:1121
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Ne peut ouvrir '%s' : %d, %s"
 
-#: src/io-v4l.c:1156 src/io-v4l.c:1165
+#: src/io-v4l.c:1169 src/io-v4l.c:1178
 msgid "driver unknown"
 msgstr "pilote inconnu"
 
-#: src/io-v4l.c:1171 src/io-v4l2k.c:1144
+#: src/io-v4l.c:1184 src/io-v4l2k.c:1144
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) n'est pas une entrée VBI brute."
 
-#: src/io-v4l.c:1191
+#: src/io-v4l.c:1204
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) ne supporte pas la fonction select()."
 
-#: src/io-v4l.c:1298 src/io-v4l.c:1336
+#: src/io-v4l.c:1311 src/io-v4l.c:1349
 #, fuzzy
 msgid "V4L driver interface not compiled."
 msgstr "L'interface BKTR n'a pas été compilée."
@@ -505,32 +505,32 @@ msgstr ""
 "%s (%s) manque la lecture de l'interface vbi, possibilité d'un périphérique "
 "de sortie seulement ou un bogue du pilote."
 
-#: src/proxy-client.c:152
+#: src/proxy-client.c:150
 msgid "Server hostname not configured."
 msgstr ""
 
-#: src/proxy-client.c:154
+#: src/proxy-client.c:152
 msgid "Server port not configured."
 msgstr ""
 
-#: src/proxy-client.c:421
+#: src/proxy-client.c:419
 msgid "Protocol error (unexpected message)."
 msgstr ""
 
-#: src/proxy-client.c:582 src/proxy-client.c:634
+#: src/proxy-client.c:580 src/proxy-client.c:632
 msgid "Connection lost due to I/O error."
 msgstr ""
 
-#: src/proxy-client.c:755
+#: src/proxy-client.c:753
 #, c-format
 msgid "Incompatible server version %u.%u.%u."
 msgstr ""
 
-#: src/proxy-client.c:763
+#: src/proxy-client.c:761
 msgid "Incompatible server architecture (endianess mismatch)."
 msgstr ""
 
-#: src/proxy-client.c:1800 src/proxy-client.c:1810
+#: src/proxy-client.c:1841 src/proxy-client.c:1885
 #, fuzzy
 msgid "Proxy client interface not compiled."
 msgstr "L'interface V4L n'a pas été compilée."

@@ -31,8 +31,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.9\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-25 12:29+0200\n"
-"PO-Revision-Date: 2004-10-25 12:29+0200\n"
+"POT-Creation-Date: 2004-11-11 01:05+0100\n"
+"PO-Revision-Date: 2004-11-11 01:05+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -119,6 +119,7 @@ msgstr "Include HTML page header"
 #. TRANSLATORS: "lang=\"en\" refers to the page title
 #. "Teletext Page ...". Please specify "de", "fr", "es" etc.
 #: src/exp-html.c:220
+#, c-format
 msgid "<title lang=\"en\">"
 msgstr "<title lang=“[1men[0m”>"
 
@@ -332,48 +333,48 @@ msgstr "Out of memory in export module '%s'."
 msgid "Unknown error."
 msgstr "Unknown error."
 
-#: src/io-bktr.c:187
+#: src/io-bktr.c:184
 msgid "BKTR driver"
 msgstr "BKTR driver"
 
-#: src/io-bktr.c:198 src/io-bktr.c:277 src/io-bktr.c:295 src/io-v4l.c:164
-#: src/io-v4l.c:1076 src/io-v4l.c:1108 src/io-v4l.c:1131 src/io-v4l2.c:105
+#: src/io-bktr.c:195 src/io-bktr.c:274 src/io-bktr.c:292 src/io-v4l.c:164
+#: src/io-v4l.c:1086 src/io-v4l.c:1118 src/io-v4l.c:1144 src/io-v4l2.c:105
 #: src/io-v4l2k.c:182 src/io-v4l2k.c:537 src/io-v4l2k.c:975
-#: src/io-v4l2k.c:1091 src/io-v4l2k.c:1104 src/proxy-client.c:198
-#: src/proxy-client.c:1781
+#: src/io-v4l2k.c:1091 src/io-v4l2k.c:1104 src/proxy-client.c:196
+#: src/proxy-client.c:1556
 msgid "Virtual memory exhausted."
 msgstr "Virtual memory exhausted."
 
-#: src/io-bktr.c:209
+#: src/io-bktr.c:206
 #, c-format
 msgid "Cannot open '%s': %s."
 msgstr "Cannot open '%s': %s."
 
-#: src/io-bktr.c:265 src/io-v4l.c:708 src/io-v4l.c:1061 src/io-v4l2k.c:962
+#: src/io-bktr.c:262 src/io-v4l.c:712 src/io-v4l.c:1071 src/io-v4l2k.c:962
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "Sorry, %s (%s) cannot capture any of the requested data services."
 
-#: src/io-bktr.c:306 src/io-v4l.c:175 src/io-v4l2k.c:548
+#: src/io-bktr.c:303 src/io-v4l.c:175 src/io-v4l2k.c:548
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Not enough memory to allocate vbi capture buffer (%d KB)."
 
-#: src/io-bktr.c:365
+#: src/io-bktr.c:362
 msgid "BKTR driver interface not compiled."
 msgstr "BKTR driver interface not compiled."
 
-#: src/io-v4l.c:759 src/io-v4l2k.c:877
+#: src/io-v4l.c:763 src/io-v4l2k.c:877
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "Cannot initialize %s (%s), the device is already in use."
 
-#: src/io-v4l.c:773
+#: src/io-v4l.c:777
 #, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %s."
 msgstr "Could not set the vbi capture parameters for %s (%s): %s."
 
-#: src/io-v4l.c:909 src/io-v4l2k.c:924
+#: src/io-v4l.c:915 src/io-v4l2k.c:924
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -382,12 +383,12 @@ msgstr ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
 
-#: src/io-v4l.c:957
+#: src/io-v4l.c:967
 #, c-format
 msgid "Cannot capture with %s (%s), has no standard vbi interface."
 msgstr "Cannot capture with %s (%s), has no standard vbi interface."
 
-#: src/io-v4l.c:977
+#: src/io-v4l.c:987
 #, c-format
 msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
@@ -396,12 +397,12 @@ msgstr ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
 
-#: src/io-v4l.c:994 src/io-v4l.c:1221
+#: src/io-v4l.c:1004 src/io-v4l.c:1234
 #, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr "Cannot set or determine current videostandard of %s (%s)."
 
-#: src/io-v4l.c:1033 src/io-v4l2k.c:934
+#: src/io-v4l.c:1043 src/io-v4l2k.c:934
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -410,26 +411,26 @@ msgstr ""
 "Cannot capture the requested data services with %s (%s), the sampling "
 "frequency %.2f MHz is too low."
 
-#: src/io-v4l.c:1139 src/io-v4l2.c:120 src/io-v4l2k.c:1121
+#: src/io-v4l.c:1152 src/io-v4l2.c:120 src/io-v4l2k.c:1121
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Cannot open '%s': %d, %s."
 
-#: src/io-v4l.c:1156 src/io-v4l.c:1165
+#: src/io-v4l.c:1169 src/io-v4l.c:1178
 msgid "driver unknown"
 msgstr "driver unknown"
 
-#: src/io-v4l.c:1171 src/io-v4l2k.c:1144
+#: src/io-v4l.c:1184 src/io-v4l2k.c:1144
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) is not a raw vbi device."
 
-#: src/io-v4l.c:1191
+#: src/io-v4l.c:1204
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) does not support the select() function."
 
-#: src/io-v4l.c:1298 src/io-v4l.c:1336
+#: src/io-v4l.c:1311 src/io-v4l.c:1349
 msgid "V4L driver interface not compiled."
 msgstr "V4L driver interface not compiled."
 
@@ -522,59 +523,59 @@ msgstr ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "
 "driver bug."
 
-#: src/proxy-client.c:152
+#: src/proxy-client.c:150
 msgid "Server hostname not configured."
 msgstr "Server hostname not configured."
 
-#: src/proxy-client.c:154
+#: src/proxy-client.c:152
 msgid "Server port not configured."
 msgstr "Server port not configured."
 
-#: src/proxy-client.c:421
+#: src/proxy-client.c:419
 msgid "Protocol error (unexpected message)."
 msgstr "Protocol error (unexpected message)."
 
-#: src/proxy-client.c:578 src/proxy-client.c:630
+#: src/proxy-client.c:580 src/proxy-client.c:632
 msgid "Connection lost due to I/O error."
 msgstr "Connection lost due to I/O error."
 
-#: src/proxy-client.c:751
+#: src/proxy-client.c:753
 #, c-format
 msgid "Incompatible server version %u.%u.%u."
 msgstr "Incompatible server version %u.%u.%u."
 
-#: src/proxy-client.c:759
+#: src/proxy-client.c:761
 msgid "Incompatible server architecture (endianess mismatch)."
 msgstr "Incompatible server architecture (endianess mismatch)."
 
-#: src/proxy-client.c:1796 src/proxy-client.c:1806
+#: src/proxy-client.c:1841 src/proxy-client.c:1885
 msgid "Proxy client interface not compiled."
 msgstr "Proxy client interface not compiled."
 
-#: src/proxy-msg.c:1182
+#: src/proxy-msg.c:1185
 #, c-format
 msgid "Cannot create socket: %s."
 msgstr "Cannot create socket: %s."
 
-#: src/proxy-msg.c:1190
+#: src/proxy-msg.c:1193
 #, c-format
 msgid "Invalid hostname or port: %s."
 msgstr "Invalid hostname or port: %s."
 
-#: src/proxy-msg.c:1210
+#: src/proxy-msg.c:1213
 msgid "Connection via TCP/IP failed, server not running or unreachable."
 msgstr "Connection via TCP/IP failed, server not running or unreachable."
 
-#: src/proxy-msg.c:1212
+#: src/proxy-msg.c:1215
 msgid "Connection via socket failed, server not running."
 msgstr "Connection via socket failed, server not running."
 
-#: src/proxy-msg.c:1221 src/proxy-msg.c:1263
+#: src/proxy-msg.c:1224 src/proxy-msg.c:1266
 #, c-format
 msgid "Socket I/O error: %s."
 msgstr "Socket I/O error: %s."
 
-#: src/proxy-msg.c:1256
+#: src/proxy-msg.c:1259
 #, c-format
 msgid "Cannot connect to server: %s."
 msgstr "Cannot connect to server: %s."
