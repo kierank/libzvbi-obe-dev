@@ -2,6 +2,7 @@
  *  libzvbi test
  *
  *  Copyright (C) 2000, 2001, 2002 Michael H. Schimek
+ *  Copyright (C) 2003 James Mastros
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.9 2002/11/30 02:37:18 mschimek Exp $ */
+/* $Id: osc.c,v 1.10 2004/01/02 07:46:09 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -65,8 +66,172 @@ int			palette[256];
 int			depth;
 int			draw_row, draw_offset;
 int			draw_count = -1;
+int                     cur_x, cur_y;
+
+/* Copied from ../src/decoder.c */
+struct vbi_service_par {
+	unsigned int	id;		/* VBI_SLICED_ */
+	char *		label;
+	int		first[2];	/* scanning lines (ITU-R), max. distribution; */
+	int		last[2];	/*  zero: no data from this field, requires field sync */
+	int		offset;		/* leading edge hsync to leading edge first CRI one bit
+					    half amplitude points, nanoseconds */
+	int		cri_rate;	/* Hz */
+	int		bit_rate;	/* Hz */
+	int		scanning;	/* scanning system: 525 (FV = 59.94 Hz, FH = 15734 Hz),
+							    625 (FV = 50 Hz, FH = 15625 Hz) */
+	unsigned int	cri_frc;	/* Clock Run In and FRaming Code, LSB last txed bit of FRC */
+	unsigned int	cri_mask;	/* cri bits significant for identification, */
+	char		cri_bits;
+	char		frc_bits;	/* cri_bits at cri_rate, frc_bits at bit_rate */
+	short		payload;	/* in bits */
+	char		modulation;	/* payload modulation */
+};
+extern struct vbi_service_par vbi_services[];
+
 
 #include "sim.c"
+
+/* From capture.c */
+static inline int
+odd_parity(uint8_t c)
+{
+	c ^= (c >> 4);
+	c ^= (c >> 2);
+	c ^= (c >> 1);
+
+	return c & 1;
+}
+
+extern const int8_t vbi_hamm8val[256];
+extern const uint8_t vbi_bit_reverse[256];
+
+static inline int
+vbi_hamm16(uint8_t *p)
+{
+	return vbi_hamm8val[p[0]] | (vbi_hamm8val[p[1]] << 4);
+}
+
+#define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
+
+#define PIL(day, mon, hour, min) \
+	(((day) << 15) + ((mon) << 11) + ((hour) << 6) + ((min) << 0))
+
+/* Return value must be free()d by caller! */
+static char *
+decode_ttx(uint8_t *buf, int line)
+{
+        char *text, *text_start;
+	int packet_address;
+	int magazine, packet;
+	int j;
+
+        text_start = text = malloc(255);
+        memset(text, 0, 255);
+	packet_address = vbi_hamm16(buf + 0);
+
+	if (packet_address < 0)
+		return text; /* hamming error */
+
+	magazine = packet_address & 7;
+	packet = packet_address >> 3;
+
+        text += sprintf(text, "pg %x%02d ln %03d >", magazine, packet, line);
+
+        for (j = 0; j < 42; j++) {
+	   char c = printable(buf[j]);
+	   
+	   *text = c;
+	   text++;
+	}
+
+        *text='<';
+        *text=0;
+
+        return text_start;
+}
+
+static char *
+dump_pil(int pil)
+{
+	int day, mon, hour, min;
+        static char text[255];
+   
+        memset(text, 0, 255);
+
+	day = pil >> 15;
+	mon = (pil >> 11) & 0xF;
+	hour = (pil >> 6) & 0x1F;
+	min = pil & 0x3F;
+
+	if (pil == PIL(0, 15, 31, 63))
+		sprintf(text, " PDC: Timer-control (no PDC)\n");
+	else if (pil == PIL(0, 15, 30, 63))
+		sprintf(text, " PDC: Recording inhibit/terminate\n");
+	else if (pil == PIL(0, 15, 29, 63))
+		sprintf(text, " PDC: Interruption\n");
+	else if (pil == PIL(0, 15, 28, 63))
+		sprintf(text, " PDC: Continue\n");
+	else if (pil == PIL(31, 15, 31, 63))
+		sprintf(text, " PDC: No time\n");
+	else
+		sprintf(text, " PDC: %05x, 200X-%02d-%02d %02d:%02d\n",
+			pil, mon, day, hour, min);
+        return text;
+}
+
+static char *
+decode_vps(uint8_t *buf)
+{
+        char *text, *text_start;
+	static char pr_label[20];
+	static char label[20];
+	static int l = 0;
+	int cni, pcs, pty, pil;
+	int c;
+
+        text_start=text=malloc(255);
+        memset(text, 0, 255);
+        
+	text += sprintf(text, "VPS: ");
+
+	c = vbi_bit_reverse[buf[1]];
+
+	if ((int8_t) c < 0) {
+		label[l] = 0;
+		memcpy(pr_label, label, sizeof(pr_label));
+		l = 0;
+	}
+
+	c &= 0x7F;
+
+	label[l] = printable(c);
+
+	l = (l + 1) % 16;
+
+	text += sprintf(text, " 3-10: %02x %02x %02x %02x %02x %02x %02x %02x (\"%s\")\n",
+		buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], pr_label);
+
+	pcs = buf[2] >> 6;
+
+	cni = + ((buf[10] & 3) << 10)
+	      + ((buf[11] & 0xC0) << 2)
+	      + ((buf[8] & 0xC0) << 0)
+	      + (buf[11] & 0x3F);
+
+	pil = ((buf[8] & 0x3F) << 14) + (buf[9] << 6) + (buf[10] >> 2);
+
+	pty = buf[12];
+
+	text += sprintf(text, " CNI: %04x PCS: %d PTY: %d ", cni, pcs, pty);
+
+	text += sprintf(text, " %s", dump_pil(pil));
+   
+        return(text_start);
+}
+
+
+/* End from capture.c */
 
 static void
 draw(unsigned char *raw)
@@ -132,8 +297,38 @@ draw(unsigned char *raw)
 		if (sliced[i].line == line)
 			break;
 	if (i < slines) {
-		xti.nchars += snprintf(buf + xti.nchars, 255 - xti.nchars,
-				       " %s", vbi_sliced_name(sliced[i].id) ?: "???");
+	   int svc_idx=0;
+	   while (vbi_services[svc_idx].id !=0 && 
+		  vbi_services[svc_idx].id != sliced[i].id)
+	     svc_idx++;
+	   
+	   if (vbi_services[svc_idx].id == sliced[i].id) {
+	      struct vbi_service_par service;
+	      service = vbi_services[svc_idx];
+	      
+	      xti.nchars += snprintf(buf + xti.nchars, 255 - xti.nchars,
+				     " %s (%x) +%dns",
+				     service.label,
+				     service.id,
+				     service.offset
+				    );
+	      if (service.id & VBI_SLICED_TELETEXT_B) {
+		 char *text = decode_ttx(sliced[i].data, sliced[i].line);
+		 xti.nchars += snprintf(buf + xti.nchars, 255 - xti.nchars,
+					": %s", text);
+		 free(text);
+	      } else if (service.id & VBI_SLICED_VPS) {
+		 char *text = decode_vps(sliced[i].data);
+		 xti.nchars += snprintf(buf + xti.nchars, 255 - xti.nchars,
+					": %s", text);
+		 free(text);
+	      }
+	   } else {
+	      xti.nchars += snprintf(buf + xti.nchars, 255 - xti.nchars,
+				     " %s (%d)", 
+				     vbi_sliced_name(sliced[i].id) ?: "???", 
+				     sliced[i].id);
+	   }
 	} else {
 		int s = 0, sd = 0;
 
@@ -150,13 +345,35 @@ draw(unsigned char *raw)
 
 		xti.nchars += snprintf(buf + xti.nchars, 255 - xti.nchars,
 				       (sd < 5) ? " Blank" : " Unknown signal");
+	        xti.nchars += snprintf(buf + xti.nchars, 255 - xti.nchars,
+				       " (%d)", sd);
 	}
 
-	xti.chars = buf;
+        XSetForeground(display, gc, 0x00FFFF00);
+        XFillRectangle(display, window, gc,
+		       0xc0-draw_offset, 
+		       src_h, 1, dst_h);
+        XFillRectangle(display, window, gc,
+		       0x19b-draw_offset,
+		       src_h, 1, dst_h);
+        /* 50% grey */
+        XSetForeground(display, gc, 0xAAAAAAAA);  
+        int x=draw_offset;
+        while (x<src_w && (x-draw_offset)<dst_w) {
+	   XFillRectangle(display, window, gc,
+			  x-draw_offset, /* x,y, w,h */
+			  src_h, 1, dst_h);
+	   x+=10;
+	}
+        XSetForeground(display, gc, ~0);
+
+        xti.chars = buf;
 	xti.delta = 0;
 	xti.font = 0;
 
 	XDrawText(display, window, gc, 4, src_h + 12, &xti, 1);
+        xti.nchars = snprintf(buf, 255, "(%d, %3.0d)\0", cur_x+draw_offset, (1000*(dst_h-cur_y))/(dst_h-src_h));
+        XDrawText(display, window, gc, 4, src_h + 24, &xti, 1);
 
 	data = raw + draw_offset + draw_row * src_w;
 	h0 = dst_h - (data[0] * v) / 256;
@@ -230,6 +447,12 @@ redraw:
 
 			break;
 
+		case MotionNotify:
+		       cur_x = event.xmotion.x;
+		       cur_y = event.xmotion.y;
+		       // printf("Got MotionNotify: (%d, %d)\n", event.xmotion.x, event.xmotion.y);
+		       break;
+		   
 		case ClientMessage:
 			exit(EXIT_SUCCESS);
 		}
@@ -330,7 +553,7 @@ init_window(int ac, char **av, char *dev_name)
 
 	delete_window_atom = XInternAtom(display, "WM_DELETE_WINDOW", False);
 
-	XSelectInput(display, window, KeyPressMask | ExposureMask | StructureNotifyMask);
+	XSelectInput(display, window, PointerMotionMask | KeyPressMask | ExposureMask | StructureNotifyMask);
 	XSetWMProtocols(display, window, &delete_window_atom, 1);
 	snprintf(buf, sizeof(buf) - 1, "%s - [cursor] [g]rab [l]ive", dev_name);
 	XStoreName(display, window, buf);
@@ -446,6 +669,20 @@ main(int argc, char **argv)
 		par = init_sim (scanning, services);
 	} else {
 		do {
+			cap = vbi_capture_v4l2k_new (dev_name,
+						    /* fd -- dev_name is non-null, so unused */ 0,
+						    /* buffers */ 5,
+						    &services,
+						    /* strict */ -1,
+						    &errstr,
+						    /* trace */ verbose);
+			if (cap)
+				break;
+
+			fprintf (stderr, "Cannot capture vbi data "
+				 "with v4l2k interface:\n%s\n", errstr);
+
+			free (errstr);
 			cap = vbi_capture_v4l2_new (dev_name,
 						    /* buffers */ 5,
 						    &services,

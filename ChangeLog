@@ -1,3 +1,11 @@
+2004-01-02    <mschimek@users.sf.net>
+
+	* src/test/osc.c: Added patch by James Mastros.
+
+2003-12-03    <mschimek@users.sf.net>
+
+	* src/teletext.c (top_navigation_bar): Segv if vtp->pgno == 0x899. 
+
 2003-11-13    <mschimek@users.sf.net>
 
 	* src: New misc.h from 0.3 branch.
