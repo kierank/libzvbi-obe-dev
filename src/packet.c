@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.5 2002/06/07 22:00:36 mschimek Exp $ */
+/* $Id: packet.c,v 1.6 2002/07/16 00:10:21 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,7 +70,7 @@ dump_raw(vt_page *vtp, vbi_bool unham)
 }
 
 static void
-dump_extension(extension *ext)
+dump_extension(vt_extension *ext)
 {
 	int i;
 
@@ -162,7 +162,7 @@ hamm8_page_number(pagenum *p, uint8_t *raw, int magazine)
 }
 
 static inline vbi_bool
-parse_mot(magazine *mag, uint8_t *raw, int packet)
+parse_mot(vt_magazine *mag, uint8_t *raw, int packet)
 {
 	int err, i, j;
 
@@ -224,7 +224,7 @@ parse_mot(magazine *mag, uint8_t *raw, int packet)
 
 	case 19 ... 20: /* level 2.5 pops */
 	{
-		pop_link *pop = mag->pop_link + (packet - 19) * 4;
+		vt_pop_link *pop = mag->pop_link + (packet - 19) * 4;
 
 		for (i = 0; i < 4; raw += 10, pop++, i++) {
 			char n[10];
@@ -458,8 +458,8 @@ convert_drcs(vt_page *vtp, uint8_t *raw)
 static int
 page_language(struct teletext *vt, vt_page *vtp, int pgno, int national)
 {
-	magazine *mag;
-	extension *ext;
+	vt_magazine *mag;
+	vt_extension *ext;
 	int char_set;
 	int lang = -1; /***/
 
@@ -878,18 +878,18 @@ parse_mpt_ex(struct teletext *vt, uint8_t *raw, int packet)
 }
 
 /**
- * vbi_convert_page:
- * @vbi: Initialized vbi decoding context.
- * @vtp: Raw teletext page to be converted.
- * @cached: The raw page is already cached, update the cache.
- * @new_function: The page function to convert to.
+ * @internal
+ * @param vbi Initialized vbi decoding context.
+ * @param vtp Raw teletext page to be converted.
+ * @param cached The raw page is already cached, update the cache.
+ * @param new_function The page function to convert to.
  * 
  * Since MOT, MIP and X/28 are optional, the function of a system page
  * may not be clear until we format a LOP and find a link of certain type,
  * so this function converts a page "after the fact".
  * 
- * Return value: 
- * Pointer to the converted page, either @vtp or the cached copy.
+ * @return
+ * Pointer to the converted page, either @a vtp or the cached copy.
  **/
 vt_page *
 vbi_convert_page(vbi_decoder *vbi, vt_page *vtp,
@@ -1119,14 +1119,14 @@ dump_pty(int pty)
 #endif /* BSDATA_TEST */
 
 /**
- * vbi_decode_vps:
- * @vbi: Initialized vbi decoding context.
- * @buf: 13 bytes.
+ * @internal
+ * @param vbi Initialized vbi decoding context.
+ * @param buf 13 bytes.
  * 
  * Decode a VPS datagram (13 bytes) according to
  * ETS 300 231 and update decoder state. This may
- * send a VBI_EVENT_NETWORK.
- **/
+ * send a @a VBI_EVENT_NETWORK.
+ */
 void
 vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 {
@@ -1832,7 +1832,7 @@ parse_28_29(vbi_decoder *vbi, uint8_t *p,
 {
 	int designation, function;
 	int triplets[13], *triplet = triplets, buf = 0, left = 0;
-	extension *ext;
+	vt_extension *ext;
 	int i, j, err = 0;
 
 	static int
@@ -2075,23 +2075,23 @@ parse_8_30(vbi_decoder *vbi, uint8_t *p, int packet)
 }
 
 /**
- * vbi_decode_teletext:
- * @vbi: Initialized vbi decoding context.
- * @p: Packet data.
+ * @internal
+ * @param vbi Initialized vbi decoding context.
+ * @param p Packet data.
  * 
  * Parse a teletext packet (42 bytes) and update the decoder
  * state accordingly. This function may send events.
  * 
  * Return value:
  * FALSE if the packet contained incorrectable errors. 
- **/
+ */
 vbi_bool
 vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 {
 	vt_page *cvtp;
 	struct raw_page *rvtp;
 	int pmag, mag0, mag8, packet;
-	magazine *mag;
+	vt_magazine *mag;
 
 	if ((pmag = vbi_hamm16(p)) < 0)
 		return FALSE;
@@ -2575,9 +2575,8 @@ default_color_map[40] = {
 };
 
 /**
- * vbi_teletext_set_default_region:
- * @vbi: Initialized vbi decoding context.
- * @default_region: A value between 0 ... 80, index into
+ * @param vbi Initialized vbi decoding context.
+ * @param default_region A value between 0 ... 80, index into
  *   the Teletext character set table according to ETS 300 706,
  *   Section 15 (or libzvbi source file lang.c). The three last
  *   significant bits will be replaced.
@@ -2586,11 +2585,11 @@ default_color_map[40] = {
  * eight national character sets. When more countries started
  * to broadcast Teletext the three bit character set id was
  * locally redefined and later extended to seven bits grouping
- * the regional variations. Since some stations still transmit
- * only the legacy id and we don't ship regional variants of this
- * decoder as TV manufacturers do, this function can be used to
+ * the regional variants. Since some stations still transmit
+ * only the legacy three bit id and we don't ship regional variants
+ * of this decoder as TV manufacturers do, this function can be used to
  * set a default for the extended bits. The "factory default" is 16.
- **/
+ */
 void
 vbi_teletext_set_default_region(vbi_decoder *vbi, int default_region)
 {
@@ -2602,7 +2601,7 @@ vbi_teletext_set_default_region(vbi_decoder *vbi, int default_region)
 	vbi->vt.region = default_region;
 
 	for (i = 0; i < 9; i++) {
-		extension *ext = &vbi->vt.magazine[i].extension;
+		vt_extension *ext = &vbi->vt.magazine[i].extension;
 
 		ext->char_set[0] =
 		ext->char_set[1] =
@@ -2611,12 +2610,12 @@ vbi_teletext_set_default_region(vbi_decoder *vbi, int default_region)
 }
 
 /**
- * vbi_teletext_set_level:
- * @vbi: Initialized vbi decoding context.
- * @level: 
+ * @param vbi Initialized vbi decoding context.
+ * @param level 
  * 
- * Deprecated.
- **/
+ * @deprecated
+ * This became a parameter of vbi_fetch_vt_page().
+ */
 void
 vbi_teletext_set_level(vbi_decoder *vbi, int level)
 {
@@ -2629,13 +2628,13 @@ vbi_teletext_set_level(vbi_decoder *vbi, int level)
 }
 
 /**
- * vbi_teletext_desync:
- * @vbi: Initialized vbi decoding context.
+ * @internal
+ * @param vbi Initialized vbi decoding context.
  * 
  * This function must be called after desynchronisation
  * has been detected (i. e. vbi data has been lost)
  * to reset the Teletext decoder.
- **/
+ */
 void
 vbi_teletext_desync(vbi_decoder *vbi)
 {
@@ -2654,17 +2653,16 @@ vbi_teletext_desync(vbi_decoder *vbi)
 }
 
 /**
- * vbi_teletext_channel_switched:
- * @vbi: Initialized vbi decoding context.
+ * @param vbi Initialized vbi decoding context.
  * 
  * This function must be called after a channel switch,
  * to reset the Teletext decoder.
- **/
+ */
 void
 vbi_teletext_channel_switched(vbi_decoder *vbi)
 {
-	magazine *mag;
-	extension *ext;
+	vt_magazine *mag;
+	vt_extension *ext;
 	int i, j;
 
 	vbi->vt.initial_page.pgno = 0x100;
@@ -2709,24 +2707,24 @@ vbi_teletext_channel_switched(vbi_decoder *vbi)
 
 
 /**
- * vbi_teletext_destroy:
- * @vbi: VBI decoding context.
+ * @internal
+ * @param vbi VBI decoding context.
  * 
- * This function is called during @vbi destruction
- * to destroy the Teletext subset of @vbi.
- **/
+ * This function is called during @a vbi destruction
+ * to destroy the Teletext subset of @a vbi object.
+ */
 void
 vbi_teletext_destroy(vbi_decoder *vbi)
 {
 }
 
 /**
- * vbi_teletext_init:
- * @vbi: VBI decoding context.
+ * @internal
+ * @param vbi VBI decoding context.
  * 
- * This function is called during @vbi initialization
- * to initialize the Teletext subset of @vbi.
- **/
+ * This function is called during @a vbi initialization
+ * to initialize the Teletext subset of @a vbi object.
+ */
 void
 vbi_teletext_init(vbi_decoder *vbi)
 {
