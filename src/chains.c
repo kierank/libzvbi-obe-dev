@@ -25,7 +25,7 @@
 
 #include "config.h"
 
-#ifdef ENABLE_PROXY
+#if defined(ENABLE_PROXY) && defined(ENABLE_V4L)
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -594,4 +594,4 @@ ssize_t read(int fd, void *buf, size_t count)
    }
 }
 
-#endif /* !ENABLE_PROXY */
+#endif /* !ENABLE_PROXY || !ENABLE_V4L */
