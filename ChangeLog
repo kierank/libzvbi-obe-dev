@@ -1,3 +1,23 @@
+2003-05-10      <tomzo@users.sf.net>
+
+        * daemon/proxyd.c: bugfix: busy loop until the first client connect
+          unless -nodetach option was used; also added copying of group and
+          permissions from VBI device onto named socket path
+        * daemon/README: added TODO list
+        * src/io-proxy.c: bugfix proxy_read(): loop around select() until a
+          complete VBI frame is received or timeout expired; before the
+          function returned 0 when only a partial message was received,
+          falsely indicating a timeout to the caller
+
+2003-05-03      <tomzo@users.sf.net>
+
+        * src/proxy-msg.c: follow synlinks in given device paths to allow
+          both /dev/vbi and /dev/vbi0 to work as proxy device args
+        * test/proxy-test.c: use vbi_capture_pull_sliced() instead of
+          vbi_capture_read_sliced()
+        * src/io.h: added declaration of vbi_capture_proxy_new() for
+          inclusion in libzvbi.h
+
 2003-05-02	<mschimek@users.sf.net>
 
 	* src/io-v4l2k.c: Missed one of Tom's fixes.
