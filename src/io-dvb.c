@@ -22,7 +22,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #ifdef ENABLE_DVB
@@ -566,7 +566,7 @@ vbi_capture_dvb_new(char *dev, int scanning,
  */
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #ifdef ENABLE_DVB
