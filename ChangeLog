@@ -1,3 +1,7 @@
+2005-02-28    <mschimek@users.sf.net>
+
+	* Release 0.2.14.
+
 2005-02-25    <mschimek@users.sf.net>
 
 	* src/cache.c (destroy_list): Suppress unused parameter warning.

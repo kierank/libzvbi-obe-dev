@@ -1,3 +1,10 @@
+libzvbi 0.2.14, 2005-02-28
+--------------------------
+This version adds new demultiplexers to extract data transmissions
+in Teletext streams, namely in "Page Format Clear" and "Independent
+Data Line Format A". A new low-level decoding tool was added for
+tests.
+
 libzvbi 0.2.13, 2005-01-23
 --------------------------
 This version has new, more reliable DVB VBI capture routines.  See the
