@@ -1,3 +1,9 @@
+2002-06-08	<mschimek@users.sf.net>
+
+	* src/packet.c: #if fix.
+	* zvbi.spec.in: Removed libunicode requirement.
+	* Release 0.2.1.
+
 2002-05-23	<mschimek@users.sf.net>
 
 	* macros/autogen.sh: Updated.

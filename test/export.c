@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.3 2002/02/10 11:47:10 mschimek Exp $ */
+/* $Id: export.c,v 1.4 2002/06/07 22:01:23 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -98,7 +98,7 @@ stream(void)
 	vbi_sliced *s, sliced[40];
 
 	while (!quit) {
-		if (feof(stdin) || !fgets(buf, 255, stdin))
+		if (ferror(stdin) || !fgets(buf, 255, stdin))
 			goto abort;
 
 		dt = strtod(buf, NULL);

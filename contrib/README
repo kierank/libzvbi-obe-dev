@@ -12,7 +12,7 @@ for f in *.bdf; do bdftopcf $f | \
   gzip >`echo /usr/lib/X11/fonts/misc/$f | sed s/bdf/pcf.gz/g`; done
 mkfontdir /usr/lib/X11/fonts/misc
 
-# may not be necessary:
+# may need to:
 xset fp rehash
 /etc/rc.d/xfs restart
 

@@ -1,3 +1,7 @@
+0.2.1
+-----
+Bug fixes.
+
 0.2
 ---
 Bug fixes, most notably the character code range check in Closed
