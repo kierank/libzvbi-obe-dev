@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.13 2004/12/31 06:05:20 mschimek Exp $ */
+/* $Id: capture.c,v 1.14 2005/01/09 18:06:26 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -259,7 +259,7 @@ decode_wss_625(uint8_t *buf)
 		"none",
 		"in active image area",
 		"out of active image area",
-		"?"
+		"<invalid>"
 	};
 	int g1 = buf[0] & 15;
 	int parity;
@@ -273,19 +273,20 @@ decode_wss_625(uint8_t *buf)
 		printf("WSS PAL: ");
 		if (!(parity & 1))
 			printf("<parity error> ");
-		printf("%s; %s mode; %s colour coding;\n"
-		       "      %s helper; reserved b7=%d; %s\n"
-		       "      open subtitles: %s; %scopyright %s; copying %s\n",
-		       formats[g1],
-		       (buf[0] & 0x10) ? "film" : "camera",
-		       (buf[0] & 0x20) ? "MA/CP" : "standard",
-		       (buf[0] & 0x40) ? "modulated" : "no",
-		       !!(buf[0] & 0x80),
-		       (buf[1] & 0x01) ? "have TTX subtitles; " : "",
-		       subtitles[(buf[1] >> 1) & 3],
-		       (buf[1] & 0x08) ? "surround sound; " : "",
-		       (buf[1] & 0x10) ? "asserted" : "unknown",
-		       (buf[1] & 0x20) ? "restricted" : "not restricted");
+		printf ("%s; %s mode; %s colour coding; %s helper; "
+			"reserved b7=%d; %s Teletext subtitles; "
+			"open subtitles: %s; %s surround sound; "
+			"copyright %s; copying %s\n",
+			formats[g1],
+			(buf[0] & 0x10) ? "film" : "camera",
+			(buf[0] & 0x20) ? "MA/CP" : "standard",
+			(buf[0] & 0x40) ? "modulated" : "no",
+			!!(buf[0] & 0x80),
+			(buf[1] & 0x01) ? "have" : "no",
+			subtitles[(buf[1] >> 1) & 3],
+			(buf[1] & 0x08) ? "have" : "no",
+			(buf[1] & 0x10) ? "asserted" : "unknown",
+			(buf[1] & 0x20) ? "restricted" : "not restricted");
 	}
 }
 
@@ -527,6 +528,7 @@ main(int argc, char **argv)
 	char *errstr;
 	unsigned int services;
 	int scanning = 625;
+	int strict;
 	int verbose = 0;
 	int c, index;
 	int interface = 0;
@@ -590,6 +592,8 @@ main(int argc, char **argv)
 		| VBI_SLICED_CAPTION_625 | VBI_SLICED_VPS
 		| VBI_SLICED_WSS_625 | VBI_SLICED_WSS_CPR1204;
 
+	strict = 0;
+
 	if (do_sim) {
 		par = init_sim (scanning, services);
 	} else {
@@ -598,7 +602,7 @@ main(int argc, char **argv)
 				cap = vbi_capture_dvb_new (dev_name,
 							   scanning,
 							   &services,
-							   /* strict */ -1,
+							   strict,
 							   &errstr,
 							   !!verbose);
 				if (cap) {
@@ -618,7 +622,7 @@ main(int argc, char **argv)
 				cap = vbi_capture_v4l2_new (dev_name,
 							    /* buffers */ 5,
 							    &services,
-							    /* strict */ -1,
+							    strict,
 							    &errstr,
 							    /* trace */
 							    !!verbose);
@@ -635,7 +639,7 @@ main(int argc, char **argv)
 				cap = vbi_capture_v4l_new (dev_name,
 							   scanning,
 							   &services,
-							   /* strict */ -1,
+							   strict,
 							   &errstr,
 							   /* trace */
 							   !!verbose);
@@ -653,7 +657,7 @@ main(int argc, char **argv)
 				cap = vbi_capture_bktr_new (dev_name,
 							    scanning,
 							    &services,
-							    /* strict */ -1,
+							    strict,
 							    &errstr,
 							    /* trace */
 							    !!verbose);
