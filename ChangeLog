@@ -1,3 +1,9 @@
+2002-01-17	V4L, build fixes <garetxe@users.sf.net>
+
+	* src/io_v4l.c: Added missing pixfmt initialization.
+	Works great after that, great job.
+	* Makefile.am, configure.in: Some build fixes.
+
 2002-01-14	Restored V4L interface, more test stuff, fixes <mschimek@users.sf.net>
 
 	* src/io_v4l.c: Added, *untested*.

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.1 2002/01/15 03:31:05 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l.c,v 1.2 2002/01/17 19:55:24 garetxe Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -731,6 +731,8 @@ v4l_new(char *dev_name, int given_fd, int scanning,
 	}
 
 	printv("Guessed videostandard %d\n", v->dec.scanning);
+
+	v->dec.sampling_format = VBI_PIXFMT_YUV420;
 
 	if (*services & ~(VBI_SLICED_VBI_525 | VBI_SLICED_VBI_625)) {
 		/* Nyquist */
