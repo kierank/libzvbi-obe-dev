@@ -1,3 +1,8 @@
+2002-03-10	zapping-Bugs-527984 <mschimek@users.sf.net>
+
+	* src/io-v4l2.c: Added mmap PROT_READ | PROT_WRITE for
+	  bttv 0.8.x.
+
 2002-03-09	Bugfix <mschimek@users.sf.net>
 
 	* src/search.c: Fixed pattern highlighting, used to still
