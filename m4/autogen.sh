@@ -41,11 +41,11 @@ test -n "`autoconf --version </dev/null | grep 2.53`" || {
 grep "^AM_GNU_GETTEXT" $srcdir/configure.in >/dev/null && {
   grep "sed.*POTFILES" $srcdir/configure.in >/dev/null || \
   test -n "`gettext --version </dev/null | grep 0.11`" || {
+    # Since 0.11.2 most of the gettext stuff is included,
+    # no need to insist anymore.
     echo
-    echo "**Error**: You must have 'gettext 0.11.2' installed to compile $PACKAGE."
+    echo "**Warning**: You should have 'gettext 0.11.2' installed to compile $PACKAGE."
     echo "Get ftp://ftp.gnu.org/pub/gnu/gettext/gettext-0.11.2.tar.gz"
-    echo "(a newer version may work, but is not tested)"
-    DIE=1
   }
 }
 
@@ -84,11 +84,15 @@ if test "$DIE" -eq 1; then
   test "$yesno" == "y" || exit 1
 fi
 
-if test -z "$*"; then
-  echo "**Warning**: I am going to run 'configure' with no arguments."
-  echo "If you wish to pass any to it, please specify them on the"
-  echo $0 "command line."
-  echo
+echo
+
+if test x$NOCONFIGURE = x; then
+  if test -z "$*"; then
+    echo "**Warning**: I am going to run 'configure' with no arguments."
+    echo "If you wish to pass any to it, please specify them on the"
+    echo $0 "command line."
+    echo
+  fi
 fi
 
 case $CC in
@@ -96,7 +100,13 @@ xlc )
   am_opt=--include-deps;;
 esac
 
-for coin in `find $srcdir -name configure.in -print`
+if test x$NORECURSIVE = x; then
+  configure_files=$srcdir/configure.in
+else
+  configure_files="`find $srcdir -name configure.in -print`"
+fi
+
+for coin in $configure_files
 do 
   dr=`dirname $coin`
   if test -f $dr/NO-AUTO-GEN; then
@@ -160,8 +170,11 @@ do
 	fi
       fi
       echo "Running aclocal $aclocalinclude ..."
-      aclocalmsg=`aclocal $aclocalinclude 2>&1 || echo .`
+      # aclocal may fail without message, hence echo
+      aclocalmsg=`aclocal $aclocalinclude 2>&1`
+      test $? != 0 -a -z "$aclocalmsg" && aclocalmsg="Unknown error."
       if test ! -z "$aclocalmsg" ; then
+        echo "$aclocalmsg"
 	echo
 	echo "**Error**: aclocal failed. This may mean that you have not"
 	echo "installed all of the packages you need, or you may need to"

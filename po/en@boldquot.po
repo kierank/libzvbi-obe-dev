@@ -30,8 +30,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.1\n"
-"POT-Creation-Date: 2002-06-22 08:47+0200\n"
-"PO-Revision-Date: 2002-06-18 07:37+0200\n"
+"POT-Creation-Date: 2002-07-07 02:20+0200\n"
+"PO-Revision-Date: 2002-07-07 02:20+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -39,11 +39,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/exp-gfx.c:733
+#: src/exp-gfx.c:731
 msgid "Correct aspect ratio"
 msgstr "Correct aspect ratio"
 
-#: src/exp-gfx.c:734
+#: src/exp-gfx.c:732
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
@@ -51,39 +51,39 @@ msgstr ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
 
-#: src/exp-gfx.c:807 src/exp-gfx.c:1103
+#: src/exp-gfx.c:805 src/exp-gfx.c:1101
 #, c-format
 msgid "Unable to allocate %d KB image buffer."
 msgstr "Unable to allocate %d KB image buffer."
 
-#: src/exp-gfx.c:897
+#: src/exp-gfx.c:895
 msgid "PPM"
 msgstr "PPM"
 
-#: src/exp-gfx.c:898
+#: src/exp-gfx.c:896
 msgid "Export this page as raw PPM image"
 msgstr "Export this page as raw PPM image"
 
-#: src/exp-gfx.c:986
+#: src/exp-gfx.c:984
 #, c-format
 msgid "Unable to allocate %d byte buffer."
 msgstr "Unable to allocate %d byte buffer."
 
-#: src/exp-gfx.c:1173 src/exp-html.c:232
+#: src/exp-gfx.c:1171 src/exp-html.c:232
 #, c-format
 msgid "Teletext Page %3x.%x"
 msgstr "Teletext Page %3x.%x"
 
-#: src/exp-gfx.c:1178 src/exp-html.c:235
+#: src/exp-gfx.c:1176 src/exp-html.c:235
 #, c-format
 msgid "Teletext Page %3x"
 msgstr "Teletext Page %3x"
 
-#: src/exp-gfx.c:1247
+#: src/exp-gfx.c:1245
 msgid "PNG"
 msgstr "PNG"
 
-#: src/exp-gfx.c:1248
+#: src/exp-gfx.c:1246
 msgid "Export this page as PNG image"
 msgstr "Export this page as PNG image"
 
@@ -282,118 +282,118 @@ msgid ""
 msgstr ""
 "Export this page as VTX file, the format used by VideoteXt and vbidecode"
 
-#: src/export.c:404
+#: src/export.c:456
 #, c-format
 msgid "Invalid option string \"%s\"."
 msgstr "Invalid option string “[1m%s[0m”."
 
-#: src/export.c:493
+#: src/export.c:544
 #, c-format
 msgid "Unknown export module '%s'."
 msgstr "Unknown export module '%s'."
 
-#: src/export.c:503
+#: src/export.c:554
 #, c-format
 msgid "Cannot initialize export module '%s', probably lack of memory."
 msgstr "Cannot initialize export module '%s', probably lack of memory."
 
-#: src/export.c:939
+#: src/export.c:981
 #, c-format
 msgid "Cannot create file '%s': Error %d, %s."
 msgstr "Cannot create file '%s': Error %d, %s."
 
-#: src/export.c:1014
+#: src/export.c:1053
 #, c-format
 msgid "Error while writing file '%s'"
 msgstr "Error while writing file ‘[1m%s[0m’"
 
-#: src/export.c:1016
+#: src/export.c:1055
 msgid "Error while writing file"
 msgstr "Error while writing file"
 
-#: src/export.c:1029
+#: src/export.c:1085
 #, c-format
 msgid "Export module '%s' has no option '%s'."
 msgstr "Export module ‘[1m%s[0m’ has no option '%s'."
 
-#: src/export.c:1074
+#: src/export.c:1135
 #, c-format
 msgid "Invalid argument %s for option %s of export module %s."
 msgstr "Invalid argument %s for option %s of export module %s."
 
-#: src/export.c:1085
+#: src/export.c:1159
 #, c-format
 msgid "Out of memory in export module '%s'."
 msgstr "Out of memory in export module '%s'."
 
-#: src/export.c:1115
+#: src/export.c:1186
 msgid "Unknown error."
 msgstr "Unknown error."
 
-#: src/io-v4l2.c:340 src/io-v4l2.c:549 src/io-v4l2.c:597 src/io-v4l2.c:678
-#: src/io-v4l.c:519 src/io-v4l.c:783 src/io-v4l.c:801
+#: src/io-v4l.c:519 src/io-v4l.c:783 src/io-v4l.c:801 src/io-v4l2.c:320
+#: src/io-v4l2.c:529 src/io-v4l2.c:577 src/io-v4l2.c:658
 msgid "Virtual memory exhausted."
 msgstr "Virtual memory exhausted."
 
-#: src/io-v4l2.c:352 src/io-v4l.c:529
+#: src/io-v4l.c:529 src/io-v4l2.c:332
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Cannot open '%s': %d, %s."
 
-#: src/io-v4l2.c:361
+#: src/io-v4l2.c:341
 #, c-format
 msgid "Cannot identify '%s': %d, %s."
 msgstr "Cannot identify '%s': %d, %s."
 
-#: src/io-v4l2.c:363
+#: src/io-v4l2.c:343
 msgid "Probably not a v4l2 device."
 msgstr "Probably not a v4l2 device."
 
-#: src/io-v4l2.c:368 src/io-v4l.c:554
+#: src/io-v4l.c:554 src/io-v4l2.c:348
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) is not a raw vbi device."
 
-#: src/io-v4l2.c:379 src/io-v4l2.c:562 src/io-v4l.c:705
+#: src/io-v4l.c:705 src/io-v4l2.c:359 src/io-v4l2.c:542
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) does not support the select() function."
 
-#: src/io-v4l2.c:387
+#: src/io-v4l2.c:367
 #, c-format
 msgid "Cannot query current videostandard of %s (%s): %d, %s."
 msgstr "Cannot query current videostandard of %s (%s): %d, %s."
 
-#: src/io-v4l2.c:389 src/io-v4l2.c:661
+#: src/io-v4l2.c:369 src/io-v4l2.c:641
 msgid "Probably a driver bug."
 msgstr "Probably a driver bug."
 
-#: src/io-v4l2.c:409
+#: src/io-v4l2.c:389
 #, c-format
 msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr "Cannot query current vbi parameters of %s (%s): %d, %s."
 
-#: src/io-v4l2.c:426 src/io-v4l2.c:539 src/io-v4l.c:413 src/io-v4l.c:713
-#: src/io-v4l.c:771
+#: src/io-v4l.c:413 src/io-v4l.c:713 src/io-v4l.c:771 src/io-v4l2.c:406
+#: src/io-v4l2.c:519
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "Sorry, %s (%s) cannot capture any of the requested data services."
 
-#: src/io-v4l2.c:463 src/io-v4l.c:450
+#: src/io-v4l.c:450 src/io-v4l2.c:443
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "Cannot initialize %s (%s), the device is already in use."
 
-#: src/io-v4l2.c:479 src/io-v4l.c:456
+#: src/io-v4l.c:456 src/io-v4l2.c:459
 #, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr "Could not set the vbi capture parameters for %s (%s): %d, %s."
 
-#: src/io-v4l2.c:482 src/io-v4l2.c:581
+#: src/io-v4l2.c:462 src/io-v4l2.c:561
 msgid "Possibly a driver bug."
 msgstr "Possibly a driver bug."
 
-#: src/io-v4l2.c:511 src/io-v4l.c:593
+#: src/io-v4l.c:593 src/io-v4l2.c:491
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -402,7 +402,7 @@ msgstr ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
 
-#: src/io-v4l2.c:523 src/io-v4l.c:757
+#: src/io-v4l.c:757 src/io-v4l2.c:503
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -411,12 +411,12 @@ msgstr ""
 "Cannot capture the requested data services with %s (%s), the sampling "
 "frequency %.2f MHz is too low."
 
-#: src/io-v4l2.c:578
+#: src/io-v4l2.c:558
 #, c-format
 msgid "Cannot request streaming i/o buffers from %s (%s): %d, %s."
 msgstr "Cannot request streaming i/o buffers from %s (%s): %d, %s."
 
-#: src/io-v4l2.c:586
+#: src/io-v4l2.c:566
 #, c-format
 msgid ""
 "%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
@@ -425,27 +425,27 @@ msgstr ""
 "%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
 "exhausted."
 
-#: src/io-v4l2.c:611
+#: src/io-v4l2.c:591
 #, c-format
 msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %d, %s."
 msgstr "Querying streaming i/o buffer #%d from %s (%s) failed: %d, %s."
 
-#: src/io-v4l2.c:633
+#: src/io-v4l2.c:613
 #, c-format
 msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
 msgstr "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
 
-#: src/io-v4l2.c:657
+#: src/io-v4l2.c:637
 #, c-format
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
 msgstr "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
 
-#: src/io-v4l2.c:689 src/io-v4l.c:812
+#: src/io-v4l.c:812 src/io-v4l2.c:669
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Not enough memory to allocate vbi capture buffer (%d KB)."
 
-#: src/io-v4l2.c:699
+#: src/io-v4l2.c:679
 #, c-format
 msgid ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "
