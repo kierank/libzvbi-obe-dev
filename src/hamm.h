@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: hamm.h,v 1.5 2005/01/19 04:21:28 mschimek Exp $ */
+/* $Id: hamm.h,v 1.6 2005/01/20 20:55:03 mschimek Exp $ */
 
 #ifndef __ZVBI_HAMM_H__
 #define __ZVBI_HAMM_H__
@@ -53,6 +53,8 @@ extern const int8_t		_vbi_hamm24_inv_par [3][256];
  * 
  * @returns
  * Data bits 0 [msb] ... 7 [lsb].
+ *
+ * @since 0.2.12
  */
 vbi_inline unsigned int
 vbi_rev8			(unsigned int		c)
@@ -67,6 +69,8 @@ vbi_rev8			(unsigned int		c)
  * 
  * @returns
  * Data bits 0 [msb] ... 15 [lsb].
+ *
+ * @since 0.2.12
  */
 vbi_inline unsigned int
 vbi_rev16			(unsigned int		c)
@@ -83,6 +87,8 @@ vbi_rev16			(unsigned int		c)
  * 
  * @returns
  * Data bits 0 [msb] ... 15 [lsb].
+ *
+ * @since 0.2.12
  */
 vbi_inline unsigned int
 vbi_rev16p			(const uint8_t *	p)
@@ -97,6 +103,8 @@ vbi_rev16p			(const uint8_t *	p)
  * @returns
  * Changes the most significant bit of the byte
  * to make the number of set bits odd.
+ *
+ * @since 0.2.12
  */
 vbi_inline unsigned int
 vbi_par8			(unsigned int		c)
@@ -115,6 +123,8 @@ vbi_par8			(unsigned int		c)
  * @returns
  * If the byte has odd parity (sum of bits modulo 2 is 1) the
  * byte AND 127, otherwise a negative value.
+ *
+ * @since 0.2.12
  */
 vbi_inline int
 vbi_unpar8			(unsigned int		c)
@@ -155,6 +165,8 @@ vbi_unpar			(uint8_t *		p,
  * 
  * @returns
  * Hamming encoded unsigned byte, lsb first transmitted.
+ *
+ * @since 0.2.12
  */
 vbi_inline unsigned int
 vbi_ham8			(unsigned int		c)
@@ -171,6 +183,8 @@ vbi_ham8			(unsigned int		c)
  * @returns
  * Data bits (D4 [msb] ... D1 [lsb]) or a negative
  * value if the byte contained incorrectable errors.
+ *
+ * @since 0.2.12
  */
 vbi_inline unsigned int
 vbi_unham8			(unsigned int		c)
@@ -189,6 +203,8 @@ vbi_unham8			(unsigned int		c)
  * Data bits D4 [msb] ... D1 of first byte and D4 ... D1 [lsb]
  * of second byte, or a negative value if any of the bytes
  * contained incorrectable errors.
+ *
+ * @since 0.2.12
  */
 vbi_inline int
 vbi_unham16p			(const uint8_t *	p)
