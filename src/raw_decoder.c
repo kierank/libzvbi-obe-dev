@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.4 2005/01/24 00:13:40 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.5 2005/03/30 21:36:31 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -582,8 +582,11 @@ _vbi_sampling_par_verify	(const vbi_sampling_par *sp)
 {
 	switch (sp->sampling_format) {
 	case VBI_PIXFMT_YUV420:
-		if (sp->bytes_per_line & 1)
-			goto samples;
+		/* This conflicts with the ivtv driver, which returns an
+		   odd number of bytes per line.  The driver format is
+		   _GREY but libzvbi 0.2 has no VBI_PIXFMT_Y8. */
+		/* if (sp->bytes_per_line & 1)
+		   goto samples; */
 		break;
 
 	default:
