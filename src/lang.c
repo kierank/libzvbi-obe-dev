@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: lang.c,v 1.5 2004/12/13 07:17:09 mschimek Exp $ */
+/* $Id: lang.c,v 1.6 2005/01/20 01:38:56 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -579,7 +579,7 @@ vbi_caption_unicode(unsigned int c)
 }
 
 static inline int
-isblank(vbi_char c)
+is_blank(vbi_char c)
 {
 	/* flash/conceal: undecided; underline: nope. */
 	if (c.flash || c.conceal || c.underline)
@@ -592,7 +592,7 @@ isblank(vbi_char c)
 }
 
 static inline int
-isfull(vbi_char c)
+is_full(vbi_char c)
 {
 	/* flash/conceal: undecided. */
 	if (c.flash || c.conceal)
@@ -631,11 +631,11 @@ vbi_optimize_page(vbi_page *pg, int column, int row, int width, int height)
 			cp = pg->text + pg->columns * row + column;
 			c = *cp;
 
-			if (isblank(c)) {
+			if (is_blank(c)) {
 				c.bold = l.bold;
 				c.italic = l.italic;
 				c.foreground = l.foreground;
-			} else if (isfull(c)) {
+			} else if (is_full(c)) {
 				c.bold = l.bold;
 				c.italic = l.italic;
 				c.background = l.background;
@@ -649,11 +649,11 @@ vbi_optimize_page(vbi_page *pg, int column, int row, int width, int height)
 			cp = pg->text + pg->columns * row + column;
 			c = *cp;
 
-			if (isblank(c)) {
+			if (is_blank(c)) {
 				c.bold = l.bold;
 				c.italic = l.italic;
 				c.foreground = l.foreground;
-			} else if (isfull(c)) {
+			} else if (is_full(c)) {
 				c.bold = l.bold;
 				c.italic = l.italic;
 				c.background = l.background;
