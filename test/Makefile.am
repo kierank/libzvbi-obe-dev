@@ -17,6 +17,7 @@ check_SCRIPTS = \
 	exoptest
 
 # exoptest uses explist, build that first
+# XXX requires a make before make dist
 exoptest : explist
 
 if ENABLE_PROXY
@@ -50,8 +51,13 @@ EXTRA_DIST = \
 	uclist \
 	sim.c
 
-INCLUDES = -I$(top_srcdir) $(COMMON_INCLUDES) $(X_CFLAGS) \
-	-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations \
-	-D_REENTRANT -D_GNU_SOURCE
+AM_CPPFLAGS = \
+	-I$(top_srcdir) \
+	$(X_CFLAGS) \
+	-D_REENTRANT \
+	-D_GNU_SOURCE
 
-LDADD = $(top_builddir)/src/.libs/libzvbi.a $(LIBS) $(X_LIBS)
+LDADD = \
+	$(top_builddir)/src/.libs/libzvbi.a \
+	$(LIBS) \
+	$(X_LIBS)
