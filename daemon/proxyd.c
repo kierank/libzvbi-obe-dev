@@ -37,6 +37,9 @@
  *
  *
  *  $Log: proxyd.c,v $
+ *  Revision 1.12  2004/11/07 10:52:01  mschimek
+ *  dprintf: s/proxyd/zvbid.
+ *
  *  Revision 1.11  2004/10/25 16:56:26  mschimek
  *  *** empty log message ***
  *
@@ -47,7 +50,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxyd.c,v 1.11 2004/10/25 16:56:26 mschimek Exp $";
+static const char rcsid[] = "$Id: proxyd.c,v 1.12 2004/11/07 10:52:01 mschimek Exp $";
 
 #include "config.h"
 
@@ -82,8 +85,11 @@ static const char rcsid[] = "$Id: proxyd.c,v 1.11 2004/10/25 16:56:26 mschimek E
 #define DBG_QU 2
 #define DBG_CLNT 4
 #define DBG_SCHED 8
-#define dprintf(flags, fmt, arg...) do {if (opt_debug_level & (flags)) \
-                                        fprintf(stderr, "proxyd: " fmt, ## arg);} while (0)
+#define dprintf(flags, fmt, arg...)					\
+do {									\
+	if (opt_debug_level & (flags))					\
+		fprintf (stderr, "zvbid: " fmt, ## arg);		\
+} while (0)
 
 /* Macro to cast (void *) to (int) and backwards without compiler warning
 ** (note: 64-bit compilers warn when casting a pointer to an int) */
