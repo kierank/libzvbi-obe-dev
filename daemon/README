@@ -63,4 +63,62 @@ tmp directory.
 
 If you've got any questions, feel free to ask.
 
+2003-05-10
+----------
+
+This is an unordered list of open points (i.e. unimplemented or yet
+undecided) regarding the proxy.  Any comments or help appreciated.
+The list will be updated in CVS along with the implementation.
+
+- libzvbi.h: should contain HAVE_PROXY macro or other means to query
+  if proxy interface is available at compile time (version number is not
+  enough since proxy support might have been disabled config.h)
+- merge of different client's service parameters: instead of merging the
+  parameters once in the daemon and passing them in one call to add_services,
+  add them with separate calls in the order of connect time (i.e. first
+  client's services have highest priority).  This is the only way to deal
+  with differing strict levels properly  --> also requires routing service
+  requests through io.c with new interface function to adapt size of raw
+  buffer
+- add raw buffer forward, possibly based on shared memory to avoid copying
+  (mmapped DMA buffers can probably not directly be shared though, so
+  one copy will be required in conjunction with streams buffers; copying
+  may also be required if the client uses the read() interface; shm should
+  still be more efficient than stuffing everything through a socket)
+- add io.c interface function to flush stream buffers & discard the next
+  1-2 frames after a channel change.  Add note to documentation about
+  performance issues, i.e. advise to request raw buffer only if required
+- startup "rc" script for proxy daemon; add daemon and rc for installation;
+  daemon should be renamed to vbiproxyd for installation
+- daemon man page
+- proxy main loop needs to be changed to work with drivers which don't
+  support select on vbi (possibly use an additional thread which blocks
+  in a read on the device)
+- CONNECT_CNF message should include name of assorted video device for
+  clients which might need it for tasks as channel switching (at least
+  with v4l1 drivers the client cannot use the VBI device since it's kept
+  busy by the daemon)
+- add note to documentation that fd returned by capture_get_fd is only
+  for select --> return -1 if select non-supported? (e.g. v4l1)
+- inform clients about video norm changes: e.g. sampling rate may change
+  (only relevant for raw data though), number of VBI lines may change,
+  client may want to change service IDs.  Probably only for clients
+  which explicitly enable this; others could simply be starved.
+- device permissions are implemented by copying group id and access
+  mask of the device.  This is not portable however according to man
+  socket(7).  Possibly a sub-directory should be used and permissions
+  set on the directory.  On in X11 way a key file could be used.
+- manage channel change requests (see discussion on mailing list)
+
+Questions indirectly related to the daemon:
+
+- There's a "time_per_frame" in the capture context: would be useful, but
+  how can it be queried?  Currently it's unused.
+- it's very unfortunate that the frame sequence counter is not made
+  available; when using the read(2) with bttv that's the only reliable way
+  to detect missing frames.  Unfortunately I don't see a way to add it to
+  vbi_capture_buffer without losing binary compatibility.
+- in v4l2k_new: what's the "guess" string for?  It's assigned but never used
+
+
 -tom
