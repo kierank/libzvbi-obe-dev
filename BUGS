@@ -1,4 +1,4 @@
-$Id: BUGS,v 1.14 2004/01/02 07:46:09 mschimek Exp $
+$Id: BUGS,v 1.15 2004/02/18 07:56:42 mschimek Exp $
 
 * v4l and v4l2 i/o can ignore timeout parameter
   > maybe a sleep() loop works, but what about timestamping?
@@ -7,3 +7,4 @@ $Id: BUGS,v 1.14 2004/01/02 07:46:09 mschimek Exp $
    v4l/vbi0 and would never give me any pages.  Changing the link to
    /dev/v4l/vbi0 (absolute reference) fixed the problem."
   Maybe v4l device probing.
+* vbi_page.text[1056] < 26 * 41. D'oh!

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.10 2004/01/02 07:46:09 mschimek Exp $ */
+/* $Id: osc.c,v 1.11 2004/02/18 07:56:45 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -372,7 +372,7 @@ draw(unsigned char *raw)
 	xti.font = 0;
 
 	XDrawText(display, window, gc, 4, src_h + 12, &xti, 1);
-        xti.nchars = snprintf(buf, 255, "(%d, %3.0d)\0", cur_x+draw_offset, (1000*(dst_h-cur_y))/(dst_h-src_h));
+        xti.nchars = snprintf(buf, 255, "(%d, %3.0d)", cur_x+draw_offset, (1000*(dst_h-cur_y))/(dst_h-src_h));
         XDrawText(display, window, gc, 4, src_h + 24, &xti, 1);
 
 	data = raw + draw_offset + draw_row * src_w;

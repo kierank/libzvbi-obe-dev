@@ -1,3 +1,10 @@
+2004-02-18    <mschimek@users.sf.net>
+
+	* src/Makefile.am: New file io-dvb.c.
+	* src/io-dvb.c: New device interface contributed by Gerd Knorr.
+	* src/dvb: DVB headers from Linux 2.6.1.
+	* test/capture.c: Added PID option and DVB interface.
+
 2004-01-02    <mschimek@users.sf.net>
 
 	* src/test/osc.c: Added patch by James Mastros.
