@@ -2,11 +2,11 @@
 
 TESTS = exoptest cpptest
 
-## if ENABLE_PROXY
-## proxy_programs=proxy-test
-## else
-proxy_programs=
-## endif
+if ENABLE_PROXY
+proxy_programs = proxy-test
+else
+proxy_programs =
+endif
 
 noinst_PROGRAMS = \
     unicode \
@@ -26,5 +26,4 @@ EXTRA_DIST = $(TESTS) README uclist sim.c
 INCLUDES = -I$(top_srcdir)/src $(COMMON_INCLUDES) $(X_CFLAGS) \
 	-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations
 
-LDADD = $(top_builddir)/src/.libs/libzvbi.a \
-	$(PTHREAD_LIB) -lm $(PNG_LIB) $(X_LIBS)
+LDADD = $(top_builddir)/src/.libs/libzvbi.a $(LIBS) $(X_LIBS)
