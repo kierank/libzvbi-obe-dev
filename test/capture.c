@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.4 2002/08/07 19:29:03 mschimek Exp $ */
+/* $Id: capture.c,v 1.5 2002/10/11 12:31:04 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -118,7 +118,7 @@ decode_vps(uint8_t *buf)
 
 	c = vbi_bit_reverse[buf[1]];
 
-	if ((char) c < 0) {
+	if ((int8_t) c < 0) {
 		label[l] = 0;
 		memcpy(pr_label, label, sizeof(pr_label));
 		l = 0;

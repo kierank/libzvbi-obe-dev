@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.8 2002/09/26 20:48:58 mschimek Exp $ */
+/* $Id: packet.c,v 1.9 2002/10/11 12:30:18 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -170,7 +170,7 @@ parse_mot(vt_magazine *mag, uint8_t *raw, int packet)
 	case 1 ... 8:
 	{
 		int index = (packet - 1) << 5;
-		char n0, n1;
+		int n0, n1;
 
 		for (i = 0; i < 20; index++, i++) {
 			if (i == 10)
@@ -194,7 +194,7 @@ parse_mot(vt_magazine *mag, uint8_t *raw, int packet)
 		int index = (packet - 9) * 0x30 + 10;
 
 		for (i = 0; i < 20; index++, i++) {
-			char n0, n1;
+			int n0, n1;
 
 			if (i == 6 || i == 12) {
 				if (index == 0x100)
@@ -227,7 +227,7 @@ parse_mot(vt_magazine *mag, uint8_t *raw, int packet)
 		vt_pop_link *pop = mag->pop_link + (packet - 19) * 4;
 
 		for (i = 0; i < 4; raw += 10, pop++, i++) {
-			char n[10];
+			int n[10];
 
 			for (err = j = 0; j < 10; j++)
 				err |= n[j] = vbi_hamm8(raw[j]);
@@ -263,7 +263,7 @@ parse_mot(vt_magazine *mag, uint8_t *raw, int packet)
 	case 24:	/* level 3.5 drcs */
 	    {
 		int index = (packet == 21) ? 0 : 8;
-		char n[4];
+		int n[4];
 
 		for (i = 0; i < 8; raw += 4, index++, i++) {
 			for (err = j = 0; j < 4; j++)
@@ -659,7 +659,7 @@ static const int dec2bcdp[20] = {
 static vbi_bool
 top_page_number(pagenum *p, uint8_t *raw)
 {
-	char n[8];
+	int n[8];
 	int pgno, err, i;
 
 	for (err = i = 0; i < 8; i++)
@@ -1179,7 +1179,7 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 
 		c = vbi_bit_reverse[buf[1]];
 
-		if ((char) c < 0) {
+		if ((int8_t) c < 0) {
 			label[l] = 0;
 			memcpy(pr_label, label, sizeof(pr_label));
 			l = 0;
@@ -2390,7 +2390,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 
 	case 1 ... 25:
 	{
-		char n;
+		int n;
 		int i;
 
 		switch (cvtp->function) {
