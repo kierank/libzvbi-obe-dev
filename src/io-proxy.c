@@ -18,6 +18,15 @@
  *
  *
  *  $Log: io-proxy.c,v $
+ *  Revision 1.7  2003/05/24 12:17:13  tomzo
+ *  Implemented new capture interfaces:
+ *  - add_services(): message exchange with daemon: MSG_TYPE_SERVICE_REQ/_CNF/_REJ
+ *  - added get_poll_fd(): return file handle for select (socket file handle)
+ *  - changed get_fd() interface: return -1 since VBI device is not acessible
+ *  Also:
+ *  - renamed MSG_TYPE_DATA_IND into _SLICED_IND in preparation for raw data
+ *  - added dummy function for flush() capture interface
+ *
  *  Revision 1.6  2003/05/17 13:02:57  tomzo
  *  Fixed definition of dprintf2() macro: print only for (v->trace >= 2)
  *
@@ -35,7 +44,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: io-proxy.c,v 1.6 2003/05/17 13:02:57 tomzo Exp $";
+static const char rcsid[] = "$Id: io-proxy.c,v 1.7 2003/05/24 12:17:13 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -63,8 +72,8 @@ static const char rcsid[] = "$Id: io-proxy.c,v 1.6 2003/05/17 13:02:57 tomzo Exp
 #include "proxy-msg.h"
 #include "bcd.h"
 
-#define dprintf1(fmt, arg...)    if (v->trace >= 1) printf("WARN  io-proxy: " fmt, ## arg)
-#define dprintf2(fmt, arg...)    if (v->trace >= 2) printf("TRACE io-proxy: " fmt, ## arg)
+#define dprintf1(fmt, arg...)    do {if (v->trace >= 1) fprintf(stderr, "io-proxy: " fmt, ## arg);} while(0)
+#define dprintf2(fmt, arg...)    do {if (v->trace >= 2) fprintf(stderr, "io-proxy: " fmt, ## arg);} while(0)
 
 /* ----------------------------------------------------------------------------
 ** Declaration of types of internal state variables
@@ -76,6 +85,8 @@ typedef enum
         CLNT_STATE_RETRY,
         CLNT_STATE_WAIT_CONNECT,
         CLNT_STATE_WAIT_CON_CNF,
+        CLNT_STATE_SRV_CHANGE,
+        CLNT_STATE_WAIT_SRV_CNF,
         CLNT_STATE_RECEIVE,
 } PROXY_CLIENT_STATE;
 
@@ -96,7 +107,7 @@ typedef struct vbi_capture_proxy
         vbi_raw_decoder         dec;
         double                  time_per_frame;
         vbi_capture_buffer      sliced_buffer;
-        VBIPROXY_MSG_BODY     * p_data_ind;
+        VBIPROXY_MSG_BODY     * p_sliced_ind;
 
         int                     scanning;
         unsigned int            services;
@@ -212,9 +223,17 @@ static vbi_bool proxy_client_check_msg( vbi_capture_proxy *v, uint len, VBIPROXY
                     (memcmp(pBody->connect_rej.magics.protocol_magic, VBIPROXY_MAGIC_STR, VBIPROXY_MAGIC_LEN) == 0) );
          break;
 
-      case MSG_TYPE_DATA_IND:
-         result = (len == sizeof(VBIPROXY_MSG_HEADER) + sizeof(pBody->data_ind) +
-                          sizeof(pBody->data_ind.sliced[0]) * (pBody->data_ind.line_count - 1));
+      case MSG_TYPE_SLICED_IND:
+         result = (len == sizeof(VBIPROXY_MSG_HEADER) + sizeof(pBody->sliced_ind) +
+                          sizeof(pBody->sliced_ind.sliced[0]) * (pBody->sliced_ind.line_count - 1));
+         break;
+
+      case MSG_TYPE_SERVICE_CNF:
+         result = (len == sizeof(VBIPROXY_MSG_HEADER) + sizeof(pBody->service_cnf));
+         break;
+
+      case MSG_TYPE_SERVICE_REJ:
+         result = (len == sizeof(VBIPROXY_MSG_HEADER) + sizeof(pBody->service_rej));
          break;
 
       case MSG_TYPE_CLOSE_REQ:
@@ -222,6 +241,7 @@ static vbi_bool proxy_client_check_msg( vbi_capture_proxy *v, uint len, VBIPROXY
          break;
 
       case MSG_TYPE_CONNECT_REQ:
+      case MSG_TYPE_SERVICE_REQ:
          dprintf1("check_msg: recv server msg type %d\n", pHead->type);
          result = FALSE;
          break;
@@ -244,7 +264,7 @@ static vbi_bool proxy_client_take_message( vbi_capture_proxy *v, VBIPROXY_MSG_BO
 {
    vbi_bool result = FALSE;
 
-   /*if (v->io.readHeader.type != MSG_TYPE_DATA_IND) //XXX */
+   /*if (v->io.readHeader.type != MSG_TYPE_SLICED_IND) //XXX */
    dprintf2("take_message: recv msg type %d, len %d\n", v->io.readHeader.type, v->io.readHeader.len);
 
    switch (v->io.readHeader.type)
@@ -293,22 +313,58 @@ static vbi_bool proxy_client_take_message( vbi_capture_proxy *v, VBIPROXY_MSG_BO
          }
          break;
 
-      case MSG_TYPE_DATA_IND:
+      case MSG_TYPE_SLICED_IND:
          if (v->state == CLNT_STATE_RECEIVE)
          {
-            if (v->p_data_ind != NULL)
-               free(v->p_data_ind);
-            if (pMsg->data_ind.line_count > v->dec.count[0] + v->dec.count[1])
+            if (v->p_sliced_ind != NULL)
+               free(v->p_sliced_ind);
+            if (pMsg->sliced_ind.line_count > v->dec.count[0] + v->dec.count[1])
             {  /* more lines than req. for service -> would overflow the allocated slicer buffer
                ** -> discard extra lines (should never happen; proxy checks for line counts) */
-               dprintf2("take_message: DATA_IND: too many lines: %d > %d\n", pMsg->data_ind.line_count, v->dec.count[0] + v->dec.count[1]);
-               pMsg->data_ind.line_count = v->dec.count[0] + v->dec.count[1];
+               dprintf1("take_message: SLICED_IND: too many lines: %d > %d\n", pMsg->sliced_ind.line_count, v->dec.count[0] + v->dec.count[1]);
+               pMsg->sliced_ind.line_count = v->dec.count[0] + v->dec.count[1];
             }
-            v->p_data_ind = pMsg;
+            v->p_sliced_ind = pMsg;
             pMsg = NULL;
             result = TRUE;
          }
+         else if ( (v->state == CLNT_STATE_SRV_CHANGE) ||
+                   (v->state == CLNT_STATE_WAIT_SRV_CNF) )
+         {
+            /* discard incoming data during service changes */
+            result = TRUE;
+         }
          break;
+
+      case MSG_TYPE_SERVICE_CNF:
+         if (v->state == CLNT_STATE_WAIT_SRV_CNF)
+         {
+            memcpy(&v->dec, &pMsg->service_cnf.dec, sizeof(v->dec));
+            dprintf1("service cnf: granted service %d\n", v->dec.services);
+
+            v->state = CLNT_STATE_RECEIVE;
+            result = TRUE;
+         }
+         break;
+
+      case MSG_TYPE_SERVICE_REJ:
+         if (v->state == CLNT_STATE_WAIT_SRV_CNF)
+         {
+            if (v->p_errorstr != NULL)
+            {
+               free(v->p_errorstr);
+               v->p_errorstr = NULL;
+            }
+            if (pMsg->service_rej.errorstr[0] != 0)
+               v->p_errorstr = strdup(pMsg->service_rej.errorstr);
+
+            memset(&v->dec, 0, sizeof(v->dec));
+
+            v->state = CLNT_STATE_RECEIVE;
+            result = TRUE;
+         }
+         break;
+
 
       case MSG_TYPE_CLOSE_REQ:
          break;
@@ -394,7 +450,6 @@ static void proxy_client_handle_socket( vbi_capture_proxy *v )
             #if 0
             if (v->xxxFlag)
             {  /* send a message to the server */
-               v->io.lastIoTime  = time(NULL);
                v->provUpdate     = FALSE;
                v->statsReqUpdate = FALSE;
 
@@ -574,13 +629,13 @@ static vbi_bool proxy_client_start_acq( vbi_capture_proxy *v )
       {
          v->state = CLNT_STATE_WAIT_CONNECT;
 
-         memset(&v->ev_hand, 0, sizeof(v->ev_hand));
-         v->ev_hand.blockOnWrite   = TRUE;
-
          /* wait for CONNECT_CNF because v->dec must be available */
          while ( (v->state == CLNT_STATE_WAIT_CONNECT) ||
                  (v->state == CLNT_STATE_WAIT_CON_CNF) )
          {
+            memset(&v->ev_hand, 0, sizeof(v->ev_hand));
+            v->ev_hand.blockOnWrite   = TRUE;
+
             tv.tv_sec  = 5;
             tv.tv_usec = 0;
             ret = proxy_client_wait_select(v, &tv);
@@ -678,9 +733,9 @@ proxy_read( vbi_capture *vc, vbi_capture_buffer **raw,
         vbi_capture_proxy *v = PARENT(vc, vbi_capture_proxy, capture);
         int ret;
 
-        if (v->p_data_ind != NULL) {
-                free(v->p_data_ind);
-                v->p_data_ind = NULL;
+        if (v->p_sliced_ind != NULL) {
+                free(v->p_sliced_ind);
+                v->p_sliced_ind = NULL;
                 v->sliced_buffer.data = NULL;
         }
 
@@ -691,32 +746,32 @@ proxy_read( vbi_capture *vc, vbi_capture_buffer **raw,
 
         	proxy_client_handle_socket(v);
 
-	} while (v->p_data_ind == NULL);
+	} while (v->p_sliced_ind == NULL);
 
         if (raw != NULL) {
                 /* XXX TODO raw buffer forward not implemented */
         }
 
         if (proxy_client_check_timeouts(v))
-           return -1;
+                return -1;
 
-        if (v->p_data_ind != NULL) {
-                int lines = v->p_data_ind->data_ind.line_count;
+        if (v->p_sliced_ind != NULL) {
+                int lines = v->p_sliced_ind->sliced_ind.line_count;
 
                 if (*sliced) {
                         memcpy( (vbi_sliced *)(*sliced)->data,
-                                v->p_data_ind->data_ind.sliced,
+                                v->p_sliced_ind->sliced_ind.sliced,
                                 lines * sizeof(vbi_sliced) );
 
-                        (*sliced)->timestamp = v->p_data_ind->data_ind.timestamp;
+                        (*sliced)->timestamp = v->p_sliced_ind->sliced_ind.timestamp;
                         (*sliced)->size      = lines * sizeof(vbi_sliced);
 
-                        free(v->p_data_ind);
-                        v->p_data_ind = NULL;
+                        free(v->p_sliced_ind);
+                        v->p_sliced_ind = NULL;
                 } else {
                         *sliced = &v->sliced_buffer;
-                        (*sliced)->data      = v->p_data_ind->data_ind.sliced;
-                        (*sliced)->timestamp = v->p_data_ind->data_ind.timestamp;
+                        (*sliced)->data      = v->p_sliced_ind->sliced_ind.sliced;
+                        (*sliced)->timestamp = v->p_sliced_ind->sliced_ind.timestamp;
                         (*sliced)->size      = lines * sizeof(vbi_sliced);
                 }
                 return 1;
@@ -748,9 +803,9 @@ proxy_delete(vbi_capture *vc)
         if (v->p_srv_port != NULL)
                 free(v->p_srv_port);
 
-        if (v->p_data_ind != NULL)
-                free(v->p_data_ind);
-        else /* note: v->sliced_buffer.data points into p_data_ind */
+        if (v->p_sliced_ind != NULL)
+                free(v->p_sliced_ind);
+        else /* note: v->sliced_buffer.data points into p_sliced_ind */
                 assert(v->sliced_buffer.data == NULL);
 
         if (v->p_errorstr != NULL)
@@ -759,12 +814,93 @@ proxy_delete(vbi_capture *vc)
         free(v);
 }
 
+static void proxy_flush(vbi_capture *vc)
+{
+        /* TODO */
+        /* arrange for all packets to be discarded if timestamp <= now + 1 frame */
+}
+
 static int
-proxy_fd(vbi_capture *vc)
+proxy_get_read_fd(vbi_capture *vc)
+{
+        /* direct access to device is not supported */
+        return -1;
+}
+
+static int
+proxy_get_poll_fd(vbi_capture *vc)
 {
         vbi_capture_proxy *v = PARENT(vc, vbi_capture_proxy, capture);
 
+        /* note: returned filehandle must only be used for poll(2) and select(2) */
         return v->io.sock_fd;
+}
+
+static unsigned int
+proxy_add_services(vbi_capture *vc, vbi_bool reset, vbi_bool commit,
+                  unsigned int services, int strict,
+                  char ** errorstr)
+{
+        vbi_capture_proxy *v = PARENT(vc, vbi_capture_proxy, capture);
+        struct timeval tv;
+        int ret;
+
+        assert(v->state == CLNT_STATE_RECEIVE);
+
+        if (services == 0) {
+                return 0;
+        }
+
+        /* set intermediate state so that incoming data is discarded in the handler */
+        v->state = CLNT_STATE_SRV_CHANGE;
+
+        /* wait for ongoing read to complete */
+        while ( vbi_proxy_msg_is_idle(&v->io) == FALSE )
+        {
+                tv.tv_sec  = 1;
+                tv.tv_usec = 0;
+                ret = proxy_client_wait_select(v, &tv);
+
+                if (ret <= 0)
+                        break;
+
+                proxy_client_handle_socket(v);
+        }
+
+        if (v->state != CLNT_STATE_SRV_CHANGE)
+                return 0;
+
+        dprintf1("add_services: send service req: srv %d, strict %d\n", services, strict);
+
+        /* send service request to proxy daemon */
+        v->client_msg.service_req.commit       = reset;
+        v->client_msg.service_req.commit       = commit;
+        v->client_msg.service_req.services     = services;
+        v->client_msg.service_req.strict       = strict;
+        vbi_proxy_msg_write(&v->io, MSG_TYPE_SERVICE_REQ, sizeof(v->client_msg.service_req),
+                            &v->client_msg.service_req, FALSE);
+
+        v->state = CLNT_STATE_WAIT_SRV_CNF;
+
+        /* wait for SERVICE_CNF because v->dec must be available */
+        while (v->state == CLNT_STATE_WAIT_SRV_CNF)
+        {
+                tv.tv_sec  = 4;
+                tv.tv_usec = 0;
+                ret = proxy_client_wait_select(v, &tv);
+
+                if (ret <= 0)
+                        break;
+
+                proxy_client_handle_socket(v);
+        }
+
+        if (v->state != CLNT_STATE_RECEIVE) {
+                proxy_client_close(v);
+                return 0;
+        }
+
+        return v->dec.services & services;
 }
 
 /* document below */
@@ -783,6 +919,11 @@ vbi_capture_proxy_new(const char *dev_name, int buffers, int scanning,
         if (buffers < 1)
                 buffers = 1;
 
+        if (strict < -1)
+                strict = -1;
+        else if (strict > 2)
+                strict = 2;
+
         if (trace) {
                 fprintf(stderr, "Try to connect vbi proxy, libzvbi interface rev.\n%s\n", rcsid);
                 vbi_proxy_msg_set_debug_level(trace);
@@ -797,8 +938,11 @@ vbi_capture_proxy_new(const char *dev_name, int buffers, int scanning,
 
         v->capture.parameters = proxy_parameters;
         v->capture._delete = proxy_delete;
-        v->capture.get_fd = proxy_fd;
+        v->capture.get_fd = proxy_get_read_fd;
+        v->capture.get_poll_fd = proxy_get_poll_fd;
         v->capture.read = proxy_read;
+        v->capture.flush = proxy_flush;
+        v->capture.add_services = proxy_add_services;
 
         v->scanning     = scanning,
         v->services     = *services;
@@ -853,6 +997,13 @@ vbi_capture_proxy_new(const char *dev_name, int buffers, int scanning,
  * @param errorstr If not @c NULL this function stores a pointer to an error
  *   description here. You must free() this string when no longer needed.
  * @param trace If @c TRUE print progress messages on stderr.
+ *
+ * Open a new connection to a VBI proxy to open a VBI device for the
+ * given services.  On side of the proxy one of the regular v4l_new()
+ * functions is invoked and if it succeeds, data slicing is started
+ * and all captured data forwarded transparently.  Whenever possible
+ * the proxy should be used instead of opening the device directly, since
+ * it allows multiple VBI clients to operate concurrently.
  * 
  * @return
  * Initialized vbi_capture context, @c NULL on failure.
