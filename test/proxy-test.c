@@ -25,6 +25,9 @@
  *    for a list of possible options.
  *
  *  $Log: proxy-test.c,v $
+ *  Revision 1.16  2004/12/31 06:05:20  mschimek
+ *  *** empty log message ***
+ *
  *  Revision 1.15  2004/11/07 10:52:47  mschimek
  *  *** empty log message ***
  *
@@ -68,7 +71,12 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxy-test.c,v 1.15 2004/11/07 10:52:47 mschimek Exp $";
+static const char
+rcsid [] = "$Id: proxy-test.c,v 1.16 2004/12/31 06:05:20 mschimek Exp $";
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,7 +93,6 @@ static const char rcsid[] = "$Id: proxy-test.c,v 1.15 2004/11/07 10:52:47 mschim
 #define USE_LIBZVBI
 #include "src/libzvbi.h"
 
-#include "config.h"
 #ifdef ENABLE_V4L
 #include "src/videodev.h"
 #endif

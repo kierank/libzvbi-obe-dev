@@ -18,11 +18,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.6 2004/10/25 16:56:30 mschimek Exp $ */
+/* $Id: caption.c,v 1.7 2004/12/31 06:05:20 mschimek Exp $ */
 
 #undef NDEBUG
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

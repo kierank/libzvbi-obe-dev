@@ -18,11 +18,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.12 2004/10/28 03:28:05 mschimek Exp $ */
+/* $Id: capture.c,v 1.13 2004/12/31 06:05:20 mschimek Exp $ */
 
 #undef NDEBUG
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

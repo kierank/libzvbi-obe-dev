@@ -1,3 +1,11 @@
+2004-12-31    <mschimek@users.sf.net>
+
+	* Release 0.2.11
+
+2004-12-31    <mschimek@users.sf.net>
+
+	* src/Makefile.am (libzvbi_la_SOURCES): Added dvb_demux.h.
+
 2004-12-30    <mschimek@users.sf.net>
 
 	* Release 0.2.10

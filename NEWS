@@ -1,3 +1,7 @@
+libzvbi 0.2.11, 2004-12-31
+--------------------------
+Build fix. Cough.
+
 libzvbi 0.2.10, 2004-12-30
 --------------------------
 The bit slicer and raw VBI decoder have been replaced by improved and
