@@ -17,6 +17,9 @@ EXTRA_DIST = \
 	wstfont2.xbm \
 	ccfont2.xbm
 
+CLEANFILES = \
+	$(BUILT_SOURCES)
+
 INCLUDES  = \
 	-Wall \
 	-Wunused \
@@ -106,6 +109,7 @@ LIBZVBI_HDRS = \
 	proxy-client.h \
 	exp-gfx.h \
 	exp-txt.h \
+	hamm.h \
 	cc.h \
 	vt.h \
 	tables.h \
