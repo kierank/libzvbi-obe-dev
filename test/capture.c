@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.2 2002/02/10 11:47:10 mschimek Exp $ */
+/* $Id: capture.c,v 1.3 2002/04/12 12:10:34 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -389,6 +389,9 @@ mainloop(void)
 	vbi_capture_buffer *sliced_buffer;
 	double timestamp;
 	struct timeval tv;
+
+	tv.tv_sec = 2;
+	tv.tv_usec = 0;
 
 	raw = malloc(src_w * src_h);
 	sliced = malloc(sizeof(vbi_sliced) * src_h);
