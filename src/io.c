@@ -18,12 +18,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.10 2004/06/18 14:13:08 mschimek Exp $ */
+/* $Id: io.c,v 1.11 2004/10/04 20:50:24 mschimek Exp $ */
 
 #include <assert.h>
+
+#include <unistd.h>
 #include <errno.h>
 #include <unistd.h>		/* close() */
 #include <sys/ioctl.h>		/* ioctl() */
+#include <sys/time.h>
+#include <sys/types.h>
 
 #include "io.h"
 
@@ -31,9 +35,9 @@
 vbi_bool vbi_capture_force_read_mode = FALSE;
 
 /**
- * @addtogroup Device Device interface
+ * @addtogroup Device VBI capture device interface
  * @ingroup Raw
- * @brief Access to VBI capture devices.
+ * @brief Platform independent interface to VBI capture device drivers
  */
 
 /**
@@ -81,6 +85,10 @@ vbi_capture_read_raw(vbi_capture *capture, void *data,
  * 
  * Read a sliced vbi frame, that is an array of vbi_sliced structures,
  * from the capture device. 
+ *
+ * Note: it's generally more efficient to use vbi_capture_pull_sliced()
+ * instead, as that one may avoid having to copy sliced data into the
+ * given buffer (e.g. for the VBI proxy)
  * 
  * @return
  * -1 on error, examine @c errno for details. 0 on timeout, 1 on success.
@@ -109,10 +117,10 @@ vbi_capture_read_sliced(vbi_capture *capture, vbi_sliced *data, int *lines,
 
 /**
  * @param capture Initialized vbi capture context.
- * @param raw_data Stores the raw vbi data here. Use vbi_capture_parameters() to
- *   determine the buffer size.
- * @param sliced_data Stores the sliced vbi data here. Use vbi_capture_parameters() to
- *   determine the buffer size.
+ * @param raw_data Stores the raw vbi data here. Use vbi_capture_parameters()
+ *   to determine the buffer size.
+ * @param sliced_data Stores the sliced vbi data here. Use
+ *   vbi_capture_parameters() to determine the buffer size.
  * @param lines Stores number of vbi lines decoded and stored in @a data,
  *   which can be zero, here.
  * @param timestamp On success the capture instant in seconds and fractions
@@ -122,10 +130,16 @@ vbi_capture_read_sliced(vbi_capture *capture, vbi_sliced *data, int *lines,
  * Read a raw vbi frame from the capture device, decode to sliced data
  * and also read the sliced vbi frame, that is an array of vbi_sliced
  * structures, from the capture device.
+ *
+ * Note: depending on the driver, captured raw data may have to be copied
+ * from the capture buffer into the given buffer (e.g. for v4l2 streams which
+ * use memory mapped buffers.)  It's generally more efficient to use one of
+ * the vbi_capture_pull() interfaces, especially if you don't require access
+ * to raw data at all.
  * 
  * @return
- * -1 on error, examine @c errno for details. The function also fails if vbi data
- * is not available in raw format. 0 on timeout, 1 on success.
+ * -1 on error, examine @c errno for details. The function also fails if
+ * vbi data is not available in raw format. 0 on timeout, 1 on success.
  */
 int
 vbi_capture_read(vbi_capture *capture, void *raw_data,
@@ -185,10 +199,11 @@ vbi_capture_pull_raw(vbi_capture *capture, vbi_capture_buffer **buffer,
  * @param timeout Wait timeout, will be read only.
  * 
  * Read a sliced vbi frame, that is an array of vbi_sliced,
- * from the capture device, returning a pointer to the array as @a buffer->data.
- * @a buffer->size is the size of the array, that is the number of lines decoded,
- * which can be zero, <u>times the size of structure vbi_sliced</u>. The data
- * remains valid until the next vbi_capture_pull_sliced() call and must be read only.
+ * from the capture device, returning a pointer to the array as
+ * @a buffer->data. @a buffer->size is the size of the array, that is
+ * the number of lines decoded, which can be zero, <i>times the size
+ * of structure vbi_sliced</i>. The data remains valid until the
+ * next vbi_capture_pull_sliced() call and must be read only.
  * 
  * @return
  * -1 on error, examine @c errno for details. 0 on timeout, 1 on success.
@@ -220,11 +235,11 @@ vbi_capture_pull_sliced(vbi_capture *capture, vbi_capture_buffer **buffer,
  * times the size of the vbi_sliced structure.
  *
  * The raw and sliced data remains valid
- * until the next vbi_capture_pull_raw() call and must be read only.
+ * until the next vbi_capture_pull() call and must be read only.
  * 
  * @return
- * -1 on error, examine @c errno for details. The function also fails if vbi data
- * is not available in raw format. 0 on timeout, 1 on success.
+ * -1 on error, examine @c errno for details. The function also fails
+ * if vbi data is not available in raw format. 0 on timeout, 1 on success.
  */
 int
 vbi_capture_pull(vbi_capture *capture, vbi_capture_buffer **raw_buffer,
@@ -263,17 +278,63 @@ vbi_capture_parameters(vbi_capture *capture)
 }
 
 /**
+ * @param capture Initialized vbi capture context.
+ * @param reset @c TRUE to clear all previous services before adding
+ *   new ones (by invoking vbi_raw_decoder_reset() at the appropriate
+ *   time.)
+ * @param commit @c TRUE to apply all previously added services to
+ *   the device; when doing subsequent calls of this function,
+ *   commit should be set @c TRUE for the last call.  Reading data
+ *   cannot continue before changes were commited (because capturing
+ *   has to be suspended to allow resizing the VBI image.)  Note this
+ *   flag is ignored when using the VBI proxy.
+ * @param services This must point to a set of @ref VBI_SLICED_
+ *   symbols describing the
+ *   data services to be decoded. On return the services actually
+ *   decodable will be stored here. See vbi_raw_decoder_add()
+ *   for details. If you want to capture raw data only, set to
+ *   @c VBI_SLICED_VBI_525, @c VBI_SLICED_VBI_625 or both.
+ * @param strict Will be passed to vbi_raw_decoder_add().
+ * @param errorstr If not @c NULL this function stores a pointer to an error
+ *   description here. You must free() this string when no longer needed.
+ *
+ * Add and/or remove one or more services to an already initialized capture
+ * context.  Can be used to dynamically change the set of active services.
+ * Internally the function will restart parameter negotiation with the
+ * VBI device driver and then call vbi_raw_decoder_add_services().
+ * You may call vbi_raw_decoder_reset() before using this function
+ * to rebuild your service mask from scratch.  Note that the number of
+ * VBI lines may change with this call (even if a negative result is
+ * returned) so you have to check the size of your buffers.
+ *
+ * @return
+ * Bitmask of supported services among those requested (not including
+ * previously added services), 0 upon errors.
+ */
+unsigned int
+vbi_capture_update_services(vbi_capture *capture,
+			    vbi_bool reset, vbi_bool commit,
+			    unsigned int services, int strict,
+			    char ** errorstr)
+{
+	assert (capture != NULL);
+
+	return capture->update_services(capture, reset, commit,
+					services, strict, errorstr);
+}
+
+/**
  * @param capture Initialized vbi capture context, can be @c NULL.
  * 
  * @return
  * The file descriptor used to read from the device. If not
- * applicable or the @a capture context is invalid -1
- * will be returned.
+ * applicable (e.g. when using the proxy) or the @a capture context is
+ * invalid -1 will be returned.
  */
 int
 vbi_capture_fd(vbi_capture *capture)
 {
-	if (capture)
+	if (capture && (capture->get_fd != NULL))
 		return capture->get_fd(capture);
 	else
 		return -1;
@@ -283,12 +344,91 @@ vbi_capture_fd(vbi_capture *capture)
  * @internal
  */
 void
-vbi_capture_set_log_fp		(vbi_capture *		capture,
-				 FILE *			fp)
+vbi_capture_set_log_fp          (vbi_capture *          capture,
+                                 FILE *                 fp)
 {
-	assert (NULL != capture);
+        assert (NULL != capture);
 
-	capture->sys_log_fp = fp;
+        capture->sys_log_fp = fp;
+}
+
+/**
+ * @param capture Initialized vbi capture context.
+ *
+ * @brief Queries the capture device for the current norm
+ *
+ * This function is intended to allow the application to check for
+ * asynchronous norm changes, i.e. by a different application using
+ * the same device.
+ *
+ * @return
+ * Value 625 for PAL/SECAM norms, 525 for NTSC;
+ * 0 if unknown, -1 on error.
+ */
+int
+vbi_capture_get_scanning(vbi_capture *capture)
+{
+	if (capture && (capture->get_scanning != NULL))
+		return capture->get_scanning(capture);
+	else
+		return -1;
+}
+
+/**
+ * @param capture Initialized vbi capture context.
+ *
+ * After a channel change this function should be used to discard all
+ * VBI data in intermediate buffers which may still originate from the
+ * previous channel.
+ */
+void
+vbi_capture_flush(vbi_capture *capture)
+{
+	assert (capture != NULL);
+
+	if (capture->flush != NULL) {
+		capture->flush(capture);
+        }
+}
+
+/**
+ * @param capture Initialized vbi capture context.
+ * @param p_dev_video Path to a video device (e.g. /dev/video) which
+ *   refers to the same hardware as the VBI device which is used for
+ *   capturing.  Note: only useful for old video4linux drivers which
+ *   don't support norm queries through VBI devices.
+ * 
+ * @brief Set path to video device for TV norm queries
+ *
+ * @return
+ * Returns @c TRUE if the configuration option and parameters are
+ * supported; else @c FALSE.
+ */
+vbi_bool
+vbi_capture_set_video_path(vbi_capture *capture, const char * p_dev_video)
+{
+	assert (capture != NULL);
+
+	if (capture->set_video_path != NULL)
+		return capture->set_video_path(capture, p_dev_video);
+	else
+		return FALSE;
+}
+
+/**
+ * @param capture Initialized vbi capture context.
+ * 
+ * @brief Query properties of the capture device file handle
+ */
+VBI_CAPTURE_FD_FLAGS
+vbi_capture_get_fd_flags(vbi_capture *capture)
+{
+	assert (capture != NULL);
+
+	if (capture->get_fd_flags != NULL)
+		return capture->get_fd_flags(capture);
+	else
+		return 0;
 }
 
 /**
@@ -303,57 +443,60 @@ vbi_capture_delete(vbi_capture *capture)
 		capture->_delete(capture);
 }
 
+static __inline__ void
+timeval_subtract		(struct timeval *	delta,
+				 const struct timeval *	tv1,
+				 const struct timeval *	tv2)
+{
+	if (tv1->tv_usec < tv2->tv_usec) {
+		delta->tv_sec = tv1->tv_sec - tv2->tv_sec - 1;
+		delta->tv_usec = 1000000 + tv1->tv_usec - tv2->tv_usec;
+	} else {
+		delta->tv_sec = tv1->tv_sec - tv2->tv_sec;
+		delta->tv_usec = tv1->tv_usec - tv2->tv_usec;
+	}
+}
 
 /**
  * @internal
- * @brief Substract time spent waiting in select from a given max.
- *   timeout struct.
  *
- * @param tv_start Actual time before select() was called.
  * @param timeout Timeout value given to select, will be reduced by the
  *   difference since start time.
+ * @param tv_start Actual time before select() was called
+ *
+ * @brief Substract time spent waiting in select from a given
+ *   max. timeout struct
  *
  * This functions is intended for functions which call select() repeatedly
  * with a given overall timeout.  After each select() call the time already
- * spent in waiting has to be substracted from the timeout. (Note that we
- * don't use the Linux select(2) feature to return the time not slept in
- * the timeout struct, because that's not portable.)
+ * spent in waiting has to be substracted from the timeout. (Note that we don't
+ * use the Linux select(2) feature to return the time not slept in the timeout
+ * struct, because that's not portable.)
  * 
  * @return
- * Modifes @a timeout value.
+ * No direct return; modifies timeout value in the struct pointed to by the
+ * second pointer argument as described above.
  */
-/* XXX should we use Linux feature if available? */
 void
-vbi_capture_io_update_timeout	(const struct timeval *	tv_start,
-				 struct timeval *	timeout)
+vbi_capture_io_update_timeout	(struct timeval *	timeout,
+				 const struct timeval *	tv_start)
+				 
 {
 	struct timeval delta;
 	struct timeval tv_stop;
-        int errno_saved;
+        int            errno_saved;
 
         errno_saved = errno;
 	gettimeofday(&tv_stop, NULL);
         errno = errno_saved;
 
 	/* first calculate difference between start and current time */
-	delta.tv_sec = tv_stop.tv_sec - tv_start->tv_sec;
-	if (tv_stop.tv_usec < tv_start->tv_usec) {
-		delta.tv_usec = 1000000 + tv_stop.tv_usec - tv_start->tv_usec;
-		delta.tv_sec += 1;
-	} else {
-		delta.tv_usec = tv_stop.tv_usec - tv_start->tv_usec;
-	}
+	timeval_subtract (&delta, &tv_stop, tv_start);
 
 	assert((delta.tv_sec >= 0) && (delta.tv_usec >= 0));
 
 	/* substract delta from the given max. timeout */
-	timeout->tv_sec -= delta.tv_sec;
-	if (timeout->tv_usec < delta.tv_usec) {
-		timeout->tv_usec = 1000000 + timeout->tv_usec - delta.tv_usec;
-		timeout->tv_sec -= 1;
-	} else {
-		timeout->tv_usec -= delta.tv_usec;
-	}
+	timeval_subtract (timeout, timeout, &delta);
 
 	/* check if timeout was underrun -> set rest timeout to zero */
 	if ( (timeout->tv_sec < 0) || (timeout->tv_usec < 0) ) {
@@ -364,21 +507,20 @@ vbi_capture_io_update_timeout	(const struct timeval *	tv_start,
 
 /**
  * @internal
- * @brief Waits in select() for the given file handle to become readable.
  *
  * @param fd file handle
  * @param timeout maximum time to wait; when the function returns the
  *   value is reduced by the time spent waiting.
  *
+ * @brief Waits in select() for the given file handle to become readable.
+ *
  * If the syscall is interrupted by an interrupt, the select() call
  * is repeated with a timeout reduced by the time already spent
  * waiting.
- *
- * @return
- * See select(2).
  */
 int
-vbi_capture_io_select( int fd, struct timeval * timeout )
+vbi_capture_io_select		(int			fd,
+				 struct timeval *	timeout)
 {
 	struct timeval tv_start;
 	struct timeval tv;
@@ -394,7 +536,7 @@ vbi_capture_io_select( int fd, struct timeval * timeout )
 
 		ret = select(fd + 1, &fds, NULL, NULL, &tv);
 
-		vbi_capture_io_update_timeout(&tv_start, timeout);
+		vbi_capture_io_update_timeout (timeout, &tv_start);
 
 		if ((ret < 0) && (errno == EINTR))
 			continue;
@@ -473,6 +615,10 @@ fprint_symbolic			(FILE *			fp,
 	va_end (ap); 
 }
 
+/**
+ * @internal
+ * Used by function printing ioctl arguments generated by structpr.pl.
+ */
 void
 fprint_unknown_ioctl		(FILE *			fp,
 				 unsigned int		cmd,
@@ -486,7 +632,7 @@ fprint_unknown_ioctl		(FILE *			fp,
 
 /**
  * @internal
- * Drop-in for open(). Logs the request on fp if given.
+ * Drop-in for open(). Logs the request on fp if not NULL.
  */
 int
 device_open			(FILE *			fp,
@@ -531,7 +677,7 @@ device_open			(FILE *			fp,
 
 /**
  * @internal
- * Drop-in for close(). Logs the request on fp if given.
+ * Drop-in for close(). Logs the request on fp if not NULL.
  */
 int
 device_close			(FILE *			fp,
@@ -561,7 +707,7 @@ device_close			(FILE *			fp,
 
 /**
  * @internal
- * Drop-in for ioctl(). Logs the request on fp if given. You must supply
+ * Drop-in for ioctl(). Logs the request on fp if not NULL. You must supply
  * a function printing the arguments, structpr.pl generates one for you
  * from a header file.
  */

@@ -19,7 +19,7 @@
  */
 
 static char rcsid[] =
-"$Id: io-v4l2k.c,v 1.19 2004/06/18 14:14:51 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.20 2004/10/04 20:50:24 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -822,14 +822,14 @@ v4l2_update_services(vbi_capture *vc,
 		sup_services = vbi_raw_decoder_parameters(&dec_temp, services | v->services,
 						          v->dec.scanning, &max_rate);
 
-		if ((sup_services & services) == 0) {
+	        services &= sup_services;
+
+		if (0 == services) {
 			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of the "
 					       "requested data services with scanning %d."),
 	                                       v->p_dev_name, v->vcap.card, v->dec.scanning);
 			goto failure;
 		}
-
-	        services &= sup_services;
 
 		vfmt.fmt.vbi.sample_format	= V4L2_PIX_FMT_GREY;
 		vfmt.fmt.vbi.sampling_rate	= dec_temp.sampling_rate;
@@ -866,7 +866,7 @@ v4l2_update_services(vbi_capture *vc,
 				vbi_asprintf(errorstr, _("Cannot initialize %s (%s), "
 						       "the device is already in use."),
 					     v->p_dev_name, v->vcap.card);
-				goto failure;
+				goto io_error;
 
 			default:
 				vbi_asprintf(errorstr, _("Could not set the vbi capture parameters "
@@ -913,7 +913,7 @@ v4l2_update_services(vbi_capture *vc,
 		vbi_asprintf(errorstr, _("%s (%s) offers unknown vbi sampling format #%d. "
 				       "This may be a driver bug or libzvbi is too old."),
 			     v->p_dev_name, v->vcap.card, vfmt.fmt.vbi.sample_format);
-		goto failure;
+		goto io_error;
 	}
 
 	if (services & ~(VBI_SLICED_VBI_525 | VBI_SLICED_VBI_625)) {
@@ -926,6 +926,7 @@ v4l2_update_services(vbi_capture *vc,
 						 "%.2f MHz is too low."),
 				     v->p_dev_name, v->vcap.card,
 				     v->dec.sampling_rate / 1e6);
+                        services = 0;
 			goto failure;
 		}
 
@@ -962,13 +963,15 @@ v4l2_update_services(vbi_capture *vc,
 		if (!v->sliced_buffer.data) {
 			vbi_asprintf(errorstr, _("Virtual memory exhausted."));
 			errno = ENOMEM;
-			goto failure;
+			goto io_error;
 		}
 	}
 
-	printv("Will decode services 0x%08x, added 0x%0x\n", v->dec.services, services);
+failure:
+        v->services |= services;
+	printv("Will capture services 0x%08x, added 0x%0x commit:%d\n", v->services, services, commit);
 
-	if (commit) {
+	if (commit && (v->services != 0)) {
 		if (v->streaming) {
 			if (v4l2_stream_alloc(v, errorstr) != 0)
 				goto io_error;
@@ -978,11 +981,9 @@ v4l2_update_services(vbi_capture *vc,
 		}
 	}
 
-        v->services |= services;
 	return services;
 
 io_error:
-failure:
         printv("v4l2-update_services: failed with errno=%d, msg='%s' guess='%s'\n", errno,
                (((errorstr != NULL) && (*errorstr != NULL)) ? *errorstr : ""),
                ((guess != NULL) ? guess : ""));
@@ -1022,8 +1023,6 @@ v4l2_delete(vbi_capture *vc)
 	free(v);
 }
 
-#if 0 /* future stuff */
-
 static VBI_CAPTURE_FD_FLAGS
 v4l2_get_fd_flags(vbi_capture *vc)
 {
@@ -1036,8 +1035,6 @@ v4l2_get_fd_flags(vbi_capture *vc)
 
         return result;
 }
-
-#endif
 
 static int
 v4l2_get_fd(vbi_capture *vc)
@@ -1100,18 +1097,11 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	v->capture.parameters = v4l2_parameters;
 	v->capture._delete = v4l2_delete;
 	v->capture.get_fd = v4l2_get_fd;
-#if 0 /* future stuff */
 	v->capture.get_fd_flags = v4l2_get_fd_flags;
 	v->capture.update_services = v4l2_update_services;
 	v->capture.get_scanning = v4l2_get_scanning;
 	v->capture.flush = v4l2_flush;
-#else
-	if (0) {
-		/* Unused, no warning please. */
-		v4l2_get_scanning (0);
-		v4l2_flush (0);
-	}
-#endif
+
 	if (-1 == fd) {
 		v->fd = device_open (v->capture.sys_log_fp,
 				     v->p_dev_name, O_RDWR, 0);

@@ -1,3 +1,21 @@
+2004-10-04    <mschimek@users.sf.net>
+
+	* m4/autogen.sh: Updated to recognize newer automake.
+	* Makefile.am: Added zvbi-0.2.pc.
+	* zvbi-0.2.pc.in: Added.
+	* configure.in: Restored proxy switch and output files. Added
+	  zvbi-0.2.pc output. Removed duplicate -lm in PNG_LIB.
+	* src/io-v4l.c, src/io-v4l2k.c, src/io.c, src/io.h, src/decoder.c:
+	  Merged with proxy-18.bak.
+	* daemon/Makefile.am, daemon/zvbid.init.in: Added from proxy
+	  branch and updated.
+	* daemon/proxyd.c, daemon/README, daemon/zvbid.1, test/proxy-test.c,
+	  src/proxy-client.c, src/proxy-client.h, src/proxy-msg.c,
+	  src/proxy-msg.h: Added from proxy-18.bak. Tweaked cvs Log
+	  keyword to preserve Tom's comments.
+	* test/Makefile.am: Restored proxy targets.
+	* src/Makefile.am: Merged with proxy-18.bak.
+
 2004-06-12    <mschimek@users.sf.net>
 
 	* test/README: Updated capture and osc tool documentation.
@@ -6,9 +24,9 @@
 	  Changed verbosity option from boolean to multi-level to
 	  enable ioctl logging.
 	* src/io-v4l2k.c: Replaced by version from proxy
-	  branch (proxy-17.bak). Interface extensions disabled for now.
-	  Added ioctl logging. Added preliminary hack to force read
-	  capture for tests.
+	  branch (proxy-17.bak). s/signed char/int - only text is char.
+	  Interface extensions disabled for now. Added ioctl logging.
+	  Added preliminary hack to force read capture for tests.
 	* src/io-bktr.c (vbi_capture_bktr_new): No more warning about
 	  unused rcsid.
 	* src/io.c, src/io.h: Added vbi_capture_io_select and

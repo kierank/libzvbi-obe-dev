@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.13 2004/06/18 14:13:17 mschimek Exp $ */
+/* $Id: io.h,v 1.14 2004/10/04 20:50:24 mschimek Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -42,6 +42,32 @@ typedef struct vbi_capture_buffer {
  * @brief Opaque device interface handle.
  **/
 typedef struct vbi_capture vbi_capture;
+
+/**
+ * @ingroup Device
+ * @brief Properties of capture file handle
+ */
+typedef enum {
+       /**
+        * Is set when select(2) can be used to wait for
+        * new data on the capture device file handle.
+        */
+        VBI_FD_HAS_SELECT  = 1<<0,
+       /**
+        * Is set when the capture device supports
+        * "user-space DMA".  In this case it's more efficient
+        * to use one of the "pull" functions to read raw data
+        * because otherwise the data has to be copied once
+        * more into the passed buffer.
+        */
+        VBI_FD_HAS_MMAP    = 1<<1,
+       /**
+        * Is not set when the capture device file handle is
+        * not the actual device.  In this case it can only be
+        * used for select(2) and not for ioctl(2)
+        */
+        VBI_FD_IS_DEVICE   = 1<<2,
+} VBI_CAPTURE_FD_FLAGS;
 
 /**
  * @addtogroup Device
@@ -75,6 +101,14 @@ extern vbi_capture*	vbi_capture_dvb_new(char *dev, int scanning,
 				        unsigned int *services, int strict,
 				        char **errstr, vbi_bool trace);
 
+struct vbi_proxy_client;
+ 
+extern vbi_capture *
+vbi_capture_proxy_new( struct vbi_proxy_client * vpc,
+                        int buffers, int scanning,
+                        unsigned int *p_services, int strict,
+                        char **pp_errorstr );
+
 extern int		vbi_capture_read_raw(vbi_capture *capture, void *data,
 					     double *timestamp, struct timeval *timeout);
 extern int		vbi_capture_read_sliced(vbi_capture *capture, vbi_sliced *data, int *lines,
@@ -90,8 +124,16 @@ extern int		vbi_capture_pull(vbi_capture *capture, vbi_capture_buffer **raw_buff
 					 vbi_capture_buffer **sliced_buffer, struct timeval *timeout);
 extern vbi_raw_decoder *vbi_capture_parameters(vbi_capture *capture);
 extern int		vbi_capture_fd(vbi_capture *capture);
-
+extern unsigned int     vbi_capture_update_services(vbi_capture *capture,
+                                                    vbi_bool reset, vbi_bool commit,
+                                                    unsigned int services, int strict,
+                                                    char ** errorstr);
+extern int              vbi_capture_get_scanning(vbi_capture *capture);
+extern void             vbi_capture_flush(vbi_capture *capture);
 extern void		vbi_capture_delete(vbi_capture *capture);
+
+extern vbi_bool         vbi_capture_set_video_path(vbi_capture *capture, const char * p_dev_video);
+extern VBI_CAPTURE_FD_FLAGS vbi_capture_get_fd_flags(vbi_capture *capture);
 /** @} */
 
 /* Private */
@@ -188,12 +230,6 @@ device_ioctl			(FILE *			fp,
 				 void *			arg);
 
 extern void
-vbi_capture_io_update_timeout	(const struct timeval *	tv_start,
-				 struct timeval *	timeout);
-extern int
-vbi_capture_io_select( int fd, struct timeval * timeout );
-
-extern void
 vbi_capture_set_log_fp		(vbi_capture *		capture,
 				 FILE *			fp);
 
@@ -209,11 +245,25 @@ struct vbi_capture {
 	vbi_bool		(* read)(vbi_capture *, vbi_capture_buffer **,
 					 vbi_capture_buffer **, struct timeval *);
 	vbi_raw_decoder *	(* parameters)(vbi_capture *);
+        unsigned int            (* update_services)(vbi_capture *,
+                                         vbi_bool, vbi_bool,
+                                         unsigned int, int, char **);
+        int                     (* get_scanning)(vbi_capture *);
+	void			(* flush)(vbi_capture *);
 	int			(* get_fd)(vbi_capture *);
+	VBI_CAPTURE_FD_FLAGS	(* get_fd_flags)(vbi_capture *);
+	vbi_bool 		(* set_video_path)(vbi_capture *, const char *);
 	void			(* _delete)(vbi_capture *);
 
 	/* Log all system calls if non-NULL. */
 	FILE *			sys_log_fp;
 };
+
+extern void
+vbi_capture_io_update_timeout	(struct timeval *	timeout,
+				 const struct timeval *	tv_start);
+extern int
+vbi_capture_io_select		(int			fd,
+				 struct timeval *	timeout);
 
 #endif /* IO_H */

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.13 2003/11/14 05:29:18 mschimek Exp $ */
+/* $Id: decoder.c,v 1.14 2004/10/04 20:50:23 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -959,9 +959,8 @@ vbi_raw_decoder_check_service(const vbi_raw_decoder *rd, int srv_idx, int strict
 		}
 
 		if (rd->count[field] == 0) {
-			ds_diag ("skipping service 0x%08X: zero count\n",
-				vbi_services[srv_idx].id);
-			goto finished;
+			count[field] = 0;
+			continue;
 		}
 
 		if (rd->start[field] > 0 && strict > 0) {
@@ -991,6 +990,12 @@ vbi_raw_decoder_check_service(const vbi_raw_decoder *rd, int srv_idx, int strict
 		}
 	}
 	row[1] += rd->count[0];
+
+	if (count[0] + count[1] == 0) {
+		ds_diag ("skipping service 0x%08X: zero line count\n",
+			vbi_services[srv_idx].id);
+		goto finished;
+	}
 
 	result = TRUE;
 
@@ -1131,7 +1136,7 @@ vbi_raw_decoder_add_services(vbi_raw_decoder *rd, unsigned int services, int str
 
 		/* skip colour burst */
 		if (rd->offset > 0 && strict > 0 && offset < off_min)
-			skip = (int)(off_min * rd->sampling_rate);
+			skip = (int)((off_min - offset) * rd->sampling_rate);
 		else
 			skip = 0;
 

@@ -67,6 +67,8 @@ FILE_PATTERNS          = *.c \
                          hamm.h \
                          io.h \
                          lang.h \
+                         proxy-msg.h \
+                         proxy-client.h \
                          search.h \
                          sliced.h \
                          tables.h \
