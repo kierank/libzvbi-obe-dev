@@ -1,3 +1,15 @@
+2005-03-28    <mschimek@users.sf.net>
+
+	* Release 0.2.15.
+
+2005-03-28    <mschimek@users.sf.net>
+
+	* src/raw_decoder.c (_vbi_sampling_par_verify): Disabled a YUV420
+	  even bytes per line check because it conflicts with the ivtv driver,
+	  which returns an odd number of bytes per line using _GREY format,
+	  mapped to YUV420 because libzvbi 0.2 has no VBI_PIXFMT_Y8.
+	* configure.in: Bumped version number to 0.2.15, .so version to 6:1:6.
+
 2005-02-28    <mschimek@users.sf.net>
 
 	* Release 0.2.14.

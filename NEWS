@@ -1,3 +1,8 @@
+libzvbi 0.2.15, 2005-03-28
+--------------------------
+This is a bugfix release. Due to an incorrect bytes per line check
+previous versions could not capture VBI data from ivtv driver.
+
 libzvbi 0.2.14, 2005-02-28
 --------------------------
 This version adds new demultiplexers to extract data transmissions
