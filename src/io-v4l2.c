@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.14 2003/02/16 21:11:26 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2.c,v 1.15 2003/04/29 17:12:47 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -406,6 +406,8 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 	}
 
 	if (strict >= 0) {
+		struct v4l2_format vfmt_temp = vfmt;
+
 		printv("Attempt to set vbi capture parameters\n");
 
 		*services = vbi_raw_decoder_parameters(&v->dec, *services,
@@ -427,7 +429,7 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 		vfmt.fmt.vbi.count[1]		= v->dec.count[1];
 
 		/* API rev. Nov 2000 paranoia */
-
+/*
 		if (!vfmt.fmt.vbi.count[0]) {
 			vfmt.fmt.vbi.start[0] = ((v->dec.scanning == 625) ? 6 : 10) + V4L2_LINE;
 			vfmt.fmt.vbi.count[0] = 1;
@@ -435,7 +437,7 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 			vfmt.fmt.vbi.start[1] = ((v->dec.scanning == 625) ? 318 : 272) + V4L2_LINE;
 			vfmt.fmt.vbi.count[1] = 1;
 		}
-
+*/
 		if (trace)
 			print_vfmt("VBI capture parameters requested: ", &vfmt);
 
@@ -446,6 +448,7 @@ vbi_capture_v4l2_new(const char *dev_name, int buffers,
 				if (g_fmt != -1) {
 					printv("VIDIOC_S_FMT returned EBUSY, "
 					       "will try the current parameters\n");
+					vfmt = vfmt_temp;
 					break;
 				}
 #endif

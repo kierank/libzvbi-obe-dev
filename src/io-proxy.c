@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static const char rcsid[] = "$Id: io-proxy.c,v 1.1 2003/04/29 05:51:29 mschimek Exp $";
+static const char rcsid[] = "$Id: io-proxy.c,v 1.2 2003/04/29 17:12:46 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -36,6 +36,7 @@ static const char rcsid[] = "$Id: io-proxy.c,v 1.1 2003/04/29 05:51:29 mschimek 
 #include <fcntl.h>
 #include <unistd.h>
 #include <assert.h>
+#include <utils.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -44,6 +45,7 @@ static const char rcsid[] = "$Id: io-proxy.c,v 1.1 2003/04/29 05:51:29 mschimek 
 
 #include "proxy-msg.h"
 #include "bcd.h"
+
 
 #define dprintf1(fmt, arg...)    if (v->trace) printf("WARN  io-proxy: " fmt, ## arg)
 #define dprintf2(fmt, arg...)    if (v->trace) printf("TRACE io-proxy: " fmt, ## arg)
@@ -66,7 +68,6 @@ typedef struct
 
 #define SRV_REPLY_TIMEOUT       60
 #define CLNT_NAME_STR           "libzvbi io-proxy"
-#define CLNT_BUFFER_COUNT       5
 #define CLNT_RETRY_INTERVAL     20
 #define CLNT_MAX_MSG_LOOP_COUNT 50
 
@@ -81,6 +82,7 @@ typedef struct vbi_capture_proxy
         int                     scanning;
         unsigned int            services;
         int                     strict;
+        int                     buffer_count;
         vbi_bool                trace;
 
         PROXY_CLIENT_STATE      state;
@@ -111,7 +113,7 @@ static void proxy_client_send_connect_req( vbi_capture_proxy *v )
    v->client_msg.connect_req.scanning     = v->scanning;
    v->client_msg.connect_req.services     = v->services;
    v->client_msg.connect_req.strict       = v->strict;
-   v->client_msg.connect_req.buffer_count = CLNT_BUFFER_COUNT;
+   v->client_msg.connect_req.buffer_count = v->buffer_count;
 
    vbi_proxy_msg_write(&v->io, MSG_TYPE_CONNECT_REQ, sizeof(v->client_msg.connect_req),
                        &v->client_msg.connect_req, FALSE);
@@ -129,9 +131,6 @@ static vbi_bool proxy_client_connect_server( vbi_capture_proxy *v )
    vbi_bool use_tcp_ip;
    int  sock_fd;
    vbi_bool result = FALSE;
-
-   /* clear any old error messages */
-   SystemErrorMessage_Set(&v->p_errorstr, 0, NULL);
 
    use_tcp_ip = FALSE;
 
@@ -156,9 +155,9 @@ static vbi_bool proxy_client_connect_server( vbi_capture_proxy *v )
    {
       dprintf2("connect_server: Hostname or port not configured\n");
       if (use_tcp_ip && (v->p_srv_host == NULL))
-         SystemErrorMessage_Set(&v->p_errorstr, 0, "Server hostname not configured", NULL);
+         vbi_asprintf(&v->p_errorstr, "%s", _("Server hostname not configured"));
       else if (v->p_srv_port == NULL)
-         SystemErrorMessage_Set(&v->p_errorstr, 0, "Server service name (aka port) not configured", NULL);
+         vbi_asprintf(&v->p_errorstr, "%s", _("Server service name (i.e. port) not configured"));
    }
    return result;
 }
@@ -179,15 +178,13 @@ static vbi_bool proxy_client_check_msg( vbi_capture_proxy *v, uint len, VBIPROXY
             if (pBody->connect_cnf.magics.endian_magic == VBIPROXY_ENDIAN_MAGIC)
             {  /* endian type matches -> no swapping required */
                v->endianSwap = FALSE;
-               result                 = TRUE;
             }
             else if (pBody->connect_cnf.magics.endian_magic == swap32(VBIPROXY_ENDIAN_MAGIC))
             {  /* endian type does not match -> convert "endianess" of all msg elements > 1 byte */
                /* enable byte swapping for all following messages */
                v->endianSwap = TRUE;
-               /* XXX not supported */
-               result = FALSE;
             }
+            result = TRUE;
          }
          break;
 
@@ -198,7 +195,7 @@ static vbi_bool proxy_client_check_msg( vbi_capture_proxy *v, uint len, VBIPROXY
 
       case MSG_TYPE_DATA_IND:
          result = (len == sizeof(VBIPROXY_MSG_HEADER) + sizeof(pBody->data_ind) +
-                          sizeof(vbi_sliced) * (pBody->data_ind.line_count - 1));
+                          sizeof(pBody->data_ind.sliced[0]) * (pBody->data_ind.line_count - 1));
          break;
 
       case MSG_TYPE_CLOSE_REQ:
@@ -241,7 +238,14 @@ static vbi_bool proxy_client_take_message( vbi_capture_proxy *v, VBIPROXY_MSG_BO
             /* note: nxtvepg and endian magics are already checked */
             if (pMsg->connect_cnf.magics.protocol_compat_version != VBIPROXY_COMPAT_VERSION)
             {
-               SystemErrorMessage_Set(&v->p_errorstr, 0, "Incompatible server version", NULL);
+               vbi_asprintf(&v->p_errorstr, "%s: %d.%d.%d", _("Incompatible server version"),
+                                         ((pMsg->connect_cnf.magics.protocol_compat_version >> 16) & 0xff),
+                                         ((pMsg->connect_cnf.magics.protocol_compat_version >>  8) & 0xff),
+                                         ((pMsg->connect_cnf.magics.protocol_compat_version      ) & 0xff));
+            }
+            else if (v->endianSwap)
+            {  /* endian swapping currently unsupported */
+               vbi_asprintf(&v->p_errorstr, "%s", _("Incompatible server CPU architecture (endianess mismatch)"));
             }
             else
             {  /* version ok -> request block forwarding */
@@ -275,6 +279,12 @@ static vbi_bool proxy_client_take_message( vbi_capture_proxy *v, VBIPROXY_MSG_BO
          {
             if (v->p_data_ind != NULL)
                free(v->p_data_ind);
+            if (pMsg->data_ind.line_count > v->dec.count[0] + v->dec.count[1])
+            {  /* more lines than req. for service -> would overflow the allocated slicer buffer
+               ** -> discard extra lines (should never happen; proxy checks for line counts) */
+               dprintf1("take_message: DATA_IND: too many lines: %d > %d\n", pMsg->data_ind.line_count, v->dec.count[0] + v->dec.count[1]);
+               pMsg->data_ind.line_count = v->dec.count[0] + v->dec.count[1];
+            }
             v->p_data_ind = pMsg;
             pMsg = NULL;
             result = TRUE;
@@ -292,7 +302,7 @@ static vbi_bool proxy_client_take_message( vbi_capture_proxy *v, VBIPROXY_MSG_BO
    if ((result == FALSE) && (v->p_errorstr == NULL))
    {
       dprintf2("take_message: message type %d (len %d) not expected in state %d\n", v->io.readHeader.type, v->io.readHeader.len, v->state);
-      SystemErrorMessage_Set(&v->p_errorstr, 0, "Protocol error (unecpected message)", NULL);
+      vbi_asprintf(&v->p_errorstr, "%s", _("Proxy protocol error (unecpected message)"));
    }
    if (pMsg != NULL)
       free(pMsg);
@@ -422,7 +432,7 @@ static void proxy_client_handle_socket( vbi_capture_proxy *v )
          }
          else
          {  /* I/O error; note: acq is not stopped, instead try to reconnect periodically */
-            SystemErrorMessage_Set(&v->p_errorstr, 0, "Lost connection (I/O error)", NULL);
+            vbi_asprintf(&v->p_errorstr, "%s", _("Lost connection (I/O error)"));
             proxy_client_close(v);
          }
          readable = FALSE;
@@ -562,7 +572,7 @@ static vbi_bool proxy_client_check_timeouts( vbi_capture_proxy *v )
           (v->state == CLNT_STATE_WAIT_CON_CNF) ))
    {
       dprintf2("check_timeouts: network timeout\n");
-      SystemErrorMessage_Set(&v->p_errorstr, 0, "Lost connection (I/O timeout)", NULL);
+      vbi_asprintf(&v->p_errorstr, "%s", _("Lost connection (I/O timeout)"));
       proxy_client_close(v);
    }
    else if ( (v->state == CLNT_STATE_RETRY) &&
@@ -623,7 +633,6 @@ proxy_read( vbi_capture *vc, vbi_capture_buffer **raw,
 
         if (v->p_data_ind != NULL) {
                 int lines = v->p_data_ind->data_ind.line_count;
-                /* XXX check max line count */
 
                 if (*sliced) {
                         memcpy( (vbi_sliced *)(*sliced)->data,
@@ -660,6 +669,10 @@ proxy_delete(vbi_capture *vc)
 {
         vbi_capture_proxy *v = PARENT(vc, vbi_capture_proxy, capture);
 
+        /* close the connection (during normal shutdown it should already be closed) */
+        if (v->state != CLNT_STATE_NULL)
+                proxy_client_stop_acq(v);
+
         if (v->p_srv_host != NULL)
                 free(v->p_srv_host);
 
@@ -671,12 +684,8 @@ proxy_delete(vbi_capture *vc)
         else /* note: v->sliced_buffer.data points into p_data_ind */
                 assert(v->sliced_buffer.data == NULL);
 
-        /* close the connection (during normal shutdown it should already be closed) */
-        if (v->state != CLNT_STATE_NULL)
-                proxy_client_stop_acq(v);
-
-        /* free the memory allocated for the config strings and error text */
-        SystemErrorMessage_Set(&v->p_errorstr, 0, NULL);
+        if (v->p_errorstr != NULL)
+           free(v->p_errorstr);
 
         free(v);
 }
@@ -684,11 +693,13 @@ proxy_delete(vbi_capture *vc)
 static int
 proxy_fd(vbi_capture *vc)
 {
-        return -1;
+        vbi_capture_proxy *v = PARENT(vc, vbi_capture_proxy, capture);
+
+        return v->io.sock_fd;
 }
 
 vbi_capture *
-vbi_capture_proxy_new(const char *dev_name, int scanning,
+vbi_capture_proxy_new(const char *dev_name, int buffers, int scanning,
                       unsigned int *services, int strict,
                       char **pp_errorstr, vbi_bool trace)
 {
@@ -698,6 +709,9 @@ vbi_capture_proxy_new(const char *dev_name, int scanning,
 
         if (scanning != 525 && scanning != 625)
                 scanning = 0;
+
+        if (buffers < 1)
+                buffers = 1;
 
         if (trace)
                 fprintf(stderr, "Try to connect vbi proxy, libzvbi interface rev.\n%s\n", rcsid);
@@ -714,10 +728,11 @@ vbi_capture_proxy_new(const char *dev_name, int scanning,
         v->capture.get_fd = proxy_fd;
         v->capture.read = proxy_read;
 
-        v->scanning   = scanning,
-        v->services   = *services;
-        v->strict     = strict;
-        v->trace      = trace;
+        v->scanning     = scanning,
+        v->services     = *services;
+        v->strict       = strict;
+        v->buffer_count = buffers;
+        v->trace        = trace;
 
         v->p_srv_port = vbi_proxy_msg_get_socket_name(dev_name);
         v->p_srv_host = NULL;
@@ -745,9 +760,9 @@ vbi_capture_proxy_new(const char *dev_name, int scanning,
 #else
 
 vbi_capture *
-vbi_capture_proxy_new(const char *dev_name, int scanning,
-                     unsigned int *services, int strict,
-                     char **pp_errorstr, vbi_bool trace)
+vbi_capture_proxy_new(const char *dev_name, int buffers, int scanning,
+                      unsigned int *services, int strict,
+                      char **pp_errorstr, vbi_bool trace)
 {
         pthread_once (&vbi_init_once, vbi_init);
         vbi_asprintf(pp_errorstr, _("PROXY interface not compiled."));

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2k.c,v 1.6 2003/04/29 05:51:29 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2k.c,v 1.7 2003/04/29 17:12:47 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -454,16 +454,6 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		vfmt.fmt.vbi.start[1]		= v->dec.start[0];
 		vfmt.fmt.vbi.count[1]		= v->dec.count[1];
 
-		/* API rev. Nov 2000 paranoia */
-
-		if (!vfmt.fmt.vbi.count[0]) {
-			vfmt.fmt.vbi.start[0] = ((v->dec.scanning == 625) ? 6 : 10);
-			vfmt.fmt.vbi.count[0] = 1;
-		} else if (!vfmt.fmt.vbi.count[1]) {
-			vfmt.fmt.vbi.start[1] = ((v->dec.scanning == 625) ? 318 : 272);
-			vfmt.fmt.vbi.count[1] = 1;
-		}
-
 		if (trace)
 			print_vfmt("VBI capture parameters requested: ", &vfmt);
 
@@ -482,24 +472,16 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 					     dev_name, vcap.card);
 				goto failure;
 
-			case EINVAL:
-				{
 			default:
-					vbi_asprintf(errorstr, _("Could not set the vbi capture parameters "
-							       "for %s (%s): %d, %s."),
-						     dev_name, vcap.card, errno, strerror(errno));
-					guess = _("Possibly a driver bug.");
-					goto io_error;
-				}
-
-				vfmt.fmt.vbi.start[0] = 7;
-				vfmt.fmt.vbi.start[1] = 320;
-
-				break;
+				vbi_asprintf(errorstr, _("Could not set the vbi capture parameters "
+						       "for %s (%s): %d, %s."),
+					     dev_name, vcap.card, errno, strerror(errno));
+				guess = _("Possibly a driver bug.");
+				goto io_error;
 			}
+		} else {
+			printv("Successful set vbi capture parameters\n");
 		}
-
-		printv("Successful set vbi capture parameters\n");
 	}
 
 	if (trace)

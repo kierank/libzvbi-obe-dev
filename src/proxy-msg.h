@@ -16,54 +16,17 @@
  *
  *  Author: Tom Zoerner
  *
- *  $Id: proxy-msg.h,v 1.1 2003/04/29 05:51:30 mschimek Exp $
+ *  $Id: proxy-msg.h,v 1.2 2003/04/29 17:12:48 mschimek Exp $
  */
 
 #ifndef __VBIPROXYMSG_H
 #define __VBIPROXYMSG_H
 
-
-#ifndef __GNUC__
-#define __inline__
-#endif
-
-static __inline__ const unsigned int
-swap32(unsigned int x)
-{
-#ifdef __GNUC__
-#if #cpu (i686)
-  if (!__builtin_constant_p(x)) {
-    __asm__ __volatile__ ("bswap %0" : "=r" (x) : "0" (x));
-    return x;
-  }
-#endif
-#endif
-  return
-      (((x) & 0xFFUL) << 24)
-    | (((x) & 0xFF00UL) << 8)
-    | (((x) & 0xFF0000UL) >> 8)
-    | (((x) & 0xFF000000UL) >> 24);
-}
-
-
-#ifdef WIN32
-// declare missing stuff to compile under windows
-enum
-{
-   LOG_ERR,
-   LOG_WARNING,
-   LOG_NOTICE,
-   LOG_INFO,
-};
-typedef int ssize_t;
-#else
 #include <sys/syslog.h>
-#endif
 
-// ----------------------------------------------------------------------------
-// Declaration of message IDs and the common header struct
-// - the actual message structs are declared in the upper layers
-
+/* ----------------------------------------------------------------------------
+** Declaration of message IDs and the common header struct
+*/
 typedef enum
 {
    MSG_TYPE_CONNECT_REQ,
@@ -71,12 +34,17 @@ typedef enum
    MSG_TYPE_CONNECT_REJ,
    MSG_TYPE_CLOSE_REQ,
    MSG_TYPE_DATA_IND,
-   //MSG_TYPE_SERVICE_REQ,
-   //MSG_TYPE_SERVICE_CNF,
-   //MSG_TYPE_CHANNEL_REQ,
-   //MSG_TYPE_CHANNEL_CNF,
-   //MSG_TYPE_CHANTAB_REQ,
-   //MSG_TYPE_CHANTAB_CNF,
+   /*
+   MSG_TYPE_SERVICE_REQ,
+   MSG_TYPE_SERVICE_CNF,
+   MSG_TYPE_CHN_CHANGE_REQ,       // also resets VBI buffer
+   MSG_TYPE_CHN_CHANGE_IND,
+   MSG_TYPE_CHN_CHANGE_CNF,
+   MSG_TYPE_CHN_LOCK_REQ,
+   MSG_TYPE_CHN_LOCK_CNF,
+   MSG_TYPE_CHANTAB_REQ,
+   MSG_TYPE_CHANTAB_CNF,
+   */
 } VBIPROXY_MSG_TYPE;
 
 #define VBIPROXY_MSG_MAXSIZE  65536
@@ -110,7 +78,7 @@ typedef struct
         VBIPROXY_MAGICS         magics;
         uint8_t                 client_name[VBIPROXY_CLIENT_NAME_MAX_LENGTH];
 
-        // service request
+        /* service request */
         uint32_t                scanning;
         uint32_t                services;
         uint8_t                 strict;
@@ -120,7 +88,7 @@ typedef struct
 typedef struct
 {
         VBIPROXY_MAGICS         magics;
-        vbi_raw_decoder         dec;            // req. e.g. for VBI line counts
+        vbi_raw_decoder         dec;            /* req. e.g. for VBI line counts */
 } VBIPROXY_CONNECT_CNF;
 
 typedef struct
@@ -146,32 +114,33 @@ typedef union
         VBIPROXY_DATA_IND       data_ind;
 } VBIPROXY_MSG_BODY;
 
-// ----------------------------------------------------------------------------
-// Declaration of the IO state struct
-
+/* ----------------------------------------------------------------------------
+** Declaration of the IO state struct
+*/
 typedef struct
 {
-        int                     sock_fd;        // socket file handle or -1 if closed
-        time_t                  lastIoTime;     // timestamp of last i/o (for timeouts)
+        int                     sock_fd;        /* socket file handle or -1 if closed */
+        time_t                  lastIoTime;     /* timestamp of last i/o (for timeouts) */
 
-        uint32_t                writeLen;       // number of bytes in write buffer, including header
-        uint32_t                writeOff;       // number of already written bytes, including header
-        VBIPROXY_MSG_HEADER     writeHeader;    // header to be written
-        void                    * pWriteBuf;    // data to be written
-        vbi_bool                freeWriteBuf;   // TRUE if the buffer shall be freed by the I/O handler
+        uint32_t                writeLen;       /* number of bytes in write buffer, including header */
+        uint32_t                writeOff;       /* number of already written bytes, including header */
+        VBIPROXY_MSG_HEADER     writeHeader;    /* header to be written */
+        void                    * pWriteBuf;    /* data to be written */
+        vbi_bool                freeWriteBuf;   /* TRUE if the buffer shall be freed by the I/O handler */
 
-        vbi_bool                waitRead;       // TRUE while length of incoming msg is not completely read
-        uint32_t                readLen;        // length of incoming message (including itself)
-        uint32_t                readOff;        // number of already read bytes
-        uint8_t                 *pReadBuf;      // msg buffer; allocated after length is read
-        VBIPROXY_MSG_HEADER     readHeader;     // received message header
+        vbi_bool                waitRead;       /* TRUE while length of incoming msg is not completely read */
+        uint32_t                readLen;        /* length of incoming message (including itself) */
+        uint32_t                readOff;        /* number of already read bytes */
+        uint8_t                 *pReadBuf;      /* msg buffer; allocated after length is read */
+        VBIPROXY_MSG_HEADER     readHeader;     /* received message header */
 } VBIPROXY_MSG_STATE;
 
-// ----------------------------------------------------------------------------
-// Declaration of the service interface functions
-//
-void     vbi_proxy_msg_set_logging( int fileloglev, int sysloglev, const char * pLogfileName );
+/* ----------------------------------------------------------------------------
+** Declaration of the service interface functions
+*/
 void     vbi_proxy_msg_logger( int level, int clnt_fd, int errCode, const char * pText, ... );
+void     vbi_proxy_msg_set_logging( vbi_bool do_logtty, int sysloglev,
+                                    int fileloglev, const char * pLogfileName );
 
 vbi_bool vbi_proxy_msg_is_idle( VBIPROXY_MSG_STATE * pIO );
 vbi_bool vbi_proxy_msg_check_timeout( VBIPROXY_MSG_STATE * pIO, time_t now );
@@ -192,4 +161,4 @@ vbi_bool vbi_proxy_msg_check_connect( const char * p_sock_path );
 int      vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost, const char * pSrvPort, char ** ppErrorText );
 vbi_bool vbi_proxy_msg_finish_connect( int sock_fd, char ** ppErrorText );
 
-#endif  // __VBIPROXYMSG_H
+#endif  /* __VBIPROXYMSG_H */

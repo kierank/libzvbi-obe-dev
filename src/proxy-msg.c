@@ -19,7 +19,7 @@
  *  Author:
  *          Tom Zoerner
  *
- *  $Id: proxy-msg.c,v 1.1 2003/04/29 05:51:30 mschimek Exp $
+ *  $Id: proxy-msg.c,v 1.2 2003/04/29 17:12:47 mschimek Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -54,6 +54,7 @@
 #include <assert.h>
 
 #include "bcd.h"
+#include "vbi.h"
 #include "proxy-msg.h"
 
 #define dprintf1(fmt, arg...)    if (proxy_msg_trace >= 1) printf("proxy_msg: " fmt, ## arg)
@@ -65,20 +66,16 @@ static int proxy_msg_trace = 1;
 #endif
 
 
-typedef struct
+static struct
 {
    vbi_bool  do_logtty;
    int       sysloglev;
    int       fileloglev;
    char    * pLogfileName;
-} VBIPROXY_LOGCF;
-
-static VBIPROXY_LOGCF epgNetIoLogCf =
-#if (DEBUG_SWITCH == OFF) || defined(DPRINTF_OFF)
-   {TRUE, 0, 0, NULL};
-#else
-   {FALSE, 0, 0, NULL};
-#endif
+} proxy_msg_logcf =
+{
+   FALSE, 0, 0, NULL
+};
 
 /* ----------------------------------------------------------------------------
 ** Local settings
@@ -86,72 +83,6 @@ static VBIPROXY_LOGCF epgNetIoLogCf =
 #define SRV_IO_TIMEOUT             60
 #define SRV_LISTEN_BACKLOG_LEN     10
 #define SRV_CLNT_SOCK_BASE_PATH    "/tmp/vbiproxy"
-
-/* ----------------------------------------------------------------------------
-** Save text describing network error cause
-** - argument list has to be terminated with NULL pointer
-** - to be displayed by the GUI to help the user fixing the problem
-*/
-void SystemErrorMessage_Set( char ** ppErrorText, int errCode, const char * pText, ... )
-{
-   char * sysErrStr = NULL;  // init to avoid compiler warning
-   va_list argl;
-   const char *argv[20];
-   int argc, sumlen, off, idx;
-
-   // free the previous error text
-   if (*ppErrorText != NULL)
-   {
-      free(*ppErrorText);
-      *ppErrorText = NULL;
-   }
-
-   // collect all given strings
-   if (pText != NULL)
-   {
-      argc    = 1;
-      argv[0] = pText;
-      sumlen  = strlen(pText);
-
-      if (errCode != 0)
-      {
-         sysErrStr = strerror(errCode);
-         sumlen += strlen(sysErrStr);
-      }
-
-      va_start(argl, pText);
-      while (argc < 20 - 1)
-      {
-         argv[argc] = va_arg(argl, char *);
-         if (argv[argc] == NULL)
-            break;
-
-         sumlen += strlen(argv[argc]);
-         argc += 1;
-      }
-      va_end(argl);
-
-      if (argc > 0)
-      {
-         // allocate memory for sum of all strings length
-         *ppErrorText = malloc(sumlen + 1);
-
-         // concatenate the strings
-         off = 0;
-         for (idx=0; idx < argc; idx++)
-         {
-            strcpy(*ppErrorText + off, argv[idx]);
-            off += strlen(argv[idx]);
-         }
-
-         if (errCode != 0)
-         {
-            strcpy(*ppErrorText + off, sysErrStr);
-            //off += strlen(sysErrStr);
-         }
-      }
-   }
-}
 
 /* ----------------------------------------------------------------------------
 ** Append entry to logfile
@@ -167,13 +98,13 @@ void vbi_proxy_msg_logger( int level, int clnt_fd, int errCode, const char * pTe
 
    if (pText != NULL)
    {
-      // open the logfile, if one is configured
-      if ( (level <= epgNetIoLogCf.fileloglev) &&
-           (epgNetIoLogCf.pLogfileName != NULL) )
+      /* open the logfile, if one is configured */
+      if ( (level <= proxy_msg_logcf.fileloglev) &&
+           (proxy_msg_logcf.pLogfileName != NULL) )
       {
-         fd = open(epgNetIoLogCf.pLogfileName, O_WRONLY|O_CREAT|O_APPEND, 0666);
+         fd = open(proxy_msg_logcf.pLogfileName, O_WRONLY|O_CREAT|O_APPEND, 0666);
          if (fd >= 0)
-         {  // each line in the file starts with a timestamp
+         {  /* each line in the file starts with a timestamp */
             strftime(timestamp, sizeof(timestamp) - 1, "[%d/%b/%Y:%H:%M:%S +0000] ", gmtime(&now));
             write(fd, timestamp, strlen(timestamp));
          }
@@ -181,12 +112,12 @@ void vbi_proxy_msg_logger( int level, int clnt_fd, int errCode, const char * pTe
       else
          fd = -1;
 
-      if (epgNetIoLogCf.do_logtty && (level <= LOG_WARNING))
+      if (proxy_msg_logcf.do_logtty && (level <= LOG_WARNING))
          fprintf(stderr, "vbiproxy: ");
 
       argc = 0;
       memset(argv, 0, sizeof(argv));
-      // add pointer to file descriptor (for client requests) or pid (for general infos)
+      /* add pointer to file descriptor (for client requests) or pid (for general infos) */
       if (clnt_fd != -1)
          sprintf(fdstr, "fd %d: ", clnt_fd);
       else
@@ -195,10 +126,10 @@ void vbi_proxy_msg_logger( int level, int clnt_fd, int errCode, const char * pTe
       }
       argv[argc++] = fdstr;
 
-      // add pointer to first log output string
+      /* add pointer to first log output string */
       argv[argc++] = pText;
 
-      // append pointers to the rest of the log strings
+      /* append pointers to the rest of the log strings */
       va_start(argl, pText);
       while ((argc < 5) && ((pText = va_arg(argl, char *)) != NULL))
       {
@@ -206,35 +137,35 @@ void vbi_proxy_msg_logger( int level, int clnt_fd, int errCode, const char * pTe
       }
       va_end(argl);
 
-      // add system error message
+      /* add system error message */
       if (errCode != 0)
       {
          argv[argc++] = strerror(errCode);
       }
 
-      // print the strings to the file and/or stderr
+      /* print the strings to the file and/or stderr */
       for (idx=0; idx < argc; idx++)
       {
          if (fd >= 0)
             write(fd, argv[idx], strlen(argv[idx]));
-         if (epgNetIoLogCf.do_logtty && (level <= LOG_WARNING))
+         if (proxy_msg_logcf.do_logtty && (level <= LOG_WARNING))
             fprintf(stderr, "%s", argv[idx]);
       }
 
-      // terminate the line with a newline character and close the file
+      /* terminate the line with a newline character and close the file */
       if (fd >= 0)
       {
          write(fd, "\n", 1);
          close(fd);
       }
-      if (epgNetIoLogCf.do_logtty && (level <= LOG_WARNING))
+      if (proxy_msg_logcf.do_logtty && (level <= LOG_WARNING))
       {
          fprintf(stderr, "\n");
          fflush(stderr);
       }
 
-      // syslog output
-      if (level <= epgNetIoLogCf.sysloglev)
+      /* syslog output */
+      if (level <= proxy_msg_logcf.sysloglev)
       {
          switch (argc)
          {
@@ -255,35 +186,38 @@ void vbi_proxy_msg_logger( int level, int clnt_fd, int errCode, const char * pTe
 **   NOTICE : start/stop of the daemon
 **   INFO   : connection establishment and shutdown
 */
-void vbi_proxy_msg_set_logging( int sysloglev, int fileloglev, const char * pLogfileName )
+void vbi_proxy_msg_set_logging( vbi_bool do_logtty, int sysloglev,
+                                int fileloglev, const char * pLogfileName )
 {
-   // free the memory allocated for the old config strings
-   if (epgNetIoLogCf.pLogfileName != NULL)
+   /* free the memory allocated for the old config strings */
+   if (proxy_msg_logcf.pLogfileName != NULL)
    {
-      free(epgNetIoLogCf.pLogfileName);
-      epgNetIoLogCf.pLogfileName = NULL;
+      free(proxy_msg_logcf.pLogfileName);
+      proxy_msg_logcf.pLogfileName = NULL;
    }
 
-   // make a copy of the new config strings
+   proxy_msg_logcf.do_logtty = do_logtty;
+
+   /* make a copy of the new config strings */
    if (pLogfileName != NULL)
    {
-      epgNetIoLogCf.pLogfileName = malloc(strlen(pLogfileName) + 1);
-      strcpy(epgNetIoLogCf.pLogfileName, pLogfileName);
-      epgNetIoLogCf.fileloglev = ((fileloglev > 0) ? (fileloglev + LOG_ERR) : -1);
+      proxy_msg_logcf.pLogfileName = malloc(strlen(pLogfileName) + 1);
+      strcpy(proxy_msg_logcf.pLogfileName, pLogfileName);
+      proxy_msg_logcf.fileloglev = ((fileloglev > 0) ? (fileloglev + LOG_ERR) : -1);
    }
    else
-      epgNetIoLogCf.fileloglev = -1;
+      proxy_msg_logcf.fileloglev = -1;
 
-   if (sysloglev && !epgNetIoLogCf.sysloglev)
+   if (sysloglev && !proxy_msg_logcf.sysloglev)
    {
       openlog("vbiproxy", LOG_PID, LOG_DAEMON);
    }
-   else if (!sysloglev && epgNetIoLogCf.sysloglev)
+   else if (!sysloglev && proxy_msg_logcf.sysloglev)
    {
    }
 
-   // convert GUI log-level setting to syslog enum value
-   epgNetIoLogCf.sysloglev = ((sysloglev > 0) ? (sysloglev + LOG_ERR) : -1);
+   /* convert GUI log-level setting to syslog enum value */
+   proxy_msg_logcf.sysloglev = ((sysloglev > 0) ? (sysloglev + LOG_ERR) : -1);
 }
 
 /* ----------------------------------------------------------------------------
@@ -328,10 +262,10 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked,
    now = time(NULL);
    if (pIO->writeLen > 0)
    {
-      // write the message header
+      /* write the message header */
       assert(pIO->writeLen >= sizeof(VBIPROXY_MSG_HEADER));
       if (pIO->writeOff < sizeof(VBIPROXY_MSG_HEADER))
-      {  // write message header
+      {  /* write message header */
          len = send(pIO->sock_fd, ((char *)&pIO->writeHeader) + pIO->writeOff, sizeof(VBIPROXY_MSG_HEADER) - pIO->writeOff, 0);
          if (len >= 0)
          {
@@ -342,7 +276,7 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked,
             err = TRUE;
       }
 
-      // write the message body, if the header is written
+      /* write the message body, if the header is written */
       if ((err == FALSE) && (pIO->writeOff >= sizeof(VBIPROXY_MSG_HEADER)) && (pIO->writeOff < pIO->writeLen))
       {
          len = send(pIO->sock_fd, ((char *)pIO->pWriteBuf) + pIO->writeOff - sizeof(VBIPROXY_MSG_HEADER), pIO->writeLen - pIO->writeOff, 0);
@@ -358,7 +292,7 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked,
       if (err == FALSE)
       {
          if (pIO->writeOff >= pIO->writeLen)
-         {  // all data has been written -> free the buffer; reset write state
+         {  /* all data has been written -> free the buffer; reset write state */
             if (pIO->freeWriteBuf)
                free(pIO->pWriteBuf);
             pIO->pWriteBuf = NULL;
@@ -368,7 +302,7 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked,
             *pBlocked = TRUE;
       }
       else if ((errno != EAGAIN) && (errno != EINTR))
-      {  // network error -> close the connection
+      {  /* network error -> close the connection */
          dprintf2("handle_io: write error on fd %d: %s\n", pIO->sock_fd, strerror(errno));
          result = FALSE;
       }
@@ -377,9 +311,9 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked,
    }
    else if (pIO->waitRead || (pIO->readLen > 0))
    {
-      len = 0;  // compiler dummy
+      len = 0;  /* compiler dummy */
       if (pIO->waitRead)
-      {  // in read phase one: read the message length
+      {  /* in read phase one: read the message length */
          assert(pIO->readOff < sizeof(pIO->readHeader));
          len = recv(pIO->sock_fd, (char *)&pIO->readHeader + pIO->readOff, sizeof(pIO->readHeader) - pIO->readOff, 0);
          if (len > 0)
@@ -388,21 +322,21 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked,
             pIO->lastIoTime = now;
             pIO->readOff += len;
             if (pIO->readOff >= sizeof(pIO->readHeader))
-            {  // message length variable has been read completely
-               // convert from network byte order (big endian) to host byte order
+            {  /* message length variable has been read completely */
+               /* convert from network byte order (big endian) to host byte order */
                pIO->readLen = ntohs(pIO->readHeader.len);
                pIO->readHeader.len = pIO->readLen;
-               //XXX//dprintf1("handle_io: fd %d: new block: size %d\n", pIO->sock_fd, pIO->readLen);
+               /*XXX//dprintf1("handle_io: fd %d: new block: size %d\n", pIO->sock_fd, pIO->readLen); */
                if ((pIO->readLen < VBIPROXY_MSG_MAXSIZE) &&
                    (pIO->readLen >= sizeof(VBIPROXY_MSG_HEADER)))
-               {  // message size acceptable -> allocate a buffer with the given size
+               {  /* message size acceptable -> allocate a buffer with the given size */
                   if (pIO->readLen > sizeof(VBIPROXY_MSG_HEADER))
                      pIO->pReadBuf = malloc(pIO->readLen - sizeof(VBIPROXY_MSG_HEADER));
-                  // enter the second phase of the read process
+                  /* enter the second phase of the read process */
                   pIO->waitRead = FALSE;
                }
                else
-               {  // illegal message size -> protocol error
+               {  /* illegal message size -> protocol error */
                   dprintf2("handle_io: fd %d: illegal block size %d\n", pIO->sock_fd, pIO->readLen);
                   result = FALSE;
                }
@@ -415,7 +349,7 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked,
       }
 
       if ((err == FALSE) && (pIO->waitRead == FALSE) && (pIO->readLen > sizeof(VBIPROXY_MSG_HEADER)))
-      {  // in read phase two: read the complete message into the allocated buffer
+      {  /* in read phase two: read the complete message into the allocated buffer */
          assert(pIO->pReadBuf != NULL);
          len = recv(pIO->sock_fd, pIO->pReadBuf + pIO->readOff - sizeof(VBIPROXY_MSG_HEADER), pIO->readLen - pIO->readOff, 0);
          if (len > 0)
@@ -430,19 +364,19 @@ vbi_bool vbi_proxy_msg_handle_io( VBIPROXY_MSG_STATE * pIO, vbi_bool * pBlocked,
       if (err == FALSE)
       {
          if (pIO->readOff < pIO->readLen)
-         {  // not all data has been read yet
+         {  /* not all data has been read yet */
             *pBlocked = TRUE;
          }
       }
       else
       {
          if ((len == 0) && closeOnZeroRead)
-         {  // zero bytes read after select returned readability -> network error or connection closed by peer
+         {  /* zero bytes read after select returned readability -> network error or connection closed by peer */
             dprintf2("handle_io: zero len read on fd %d\n", pIO->sock_fd);
             result = FALSE;
          }
          else if ((len < 0) && (errno != EAGAIN) && (errno != EINTR))
-         {  // network error -> close the connection
+         {  /* network error -> close the connection */
             dprintf2("handle_io: read error on fd %d: len=%d, %s\n", pIO->sock_fd, len, strerror(errno));
             result = FALSE;
          }
@@ -497,7 +431,7 @@ void vbi_proxy_msg_fill_magics( VBIPROXY_MAGICS * p_magic )
 void vbi_proxy_msg_write( VBIPROXY_MSG_STATE * p_io, VBIPROXY_MSG_TYPE type,
                           uint32_t msgLen, void * pMsg, vbi_bool freeBuf )
 {
-   assert((p_io->waitRead == FALSE) && (p_io->readLen == 0));  // I/O must be idle
+   assert((p_io->waitRead == FALSE) && (p_io->readLen == 0));  /* I/O must be idle */
    assert((p_io->writeLen == 0) && (p_io->pWriteBuf == NULL));
    assert((msgLen == 0) || (pMsg != NULL));
 
@@ -508,7 +442,7 @@ void vbi_proxy_msg_write( VBIPROXY_MSG_STATE * p_io, VBIPROXY_MSG_TYPE type,
    p_io->writeLen     = sizeof(VBIPROXY_MSG_HEADER) + msgLen;
    p_io->writeOff     = 0;
 
-   // message header: length is coded in network byte order (i.e. big endian)
+   /* message header: length is coded in network byte order (i.e. big endian) */
    p_io->writeHeader.len  = htons(p_io->writeLen);
    p_io->writeHeader.type = type;
 }
@@ -567,7 +501,7 @@ vbi_bool vbi_proxy_msg_write_queue( VBIPROXY_MSG_STATE * p_io, vbi_bool * p_bloc
 
       if (vbi_proxy_msg_handle_io(p_io, p_blocked, FALSE))
       {
-         // if the last block could not be transmitted fully, quit the loop
+         /* if the last block could not be transmitted fully, quit the loop */
          if (p_io->writeLen > 0)
          {
             dprintf2("msg_write_queue: socket blocked\n");
@@ -709,7 +643,7 @@ static char * gai_strerror( int errCode )
       default:                  return "internal or unknown error";
    }
 }
-#endif  // HAVE_GETADDRINFO
+#endif  /* HAVE_GETADDRINFO */
 
 /* ----------------------------------------------------------------------------
 ** Get socket address for PF_UNIX aka PF_LOCAL address family
@@ -724,7 +658,7 @@ static int vbi_proxy_msg_get_local_socket_addr( const char * pPathName, const st
 
    if ((pInParams->ai_family == PF_UNIX) && (pPathName != NULL))
    {
-      // note: use regular malloc instead of malloc in case memory is freed by the libc internal freeaddrinfo
+      /* note: use regular malloc instead of malloc in case memory is freed by the libc internal freeaddrinfo */
       res = malloc(sizeof(struct addrinfo));
       *ppResult = res;
 
@@ -765,7 +699,7 @@ int vbi_proxy_msg_listen_socket( vbi_bool is_tcp_ip, const char * listen_ip, con
 
    #ifdef PF_INET6
    if (is_tcp_ip)
-   {  // try IP-v6: not supported everywhere yet, so errors must be silently ignored
+   {  /* try IP-v6: not supported everywhere yet, so errors must be silently ignored */
       ask.ai_family = PF_INET6;
       rc = getaddrinfo(listen_ip, listen_port, &ask, &res);
       if (rc == 0)
@@ -786,12 +720,12 @@ int vbi_proxy_msg_listen_socket( vbi_bool is_tcp_ip, const char * listen_ip, con
    if (sock_fd == -1)
    {
       if (is_tcp_ip)
-      {  // IP-v4 (IP-address is optional, defaults to localhost)
+      {  /* IP-v4 (IP-address is optional, defaults to localhost) */
          ask.ai_family = PF_INET;
          rc = getaddrinfo(listen_ip, listen_port, &ask, &res);
       }
       else
-      {  // UNIX domain socket: named pipe located in /tmp directory
+      {  /* UNIX domain socket: named pipe located in /tmp directory */
          ask.ai_family = PF_UNIX;
          rc = vbi_proxy_msg_get_local_socket_addr(listen_port, &ask, &res);
       }
@@ -809,26 +743,26 @@ int vbi_proxy_msg_listen_socket( vbi_bool is_tcp_ip, const char * listen_ip, con
 
    if (sock_fd != -1)
    {
-      // allow immediate reuse of the port (e.g. after server stop and restart)
+      /* allow immediate reuse of the port (e.g. after server stop and restart) */
       opt = 1;
       if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt)) == 0)
       {
-         // make the socket non-blocking
+         /* make the socket non-blocking */
          if (fcntl(sock_fd, F_SETFL, O_NONBLOCK) == 0)
          {
-            // bind the socket
+            /* bind the socket */
             if (bind(sock_fd, res->ai_addr, res->ai_addrlen) == 0)
             {
                #ifdef linux
-               // set socket permissions: r/w allowed to everyone
+               /* set socket permissions: r/w allowed to everyone */
                if ( (is_tcp_ip == FALSE) &&
                     (chmod(listen_port, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH) != 0) )
                   vbi_proxy_msg_logger(LOG_WARNING, -1, errno, "chmod failed for named socket: ", NULL);
                #endif
 
-               // enable listening for new connections
+               /* enable listening for new connections */
                if (listen(sock_fd, SRV_LISTEN_BACKLOG_LEN) == 0)
-               {  // finished without errors
+               {  /* finished without errors */
                   result = TRUE;
                }
                else
@@ -883,7 +817,7 @@ int vbi_proxy_msg_accept_connection( int listen_fd )
    struct hostent * hent;
    char  hname_buf[129];
    uint32_t  length, maxLength;
-   struct {  // allocate enough room for all possible types of socket address structs
+   struct {  /* allocate enough room for all possible types of socket address structs */
       struct sockaddr  sa;
       char             padding[64];
    } peerAddr;
@@ -916,19 +850,19 @@ int vbi_proxy_msg_accept_connection( int listen_fd )
             else if (peerAddr.sa.sa_family == AF_INET6)
             {
                if (getnameinfo(&peerAddr.sa, length, hname_buf, sizeof(hname_buf) - 1, NULL, 0, 0) == 0)
-               {  // address could be resolved to hostname
+               {  /* address could be resolved to hostname */
                   vbi_proxy_msg_logger(LOG_INFO, sock_fd, 0, "new connection from ", hname_buf, NULL);
                   result = TRUE;
                }
                else if (getnameinfo(&peerAddr.sa, length, hname_buf, sizeof(hname_buf) - 1, NULL, 0,
                                     NI_NUMERICHOST | NI_NUMERICSERV) == 0)
-               {  // resolver failed - but numeric conversion was successful
+               {  /* resolver failed - but numeric conversion was successful */
                   dprintf2("accept_connection: IPv6 resolver failed for %s\n", hname_buf);
                   vbi_proxy_msg_logger(LOG_INFO, sock_fd, 0, "new connection from ", hname_buf, NULL);
                   result = TRUE;
                }
                else
-               {  // neither name looup nor numeric name output succeeded -> fatal error
+               {  /* neither name looup nor numeric name output succeeded -> fatal error */
                   vbi_proxy_msg_logger(LOG_INFO, sock_fd, errno, "new connection: failed to get IPv6 peer name or IP-addr: ", NULL);
                   result = FALSE;
                }
@@ -940,30 +874,30 @@ int vbi_proxy_msg_accept_connection( int listen_fd )
                result = TRUE;
             }
             else
-            {  // neither INET nor named socket -> internal error
+            {  /* neither INET nor named socket -> internal error */
                sprintf(hname_buf, "%d", peerAddr.sa.sa_family);
                vbi_proxy_msg_logger(LOG_WARNING, -1, 0, "new connection via unexpected protocol family ", hname_buf, NULL);
             }
          }
          else
-         {  // fcntl failed: OS error (should never happen)
+         {  /* fcntl failed: OS error (should never happen) */
             vbi_proxy_msg_logger(LOG_WARNING, -1, errno, "new connection: failed to set socket to non-blocking: ", NULL);
          }
       }
       else
-      {  // socket address buffer too small: internal error
+      {  /* socket address buffer too small: internal error */
          sprintf(hname_buf, "need %d, have %d", length, maxLength);
          vbi_proxy_msg_logger(LOG_WARNING, -1, 0, "new connection: saddr buffer too small: ", hname_buf, NULL);
       }
 
       if (result == FALSE)
-      {  // error -> drop the connection
+      {  /* error -> drop the connection */
          close(sock_fd);
          sock_fd = -1;
       }
    }
    else
-   {  // connect accept failed: remote host may already have closed again
+   {  /* connect accept failed: remote host may already have closed again */
       if (errno == EAGAIN)
          vbi_proxy_msg_logger(LOG_INFO, -1, errno, "accept failed: ", NULL);
    }
@@ -1028,7 +962,7 @@ vbi_bool vbi_proxy_msg_check_connect( const char * p_sock_path )
       close(fd);
    }
 
-   // if no server is listening, remove the socket from the file system
+   /* if no server is listening, remove the socket from the file system */
    if (result == FALSE)
       unlink(p_sock_path);
 
@@ -1056,7 +990,7 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
 
    #ifdef PF_INET6
    if (use_tcp_ip)
-   {  // try IP-v6: not supported everywhere yet, so errors must be silently ignored
+   {  /* try IP-v6: not supported everywhere yet, so errors must be silently ignored */
       ask.ai_family = PF_INET6;
       rc = getaddrinfo(pSrvHost, pSrvPort, &ask, &res);
       if (rc == 0)
@@ -1066,7 +1000,7 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
          {
             freeaddrinfo(res);
             res = NULL;
-            //dprintf2("socket (ipv6)\n");
+            /*dprintf2("socket (ipv6)\n"); */
          }
       }
       else
@@ -1092,13 +1026,13 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
          if (sock_fd == -1)
          {
             dprintf2("socket (ipv4): %s\n", strerror(errno));
-            SystemErrorMessage_Set(ppErrorText, errno, "Cannot create network socket: ", NULL);
+            vbi_asprintf(ppErrorText, "%s: %s (%d)", _("Cannot create network socket"), strerror(errno), errno);
          }
       }
       else
       {
          dprintf2("getaddrinfo (ipv4): %s\n", gai_strerror(rc));
-         SystemErrorMessage_Set(ppErrorText, 0, "Invalid hostname or service/port: ", gai_strerror(rc), NULL);
+         vbi_asprintf(ppErrorText, "%s: %s", _("Invalid hostname or service/port"), gai_strerror(rc));
       }
    }
 
@@ -1106,20 +1040,20 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
    {
       if (fcntl(sock_fd, F_SETFL, O_NONBLOCK) == 0)
       {
-         // connect to the server socket
+         /* connect to the server socket */
          if ( (connect(sock_fd, res->ai_addr, res->ai_addrlen) == 0)
               || (errno == EINPROGRESS)
               )
          {
-            // all ok: result is in sock_fd
+            /* all ok: result is in sock_fd */
          }
          else
          {
             dprintf2("connect: %s\n", strerror(errno));
             if (use_tcp_ip)
-               SystemErrorMessage_Set(ppErrorText, errno, "Server not running or not reachable: connect via TCP/IP failed: ", NULL);
+               vbi_asprintf(ppErrorText, "%s: %s (%d)", _("Server not running or not reachable: connect via TCP/IP failed"), strerror(errno), errno);
             else
-               SystemErrorMessage_Set(ppErrorText, errno, "Server not running: connect via ", pSrvPort, " failed: ", NULL);
+               vbi_asprintf(ppErrorText, "%s %s: %s (%d)", _("Server not running: connect via socket failed"), pSrvPort, strerror(errno), errno);
             close(sock_fd);
             sock_fd = -1;
          }
@@ -1127,7 +1061,7 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
       else
       {
          dprintf2("fcntl (F_SETFL=O_NONBLOCK): %s\n", strerror(errno));
-         SystemErrorMessage_Set(ppErrorText, errno, "Failed to set socket non-blocking: ", NULL);
+         vbi_asprintf(ppErrorText, "%s: %s (%d)", _("Failed to set socket non-blocking"), strerror(errno), errno);
          close(sock_fd);
          sock_fd = -1;
       }
@@ -1154,23 +1088,23 @@ vbi_bool vbi_proxy_msg_finish_connect( int sock_fd, char ** ppErrorText )
    if (getsockopt(sock_fd, SOL_SOCKET, SO_ERROR, (void *)&sockerr, &sockerrlen) == 0)
    {
       if (sockerr == 0)
-      {  // success -> send the first message of the startup protocol to the server
+      {  /* success -> send the first message of the startup protocol to the server */
          dprintf2("finish_connect: socket connect succeeded\n");
          result = TRUE;
       }
       else
-      {  // failed to establish a connection to the server
+      {  /* failed to establish a connection to the server */
          dprintf1("finish_connect: socket connect failed: %s\n", strerror(sockerr));
-         SystemErrorMessage_Set(ppErrorText, sockerr, "Connect failed: ", NULL);
+         vbi_asprintf(ppErrorText, "%s: %s (%d)", _("Connect failed"), strerror(sockerr), sockerr);
       }
    }
    else
    {
       dprintf2("finish_connect: getsockopt: %s\n", strerror(errno));
-      SystemErrorMessage_Set(ppErrorText, errno, "Failed to query socket connect result: ", NULL);
+      vbi_asprintf(ppErrorText, "%s: %s (%d)", _("Failed to query socket connect result"), strerror(errno), errno);
    }
 
    return result;
 }
 
-#endif  // ENABLE_PROXY
+#endif  /* ENABLE_PROXY */
