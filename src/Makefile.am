@@ -70,6 +70,7 @@ libzvbi_la_SOURCES = \
 	lang.c lang.h \
 	misc.c misc.h \
 	packet.c teletext.c vt.h \
+	pfc_demux.c pfc_demux.h \
 	proxy-client.c proxy-client.h \
 	raw_decoder.c raw_decoder.h \
 	search.c search.h ure.c ure.h \
@@ -104,6 +105,7 @@ LIBZVBI_HDRS = \
 	decoder.h \
 	dvb_demux.h \
 	idl_demux.h \
+	pfc_demux.h \
 	io.h \
 	proxy-msg.h \
 	proxy-client.h \
