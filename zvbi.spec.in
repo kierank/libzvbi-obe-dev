@@ -12,7 +12,7 @@ PreReq: /sbin/install-info
 Prefix: %{_prefix}
 Provides: zvbi
 
-Requires: gettext >= 0.10.36
+Requires: gettext >= 0.11.2
 
 %description
 This library provides routines to access raw vbi sampling devices
@@ -48,6 +48,9 @@ rm -rf %{buildroot}
 %{_includedir}/libzvbi.h
 
 %changelog
+* Tue Jun 18 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
+- Requires gettext 0.11.2
+
 * Tue Jun  4 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
 - Removed libunicode requirement
 - Made package relocatable
