@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bcd.h,v 1.9 2003/10/14 20:19:59 mschimek Exp $ */
+/* $Id: bcd.h,v 1.10 2003/10/16 18:15:34 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -27,11 +27,11 @@
  * @addtogroup BCD BCD arithmetic for Teletext page numbers
  * @ingroup Service
  *
- * Teletext page numbers are expressed as binary coded decimal numbers
- * in range 0x100 to 0x8FF. The bcd format encodes one decimal digit in
- * every hex nibble (four bits) of the number. Page numbers containing
- * digits 0xA to 0xF are reserved for various system purposes and not
- * intended for display.
+ * Teletext page numbers are expressed as packed binary coded decimal
+ * numbers in range 0x100 to 0x8FF. The bcd format encodes one decimal
+ * digit in every hex nibble (four bits) of the number. Page numbers
+ * containing digits 0xA to 0xF are reserved for various system purposes
+ * and not intended for display.
  */
 
 /* Public */
@@ -58,9 +58,9 @@ typedef int vbi_bool;
  * @ingroup Service
  * 
  * Teletext or Closed Caption page number. For Teletext pages
- * this is a bcd number in range 0x100 ... 0x8FF. Page numbers
- * containing digits 0xA to 0xF are reserved for various system
- * purposes, these pages are not intended for display.
+ * this is a packed bcd number in range 0x100 ... 0x8FF. Page
+ * numbers containing digits 0xA to 0xF are reserved for various
+ * system purposes, these pages are not intended for display.
  * 
  * Closed Caption page numbers between 1 ... 8 correspond
  * to the four Caption and Text channels:
@@ -93,7 +93,7 @@ typedef int vbi_pgno;
  * @ingroup Service
  *
  * This is the subpage number only applicable to Teletext pages,
- * a BCD number in range 0x00 ... 0x99. On special 'clock' pages
+ * a packed bcd number in range 0x00 ... 0x99. On special 'clock' pages
  * (for example listing the current time in different time zones)
  * it can assume values between 0x0000 ... 0x2359 expressing
  * local time. These are not actually subpages.
@@ -113,8 +113,9 @@ typedef int vbi_subno;
  * @ingroup BCD
  * @param dec Decimal number.
  * 
- * Converts a decimal number between 0 ... 999 to a bcd number in range
- * 0x000 ... 0x999. Extra digits in the input will be discarded.
+ * Converts a two's complement binary between 0 ... 999 to a
+ * packed bcd number in range  0x000 ... 0x999. Extra digits in
+ * the input will be discarded.
  * 
  * @return
  * BCD number.
@@ -129,8 +130,9 @@ vbi_dec2bcd(unsigned int dec)
  * @ingroup BCD
  * @param bcd BCD number.
  * 
- * Converts a bcd number between 0x000 ... 0xFFF to a decimal number
- * in range 0 ... 999. Extra digits in the input will be discarded.
+ * Converts a packed bcd number between 0x000 ... 0xFFF to a two's
+ * complement binary in range 0 ... 999. Extra digits in the input
+ * will be discarded.
  * 
  * @return
  * Decimal number. The result is undefined when the bcd number contains
@@ -147,14 +149,14 @@ vbi_bcd2dec(unsigned int bcd)
  * @param a BCD number.
  * @param b BCD number.
  * 
- * Adds two bcd numbers, returning a bcd sum. The result will be in
- * range 0x0000&nbsp;0000 ... 0x9999&nbsp;9999, discarding carry and extra digits
- * in the inputs. To subtract you can add the complement,
- * e. g. -0x1 = +0x9999&nbsp;9999.
+ * Adds two packed bcd numbers, returning a packed bcd sum. Arguments
+ * and result are in range 0xF000&nbsp;0000 ... 0x0999&nbsp;9999, that
+ * is -10**7 ... +10**7 - 1 in decimal notation. To subtract you can
+ * add the 10's complement, e. g. -1 = 0xF999&nbsp;9999.
  * 
  * @return
- * BCD number. The result is undefined when the bcd number contains
- * hex digits 0xA ... 0xF.
+ * Packed bcd number. The result is undefined when any of the arguments
+ * contain hex digits 0xA ... 0xF.
  */
 static_inline unsigned int
 vbi_add_bcd(unsigned int a, unsigned int b)
@@ -174,7 +176,8 @@ vbi_add_bcd(unsigned int a, unsigned int b)
  * @ingroup BCD
  * @param bcd BCD number.
  * 
- * Tests if @a bcd forms a valid BCD number.
+ * Tests if @a bcd forms a valid BCD number. The argument must be
+ * in range 0x0000&nbsp;0000 ... 0x0999&nbsp;9999.
  * 
  * @return
  * @c FALSE if @a bcd contains hex digits 0xA ... 0xF.
