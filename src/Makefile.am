@@ -45,7 +45,7 @@ libzvbi.h: bcd.h event.h format.h lang.h export.h cache.h search.h \
 	echo -e "\ntypedef struct vbi_decoder vbi_decoder;\n" >> $@
 	for fi in $^; do \
 		echo "/* $$fi */" >> $@; \
-		sed -e "/^\/\* Public/,/^\/\* Private/!d;/^\/\* Public/d;/^\/\* Private/d;/^\/\*\*/,/\*\*\/$$/d;" $$fi >> $@; \
+		sed -e "/^\/\* Public/,/^\/\* Private/!d;/^\/\* Public/d;/^\/\* Private/d;s/\(\/\*\*.*\*\/\)//;/^[ 	]*\/\*\*/,/\*\/[ 	]*$$/d;" $$fi >> $@; \
 	done
 	echo -e "\n#ifdef __cplusplus\n}\n#endif" >> $@
 	echo -e "\n#endif /* __LIBZVBI_H__ */" >> $@
