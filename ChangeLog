@@ -1,5 +1,9 @@
+2004-02-19    <mschimek@users.sf.net>
+
+
 2004-02-18    <mschimek@users.sf.net>
 
+	* src/teletext.c: Fixes in debug code, bug item #893713.
 	* src/Makefile.am: New file io-dvb.c.
 	* src/io-dvb.c: New device interface contributed by Gerd Knorr.
 	* src/dvb: DVB headers from Linux 2.6.1.
