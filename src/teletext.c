@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.1 2002/01/12 16:19:02 mschimek Exp $ */
+/* $Id: teletext.c,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -524,7 +524,7 @@ keyword(vbi_link *ld, uint8_t *p, int column,
 
 	for (j = k = l = 0;;) {
 		// RFC 1738
-		while (isalnum(s[i + j]) || strchr("%&/=?+-~:;@", s[i + j])) {
+		while (isalnum(s[i + j]) || strchr("%&/=?+-~:;@_", s[i + j])) {
 			j++;
 			l++;
 		}
@@ -2187,6 +2187,10 @@ vbi_format_vt_page(vbi_decoder *vbi,
  * are 1 (format header only) or 25 (everything). Likewise
  * @navigation can be used to save unnecessary formatting time.
  * 
+ * Although safe to do, this function is not supposed to be called from
+ * an event handler since rendering may block decoding for extended
+ * periods of time.
+ *
  * Return value:
  * FALSE if the page is not cached or could not be formatted
  * for other reasons, for instance a data page not intended for
@@ -2232,4 +2236,3 @@ vbi_fetch_vt_page(vbi_decoder *vbi, vbi_page *pg,
 					  max_level, display_rows, navigation);
 	}
 }
-

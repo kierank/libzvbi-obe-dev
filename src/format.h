@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: format.h,v 1.1 2002/01/12 16:18:43 mschimek Exp $ */
+/* $Id: format.h,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
 
 #ifndef FORMAT_H
 #define FORMAT_H
@@ -214,7 +214,7 @@ typedef enum {
  * Latin characters. For example the Greek capital letters Alpha
  * and Beta are re-used as Latin capital letter A and B, while a
  * separate code exists for Latin capital letter C. libzvbi will
- * not analyze the page contents, so Greek A and B are always
+ * not analyse the page contents, so Greek A and B are always
  * translated to Alpha and Beta, C to Latin C, even if they
  * appear in a pure Latin character word.
  * 

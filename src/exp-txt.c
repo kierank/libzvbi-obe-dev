@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.2 2002/01/15 03:20:25 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.3 2002/01/21 07:57:10 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -475,6 +475,8 @@ print_char(text_instance *text, int endian, vbi_page *pg, vbi_char old, vbi_char
 				chg.underline = this.underline;
 				chg.bold = this.bold;
 				chg.flash = this.flash;
+				chg.foreground = ~0;
+				chg.background = ~0;
 			}
 		}
 

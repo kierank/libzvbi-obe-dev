@@ -1,4 +1,5 @@
-* io: Add io-v4l, io-dvb.
+* io: Add io-dvb. Generally speaking the i/o api is poor,
+  should be improved.
 * decoder.c: Having a public vbi_decoder and vbi_bit_slicer is bad.
   Should be both opaque (except slicer in vbi_decoder),
   with new public vbi_sampling_parameters structure.

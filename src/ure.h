@@ -20,7 +20,7 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $Id: ure.h,v 1.1 2002/01/12 16:19:12 mschimek Exp $ */
+/* $Id: ure.h,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
 
 #ifndef _h_ure
 #define _h_ure
@@ -51,7 +51,7 @@ extern "C" {
 /*
  * Options that can be combined for searching.
  */
-#define URE_IGNORE_NONSPACING      0x01
+/* mhs: not used, disabled #define URE_IGNORE_NONSPACING      0x01 */
 #define URE_DOT_MATCHES_SEPARATORS 0x02
 #define URE_NOTBOL		   0x04
 #define URE_NOTEOL		   0x08

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.c,v 1.1 2002/01/12 16:18:36 mschimek Exp $ */
+/* $Id: exp-gfx.c,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -635,7 +635,7 @@ vbi_draw_vt_page_region(vbi_page *pg,
 					if (font)
 						draw_drcs(sizeof(*canvast), (uint8_t *) canvast, rowstride,
 							  (uint8_t *) pen, ac->drcs_clut_offs,
-							  font, unicode, ac->size);
+							  font, unicode & 0x3F, ac->size);
 					else /* shouldn't happen */
 						draw_blank(sizeof(*canvast), (uint8_t *) canvast, rowstride,
 							   pen[0], TCW, TCH);
@@ -943,10 +943,10 @@ draw_char_vt_indexed(png_bytep canvas, int rowstride, png_bytep pen,
 
 static void
 draw_drcs_indexed(png_bytep canvas, int rowstride, png_bytep pen,
-		  uint8_t *src, int glyph, vbi_size size)
+		  uint8_t *font, int glyph, vbi_size size)
 {
 	draw_drcs(sizeof(png_byte), (uint8_t *) canvas, rowstride,
-		  (uint8_t *) pen, 0, src, glyph, size);
+		  (uint8_t *) pen, 0, font, glyph, size);
 }
 
 static vbi_bool
@@ -1038,8 +1038,8 @@ png_export(vbi_export *e, FILE *fp, vbi_page *pg)
 						pen[1] = ac->foreground;
 
 						if (font && (draw_char_indexed == draw_char_vt_indexed))
-							draw_drcs_indexed(canvas, rowstride,
-									  pen, font, unicode, ac->size);
+							draw_drcs_indexed(canvas, rowstride, pen,
+									  font, unicode & 0x3F, ac->size);
 						else /* shouldn't happen */
 							draw_blank(sizeof(*canvas), (uint8_t *) canvas,
 								   rowstride, VBI_TRANSPARENT_BLACK, cw, ch);
@@ -1065,8 +1065,9 @@ png_export(vbi_export *e, FILE *fp, vbi_page *pg)
 						pen[65] = ac->foreground;
 
 						if (font && (draw_char_indexed == draw_char_vt_indexed))
-							draw_drcs_indexed(canvas, rowstride, (uint8_t *)(pen + 64),
-									  font, unicode, ac->size);
+							draw_drcs_indexed(canvas, rowstride,
+									  (uint8_t *)(pen + 64),
+									  font, unicode & 0x3F, ac->size);
 						else /* shouldn't happen */
 							draw_blank(sizeof(*canvas), (uint8_t *) canvas,
 								   rowstride, VBI_TRANSPARENT_BLACK, cw, ch);
@@ -1088,7 +1089,7 @@ png_export(vbi_export *e, FILE *fp, vbi_page *pg)
 
 						if (font && (draw_char_indexed == draw_char_vt_indexed))
 							draw_drcs_indexed(canvas, rowstride, pen,
-									  font, unicode, ac->size);
+									  font, unicode & 0x3F, ac->size);
 						else /* shouldn't happen */
 							draw_blank(sizeof(*canvas), (uint8_t *) canvas,
 								   rowstride, pen[0], cw, ch);

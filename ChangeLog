@@ -1,3 +1,11 @@
+2002-01-19	Fixes <mschimek@users.sf.net>
+
+	* src/io.c: vbi_capture_delete() not NULL safe, corrected.
+	* src/search.c: Fixed non-regexp mode escape bug.
+	* src/ure.c: Added character classes :gfx: and :drcs:.
+	* src/exp-gfx.c: Fixed DRCS display.
+	* src/exp-txt.c: Fixed color reset (VT100).
+
 2002-01-17	V4L, build fixes <garetxe@users.sf.net>
 
 	* src/io_v4l.c: Added missing pixfmt initialization.

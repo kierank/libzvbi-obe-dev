@@ -22,9 +22,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: search.c,v 1.1 2002/01/12 16:18:54 mschimek Exp $ */
+/* $Id: search.c,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
 
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
 #include "lang.h"
@@ -141,7 +142,8 @@ highlight(struct vbi_search *s, vt_page *vtp,
 				break;
 
 			default:
-				// *hp++ = 0x0020; // ignore lower halves (?)
+				/* skipped */
+				/* hp++; */
 				break;
 			}
 		}
@@ -166,15 +168,15 @@ search_page_fwd(void *p, vt_page *vtp, vbi_bool wrapped)
 
 	if (start >= stop) {
 		if (wrapped && this >= stop)
-			return -1; // all done, abort
+			return -1; /* all done, abort */
 	} else if (this < start || this >= stop)
-		return -1; // all done, abort
+		return -1; /* all done, abort */
 
 	if (vtp->function != PAGE_FUNCTION_LOP)
-		return 0; // try next
+		return 0; /* try next */
 
 	if (!vbi_format_vt_page(s->vbi, &s->pg, vtp, s->vbi->vt.max_level, 25, 1))
-		return -3; // formatting error, abort
+		return -3; /* formatting error, abort */
 
 	if (s->progress)
 		if (!s->progress(&s->pg)) {
@@ -186,7 +188,7 @@ search_page_fwd(void *p, vt_page *vtp, vbi_bool wrapped)
 				s->col[0] = s->col[1] = 0;
 			}
 
-			return -2; // canceled
+			return -2; /* canceled */
 		}
 
 	/* To Unicode */
@@ -197,7 +199,7 @@ search_page_fwd(void *p, vt_page *vtp, vbi_bool wrapped)
 	flags = 0;
 
 	if (row > LAST_ROW)
-		return 0; // try next page
+		return 0; /* try next page */
 
 	for (i = FIRST_ROW; i < LAST_ROW; i++) {
 		acp = &s->pg.text[i * s->pg.columns];
@@ -206,17 +208,15 @@ search_page_fwd(void *p, vt_page *vtp, vbi_bool wrapped)
 			if (i == row && j <= s->col[0])
 				first = hp;
 
-			if (!vbi_is_print(acp->unicode))
-				continue; /* gfx | drcs, insignificant */
-
 			if (acp->size == VBI_DOUBLE_WIDTH
 			    || acp->size == VBI_DOUBLE_SIZE) {
-				// "ZZAAPPZILLA" -> "ZAPZILLA"
-				acp++; // skip left half
+				/* "ZZAAPPZILLA" -> "ZAPZILLA" */
+				acp++; /* skip left half */
 				j++;
 			} else if (acp->size > VBI_DOUBLE_SIZE) {
-				// *hp++ = 0x0020;
-				continue; // ignore lower halves (?)
+				/* skip */
+				/* *hp++ = 0x0020; */
+				continue;
 			}
 
 			*hp++ = acp->unicode;
@@ -230,7 +230,7 @@ search_page_fwd(void *p, vt_page *vtp, vbi_bool wrapped)
 	/* Search */
 
 	if (first >= hp)
-		return 0; // try next page
+		return 0; /* try next page */
 /*
 #define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
 fprintf(stderr, "exec: %x/%x; start %d,%d; %c%c%c...\n",
@@ -242,11 +242,11 @@ fprintf(stderr, "exec: %x/%x; start %d,%d; %c%c%c...\n",
 );
 */
 	if (!ure_exec(s->ud, flags, first, hp - first, &ms, &me))
-		return 0; // try next page
+		return 0; /* try next page */
 
 	highlight(s, vtp, first, ms, me);
 
-	return 1; // success, abort
+	return 1; /* success, abort */
 }
 
 static int
@@ -265,15 +265,15 @@ search_page_rev(void *p, vt_page *vtp, vbi_bool wrapped)
 
 	if (start <= stop) {
 		if (wrapped && this <= stop)
-			return -1; // all done, abort
+			return -1; /* all done, abort */
 	} else if (this > start || this <= stop)
-		return -1; // all done, abort
+		return -1; /* all done, abort */
 
 	if (vtp->function != PAGE_FUNCTION_LOP)
-		return 0; // try next page
+		return 0; /* try next page */
 
 	if (!vbi_format_vt_page(s->vbi, &s->pg, vtp, s->vbi->vt.max_level, 25, 1))
-		return -3; // formatting error, abort
+		return -3; /* formatting error, abort */
 
 	if (s->progress)
 		if (!s->progress(&s->pg)) {
@@ -285,7 +285,7 @@ search_page_rev(void *p, vt_page *vtp, vbi_bool wrapped)
 				s->col[0] = s->col[1] = 0;
 			}
 
-			return -2; // canceled
+			return -2; /* canceled */
 		}
 
 	/* To Unicode */
@@ -304,17 +304,15 @@ search_page_rev(void *p, vt_page *vtp, vbi_bool wrapped)
 			if (i == row && j >= s->col[1])
 				goto break2;
 
-			if (!vbi_is_print(acp->unicode))
-				continue; /* gfx | drcs, insignificant */
-
 			if (acp->size == VBI_DOUBLE_WIDTH
 			    || acp->size == VBI_DOUBLE_SIZE) {
-				// "ZZAAPPZILLA" -> "ZAPZILLA"
-				acp++; // skip left half
+				/* "ZZAAPPZILLA" -> "ZAPZILLA" */
+				acp++; /* skip left half */
 				j++;
 			} else if (acp->size > VBI_DOUBLE_SIZE) {
-				// *hp++ = 0x0020;
-				continue; // ignore lower halves (?)
+				/* skip */
+				/* *hp++ = 0x0020; */
+				continue;
 			}
 
 			*hp++ = acp->unicode;
@@ -327,7 +325,7 @@ search_page_rev(void *p, vt_page *vtp, vbi_bool wrapped)
 break2:
 
 	if (hp <= s->haystack)
-		return 0; // try next page
+		return 0; /* try next page */
 
 	/* Search */
 
@@ -353,11 +351,11 @@ fprintf(stderr, "exec: %x/%x; %d, %d; '%c%c%c...'\n",
 	}
 
 	if (i == 0)
-		return 0; // try next page
+		return 0; /* try next page */
 
 	highlight(s, vtp, s->haystack, ms, me);
 
-	return 1; // success, abort
+	return 1; /* success, abort */
 }
 
 /**
@@ -402,7 +400,8 @@ ucs2_strlen(const void *string)
  * @pgno: 
  * @subno: Page and subpage number of the first (forward) or
  *   last (backward) page to visit. Optional #VBI_ANY_SUBNO. 
- * @pattern: The Unicode (UCS-2, <emphasis>not</> UTF-16) search pattern.
+ * @pattern: The Unicode (UCS-2, <emphasis>not</> UTF-16) search
+ *   pattern, a 0-terminated string.
  * @casefold: Boolean, search case insensitive.
  * @regexp: Boolean, the search pattern is a regular expression.
  * @progress: A function called for each page scanned, can be
@@ -414,6 +413,46 @@ ucs2_strlen(const void *string)
  * the Teletext page cache. The context must be freed with
  * vbi_search_delete().
  * 
+ * Regular expression searching supports the standard set
+ * of operators and constants, with these extensions:
+ * <informaltable frame=none><tgroup cols=2><tbody>
+ * <row><entry>\x....</><entry>hexadecimal number of up to 4 digits</></row>
+ * <row><entry>\X....</><entry>hexadecimal number of up to 4 digits</></row>
+ * <row><entry>\u....</><entry>hexadecimal number of up to 4 digits</></row>
+ * <row><entry>\U....</><entry>hexadecimal number of up to 4 digits</></row>
+ * <row><entry>:title:</><entry>Unicode specific character class</></row>
+ * <row><entry>:gfx:</><entry>Teletext G1 or G3 graphics</></row>
+ * <row><entry>:drcs:</><entry>Teletext DRCS</></row>
+ * <row><entry>\pN1,N2,...,Nn</><entry>Character properties class</></row>
+ * <row><entry>\PN1,N2,...,Nn</><entry>Negated character properties class</></row>
+ * </tbody></tgroup></informaltable>
+ * <informaltable frame=none><tgroup cols=2><thead>
+ * <row><entry>N</><entry>Property</></row></thead><tbody>
+ * <row><entry>1</><entry>alphanumeric</></row>
+ * <row><entry>2</><entry>alpha</></row>
+ * <row><entry>3</><entry>control</></row>
+ * <row><entry>4</><entry>digit</></row>
+ * <row><entry>5</><entry>graphical</></row>
+ * <row><entry>6</><entry>lowercase</></row>
+ * <row><entry>7</><entry>printable</></row>
+ * <row><entry>8</><entry>punctuation</></row>
+ * <row><entry>9</><entry>space</></row>
+ * <row><entry>10</><entry>uppercase</></row>
+ * <row><entry>11</><entry>hex digit</></row>
+ * <row><entry>12</><entry>title</></row>
+ * <row><entry>13</><entry>defined</></row>
+ * <row><entry>14</><entry>wide</></row>
+ * <row><entry>15</><entry>nonspacing</></row>
+ * <row><entry>16</><entry>Teletext G1 or G3 graphics</></row>
+ * <row><entry>17</><entry>Teletext DRCS</></row>
+ * </tbody></tgroup></informaltable>
+ * Character classes can contain literals, constants, and character
+ * property classes. Example: [abc\U10A\p1,3,4]. Note double height
+ * and size characters will match twice, on the upper and lower row,
+ * and double width and size characters count as one (reducing the
+ * line width) so one can find combinations of normal and enlarged
+ * characters.
+ *
  * Return value:
  * A #vbi_search context pointer or %NULL if some problem occured. 
  **/
@@ -426,7 +465,7 @@ vbi_search_new(vbi_decoder *vbi,
 {
 	vbi_search *s;
 	ucs2_t *esc_pat = NULL;
-	int i, pat_len = ucs2_strlen(pattern);
+	int i, j, pat_len = ucs2_strlen(pattern);
 
 	if (pat_len <= 0)
 		return NULL;
@@ -440,15 +479,14 @@ vbi_search_new(vbi_decoder *vbi,
 			return NULL;
 		}
 
-		/* Triumph of the mind. */
-
-		for (i = 0; i < pat_len; i++) {
-			esc_pat[i * 2 + 0] = '\\';
-			esc_pat[i * 2 + 1] = pattern[i];
+		for (i = j = 0; i < pat_len; i++) {
+			if (strchr("!\"#$%&()*+,-./:;=?@[\\]^_{|}~", pattern[i]))
+				esc_pat[j++] = '\\';
+			esc_pat[j++] = pattern[i];
 		}
 
 		pattern = esc_pat;
-		pat_len *= 2;
+		pat_len = j;
 	}
 
 	if (!(s->ub = ure_buffer_create()))
@@ -492,32 +530,33 @@ abort:
  * vbi_search_next:
  * @search: Initialized search context.
  * @pg: Place to store the formatted (as with vbi_fetch_vt_page())
- *   Teletext containing the found pattern. Do <emphasis>not</>
- *   call vbi_unref_page() for this page, this will happen
- *   automatically when you call vbi_search_next() again or the
- *   search context is destroyed. The page must not be modified.
+ *   Teletext page containing the found pattern. Do <emphasis>not</>
+ *   call vbi_unref_page() for this page, libzvbi take care. Also
+ *   the page must not be modified.
  * @dir: Search direction +1 forward or -1 backward.
  *
  * Find the next occurence of the search pattern.
  *
  * Return value:
  * #vbi_search_status.
- *
- * @VBI_SEARCH_SUCCESS: Pattern found. *@pg points to the page ready
- *   for display with the pattern highlighted, pg->pgno etc.
- *
- * @VBI_SEARCH_NOT_FOUND: Pattern not found, *@pg is invalid. Another
- *   vbi_next_search() will restart from the original starting point.
- *
- * @VBI_SEARCH_CANCELED: The search has been canceled by the
- *   progress function. *@pg points to the current page as in
- *   success case, except for the highlighting. Another vbi_next_search()
- *   continues from this page.
- *
- * @VBI_SEARCH_CACHE_EMPTY: No pages in the cache, *@pg is invalid.
- *
- * @VBI_SEARCH_ERROR: Some error occured, condition unclear. Call
- *   vbi_search_delete().
+ * <informaltable frame=none><tgroup cols=2><thead>
+ * <row><entry>Value</><entry>Meaning</></row></thead><tbody>
+ * <row><entry></><entry></></row>
+ * <row><entry>@VBI_SEARCH_SUCCESS</><entry>Pattern found.
+ *   *@pg points to the page ready for display with the pattern
+ *   highlighted, pg->pgno etc.</></row>
+ * <row><entry>@VBI_SEARCH_NOT_FOUND</><entry>Pattern not found,
+ *   *@pg is invalid. Another vbi_next_search() will restart
+ *   from the original starting point.</></row>
+ * <row><entry>@VBI_SEARCH_CANCELED</><entry>The search has been
+ *   canceled by the progress function. *@pg points to the current
+ *   page as in success case, except for the highlighting. Another
+ *   vbi_next_search() continues from this page.</></row>
+ * <row><entry>@VBI_SEARCH_CACHE_EMPTY</><entry>No pages in the
+ *   cache, *@pg is invalid.</></row>
+ * <row><entry>@VBI_SEARCH_ERROR</><entry>Some error occured,
+ *   condition unclear. Call vbi_search_delete().</></row>
+ * </tbody></tgroup></informaltable>
  **/
 int
 vbi_search_next(vbi_search *search, vbi_page **pg, int dir)

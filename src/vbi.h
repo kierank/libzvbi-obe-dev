@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.h,v 1.1 2002/01/12 16:19:05 mschimek Exp $ */
+/* $Id: vbi.h,v 1.2 2002/01/21 07:57:10 mschimek Exp $ */
 
 #ifndef VBI_H
 #define VBI_H
@@ -151,7 +151,7 @@ typedef enum {
 	VBI_PROGR_INDEX = 0x7F,
 	VBI_PROGR_SCHEDULE = 0x81,
 	VBI_UNKNOWN_PAGE = 0xFF,
-	/* Private */
+/* Private */
 	VBI_NOT_PUBLIC = 0x80,
 	VBI_CA_DATA_BROADCAST =	0xE0,
 	VBI_EPG_DATA = 0xE3,
@@ -163,7 +163,7 @@ typedef enum {
 	VBI_TRIGGER_DATA = 0xFC,
 	VBI_ACI = 0xFD,
 	VBI_TOP_PAGE = 0xFE
-	/* Public */
+/* Public */
 } vbi_page_type;
 
 extern void             vbi_channel_switched(vbi_decoder *vbi, vbi_nuid nuid);
