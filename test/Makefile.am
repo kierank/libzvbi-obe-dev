@@ -32,14 +32,14 @@ x_programs =
 endif
 
 noinst_PROGRAMS = \
-	unicode \
-	glyph \
+	capture \
 	explist \
 	export \
-	capture \
+	glyph \
+	unicode \
 	wss \
-	$(x_programs) \
-	$(proxy_programs)
+	$(proxy_programs) \
+	$(x_programs)
 
 noinst_SCRIPTS = \
 	uclist

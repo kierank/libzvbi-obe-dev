@@ -1,9 +1,15 @@
+2005-01-20    <mschimek@users.sf.net>
+
+	* configure.in: Replaced uname call by AC_CANONICAL_HOST for
+	  proper cross-compiling.
+	* test/wss.c: Compile only if we ENABLE_V4L2.
+
 2005-01-19    <mschimek@users.sf.net>
 
-	* src/lang.c: s/is(blank|full)/is_ due to gcc 4.0 built-in name
+	* src/lang.c: s/is(blank|full)/is_yadda due to gcc 4.0 built-in name
 	  conflict.
 	* daemon, src, test, contrib: gcc 4.0 char pointer signedness
-	  warnings. 
+	  warnings.
 
 2005-01-18    <mschimek@users.sf.net>
 
