@@ -13,7 +13,7 @@
  *		Justin Schoeman
  *		et al.
  */
-//#include <linux/time.h> /* need struct timeval */
+/*#include <linux/time.h>*/ /* need struct timeval */
 
 /*
  *	M I S C E L L A N E O U S

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.8 2002/12/24 15:16:26 mschimek Exp $ */
+/* $Id: decoder.c,v 1.9 2002/12/24 15:44:32 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,7 +53,7 @@
  * plain bytes, with linear interpolation of samples.
  * Could be further improved with a lowpass filter.
  */
-static inline unsigned int
+static __inline__ unsigned int
 sample(uint8_t *raw, int offs, int bpp, int endian)
 {
 	unsigned char frac = offs;
@@ -88,7 +88,7 @@ sample(uint8_t *raw, int offs, int bpp, int endian)
  * Note this is just a template. The code is inlined,
  * with bpp being const.
  */
-static inline vbi_bool
+static __inline__ vbi_bool
 bit_slicer_tmpl(vbi_bit_slicer *d, uint8_t *raw,
 		uint8_t *buf, int bpp, int endian)
 {
@@ -475,9 +475,9 @@ vbi_bit_slicer_init(vbi_bit_slicer *slicer,
 
 struct vbi_service_par {
 	unsigned int	id;		/* VBI_SLICED_ */
-	char *		label;
-	int		first[2];	/* scanning lines (ITU-R), max. distribution; */
-	int		last[2];	/*  zero: no data from this field, requires field sync */
+	const char *	label;
+	short		first[2];	/* scanning lines (ITU-R), max. distribution; */
+        short		last[2];	/*  zero: no data from this field, requires field sync */
 	int		offset;		/* leading edge hsync to leading edge first CRI one bit
 					    half amplitude points, nanoseconds */
 	int		cri_rate;	/* Hz */
@@ -964,7 +964,7 @@ vbi_raw_decoder_add_services(vbi_raw_decoder *rd, unsigned int services, int str
 		job->offset = skip;
 
 		vbi_bit_slicer_init(&job->slicer,
-				    rd->bytes_per_line - skip, // XXX * bpp?
+				    rd->bytes_per_line - skip, /* XXX * bpp? */
 				    rd->sampling_rate,
 				    vbi_services[i].cri_rate,
 				    vbi_services[i].bit_rate,

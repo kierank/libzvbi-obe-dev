@@ -41,7 +41,7 @@ msgstr ""
 
 #. TRANSLATORS: Title of TOP Index page,
 #. for now please Latin-1 or ASCII only
-#: src/teletext.c:394
+#: src/teletext.c:417
 msgid "TOP Index"
 msgstr "TOP Index"
 
@@ -270,23 +270,23 @@ msgstr "Text"
 msgid "Export this page as text file"
 msgstr "Export this page as text file"
 
-#: src/exp-vtx.c:77
+#: src/exp-vtx.c:78
 msgid "Can only export Teletext pages."
 msgstr "Can only export Teletext pages."
 
-#: src/exp-vtx.c:85
+#: src/exp-vtx.c:89
 msgid "Page is not cached, sorry."
 msgstr "Page is not cached, sorry."
 
-#: src/exp-vtx.c:95
+#: src/exp-vtx.c:97
 msgid "Cannot export this page, not displayable."
 msgstr "Cannot export this page, not displayable."
 
-#: src/exp-vtx.c:130
+#: src/exp-vtx.c:138
 msgid "VTX"
 msgstr "VTX"
 
-#: src/exp-vtx.c:131
+#: src/exp-vtx.c:139
 msgid ""
 "Export this page as VTX file, the format used by VideoteXt and vbidecode"
 msgstr ""

@@ -22,9 +22,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.6 2002/10/22 04:42:40 mschimek Exp $ */
+/* $Id: vbi.c,v 1.7 2002/12/24 15:44:32 mschimek Exp $ */
 
-#include "site_def.h"
+#include "../site_def.h"
 #include "../config.h"
 
 #include <stdio.h>
@@ -391,7 +391,7 @@ vbi_decode(vbi_decoder *vbi, vbi_sliced *sliced, int lines, double time)
 		  vbi_caption_desync(vbi);
 	} else {
 		pthread_mutex_lock(&vbi->chswcd_mutex);
-		
+
 		if (vbi->chswcd > 0 && --vbi->chswcd == 0) {
 			pthread_mutex_unlock(&vbi->chswcd_mutex);
 			vbi_chsw_reset(vbi, 0);
@@ -435,7 +435,7 @@ vbi_chsw_reset(vbi_decoder *vbi, vbi_nuid identified)
 		fprintf(stderr, "*** chsw identified=%d old nuid=%d\n",
 			identified, old_nuid);
 
-	vbi_cache_flush(vbi);
+	vbi_cache_flush (vbi, TRUE);
 
 	vbi_teletext_channel_switched(vbi);
 	vbi_caption_channel_switched(vbi);
@@ -518,12 +518,14 @@ vbi_channel_switched(vbi_decoder *vbi, vbi_nuid nuid)
 	pthread_mutex_unlock(&vbi->chswcd_mutex);
 }
 
-static inline int
-transp(int val, int brig, int cont)
+static __inline__ int
+transp				(int			val,
+				 int			brig,
+				 int			cont)
 {
 	int r = (((val - 128) * cont) / 64) + brig;
 
-	return SATURATE(r, 0, 255);
+	return SATURATE (r, 0, 255);
 }
 
 /**
@@ -536,17 +538,20 @@ transp(int val, int brig, int cont)
  * Transposes the source palette by @a vbi->brightness and @a vbi->contrast.
  */
 void
-vbi_transp_colormap(vbi_decoder *vbi, vbi_rgba *d, vbi_rgba *s, int entries)
+vbi_transp_colormap		(vbi_decoder *		vbi,
+				 vbi_rgba *		d,
+				 const vbi_rgba *	s,
+				 int entries)
 {
 	int brig, cont;
 
-	brig = SATURATE(vbi->brightness, 0, 255);
-	cont = SATURATE(vbi->contrast, -128, +127);
+	brig = SATURATE (vbi->brightness, 0, 255);
+	cont = SATURATE (vbi->contrast, -128, +127);
 
 	while (entries--) {
-		*d++ = VBI_RGBA(transp(VBI_R(*s), brig, cont),
-				transp(VBI_G(*s), brig, cont),
-				transp(VBI_B(*s), brig, cont));
+		*d++ = VBI_RGBA (transp (VBI_R (*s), brig, cont),
+				 transp (VBI_G (*s), brig, cont),
+				 transp (VBI_B (*s), brig, cont));
 		s++;
 	}
 }
@@ -651,7 +656,7 @@ vbi_set_contrast(vbi_decoder *vbi, int contrast)
  */
 vbi_page_type
 vbi_classify_page(vbi_decoder *vbi, vbi_pgno pgno,
-		  vbi_subno *subno, char **language)
+		  vbi_subno *subno, const char **language)
 {
 	struct page_info *pi;
 	int code, subc;

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.10 2002/12/24 15:16:26 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l.c,v 1.11 2002/12/24 15:44:32 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -279,7 +279,7 @@ static vbi_bool
 guess_bttv_v4l(vbi_capture_v4l *v, int *strict,
 	       int given_fd, int scanning, vbi_bool trace)
 {
-	static char *video_devices[] = {
+	static const char *video_devices[] = {
 		"/dev/video",
 		"/dev/video0",
 		"/dev/video1",

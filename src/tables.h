@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: tables.h,v 1.3 2002/10/22 04:42:40 mschimek Exp $ */
+/* $Id: tables.h,v 1.4 2002/12/24 15:44:32 mschimek Exp $ */
 
 #ifndef TABLES_H
 #define TABLES_H
@@ -32,7 +32,7 @@ extern const char *vbi_country_names_en[];
 struct vbi_cni_entry {
 	int16_t			id;
 	int16_t			country;
-	char *			name;
+	const char *		name;
 	uint16_t		cni1;
 	uint16_t		cni2;
 	uint16_t		cni3;

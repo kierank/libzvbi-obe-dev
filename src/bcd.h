@@ -18,10 +18,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bcd.h,v 1.6 2002/10/22 04:42:40 mschimek Exp $ */
+/* $Id: bcd.h,v 1.7 2002/12/24 15:44:31 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
+
+#include "misc.h"
 
 /**
  * @addtogroup BCD BCD arithmetic for Teletext page numbers
@@ -35,24 +37,6 @@
  */
 
 /* Public */
-
-#ifndef DOXYGEN_SHOULD_IGNORE_THIS
-/* doxygen omits static objects */
-#define static_inline static inline
-#endif
-
-/**
- * @ingroup Basic
- * @name Boolean type
- * @{
- */
-#undef TRUE
-#undef FALSE
-#define TRUE 1
-#define FALSE 0
-
-typedef int vbi_bool;
-/** @} */
 
 /**
  * @ingroup Service
@@ -86,8 +70,7 @@ typedef int vbi_bool;
  *   "Additional text channel"</td></tr>
  * </table>
  */
-/* XXX unsigned? */
-typedef int vbi_pgno;
+typedef unsigned int vbi_pgno;
 
 /**
  * @ingroup Service
@@ -98,7 +81,7 @@ typedef int vbi_pgno;
  * it can assume values between 0x0000 ... 0x2359 expressing
  * local time. These are not actually subpages.
  */
-typedef int vbi_subno;
+typedef unsigned int vbi_subno;
 
 /**
  * @ingroup Service
@@ -188,45 +171,5 @@ vbi_is_bcd(unsigned int bcd)
 }
 
 /* Private */
-
-#undef ABS
-#define ABS(n)								\
-({									\
-	register int _n = n, _t = _n;					\
-									\
-	_t >>= sizeof(_t) * 8 - 1;					\
-	_n ^= _t;							\
-	_n -= _t;							\
-})
-
-#undef MIN
-#define MIN(x, y)							\
-({									\
-	typeof(x) _x = x;						\
-	typeof(y) _y = y;						\
-									\
-	(void)(&_x == &_y); /* alert when type mismatch */		\
-	(_x < _y) ? _x : _y;						\
-})
-
-#undef MAX
-#define MAX(x, y)							\
-({									\
-	typeof(x) _x = x;						\
-	typeof(y) _y = y;						\
-									\
-	(void)(&_x == &_y); /* alert when type mismatch */		\
-	(_x > _y) ? _x : _y;						\
-})
-
-#undef SATURATE
-#define SATURATE(n, min, max) MIN(MAX(n, min), max)
-
-/*
- *  Return a pointer to a structure of @a type from
- *  a @a ptr to one of its @a members.
- */
-#define PARENT(ptr, type, member)					\
-  ((type *)(((char *) ptr) - offsetof(type, member)))
 
 #endif /* BCD_H */

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: search.c,v 1.6 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: search.c,v 1.7 2002/12/24 15:44:32 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -162,7 +162,7 @@ highlight(struct vbi_search *s, vt_page *vtp,
 }
 
 static int
-search_page_fwd(void *p, vt_page *vtp, vbi_bool wrapped)
+search_page_fwd(void *p, const vt_page *vtp, vbi_bool wrapped)
 {
 	vbi_search *s = p;
 	vbi_char *acp;
@@ -259,7 +259,7 @@ fprintf(stderr, "exec: %x/%x; start %d,%d; %c%c%c...\n",
 }
 
 static int
-search_page_rev(void *p, vt_page *vtp, vbi_bool wrapped)
+search_page_rev(void *p, const vt_page *vtp, vbi_bool wrapped)
 {
 	vbi_search *s = p;
 	vbi_char *acp;
@@ -390,7 +390,7 @@ vbi_search_delete(vbi_search *search)
 static size_t
 ucs2_strlen(const void *string)
 {
-	ucs2_t *p = (ucs2_t *) string;
+	const ucs2_t *p = (ucs2_t *) string;
 	size_t i = 0;
 
 	if (!string)
@@ -589,8 +589,12 @@ vbi_search_next(vbi_search *search, vbi_page **pg, int dir)
 		search->stop_subno[1] = search->start_subno;
 	}
 #endif
-	switch (vbi_cache_foreach(search->vbi, search->start_pgno, search->start_subno, dir,
-		 (dir > 0) ? search_page_fwd : search_page_rev, search)) {
+	switch (vbi_cache_foreach (search->vbi, NUID0,
+				   search->start_pgno,
+				   search->start_subno,
+				   dir,
+				   (dir > 0) ? search_page_fwd
+				   : search_page_rev, search)) {
 	case 1:
 		*pg = &search->pg;
 		return VBI_SEARCH_SUCCESS;

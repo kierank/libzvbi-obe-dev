@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.10 2002/12/24 15:16:26 mschimek Exp $ */
+/* $Id: caption.c,v 1.11 2002/12/24 15:44:31 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1659,8 +1659,8 @@ vbi_caption_color_level(vbi_decoder *vbi)
 {
 	int i;
 
-	vbi_transp_colormap(vbi, vbi->cc.channel[0].pg[0].color_map,
-			    default_color_map, 8);
+	vbi_transp_colormap (vbi, vbi->cc.channel[0].pg[0].color_map,
+			     default_color_map, 8);
 
 	for (i = 1; i < 16; i++)
 		memcpy(vbi->cc.channel[i >> 1].pg[i & 1].color_map,

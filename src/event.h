@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: event.h,v 1.6 2002/12/24 15:16:26 mschimek Exp $ */
+/* $Id: event.h,v 1.7 2002/12/24 15:44:32 mschimek Exp $ */
 
 #ifndef EVENT_H
 #define EVENT_H
@@ -54,15 +54,6 @@ typedef struct vbi_decoder vbi_decoder;
  * pointed to from there must be read only. The data is only valid until
  * the handler returns.
  */
-
-/**
- * @ingroup Event
- * @brief Unique network id (a libzvbi thing).
- *
- * 0 = unknown network, bit 31 reserved for preliminary nuids.
- * Other network codes are arbitrary.
- */
-typedef unsigned int vbi_nuid;
 
 /**
  * @ingroup Event
