@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: hamm.h,v 1.6 2005/01/20 20:55:03 mschimek Exp $ */
+/* $Id: hamm.h,v 1.7 2005/01/24 00:13:06 mschimek Exp $ */
 
 #ifndef __ZVBI_HAMM_H__
 #define __ZVBI_HAMM_H__
@@ -186,7 +186,7 @@ vbi_ham8			(unsigned int		c)
  *
  * @since 0.2.12
  */
-vbi_inline unsigned int
+vbi_inline int
 vbi_unham8			(unsigned int		c)
 {
 	return _vbi_hamm8_inv[(uint8_t) c];
