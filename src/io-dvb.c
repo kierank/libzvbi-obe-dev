@@ -70,11 +70,16 @@ static vbi_capture_dvb* dvb_init(const char *dev, char **errstr, int debug)
     vbi_capture_dvb *dvb;
 
     dvb = malloc(sizeof(*dvb));
-    if (NULL == dvb)
+    if (NULL == dvb) {
+        vbi_asprintf(errstr, _("Virtual memory exhausted."));
+        errno = ENOMEM;
 	return NULL;
+    }
     CLEAR (*dvb);
 
-    if (!(dvb->demux = _vbi_dvb_demux_pes_new (NULL, NULL))) {
+    if (!(dvb->demux = vbi_dvb_pes_demux_new (NULL, NULL))) {
+	vbi_asprintf(errstr, _("Virtual memory exhausted."));
+	errno = ENOMEM;
         free (dvb);
 	return NULL;
     }
@@ -389,14 +394,16 @@ vbi_capture_dvb_new2		(const char *		device_name,
 				 char **		errstr,
 				 vbi_bool		trace)
 {
+    char *error = NULL;
     vbi_capture_dvb *dvb;
 
-    if (errstr)
-	*errstr = NULL;
+    if (!errstr)
+	    errstr = &error;
+    *errstr = NULL;
 
     dvb = dvb_init(device_name,errstr,trace);
     if (NULL == dvb)
-	return NULL;
+	goto failure;
 
     dvb->cap.parameters = dvb_parameters;
     dvb->cap.read       = dvb_read;
@@ -408,11 +415,24 @@ vbi_capture_dvb_new2		(const char *		device_name,
 	    vbi_asprintf (errstr, "DMX_SET_PES_FILTER: %s",
 			  strerror (errno));
 	    dvb_delete (&dvb->cap);
-	    return NULL;
+	    goto failure;
 	}
     }
 
+    if (errstr == &error) {
+	free (error);
+	error = NULL;
+    }
+
     return &dvb->cap;
+
+ failure:
+    if (errstr == &error) {
+	free (error);
+	error = NULL;
+    }
+
+    return NULL;
 }
 
 vbi_capture*
@@ -420,12 +440,21 @@ vbi_capture_dvb_new(char *dev, int scanning,
 		    unsigned int *services, int strict,
 		    char **errstr, vbi_bool trace)
 {
+	char *error = NULL;
 	vbi_capture *cap;
+
+	if (!errstr)
+		errstr = &error;
+	*errstr = NULL;
 
 	if ((cap = vbi_capture_dvb_new2 (dev, 0, errstr, trace))) {
 		vbi_capture_dvb *dvb = PARENT (cap, vbi_capture_dvb, cap);
-
 		dvb->bug_compatible = TRUE;
+	}
+
+	if (errstr == &error) {
+		free (error);
+		error = NULL;
 	}
 
 	return cap;
@@ -481,7 +510,7 @@ vbi_capture_dvb_filter		(vbi_capture *		cap,
  * @param device_name Name of the DVB device to open.
  * @param pid Filter out a stream with this PID. You can pass 0 here
  *   and set or change the PID later with vbi_capture_dvb_filter().
- * @param errorstr If not @c NULL the function stores a pointer to an error
+ * @param errstr If not @c NULL the function stores a pointer to an error
  *   description here. You must free() this string when no longer needed.
  * @param trace If @c TRUE print progress and warning messages on stderr.
  *
@@ -498,7 +527,9 @@ vbi_capture_dvb_new2		(const char *		device_name,
 				 char **		errstr,
 				 vbi_bool		trace)
 {
-	vbi_asprintf (errstr, _("DVB interface not compiled."));
+	if (errstr)
+		vbi_asprintf (errstr, _("DVB interface not compiled."));
+
 	return NULL;
 }
 
@@ -507,7 +538,7 @@ vbi_capture_dvb_new2		(const char *		device_name,
  * @param scanning Ignored.
  * @param services Ignored.
  * @param strict Ignored.
- * @param errorstr If not @c NULL the function stores a pointer to an error
+ * @param errstr If not @c NULL the function stores a pointer to an error
  *   description here. You must free() this string when no longer needed.
  * @param trace If @c TRUE print progress and warning messages on stderr.
  * 
@@ -537,7 +568,9 @@ vbi_capture_dvb_new(char *dev, int scanning,
 		    unsigned int *services, int strict,
 		    char **errstr, vbi_bool trace)
 {
-	vbi_asprintf (errstr, _("DVB interface not compiled."));
+	if (errstr)
+		vbi_asprintf (errstr, _("DVB interface not compiled."));
+
 	return NULL;
 }
 
@@ -663,8 +696,11 @@ static struct vbi_capture_dvb* dvb_init(char *dev, char **errstr, int debug)
     struct vbi_capture_dvb *dvb;
 
     dvb = malloc(sizeof(*dvb));
-    if (NULL == dvb)
+    if (NULL == dvb) {
+        vbi_asprintf(errstr, _("Virtual memory exhausted."));
+        errno = ENOMEM;
 	return NULL;
+    }
     memset(dvb,0,sizeof(*dvb));
 
     dvb->debug = debug;
@@ -829,21 +865,36 @@ vbi_capture_dvb_new(char *dev, int scanning,
 		    unsigned int *services, int strict,
 		    char **errstr, vbi_bool trace)
 {
+    char *error = NULL;
     struct vbi_capture_dvb *dvb;
 
-    if (errstr)
-	*errstr = NULL;
+    if (!errstr)
+	errstr = &error;
+    *errstr = NULL;
 
     dvb = dvb_init(dev,errstr,trace);
     if (NULL == dvb)
-	return NULL;
+	goto failure;
 
     dvb->cap.parameters = dvb_parameters;
     dvb->cap.read       = dvb_read;
     dvb->cap.get_fd     = dvb_fd;
     dvb->cap._delete    = dvb_delete;
 
+    if (errstr == &error) {
+	free (error);
+	error = NULL;
+    }
+
     return &dvb->cap;
+
+ failure:
+    if (errstr == &error) {
+	free (error);
+	error = NULL;
+    }
+
+    return NULL;
 }
 
 #else /* !ENABLE_DVB */
@@ -861,7 +912,9 @@ vbi_capture_dvb_new(char *dev, int scanning,
 		    unsigned int *services, int strict,
 		    char **errstr, vbi_bool trace)
 {
-	vbi_asprintf(errstr, ("DVB interface not compiled."));
+	if (errstr)
+		vbi_asprintf(errstr, ("DVB interface not compiled."));
+
 	return NULL;
 }
 

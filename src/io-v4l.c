@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l.c,v 1.27 2004/12/13 07:12:02 mschimek Exp $";
+"$Id: io-v4l.c,v 1.28 2004/12/30 02:23:59 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -154,14 +154,14 @@ v4l_suspend(vbi_capture_v4l *v)
 
 
 static int
-v4l_read_alloc(vbi_capture_v4l *v, char ** errorstr)
+v4l_read_alloc(vbi_capture_v4l *v, char ** errstr)
 {
 	assert(v->raw_buffer == NULL);
 
 	v->raw_buffer = calloc(1, sizeof(v->raw_buffer[0]));
 
 	if (v->raw_buffer == NULL) {
-		vbi_asprintf(errorstr, _("Virtual memory exhausted."));
+		vbi_asprintf(errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
 		goto failure;
 	}
@@ -172,7 +172,7 @@ v4l_read_alloc(vbi_capture_v4l *v, char ** errorstr)
 	v->raw_buffer[0].data = malloc(v->raw_buffer[0].size);
 
 	if (v->raw_buffer[0].data == NULL) {
-		vbi_asprintf(errorstr, _("Not enough memory to allocate "
+		vbi_asprintf(errstr, _("Not enough memory to allocate "
 					 "vbi capture buffer (%d KB)."),
 			     (v->raw_buffer[0].size + 1023) >> 10);
 		goto failure;
@@ -682,7 +682,7 @@ v4l_get_scanning(vbi_capture *vc)
 static vbi_bool
 set_parameters(vbi_capture_v4l *v, struct vbi_format *p_vfmt, int *p_max_rate,
 	       unsigned int *services, int strict,
-	       char **errorstr)
+	       char **errstr)
 {
 	struct vbi_format vfmt_temp;
 	vbi_raw_decoder dec_temp;
@@ -709,7 +709,7 @@ set_parameters(vbi_capture_v4l *v, struct vbi_format *p_vfmt, int *p_max_rate,
 					          dec_temp.scanning, p_max_rate);
 
 	if ((sup_services & *services) == 0) {
-		vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of the "
+		vbi_asprintf(errstr, _("Sorry, %s (%s) cannot capture any of the "
 					 "requested data services."),
 			     v->p_dev_name, v->vcap.name);
 		return FALSE;
@@ -760,7 +760,7 @@ set_parameters(vbi_capture_v4l *v, struct vbi_format *p_vfmt, int *p_max_rate,
 		*p_vfmt = vfmt_temp;
 		return TRUE;
 #endif
-		vbi_asprintf(errorstr, _("Cannot initialize %s (%s), "
+		vbi_asprintf(errstr, _("Cannot initialize %s (%s), "
 					 "the device is already in use."),
 			     v->p_dev_name, v->vcap.name);
 		break;
@@ -774,7 +774,7 @@ set_parameters(vbi_capture_v4l *v, struct vbi_format *p_vfmt, int *p_max_rate,
                 }
 		break;
 	default:
-		vbi_asprintf(errorstr, _("Could not set the vbi "
+		vbi_asprintf(errstr, _("Could not set the vbi "
 					 "capture parameters for %s (%s): %s."),
 			     v->p_dev_name, v->vcap.name, strerror(errno));
 		/* guess = _("Maybe a bug in the driver or libzvbi."); */
@@ -866,7 +866,7 @@ static unsigned int
 v4l_update_services(vbi_capture *vc,
 		    vbi_bool reset, vbi_bool commit,
 		    unsigned int services, int strict,
-		    char ** errorstr)
+		    char ** errstr)
 {
 	vbi_capture_v4l *v = PARENT(vc, vbi_capture_v4l, capture);
 	struct vbi_format vfmt;
@@ -903,7 +903,7 @@ v4l_update_services(vbi_capture *vc,
 		if (strict >= 0 && v->dec.scanning)
 			if (!set_parameters(v, &vfmt, &max_rate,
 					    &services, strict,
-					    errorstr))
+					    errstr))
 				goto failure;
 
 		if (v->do_trace)
@@ -912,7 +912,7 @@ v4l_update_services(vbi_capture *vc,
 		printv("Accept current vbi parameters\n");
 
 		if (vfmt.sample_format != VIDEO_PALETTE_RAW) {
-			vbi_asprintf(errorstr, _("%s (%s) offers unknown vbi "
+			vbi_asprintf(errstr, _("%s (%s) offers unknown vbi "
 						 "sampling format #%d. "
 						 "This may be a driver bug "
 						 "or libzvbi is too old."),
@@ -964,7 +964,7 @@ v4l_update_services(vbi_capture *vc,
 
 		if (0 && !strstr(v->vcap.name, "bttv")
 		      && !strstr(v->vcap.name, "BTTV")) {
-			vbi_asprintf(errorstr, _("Cannot capture with %s (%s), "
+			vbi_asprintf(errstr, _("Cannot capture with %s (%s), "
 						 "has no standard vbi interface."),
 				     v->p_dev_name, v->vcap.name);
 			goto io_error;
@@ -983,7 +983,7 @@ v4l_update_services(vbi_capture *vc,
 			v->dec.count[0] = 16;
 			v->dec.count[1] = 16;
 		} else if (size % 2048) {
-			vbi_asprintf (errorstr,
+			vbi_asprintf (errstr,
 				      _("Cannot identify %s (%s), reported "
 					"vbi frame size suggests this is "
 					"not a bttv driver."),
@@ -1001,7 +1001,7 @@ v4l_update_services(vbi_capture *vc,
 		switch (v->dec.scanning) {
 		default:
 #ifdef REQUIRE_VIDEOSTD
-			vbi_asprintf(errorstr, _("Cannot set or determine current "
+			vbi_asprintf(errstr, _("Cannot set or determine current "
 						 "videostandard of %s (%s)."),
 				     v->p_dev_name, v->vcap.name);
 			goto io_error;
@@ -1040,7 +1040,7 @@ v4l_update_services(vbi_capture *vc,
 		/* Nyquist */
 
 		if (v->dec.sampling_rate < max_rate * 3 / 2) {
-			vbi_asprintf(errorstr, _("Cannot capture the requested "
+			vbi_asprintf(errstr, _("Cannot capture the requested "
 						 "data services with "
 						 "%s (%s), the sampling frequency "
 						 "%.2f MHz is too low."),
@@ -1068,7 +1068,7 @@ v4l_update_services(vbi_capture *vc,
 							         strict);
 
 		if (services == 0) {
-			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot "
+			vbi_asprintf(errstr, _("Sorry, %s (%s) cannot "
 						 "capture any of "
 						 "the requested data services."),
 				     v->p_dev_name, v->vcap.name);
@@ -1083,7 +1083,7 @@ v4l_update_services(vbi_capture *vc,
 			       * sizeof(vbi_sliced));
 
 		if (!v->sliced_buffer.data) {
-			vbi_asprintf(errorstr, _("Virtual memory exhausted."));
+			vbi_asprintf(errstr, _("Virtual memory exhausted."));
 			errno = ENOMEM;
 			goto failure;
 		}
@@ -1094,7 +1094,7 @@ failure:
 	printv("Will capture services 0x%08x, added 0x%0x commit:%d\n", v->services, services, commit);
 
 	if (commit && (v->services != 0))
-		v4l_read_alloc(v, errorstr);
+		v4l_read_alloc(v, errstr);
 
 	return services;
 
@@ -1105,19 +1105,25 @@ io_error:
 static vbi_capture *
 v4l_new(const char *dev_name, int given_fd, int scanning,
 	unsigned int *services, int strict,
-	char **errorstr, vbi_bool trace)
+	char **errstr, vbi_bool trace)
 {
+	char *error = NULL;
+
 	vbi_capture_v4l *v;
 
 	pthread_once (&vbi_init_once, vbi_init);
+
+	if (!errstr)
+		errstr = &error;
+	*errstr = NULL;
 
 	if (scanning != 525 && scanning != 625)
 		scanning = 0;
 
 	if (!(v = (vbi_capture_v4l *) calloc(1, sizeof(*v)))) {
-		vbi_asprintf(errorstr, _("Virtual memory exhausted."));
+		vbi_asprintf(errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
-		return NULL;
+		goto failure;
 	}
 
 	vbi_raw_decoder_init (&v->dec);
@@ -1143,7 +1149,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 	v->p_dev_name = strdup(dev_name);
 
 	if (v->p_dev_name == NULL) {
-		vbi_asprintf(errorstr, _("Virtual memory exhausted."));
+		vbi_asprintf(errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
 		goto failure;
 	}
@@ -1151,7 +1157,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 	v->fd = device_open (v->capture.sys_log_fp,
 			     v->p_dev_name, O_RDONLY, 0);
 	if (-1 == v->fd) {
-		vbi_asprintf (errorstr, _("Cannot open '%s': %d, %s."),
+		vbi_asprintf (errstr, _("Cannot open '%s': %d, %s."),
 			      v->p_dev_name, errno, strerror(errno));
 		perm_check(v, v->p_dev_name);
 		goto io_error;
@@ -1182,7 +1188,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		}
 
 		if (!(v->vcap.type & VID_TYPE_TELETEXT)) {
-			vbi_asprintf(errorstr,
+			vbi_asprintf(errstr,
 				     _("%s (%s) is not a raw vbi device."),
 				     v->p_dev_name, v->vcap.name);
 			goto failure;
@@ -1203,7 +1209,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 
 #ifdef REQUIRE_SELECT
 	if (!v->select) {
-		vbi_asprintf(errorstr, _("%s (%s) does not support "
+		vbi_asprintf(errstr, _("%s (%s) does not support "
 					 "the select() function."),
 			     v->p_dev_name, v->vcap.name);
 		goto failure;
@@ -1216,7 +1222,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
                 assert(*services != 0);
 
                 v->services = v4l_update_services(&v->capture, FALSE, TRUE,
-                                                  *services, strict, errorstr);
+                                                  *services, strict, errstr);
                 if (v->services == 0) {
                         goto failure;
                 }
@@ -1233,7 +1239,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
                                  *  ourselves, but then we had guessed already.
                                  */
 #ifdef REQUIRE_VIDEOSTD
-                                vbi_asprintf(errorstr, _("Cannot set or determine current "
+                                vbi_asprintf(errstr, _("Cannot set or determine current "
                                                          "videostandard of %s (%s)."),
                                              v->p_dev_name, v->vcap.name);
                                 goto failure;
@@ -1261,11 +1267,22 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 	printv("Successful opened %s (%s)\n",
 	       v->p_dev_name, v->vcap.name);
 
+	if (errstr == &error) {
+		free (error);
+		error = NULL;
+	}
+
 	return &v->capture;
 
 failure:
 io_error:
-	v4l_delete(&v->capture);
+	if (v)
+		v4l_delete(&v->capture);
+
+	if (errstr == &error) {
+		free (error);
+		error = NULL;
+	}
 
 	return NULL;
 }
@@ -1273,19 +1290,19 @@ io_error:
 vbi_capture *
 vbi_capture_v4l_sidecar_new(const char *dev_name, int video_fd,
 			    unsigned int *services, int strict,
-			    char **errorstr, vbi_bool trace)
+			    char **errstr, vbi_bool trace)
 {
 	return v4l_new(dev_name, video_fd, 0,
-		       services, strict, errorstr, trace);
+		       services, strict, errstr, trace);
 }
 
 vbi_capture *
 vbi_capture_v4l_new(const char *dev_name, int scanning,
 		    unsigned int *services, int strict,
-		    char **errorstr, vbi_bool trace)
+		    char **errstr, vbi_bool trace)
 {
 	return v4l_new(dev_name, -1, scanning,
-		       services, strict, errorstr, trace);
+		       services, strict, errstr, trace);
 }
 
 #else
@@ -1307,7 +1324,7 @@ vbi_capture_v4l_new(const char *dev_name, int scanning,
  *   You can do so later with vbi_capture_update_services(); note the
  *   reset parameter must be set to @c TRUE in this case.
  * @param strict Will be passed to vbi_raw_decoder_add().
- * @param errorstr If not @c NULL this function stores a pointer to an error
+ * @param errstr If not @c NULL this function stores a pointer to an error
  *   description here. You must free() this string when no longer needed.
  * @param trace If @c TRUE print progress messages on stderr.
  *
@@ -1321,10 +1338,13 @@ vbi_capture_v4l_new(const char *dev_name, int scanning,
 vbi_capture *
 vbi_capture_v4l_sidecar_new(const char *dev_name, int given_fd,
 			    unsigned int *services, int strict,
-			    char **errorstr, vbi_bool trace)
+			    char **errstr, vbi_bool trace)
 {
 	pthread_once (&vbi_init_once, vbi_init);
-	vbi_asprintf(errorstr, _("V4L driver interface not compiled."));
+
+	if (errstr)
+		vbi_asprintf(errstr, _("V4L driver interface not compiled."));
+
 	return NULL;
 }
 
@@ -1345,7 +1365,7 @@ vbi_capture_v4l_sidecar_new(const char *dev_name, int given_fd,
  *   You can do so later with vbi_capture_update_services(); note the
  *   reset parameter must be set to @c TRUE in this case.
  * @param strict Will be passed to vbi_raw_decoder_add().
- * @param errorstr If not @c NULL this function stores a pointer to an error
+ * @param errstr If not @c NULL this function stores a pointer to an error
  *   description here. You must free() this string when no longer needed.
  * @param trace If @c TRUE print progress messages on stderr.
  * 
@@ -1355,14 +1375,15 @@ vbi_capture_v4l_sidecar_new(const char *dev_name, int given_fd,
 vbi_capture *
 vbi_capture_v4l_new(const char *dev_name, int scanning,
 		     unsigned int *services, int strict,
-		     char **errorstr, vbi_bool trace)
+		     char **errstr, vbi_bool trace)
 {
 	if (0) /* unused, no warning please */
 		fputs (rcsid, stderr);
 
 	pthread_once (&vbi_init_once, vbi_init);
 
-	vbi_asprintf (errorstr, _("V4L driver interface not compiled."));
+	if (errstr)
+		vbi_asprintf (errstr, _("V4L driver interface not compiled."));
 
 	return NULL;
 }

@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2.c,v 1.30 2004/12/13 07:11:37 mschimek Exp $";
+"$Id: io-v4l2.c,v 1.31 2004/12/30 02:24:11 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -89,18 +89,22 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 				 int			buffers,
 				 unsigned int *		services,
 				 int			strict,
-				 char **		errorstr,
+				 char **		errstr,
 				 vbi_bool		trace)
 {
-	char *guess = "";
+	char *error = NULL;
 	vbi_capture_v4l2 *v;
 
 	pthread_once (&vbi_init_once, vbi_init);
 
+	if (!errstr)
+		errstr = &error;
+	*errstr = NULL;
+
 	if (!(v = calloc (1, sizeof (*v)))) {
-		vbi_asprintf (errorstr, _("Virtual memory exhausted."));
+		vbi_asprintf (errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
-		return NULL;
+		goto failure;
 	}
 
 	v->do_trace = trace;
@@ -113,7 +117,7 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 		v->fd = device_open (v->capture.sys_log_fp,
 				     dev_name, O_RDONLY, 0);
 		if (-1 == v->fd) {
-			vbi_asprintf (errorstr, _("Cannot open '%s': %d, %s."),
+			vbi_asprintf (errstr, _("Cannot open '%s': %d, %s."),
 				      dev_name, errno, strerror (errno));
 			goto io_error;
 		}
@@ -123,23 +127,35 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 
 	if (-1 == xioctl (v, VIDIOC_QUERYCAP, &v->vcap)) {
 		/* TRANSLATORS: Cannot identify '/dev/some'. */
-		vbi_asprintf (errorstr, _("Cannot identify '%s': %s."),
-			      dev_name, strerror (errno));
-		guess = _("Probably not a v4l2 device.");
+		/* vbi_asprintf (errstr, _("Cannot identify '%s': %s."),
+		   		 dev_name, strerror (errno)); */
 
 		v4l2_delete (&v->capture);
+
+		if (errstr == &error) {
+			errstr = NULL;
+			free (error);
+			error = NULL;
+		}
 
 		/* Try V4L2 2.6. */
 		return vbi_capture_v4l2k_new (dev_name, -1, buffers,
 					      services, strict,
-					      errorstr, trace);
+					      errstr, trace);
 	}
 
 	/* XXX localize. */
-	vbi_asprintf (errorstr, "V4L2 0.20 API not supported.");
+	vbi_asprintf (errstr, "V4L2 0.20 API not supported.");
 
  io_error:
-	v4l2_delete (&v->capture);
+ failure:
+	if (v)
+		v4l2_delete (&v->capture);
+
+	if (errstr == &error) {
+		free (error);
+		error = NULL;
+	}
 
 	return NULL;
 }
@@ -162,7 +178,7 @@ vbi_capture_v4l2_new		(const char *		dev_name,
  *   You can do so later with vbi_capture_update_services(); note the
  *   reset parameter must be set to @c TRUE in this case.
  * @param strict Will be passed to vbi_raw_decoder_add().
- * @param errorstr If not @c NULL this function stores a pointer to an error
+ * @param errstr If not @c NULL this function stores a pointer to an error
  *   description here. You must free() this string when no longer needed.
  * @param trace If @c TRUE print progress messages on stderr.
  *
@@ -178,7 +194,7 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 				 int			buffers,
 				 unsigned int *		services,
 				 int			strict,
-				 char **		errorstr,
+				 char **		errstr,
 				 vbi_bool		trace)
 {
 	if (0) /* unused, no warning please */
@@ -186,7 +202,9 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 
 	pthread_once (&vbi_init_once, vbi_init);
 
-	vbi_asprintf (errorstr, _("V4L2 driver interface not compiled."));
+	if (errstr)
+		vbi_asprintf (errstr,
+			      _("V4L2 driver interface not compiled."));
 
 	return NULL;
 }

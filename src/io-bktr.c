@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-bktr.c,v 1.10 2004/12/13 07:11:48 mschimek Exp $";
+"$Id: io-bktr.c,v 1.11 2004/12/30 02:23:37 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -183,6 +183,7 @@ vbi_capture_bktr_new		(const char *		dev_name,
 				 char **		errstr,
 				 vbi_bool		trace)
 {
+	char *error = NULL;
 	char *driver_name = _("BKTR driver");
 	vbi_capture_bktr *v;
 
@@ -190,13 +191,17 @@ vbi_capture_bktr_new		(const char *		dev_name,
 
 	assert(services && *services != 0);
 
+	if (!errstr)
+		errstr = &error;
+	*errstr = NULL;
+
 	printv ("Try to open bktr vbi device, "
 		"libzvbi interface rev.\n%s\n", rcsid);
 
 	if (!(v = (vbi_capture_bktr *) calloc(1, sizeof(*v)))) {
 		vbi_asprintf(errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
-		return NULL;
+		goto failure;
 	}
 
 	vbi_raw_decoder_init (&v->dec);
@@ -317,11 +322,22 @@ vbi_capture_bktr_new		(const char *		dev_name,
 	printv("Successful opened %s (%s)\n",
 	       dev_name, driver_name);
 
+	if (errstr == &error) {
+		free (error);
+		error = NULL;
+	}
+
 	return &v->capture;
 
 failure:
 io_error:
-	bktr_delete(&v->capture);
+	if (v)
+		bktr_delete(&v->capture);
+
+	if (errstr == &error) {
+		free (error);
+		error = NULL;
+	}
 
 	return NULL;
 }
@@ -363,7 +379,9 @@ vbi_capture_bktr_new		(const char *		dev_name,
 
 	pthread_once (&vbi_init_once, vbi_init);
 
-	vbi_asprintf (errstr, _("BKTR driver interface not compiled."));
+	if (errstr)
+		vbi_asprintf (errstr,
+			      _("BKTR driver interface not compiled."));
 
 	return NULL;
 }

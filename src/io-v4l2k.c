@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.24 2004/12/13 07:12:17 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.25 2004/12/30 02:24:24 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -141,7 +141,7 @@ v4l2_stream_stop(vbi_capture_v4l2 *v)
 
 
 static int
-v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
+v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errstr)
 {
 	struct v4l2_requestbuffers vrbuf;
 	struct v4l2_buffer vbuf;
@@ -158,7 +158,7 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 	vrbuf.memory = V4L2_MEMORY_MMAP;
 
 	if (-1 == xioctl (v, VIDIOC_REQBUFS, &vrbuf)) {
-		vbi_asprintf (errorstr,
+		vbi_asprintf (errstr,
 			      _("Cannot request streaming i/o buffers "
 				"from %s (%s): %s."),
 			      v->p_dev_name, v->vcap.card,
@@ -168,7 +168,7 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 	}
 
 	if (vrbuf.count == 0) {
-		vbi_asprintf(errorstr, _("%s (%s) granted no streaming i/o buffers, "
+		vbi_asprintf(errstr, _("%s (%s) granted no streaming i/o buffers, "
 				       "perhaps the physical memory is exhausted."),
 			     v->p_dev_name, v->vcap.card);
 		goto failure;
@@ -179,7 +179,7 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 	v->raw_buffer = calloc(vrbuf.count, sizeof(v->raw_buffer[0]));
 
 	if (v->raw_buffer == NULL) {
-		vbi_asprintf(errorstr, _("Virtual memory exhausted."));
+		vbi_asprintf(errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
 		goto failure;
 	}
@@ -193,7 +193,7 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 		vbuf.index = v->num_raw_buffers;
 
 		if (-1 == xioctl (v, VIDIOC_QUERYBUF, &vbuf)) {
-			vbi_asprintf (errorstr,
+			vbi_asprintf (errstr,
 				      _("Querying streaming i/o buffer #%d "
 					"from %s (%s) failed: %s."),
 				      v->num_raw_buffers, v->p_dev_name,
@@ -227,7 +227,7 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 				break;
 			}
 
-			vbi_asprintf(errorstr, _("Memory mapping streaming i/o buffer #%d "
+			vbi_asprintf(errstr, _("Memory mapping streaming i/o buffer #%d "
 					       "from %s (%s) failed: %s."),
 				     v->num_raw_buffers, v->p_dev_name, v->vcap.card,
 				     strerror(errno));
@@ -251,7 +251,7 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 		}
 
 		if (-1 == xioctl (v, VIDIOC_QBUF, &vbuf)) {
-			vbi_asprintf (errorstr,
+			vbi_asprintf (errstr,
 				      _("Cannot enqueue streaming i/o buffer "
 					"#%d to %s (%s): %s."),
 				      v->num_raw_buffers, v->p_dev_name,
@@ -273,9 +273,9 @@ mmap_failure:
         errno = errno_copy;
 
 failure:
-        printv("v4l2-stream_alloc: failed with errno=%d, msg='%s' guess='%s'\n", errno,
-               (((errorstr != NULL) && (*errorstr != NULL)) ? *errorstr : ""),
-               ((guess != NULL) ? guess : ""));
+        printv("v4l2-stream_alloc: "
+	       "failed with errno=%d, msg='%s' guess='%s'\n",
+	       errno, *errstr, guess ? guess : "");
 
 	return -1;
 }
@@ -527,14 +527,14 @@ v4l2_suspend(vbi_capture_v4l2 *v)
 
 
 static int
-v4l2_read_alloc(vbi_capture_v4l2 *v, char ** errorstr)
+v4l2_read_alloc(vbi_capture_v4l2 *v, char ** errstr)
 {
 	assert(v->raw_buffer == NULL);
 
 	v->raw_buffer = calloc(1, sizeof(v->raw_buffer[0]));
 
 	if (!v->raw_buffer) {
-		vbi_asprintf(errorstr, _("Virtual memory exhausted."));
+		vbi_asprintf(errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
 		goto failure;
 	}
@@ -545,7 +545,7 @@ v4l2_read_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 	v->raw_buffer[0].data = malloc(v->raw_buffer[0].size);
 
 	if (!v->raw_buffer[0].data) {
-		vbi_asprintf(errorstr, _("Not enough memory to allocate "
+		vbi_asprintf(errstr, _("Not enough memory to allocate "
 				       "vbi capture buffer (%d KB)."),
 			     (v->raw_buffer[0].size + 1023) >> 10);
 		goto failure;
@@ -557,8 +557,8 @@ v4l2_read_alloc(vbi_capture_v4l2 *v, char ** errorstr)
 	return 0;
 
 failure:
-        printv("v4l2-read_alloc: failed with errno=%d, msg='%s'\n", errno,
-               (((errorstr != NULL) && (*errorstr != NULL)) ? *errorstr : ""));
+        printv("v4l2-read_alloc: failed with errno=%d, msg='%s'\n",
+	       errno, *errstr);
 
 	return -1;
 }
@@ -681,7 +681,7 @@ static void v4l2_read_flush(vbi_capture *vc)
 }
 
 static vbi_bool
-v4l2_get_videostd(vbi_capture_v4l2 *v, char ** errorstr)
+v4l2_get_videostd(vbi_capture_v4l2 *v, char ** errstr)
 {
 	struct v4l2_standard vstd;
 	v4l2_std_id stdid;
@@ -689,7 +689,7 @@ v4l2_get_videostd(vbi_capture_v4l2 *v, char ** errorstr)
 	char * guess = NULL;
 
 	if (-1 == xioctl (v, VIDIOC_G_STD, &stdid)) {
-		vbi_asprintf (errorstr,
+		vbi_asprintf (errstr,
 			      _("Cannot query current videostandard "
 				"of %s (%s): %s."),
 			      v->p_dev_name, v->vcap.card,
@@ -707,7 +707,8 @@ v4l2_get_videostd(vbi_capture_v4l2 *v, char ** errorstr)
 	}
 
 	if (-1 == r) {
-		vbi_asprintf(errorstr, _("Cannot query current videostandard of %s (%s): %s."),
+		vbi_asprintf(errstr, _("Cannot query current "
+				       "videostandard of %s (%s): %s."),
 			     v->p_dev_name, v->vcap.card, strerror(errno));
 		guess = _("Probably a driver bug.");
 		goto failure;
@@ -721,9 +722,9 @@ v4l2_get_videostd(vbi_capture_v4l2 *v, char ** errorstr)
 	return TRUE;
 
 failure:
-        printv("v4l2-get_videostd: failed with errno=%d, msg='%s' guess='%s'\n", errno,
-               (((errorstr != NULL) && (*errorstr != NULL)) ? *errorstr : ""),
-               ((guess != NULL) ? guess : ""));
+        printv("v4l2-get_videostd: "
+	       "failed with errno=%d, msg='%s' guess='%s'\n",
+               errno, *errstr, guess ? guess : "");
 
 	return FALSE;
 }
@@ -765,7 +766,7 @@ static unsigned int
 v4l2_update_services(vbi_capture *vc,
 		     vbi_bool reset, vbi_bool commit,
 		     unsigned int services, int strict,
-		     char ** errorstr)
+		     char ** errstr)
 {
 	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
 	struct v4l2_format vfmt;
@@ -779,7 +780,7 @@ v4l2_update_services(vbi_capture *vc,
 
 	if (reset) {
                 /* query current norm */
-	        if (v4l2_get_videostd(v, errorstr) == FALSE)
+	        if (v4l2_get_videostd(v, errstr) == FALSE)
 		        goto io_error;
 
 		vbi_raw_decoder_reset(&v->dec);
@@ -799,7 +800,8 @@ v4l2_update_services(vbi_capture *vc,
 	if (-1 == g_fmt) {
 		printv("failed\n");
 #ifdef REQUIRE_G_FMT
-		vbi_asprintf(errorstr, _("Cannot query current vbi parameters of %s (%s): %s."),
+		vbi_asprintf(errstr, _("Cannot query current "
+				       "vbi parameters of %s (%s): %s."),
 			     v->p_dev_name, v->vcap.card, strerror(errno));
 		goto io_error;
 #else
@@ -836,7 +838,7 @@ v4l2_update_services(vbi_capture *vc,
 	        services &= sup_services;
 
 		if (0 == services) {
-			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of the "
+			vbi_asprintf(errstr, _("Sorry, %s (%s) cannot capture any of the "
 					       "requested data services with scanning %d."),
 	                                       v->p_dev_name, v->vcap.card, v->dec.scanning);
 			goto failure;
@@ -874,13 +876,13 @@ v4l2_update_services(vbi_capture *vc,
 					break;
 				}
 #endif
-				vbi_asprintf(errorstr, _("Cannot initialize %s (%s), "
+				vbi_asprintf(errstr, _("Cannot initialize %s (%s), "
 						       "the device is already in use."),
 					     v->p_dev_name, v->vcap.card);
 				goto io_error;
 
 			default:
-				vbi_asprintf(errorstr, _("Could not set the vbi capture parameters "
+				vbi_asprintf(errstr, _("Could not set the vbi capture parameters "
 						       "for %s (%s): %d, %s."),
 					     v->p_dev_name, v->vcap.card, errno, strerror(errno));
 				guess = _("Possibly a driver bug.");
@@ -921,7 +923,7 @@ v4l2_update_services(vbi_capture *vc,
 	v->dec.sampling_format          = VBI_PIXFMT_YUV420;
 
  	if (vfmt.fmt.vbi.sample_format != V4L2_PIX_FMT_GREY) {
-		vbi_asprintf(errorstr, _("%s (%s) offers unknown vbi sampling format #%d. "
+		vbi_asprintf(errstr, _("%s (%s) offers unknown vbi sampling format #%d. "
 				       "This may be a driver bug or libzvbi is too old."),
 			     v->p_dev_name, v->vcap.card, vfmt.fmt.vbi.sample_format);
 		goto io_error;
@@ -931,7 +933,7 @@ v4l2_update_services(vbi_capture *vc,
 		/* Nyquist (we're generous at 1.5) */
 
 		if (v->dec.sampling_rate < max_rate * 3 / 2) {
-			vbi_asprintf(errorstr, _("Cannot capture the requested "
+			vbi_asprintf(errstr, _("Cannot capture the requested "
 						 "data services with "
 						 "%s (%s), the sampling frequency "
 						 "%.2f MHz is too low."),
@@ -959,7 +961,7 @@ v4l2_update_services(vbi_capture *vc,
 	                                                         strict);
 
 		if (services == 0) {
-			vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of "
+			vbi_asprintf(errstr, _("Sorry, %s (%s) cannot capture any of "
 					       "the requested data services."),
 				     v->p_dev_name, v->vcap.card);
 			goto failure;
@@ -972,7 +974,7 @@ v4l2_update_services(vbi_capture *vc,
 			malloc((v->dec.count[0] + v->dec.count[1]) * sizeof(vbi_sliced));
 
 		if (!v->sliced_buffer.data) {
-			vbi_asprintf(errorstr, _("Virtual memory exhausted."));
+			vbi_asprintf(errstr, _("Virtual memory exhausted."));
 			errno = ENOMEM;
 			goto io_error;
 		}
@@ -980,14 +982,16 @@ v4l2_update_services(vbi_capture *vc,
 
 failure:
         v->services |= services;
-	printv("Will capture services 0x%08x, added 0x%0x commit:%d\n", v->services, services, commit);
+	printv ("Will capture services 0x%08x, "
+		"added 0x%0x commit:%d\n",
+		v->services, services, commit);
 
 	if (commit && (v->services != 0)) {
 		if (v->streaming) {
-			if (v4l2_stream_alloc(v, errorstr) != 0)
+			if (v4l2_stream_alloc(v, errstr) != 0)
 				goto io_error;
 		} else {
-			if (v4l2_read_alloc(v, errorstr) != 0)
+			if (v4l2_read_alloc(v, errstr) != 0)
 				goto io_error;
 		}
 	}
@@ -995,9 +999,9 @@ failure:
 	return services;
 
 io_error:
-        printv("v4l2-update_services: failed with errno=%d, msg='%s' guess='%s'\n", errno,
-               (((errorstr != NULL) && (*errorstr != NULL)) ? *errorstr : ""),
-               ((guess != NULL) ? guess : ""));
+        printv ("v4l2-update_services: "
+		"failed with errno=%d, msg='%s' guess='%s'\n",
+		errno, *errstr, guess ? guess : "");
 
 	return 0;
 }
@@ -1075,22 +1079,28 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 				 int			buffers,
 				 unsigned int *		services,
 				 int			strict,
-				 char **		errorstr,
+				 char **		errstr,
 				 vbi_bool		trace)
 {
 	char *guess = NULL;
+	char *error = NULL;
 	vbi_capture_v4l2 *v;
 
 	pthread_once (&vbi_init_once, vbi_init);
 
-	assert(buffers > 0);
 	/* Needed to reopen device. */
 	assert(dev_name != NULL);
 
+	assert(buffers > 0);
+
+	if (!errstr)
+		errstr = &error;
+	*errstr = NULL;
+
 	if (!(v = calloc(1, sizeof(*v)))) {
-		vbi_asprintf(errorstr, _("Virtual memory exhausted."));
+		vbi_asprintf(errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
-		return NULL;
+		goto failure;
 	}
 
 	vbi_raw_decoder_init (&v->dec);
@@ -1103,7 +1113,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	v->p_dev_name = strdup(dev_name);
 
 	if (v->p_dev_name == NULL) {
-		vbi_asprintf(errorstr, _("Virtual memory exhausted."));
+		vbi_asprintf(errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
 		goto failure;
 	}
@@ -1120,7 +1130,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		v->fd = device_open (v->capture.sys_log_fp,
 				     v->p_dev_name, O_RDWR, 0);
 		if (-1 == v->fd) {
-			vbi_asprintf(errorstr, _("Cannot open '%s': %d, %s."),
+			vbi_asprintf(errstr, _("Cannot open '%s': %d, %s."),
 				     v->p_dev_name, errno, strerror(errno));
 			goto io_error;
 		}
@@ -1136,14 +1146,14 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	}
 
 	if (-1 == xioctl (v, VIDIOC_QUERYCAP, &v->vcap)) {
-		vbi_asprintf(errorstr, _("Cannot identify '%s': %d, %s."),
+		vbi_asprintf(errstr, _("Cannot identify '%s': %d, %s."),
 			     v->p_dev_name, errno, strerror(errno));
 		guess = _("Probably not a v4l2 device.");
 		goto io_error;
 	}
 
 	if (!(v->vcap.capabilities & V4L2_CAP_VBI_CAPTURE)) {
-		vbi_asprintf(errorstr, _("%s (%s) is not a raw vbi device."),
+		vbi_asprintf(errstr, _("%s (%s) is not a raw vbi device."),
 			     v->p_dev_name, v->vcap.card);
 		goto failure;
 	}
@@ -1173,7 +1183,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		v->read_active = FALSE;
 
 	} else {
-		vbi_asprintf(errorstr,
+		vbi_asprintf(errstr,
 			     _("%s (%s) lacks a vbi read interface, "
 			       "possibly an output only device "
 			       "or a driver bug."),
@@ -1186,7 +1196,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	if (services != NULL) {
                 assert(*services != 0);
                 v->services = v4l2_update_services(&v->capture, TRUE, TRUE,
-                                                   *services, strict, errorstr);
+                                                   *services, strict, errstr);
                 if (v->services == 0)
                         goto failure;
 
@@ -1196,15 +1206,25 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	printv("Successful opened %s (%s)\n",
 	       v->p_dev_name, v->vcap.card);
 
+	if (errstr == &error) {
+		free (error);
+		error = NULL;
+	}
+
 	return &v->capture;
 
-io_error:
-failure:
-	v4l2_delete(&v->capture);
+ io_error:
+ failure:
+	if (v)
+		v4l2_delete (&v->capture);
 
-        printv("v4l2k_new: failed with errno=%d, msg='%s' guess='%s'\n", errno,
-               (((errorstr != NULL) && (*errorstr != NULL)) ? *errorstr : ""),
-               ((guess != NULL) ? guess : ""));
+        printv ("v4l2k_new: failed with errno=%d, msg='%s' guess='%s'\n",
+		errno, *errstr, guess ? guess : "");
+
+	if (errstr == &error) {
+		free (error);
+		error = NULL;
+	}
 
 	return NULL;
 }
@@ -1229,7 +1249,7 @@ failure:
  *   You can do so later with vbi_capture_update_services(); note the
  *   reset parameter must be set to @c TRUE in this case.
  * @param strict Will be passed to vbi_raw_decoder_add().
- * @param errorstr If not @c NULL this function stores a pointer to an error
+ * @param errstr If not @c NULL this function stores a pointer to an error
  *   description here. You must free() this string when no longer needed.
  * @param trace If @c TRUE print progress messages on stderr.
  * 
@@ -1239,14 +1259,16 @@ failure:
 vbi_capture *
 vbi_capture_v4l2k_new(const char *dev_name, int fd, int buffers,
 		      unsigned int *services, int strict,
-		      char **errorstr, vbi_bool trace)
+		      char **errstr, vbi_bool trace)
 {
 	if (0) /* unused, no warning please */
 		fputs (rcsid, stderr);
 
 	pthread_once (&vbi_init_once, vbi_init);
 
-	vbi_asprintf (errorstr, _("V4L2 driver interface not compiled."));
+	if (errstr)
+		vbi_asprintf (errstr,
+			      _("V4L2 driver interface not compiled."));
 
 	return NULL;
 }
