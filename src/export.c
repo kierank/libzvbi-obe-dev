@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.4 2002/02/10 11:47:09 mschimek Exp $ */
+/* $Id: export.c,v 1.5 2002/03/06 00:54:22 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -1052,14 +1052,14 @@ vbi_export_invalid_option(vbi_export *e, const char *keyword, ...)
 		case VBI_OPTION_STRING:
 			s = va_arg(args, char *);
 			if (s == NULL)
-				strncpy(buf, 4, "NULL");
+				strncpy(buf, "NULL", 4);
 			else
 				snprintf(buf, sizeof(buf) - 1, "'%s'", s);
 			break;
 		default:
 			fprintf(stderr, __PRETTY_FUNCTION__
 				": unknown export option type %d\n", oi->type);
-			strncpy(buf, 1, "?");
+			strncpy(buf, "?", 1);
 			break;
 		}
 
