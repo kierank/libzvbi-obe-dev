@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.13 2003/11/14 05:29:18 mschimek Exp $ */
+/* $Id: packet.c,v 1.14 2004/05/12 02:40:59 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -992,7 +992,7 @@ station_lookup(vbi_cni_type type, int cni, const char **country, const char **na
 	case CNI_8301:
 		for (p = vbi_cni_table; p->name; p++)
 			if (p->cni1 == cni) {
-				*country = vbi_country_names_en[p->country];
+				*country = p->country;
 				*name = p->name;
 				return p->id;
 			}
@@ -1001,7 +1001,7 @@ station_lookup(vbi_cni_type type, int cni, const char **country, const char **na
 	case CNI_8302:
 		for (p = vbi_cni_table; p->name; p++)
 			if (p->cni2 == cni) {
-				*country = vbi_country_names_en[p->country];
+				*country = p->country;
 				*name = p->name;
 				return p->id;
 			}
@@ -1016,7 +1016,7 @@ station_lookup(vbi_cni_type type, int cni, const char **country, const char **na
 
 		for (p = vbi_cni_table; p->name; p++)
 			if (p->cni4 == cni) {
-				*country = vbi_country_names_en[p->country];
+				*country = p->country;
 				*name = p->name;
 				return p->id;
 			}
@@ -1025,7 +1025,7 @@ station_lookup(vbi_cni_type type, int cni, const char **country, const char **na
 	case CNI_X26:
 		for (p = vbi_cni_table; p->name; p++)
 			if (p->cni3 == cni) {
-				*country = vbi_country_names_en[p->country];
+				*country = p->country;
 				*name = p->name;
 				return p->id;
 			}
@@ -1205,7 +1205,7 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 			for (j = 0; vbi_cni_table[j].name; j++)
 				if (vbi_cni_table[j].cni4 == cni) {
 					printf(" Country: %s\n Station: %s%s\n",
-						vbi_country_names_en[vbi_cni_table[j].country],
+						vbi_cni_table[j].country,
 						vbi_cni_table[j].name,
 						(cni == 0x0DC3) ? ((buf[2] & 0x10) ? " (ZDF)" : " (ARD)") : "");
 					break;

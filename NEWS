@@ -1,3 +1,8 @@
+0.2.8
+-----
+Updated the network identification table from TR 101 231 EBU (2004-04a).
+Incorporated corrections by Stephane Loeuillet (bug #942434).
+
 0.2.7
 -----
 Fixes a bug in the v4l2 interface, didn't work with bttv driver 0.9.12.
