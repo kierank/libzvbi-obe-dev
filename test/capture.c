@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.10 2004/06/18 14:12:17 mschimek Exp $ */
+/* $Id: capture.c,v 1.11 2004/10/25 16:53:38 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -34,10 +34,14 @@
 #include <getopt.h>
 #endif
 
-#include <libzvbi.h>
+#include "src/libzvbi.h"
+
+#define TEST 1
+#include "src/dvb_mux.h"
 
 vbi_capture *		cap;
 vbi_raw_decoder *	par;
+vbi_dvb_mux *		mx;
 vbi_bool		quit;
 int			src_w, src_h;
 
@@ -49,6 +53,8 @@ int			dump_wss;
 int			dump_vps;
 int			dump_sliced;
 int			bin_sliced;
+int			bin_pes;
+int			bin_ts;
 int			do_read = TRUE;
 int			do_sim;
 int			ignore_error;
@@ -390,6 +396,16 @@ binary_sliced(vbi_sliced *s, double time, int lines)
 	}
 }
 
+static vbi_bool
+binary_ts_pes			(vbi_dvb_mux *		mx,
+				 void *			user_data,
+				 const uint8_t *	packet,
+				 unsigned int		packet_size)
+{
+	fwrite (packet, 1, packet_size, stdout);
+	return TRUE;
+}
+
 static void
 mainloop(void)
 {
@@ -400,6 +416,7 @@ mainloop(void)
 	vbi_capture_buffer *sliced_buffer;
 	double timestamp;
 	struct timeval tv;
+	int64_t pts;
 
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
@@ -408,6 +425,8 @@ mainloop(void)
 	sliced = malloc(sizeof(vbi_sliced) * src_h);
 
 	assert(raw && sliced);
+
+	pts = 0;
 
 	for (quit = FALSE; !quit;) {
 		int r;
@@ -450,27 +469,24 @@ mainloop(void)
 			assert(!"reached");
 		}
 
-		if (do_read) {
-			if (dump)
-				decode_sliced(sliced, timestamp, lines);
-			if (bin_sliced)
-				binary_sliced(sliced, timestamp, lines);
-		} else {
-			if (dump)
-				decode_sliced(sliced_buffer->data,
-					      sliced_buffer->timestamp,
-					      sliced_buffer->size
-					      / sizeof(vbi_sliced));
-			if (bin_sliced)
-				binary_sliced(sliced_buffer->data,
-					      sliced_buffer->timestamp,
-					      sliced_buffer->size
-					      / sizeof(vbi_sliced));
+		if (!do_read) {
+			sliced = sliced_buffer->data;
+			lines = sliced_buffer->size / sizeof (vbi_sliced);
+			timestamp = sliced_buffer->timestamp;
 		}
+
+		if (dump)
+			decode_sliced(sliced, timestamp, lines);
+		if (bin_sliced)
+			binary_sliced(sliced, timestamp, lines);
+		if (bin_pes || bin_ts)
+			_vbi_dvb_mux_mux(mx, pts, sliced, lines, -1);
+
+		pts += 90000 / 25; /* XXX */
 	}
 }
 
-static const char short_options[] = "123de:lnpstv";
+static const char short_options[] = "123de:lnpstvPT";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -484,7 +500,9 @@ long_options[] = {
 	{ "dump-wss",	no_argument,		&dump_wss,	TRUE },
 	{ "dump-vps",	no_argument,		&dump_vps,	TRUE },
 	{ "dump-sliced",no_argument,		&dump_sliced,	TRUE },
+	{ "pes",	no_argument,		NULL,		'P' },
 	{ "sliced",	no_argument,		NULL,		'l' },
+	{ "ts",		no_argument,		NULL,		'T' },
 	{ "read",	no_argument,		&do_read,	TRUE },
 	{ "pull",	no_argument,		&do_read,	FALSE },
 	{ "sim",	no_argument,		NULL,		's' },
@@ -543,11 +561,17 @@ main(int argc, char **argv)
 		case 'p':
 			scanning = 625;
 			break;
+		case 'P':
+			bin_pes ^= TRUE;
+			break;
 		case 's':
 			do_sim ^= TRUE;
 			break;
 		case 't':
 			dump_ttx ^= TRUE;
+			break;
+		case 'T':
+			bin_ts ^= TRUE;
 			break;
 		case 'v':
 			++verbose;
@@ -656,6 +680,23 @@ main(int argc, char **argv)
 
 	src_w = par->bytes_per_line / 1;
 	src_h = par->count[0] + par->count[1];
+
+	if (bin_pes) {
+		mx = _vbi_dvb_mux_pes_new (/* data_identifier */ 0x10,
+					   /* packet_size */ 8 * 184,
+					   VBI_VIDEOSTD_SET_625_50,
+					   binary_ts_pes,
+					   /* user_data */ NULL);
+		assert (NULL != mx);
+	} else if (bin_ts) {
+		mx = _vbi_dvb_mux_ts_new (/* pid */ 999,
+					  /* data_identifier */ 0x10,
+					  /* packet_size */ 8 * 184,
+					  VBI_VIDEOSTD_SET_625_50,
+					  binary_ts_pes,
+					  /* user_data */ NULL);
+		assert (NULL != mx);
+	}
 
 	mainloop();
 
