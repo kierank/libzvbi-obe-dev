@@ -11,7 +11,6 @@ Buildroot:	%{_tmppath}/%{name}-%{version}-root
 PreReq: 	/sbin/install-info
 Prefix:		%{_prefix}
 Provides:	zvbi
-Requires:	gettext >= 0.11.2
 
 %description
 Routines to access raw VBI capture devices (currently the V4L and
@@ -44,8 +43,8 @@ rm -rf %{buildroot}
 %{_includedir}/libzvbi.h
 
 %changelog
-* Tue Jun 18 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
-- Requires gettext 0.11.2
+* Tue Jul 18 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
+- Removed gettext requirement
 
 * Tue Jun  4 2002 Michael H. Schimek <mschimek@users.sourceforge.net>
 - Removed libunicode requirement
