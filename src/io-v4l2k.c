@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.23 2004/11/26 05:53:42 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.24 2004/12/13 07:12:17 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -30,7 +30,7 @@ static const char rcsid [] =
  */
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #include "vbi.h"
@@ -1092,6 +1092,8 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		errno = ENOMEM;
 		return NULL;
 	}
+
+	vbi_raw_decoder_init (&v->dec);
 
 	v->do_trace = trace;
 
