@@ -1,26 +1,37 @@
 /*
  *  VBI proxy test client
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License Version 2 as
- *  published by the Free Software Foundation. You find a copy of this
- *  license in the file COPYRIGHT in the root directory of this release.
+ *  Copyright (C) 2003 Tom Zoerner
  *
- *  THIS PROGRAM IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
- *  BUT WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF
- *  MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
  *  Description:
  *
- *    TODO
+ *    This is a small demo application for the VBI proxy and libzvbi.
+ *    It will read VBI data from the device given on the command line
+ *    and dump requested services' data to standard output.  See below
+ *    for a list of possible options.
  *
- *  Author:
- *          Tom Zoerner
+ *  $Log: proxy-test.c,v $
+ *  Revision 1.3  2003/05/03 12:07:48  tomzo
+ *  - use vbi_capture_pull_sliced() instead of vbi_capture_read_sliced()
+ *  - fixed copyright headers, added description to file headers
+ *
  */
 
-static const char rcsid[] = "$Id: proxy-test.c,v 1.2 2003/04/29 17:12:31 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-test.c,v 1.3 2003/05/03 12:07:48 tomzo Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,12 +42,14 @@ static const char rcsid[] = "$Id: proxy-test.c,v 1.2 2003/04/29 17:12:31 mschime
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include "libzvbi.h" /* local copy */
+
+#include <libzvbi.h>
 
 
 #define DEVICE_PATH   "/dev/vbi0"
 #define BUFFER_COUNT  5
-#define USAGE_STR     "Usage: %s [-trace] [-dev path] [-api v4l|v4l2|proxy] {ttx|vps|wss} ...\n"
+#define USAGE_STR     "Usage: %s [-trace] [-strict {0|1|2}] [-dev path] " \
+                      "[-api v4l|v4l2|proxy] {ttx|vps|wss} ...\n"
 
 typedef enum
 {
@@ -266,17 +279,14 @@ int main ( int argc, char ** argv )
       pVbiPar = vbi_capture_parameters(pVbiCapt);
       if (pVbiPar != NULL)
       {
-         vbi_sliced * pVbiData;
-         uint         lineCount;
-         uint         lastLineCount;
-         uint         line;
-         double       timestamp;
-         struct timeval timeout;
-         int  res;
+         vbi_sliced         * pVbiData;
+         vbi_capture_buffer * pVbiBuf;
+         struct timeval       timeout;
+         uint    lineCount;
+         uint    lastLineCount;
+         uint    line;
+         int     res;
 
-         lineCount = pVbiPar->count[0] + pVbiPar->count[1];
-         fprintf(stderr, "Allocating buffer for %d lines\n", lineCount);
-         pVbiData = malloc(lineCount * sizeof(*pVbiData));
          lastLineCount = 0;
 
          while(1)
@@ -284,12 +294,15 @@ int main ( int argc, char ** argv )
             timeout.tv_sec  = 5;
             timeout.tv_usec = 0;
 
-            res = vbi_capture_read_sliced(pVbiCapt, pVbiData, &lineCount, &timestamp, &timeout);
+            res = vbi_capture_pull_sliced(pVbiCapt, &pVbiBuf, &timeout);
             if (res == -1)
             {
                perror("VBI read");
                break;
             }
+            lineCount = ((unsigned int) pVbiBuf->size) / sizeof(vbi_sliced);
+            pVbiData  = pVbiBuf->data;
+
             if (lastLineCount != lineCount)
             {
                fprintf(stderr, "%d lines\n", lineCount);
