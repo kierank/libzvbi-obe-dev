@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.4 2002/05/29 02:02:17 mschimek Exp $ */
+/* $Id: packet.c,v 1.5 2002/06/07 22:00:36 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +34,10 @@
 #include "export.h"
 #include "tables.h"
 #include "vbi.h"
+
+#ifndef FPC
+#define FPC 0
+#endif
 
 #define printable(c) ((((c) & 0x7F) < 0x20 || ((c) & 0x7F) > 0x7E) ? '.' : ((c) & 0x7F))
 
@@ -2243,8 +2247,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			} else if (page == 0xFE) {
 				cvtp->function = PAGE_FUNCTION_MOT;
 				pi->code = VBI_SYSTEM_PAGE;
-#if FPC
-			} else if (pi->code == VBI_EPG_DATA) {
+			} else if (FPC && pi->code == VBI_EPG_DATA) {
 				int stream = (cvtp->subno >> 8) & 15;
 
 				if (stream >= 2) {
@@ -2266,7 +2269,6 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 						+ ((cvtp->subno >> 9) & 0x18);
 				}
 			} else {
-#endif
 				cvtp->function = PAGE_FUNCTION_UNKNOWN;
 
 				memcpy(cvtp->data.unknown.raw[0] + 0, p, 40);
@@ -2337,13 +2339,15 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			case VBI_TRIGGER_DATA:
 				function = PAGE_FUNCTION_TRIGGER;
 				break;
-#if FPC
-			case VBI_EPG_DATA:
-				function = PAGE_FUNCTION_EPG;
-				break;
-#else
+
 			case VBI_EPG_DATA:	/* EPG/NexTView transport layer */
-#endif
+				if (FPC) {
+					function = PAGE_FUNCTION_EPG;
+					break;
+				}
+
+				/* fall through */
+
 			case 0x52 ... 0x6F:	/* reserved */
 			case VBI_ACI:		/* ACI page */
 			case VBI_NOT_PUBLIC:
@@ -2416,11 +2420,11 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 			if (!(parse_mpt_ex(&vbi->vt, p, packet)))
 				return FALSE;
 			break;
-#if FPC
+
 		case PAGE_FUNCTION_EPG:
 			parse_page_clear(vbi->epg_pc + ((cvtp->subno >> 8) & 1), p, packet);
 			break;
-#endif
+
 		case PAGE_FUNCTION_LOP:
 		case PAGE_FUNCTION_TRIGGER:
 			for (n = i = 0; i < 40; i++)
@@ -2733,15 +2737,3 @@ vbi_teletext_init(vbi_decoder *vbi)
 
 	vbi_teletext_channel_switched(vbi);     /* Reset */
 }
-
-
-
-
-
-
-
-
-
-
-
-
