@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.14 2004/10/04 20:50:24 mschimek Exp $ */
+/* $Id: io.h,v 1.15 2004/10/05 23:45:52 mschimek Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -228,6 +228,18 @@ device_ioctl			(FILE *			fp,
 				 int			fd,
 				 unsigned int		cmd,
 				 void *			arg);
+extern void *
+device_mmap			(FILE *			fp,
+				 void *			start,
+				 size_t			length,
+				 int			prot,
+				 int			flags,
+				 int			fd,
+				 off_t			offset);
+extern int
+device_munmap			(FILE *			fp,
+				 void *			start,
+				 size_t			length);
 
 extern void
 vbi_capture_set_log_fp		(vbi_capture *		capture,

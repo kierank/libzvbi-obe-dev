@@ -18,16 +18,17 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.11 2004/10/04 20:50:24 mschimek Exp $ */
+/* $Id: io.c,v 1.12 2004/10/05 23:45:24 mschimek Exp $ */
 
 #include <assert.h>
 
-#include <unistd.h>
-#include <errno.h>
-#include <unistd.h>		/* close() */
+#include <fcntl.h>		/* open() */
+#include <unistd.h>		/* close(), mmap(), munmap(), gettimeofday() */
 #include <sys/ioctl.h>		/* ioctl() */
-#include <sys/time.h>
+#include <sys/mman.h>		/* mmap(), munmap() */
+#include <sys/time.h>		/* struct timeval */
 #include <sys/types.h>
+#include <errno.h>
 
 #include "io.h"
 
@@ -707,8 +708,9 @@ device_close			(FILE *			fp,
 
 /**
  * @internal
- * Drop-in for ioctl(). Logs the request on fp if not NULL. You must supply
- * a function printing the arguments, structpr.pl generates one for you
+ * Drop-in for ioctl(). Logs the request on fp if not NULL, repeats
+ * the ioctl if interrupted (EINTR). You must supply a function
+ * printing the arguments, structpr.pl generates one for you
  * from a header file.
  */
 int
@@ -760,4 +762,87 @@ device_ioctl			(FILE *			fp,
 	}
 
 	return err;
+}
+
+/**
+ * @internal
+ * Drop-in for mmap(). Logs the request on fp if not NULL.
+ */
+void *
+device_mmap			(FILE *			fp,
+				 void *			start,
+				 size_t			length,
+				 int			prot,
+				 int			flags,
+				 int			fd,
+				 off_t			offset)
+{
+	void *r;
+
+	r = mmap (start, length, prot, flags, fd, offset);
+
+	if (fp) {
+		int saved_errno;
+
+		saved_errno = errno;
+
+		fprintf (fp, "%p = mmap (start=%p length=%d prot=",
+			 r, start, (int) length);
+		fprint_symbolic (fp, 2, (unsigned long) prot,
+				 "EXEC", PROT_EXEC,
+				 "READ", PROT_READ,
+				 "WRITE", PROT_WRITE,
+				 "NONE", PROT_NONE,
+				 0);
+		fputs (" flags=", fp);
+		fprint_symbolic (fp, 2, (unsigned long) flags,
+				 "FIXED", MAP_FIXED,
+				 "SHARED", MAP_SHARED,
+				 "PRIVATE", MAP_PRIVATE,
+				 0);
+		fprintf (fp, " fd=%d offset=%d)", fd, (int) offset);
+
+		if (MAP_FAILED == r)
+			fprintf (fp, ", errno=%d, %s\n",
+				 saved_errno, strerror (saved_errno));
+		else
+			fputc ('\n', fp);
+
+		errno = saved_errno;
+	}
+
+	return r;
+}
+
+/**
+ * @internal
+ * Drop-in for munmap(). Logs the request on fp if not NULL.
+ */
+int
+device_munmap			(FILE *			fp,
+				 void *			start,
+				 size_t			length)
+{
+	int r;
+	
+	r = munmap (start, length);
+	
+	if (fp) {
+		int saved_errno;
+		
+		saved_errno = errno;
+		
+		if (-1 == r)
+			fprintf (fp, "%d = munmap (start=%p length=%d), "
+				 "errno=%d, %s\n",
+				 r, start, (int) length,
+				 saved_errno, strerror (saved_errno));
+		else
+			fprintf (fp, "%d = munmap (start=%p length=%d)\n",
+				 r, start, (int) length);
+		
+		errno = saved_errno;
+	}
+
+	return r;
 }
