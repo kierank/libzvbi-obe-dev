@@ -59,6 +59,7 @@ FILE_PATTERNS          = *.c \
                          cache.h \
                          cc.h \
                          decoder.h \
+			 dvb_demux.h \
                          event.h \
                          exp-gfx.h \
                          exp-txt.h \
