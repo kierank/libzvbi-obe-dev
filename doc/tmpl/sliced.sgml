@@ -149,13 +149,12 @@ but also very similar to vbi transmitted with digital TV.
 
 <para>
 <figure><title>ITU-R PAL/SECAM line numbering scheme</title>
-<graphic fileref="vbi_625.gif"></graphic>
+<graphic fileref="zvbi_625.gif"></graphic>
 </figure>
 <figure><title>ITU-R NTSC line numbering scheme</title>
-<graphic fileref="vbi_525.gif"></graphic>
+<graphic fileref="zvbi_525.gif"></graphic>
 </figure>
 </para>
-
 
 <!-- ##### FUNCTION vbi_sliced_name ##### -->
 <para>
