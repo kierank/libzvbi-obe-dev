@@ -1,3 +1,7 @@
+2002-10-04	<mschimek@users.sf.net>
+
+	* Release 0.2.2.
+
 2002-10-01	<mschimek@users.sf.net>
 
 	* m4: Removed gtk-doc.m4, no longer needed.

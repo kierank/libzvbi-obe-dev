@@ -1,17 +1,19 @@
-# Zapping Dutch translation -*- coding: iso-8859-1 -*-
+# Libzvbi Dutch translation -*- coding: iso-8859-1 -*-
 # Copyleft (L) 2001 Ime Smits <ime@iae.nl>
 # Reviewed: Reinout van Schouwen <reinout@cs.vu.nl>
+# Adjusted: Guus Bonnema <abonnema@xs4all.nl>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Zapping 0.6.1\n"
-"POT-Creation-Date: 2002-10-01 22:38+0200\n"
+"Project-Id-Version: zvbi 0.2.2\n"
+"POT-Creation-Date: 2002-10-04 04:25+0200\n"
 "PO-Revision-Date: 2002-10-03 21:38+0200\n"
-"Last-Translator: Ime Smits <ime@iae.nl>\n"
+"Last-Translator: Guus Bonnema <abonnema@xs4all.nl>\n"
 "Language-Team: Dutch <ime@iae.nl>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: src/exp-gfx.c:731
 msgid "Correct aspect ratio"
@@ -21,41 +23,43 @@ msgstr "Corrigeer beeldverhouding"
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
-msgstr "Een standaard TV (4:3) verhouding benaderen. De beeldgrootte wordt hierdoor verdubbeld."
+msgstr ""
+"Een standaard TV (4:3) verhouding benaderen. De beeldgrootte wordt hierdoor "
+"verdubbeld."
 
-#: src/exp-gfx.c:805 src/exp-gfx.c:1101
+#: src/exp-gfx.c:805 src/exp-gfx.c:1103
 #, c-format
 msgid "Unable to allocate %d KB image buffer."
 msgstr "Onvoldoende geheugen voor een %d kB buffer."
 
-#: src/exp-gfx.c:895
+#: src/exp-gfx.c:894
 msgid "PPM"
 msgstr "PPM"
 
-#: src/exp-gfx.c:896
+#: src/exp-gfx.c:895
 msgid "Export this page as raw PPM image"
 msgstr "Exporteer deze pagina in PPM-formaat"
 
-#: src/exp-gfx.c:984
+#: src/exp-gfx.c:986
 #, c-format
 msgid "Unable to allocate %d byte buffer."
 msgstr "Onvoldoende geheugen voor een %d byte buffer."
 
-#: src/exp-gfx.c:1171 src/exp-html.c:232
+#: src/exp-gfx.c:1173 src/exp-html.c:232
 #, c-format
 msgid "Teletext Page %3x.%x"
 msgstr "Teletekst pagina %3x.%x"
 
-#: src/exp-gfx.c:1176 src/exp-html.c:235
+#: src/exp-gfx.c:1178 src/exp-html.c:235
 #, c-format
 msgid "Teletext Page %3x"
 msgstr "Teletekst pagina %3x"
 
-#: src/exp-gfx.c:1245
-msgid "PNG"
-msgstr "P_NG"
-
 #: src/exp-gfx.c:1246
+msgid "PNG"
+msgstr "PNG"
+
+#: src/exp-gfx.c:1247
 msgid "Export this page as PNG image"
 msgstr "Exporteren in PNG-formaat"
 
@@ -100,11 +104,11 @@ msgstr "Geen ondersteuning voor tekenconversie van unicode (UCS-2) naar %s."
 msgid "Character conversion failed."
 msgstr "Karakter conversie mislukt."
 
-#: src/exp-html.c:720
+#: src/exp-html.c:719
 msgid "HTML"
 msgstr "HTML"
 
-#: src/exp-html.c:721
+#: src/exp-html.c:720
 msgid "Export this page as HTML page"
 msgstr "Exporteren als HTML-pagina"
 
@@ -225,11 +229,11 @@ msgstr "Achtergrond"
 msgid "Assumed terminal background color"
 msgstr "Aangenomen achtergrondkleur van terminal"
 
-#: src/exp-txt.c:649
+#: src/exp-txt.c:648
 msgid "Text"
 msgstr "Tekst"
 
-#: src/exp-txt.c:650
+#: src/exp-txt.c:649
 msgid "Export this page as text file"
 msgstr "Exporteren als tekst bestand"
 
@@ -245,11 +249,11 @@ msgstr "Pagina is helaas niet gecached."
 msgid "Cannot export this page, not displayable."
 msgstr "Kan deze pagina niet exporteren, niet displayable."
 
-#: src/exp-vtx.c:131
+#: src/exp-vtx.c:130
 msgid "VTX"
 msgstr "VTX"
 
-#: src/exp-vtx.c:132
+#: src/exp-vtx.c:131
 msgid ""
 "Export this page as VTX file, the format used by VideoteXt and vbidecode"
 msgstr ""
@@ -269,7 +273,8 @@ msgstr "Onbekende export module '%s'."
 #: src/export.c:556
 #, c-format
 msgid "Cannot initialize export module '%s', probably lack of memory."
-msgstr "Kan export module '%s' niet initialiseren. Waarschijnlijk geheugenprobleem."
+msgstr ""
+"Kan export module '%s' niet initialiseren. Waarschijnlijk geheugenprobleem."
 
 #: src/export.c:983
 #, c-format
@@ -373,15 +378,17 @@ msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
 msgstr ""
-"%s (%s) biedt een onbekend VBI sampling formaat #%d aan. Dit kan een"
-"driver bug zijn of libzvbi is te oud."
+"%s (%s) biedt een onbekend VBI sampling formaat #%d aan. Dit kan eendriver "
+"bug zijn of libzvbi is te oud."
 
 #: src/io-v4l2.c:506 src/io-v4l.c:760
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
 "frequency %.2f MHz is too low."
-msgstr "Kan de gewenste datadienst niet ontvangen met %s (%s), de samplingfrequentie %.2f MHz is te laag."
+msgstr ""
+"Kan de gewenste datadienst niet ontvangen met %s (%s), de samplingfrequentie "
+"%.2f MHz is te laag."
 
 #: src/io-v4l2.c:561
 #, c-format
@@ -447,7 +454,9 @@ msgstr ""
 msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
-msgstr "Kan %s (%s) niet identificeren. Vermelde vbi frame size suggereert dat dit geen bttv driver is."
+msgstr ""
+"Kan %s (%s) niet identificeren. Vermelde vbi frame size suggereert dat dit "
+"geen bttv driver is."
 
 #: src/io-v4l.c:673 src/io-v4l.c:733
 #, c-format
