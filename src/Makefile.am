@@ -1,5 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
+SUBDIRS = dvb
+
 lib_LTLIBRARIES = libzvbi.la
 
 EXTRA_DIST = wstfont2.xbm ccfont2.xbm
@@ -18,6 +20,7 @@ proxy_sources =
 libzvbi_la_SOURCES = \
 	decoder.c decoder.h sliced.h \
 	io.c io.h \
+	io-dvb.c \
 	io-bktr.c \
 	io-v4l2k.c videodev2k.h \
 	io-v4l2.c videodev2.h \
