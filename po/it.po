@@ -1,17 +1,19 @@
+# translation of vbi.po to Italian
 # zvbi Italian translation
-# Pino Toscano <toscano.pino@tiscali.it>, 2002.
+# Pino Toscano <toscano.pino@tiscali.it>, 2002, 2004.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: zvbi\n"
+"Project-Id-Version: vbi\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-11-11 01:05+0100\n"
-"PO-Revision-Date: 2004-10-25 12:24+0200\n"
+"PO-Revision-Date: 2004-11-21 19:50+0100\n"
 "Last-Translator: Pino Toscano <toscano.pino@tiscali.it>\n"
-"Language-Team: Italian <it@li.org>\n"
+"Language-Team: Italian <kde-i18n-it@kde.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.9.1\n"
 
 #: src/exp-gfx.c:733
 msgid "Correct aspect ratio"
@@ -253,8 +255,7 @@ msgid "Cannot export this page, not displayable."
 msgstr "Impossibile esportare questa pagina, non visualizzabile."
 
 #: src/exp-vtx.c:132
-msgid ""
-"Export this page as VTX file, the format used by VideoteXt and vbidecode"
+msgid "Export this page as VTX file, the format used by VideoteXt and vbidecode"
 msgstr ""
 "Esporta questa pagina come file VTX, il formato usato da VideoteXt e "
 "vbidecode"
@@ -311,7 +312,7 @@ msgstr "Errore sconosciuto."
 
 #: src/io-bktr.c:184
 msgid "BKTR driver"
-msgstr ""
+msgstr "Driver BKTR"
 
 #: src/io-bktr.c:195 src/io-bktr.c:274 src/io-bktr.c:292 src/io-v4l.c:164
 #: src/io-v4l.c:1086 src/io-v4l.c:1118 src/io-v4l.c:1144 src/io-v4l2.c:105
@@ -378,8 +379,7 @@ msgstr ""
 #: src/io-v4l.c:1004 src/io-v4l.c:1234
 #, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
-msgstr ""
-"Impossibile impostare o determinare lo standard video corrente di %s (%s)."
+msgstr "Impossibile impostare o determinare lo standard video corrente di %s (%s)."
 
 #: src/io-v4l.c:1043 src/io-v4l2k.c:934
 #, c-format
@@ -410,9 +410,8 @@ msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) non supporta la funzione select()."
 
 #: src/io-v4l.c:1311 src/io-v4l.c:1349
-#, fuzzy
 msgid "V4L driver interface not compiled."
-msgstr "Interfaccia BKTR non compilata."
+msgstr "Driver dell'interfaccia V4L non compilato."
 
 #. TRANSLATORS: Cannot identify '/dev/some'.
 #: src/io-v4l2.c:130
@@ -425,9 +424,8 @@ msgid "Probably not a v4l2 device."
 msgstr "Probabilmente non un dispositivo v4l2."
 
 #: src/io-v4l2.c:193 src/io-v4l2k.c:1247
-#, fuzzy
 msgid "V4L2 driver interface not compiled."
-msgstr "Interfaccia V4L2 non compilata."
+msgstr "Driver dell'interfaccia V4L2 non compilato."
 
 #: src/io-v4l2k.c:162
 #, c-format
@@ -485,7 +483,7 @@ msgid ""
 "scanning %d."
 msgstr ""
 "Spiacente, %s (%s) impossibile catturare ognuno dei servizi di dati "
-"richiesto."
+"richiesto con [scanning] %d."
 
 #: src/io-v4l2k.c:883
 #, c-format
@@ -508,74 +506,66 @@ msgstr ""
 
 #: src/proxy-client.c:150
 msgid "Server hostname not configured."
-msgstr ""
+msgstr "Nome host del server non configurato."
 
 #: src/proxy-client.c:152
 msgid "Server port not configured."
-msgstr ""
+msgstr "Porta del server non configurata."
 
 #: src/proxy-client.c:419
 msgid "Protocol error (unexpected message)."
-msgstr ""
+msgstr "Errore del protocollo (messaggio inatteso)."
 
 #: src/proxy-client.c:580 src/proxy-client.c:632
 msgid "Connection lost due to I/O error."
-msgstr ""
+msgstr "Connessione persa a causa di un errore di I/O."
 
 #: src/proxy-client.c:753
 #, c-format
 msgid "Incompatible server version %u.%u.%u."
-msgstr ""
+msgstr "Versione del server %u.%u.%u incompatibile."
 
 #: src/proxy-client.c:761
+#, fuzzy
 msgid "Incompatible server architecture (endianess mismatch)."
-msgstr ""
+msgstr "Architettura del server incompatibile ([endianess mismatch])."
 
 #: src/proxy-client.c:1841 src/proxy-client.c:1885
-#, fuzzy
 msgid "Proxy client interface not compiled."
-msgstr "Interfaccia V4L non compilata."
+msgstr "Interfaccia del client proxy non compilata."
 
 #: src/proxy-msg.c:1185
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot create socket: %s."
-msgstr "Impossibile creare il file '%s': %s."
+msgstr "Impossibile creare la socket: %s."
 
 #: src/proxy-msg.c:1193
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid hostname or port: %s."
-msgstr "Invalida stringa di opzione \"%s\"."
+msgstr "Nome host o porta non valida: %s."
 
 #: src/proxy-msg.c:1213
 msgid "Connection via TCP/IP failed, server not running or unreachable."
-msgstr ""
+msgstr "Connessione via TCP/IP fallita, server non attivo o irrangiungibile."
 
 #: src/proxy-msg.c:1215
 msgid "Connection via socket failed, server not running."
-msgstr ""
+msgstr "Connessione via socket fallita, server non attivo."
 
 #: src/proxy-msg.c:1224 src/proxy-msg.c:1266
 #, c-format
 msgid "Socket I/O error: %s."
-msgstr ""
+msgstr "Errore I/O della socket: %s."
 
 #: src/proxy-msg.c:1259
 #, c-format
 msgid "Cannot connect to server: %s."
-msgstr ""
+msgstr "Impossibile connettersi al server: %s."
 
 #. TRANSLATORS: Title of TOP Index page,
 #. for now please Latin-1 or ASCII only
 #: src/teletext.c:409
-msgid "TOP Index"
-msgstr ""
-
-#~ msgid "Cannot query current videostandard of %s (%s): %d, %s."
-#~ msgstr ""
-#~ "Impossibile interrogare lo standard video corrente di %s (%s): %d, %s."
-
 #, fuzzy
-#~ msgid "Sorry, %s (%s) cannot capture any of the requested data services %d."
-#~ msgstr ""
-#~ "Spiacente, %s (%s) impossibile catturare ognuno dei servizi di dati "
-#~ "richiesto."
+msgid "TOP Index"
+msgstr "Indice TOP"
+
