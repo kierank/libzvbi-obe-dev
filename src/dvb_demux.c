@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.3 2004/12/13 07:17:07 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.4 2004/12/30 02:23:05 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>
@@ -27,6 +27,13 @@
 #include "dvb_demux.h"
 #include "hamm.h"		/* vbi_rev8() */
 #include "misc.h"		/* CLEAR() */
+
+/**
+ * @addtogroup DVBDemux DVB VBI Demultiplexer
+ * @ingroup Raw
+ * @brief Separating VBI data from a DVB PES stream
+ *   (EN 301 472, EN 301 775).
+ */
 
 #ifndef DVB_DEMUX_LOG
 #  define DVB_DEMUX_LOG 0
@@ -60,26 +67,36 @@ struct wrap {
 	unsigned int		leftover;
 };
 
-/* Reads from buffer at *src + *src_left - src_size ... *src +
-   *src_left, incrementing *src and decrementing *src_left by the
-   number of bytes read. NOTE *src_left must be src_size when you
-   change buffers.
-
-   First removes w->skip bytes from the buffer and clears w->skip, then
-   removes w->consume bytes, copying the data and the following
-   w->lookahead bytes to an output buffer.
-
-   Returns TRUE on success. *dst will point to the begin of the copied
-   data. *scan_end will point to the end of the range you can scan
-   with w->lookahead (can be > *dst + w->consume if *src_left permits).
-   NOTE these pointers may point anywhere into the src_size input
-   buffer, don't free / overwrite prematurely. *src_left will be >= 0.
-
-   w->skip, w->consume and w->lookahead can change between successful
-   calls.
-
-   Returns FALSE if more data is needed, *src_left will be 0.
-*/
+/**
+ * @internal
+ * @param w Wrap-around context.
+ * @param dst Wrapped data pointer.
+ * @param scan_end End of lookahead range.
+ * @param src Source buffer pointer, will be incremented.
+ * @param src_left Bytes left in source buffer, will be decremented.
+ * @param src_size Size of source buffer.
+ *
+ * Reads from buffer at *src + *src_left - src_size ... *src +
+ * *src_left, incrementing *src and decrementing *src_left by the
+ * number of bytes read. NOTE *src_left must be src_size when you
+ * change buffers.
+ *
+ * First removes w->skip bytes from the buffer and clears w->skip, then
+ * removes w->consume bytes (presently unused, assumed to be zero), copying
+ * the data and the following w->lookahead bytes to an output buffer.
+ *
+ * Returns TRUE on success. *dst will point to the begin of the copied
+ * data. *scan_end will point to the end of the range you can scan
+ * with w->lookahead (can be > *dst + w->consume if *src_left permits).
+ * NOTE if copying can be avoided these pointers may point into the
+ * src_size input buffer, so don't free / overwrite prematurely.
+ * *src_left will be >= 0.
+ *
+ * w->skip, w->consume and w->lookahead can change between successful
+ * calls.
+ *
+ * Returns FALSE if more data is needed, *src_left will be 0.
+ */
 vbi_inline vbi_bool
 wrap_around			(struct wrap *		w,
 				 const uint8_t **	dst,
@@ -184,6 +201,7 @@ wrap_around			(struct wrap *		w,
 	return TRUE;
 }
 
+/** @internal */
 struct frame {
 	/* Buffers for sliced and raw data of one frame. */
 
@@ -192,17 +210,17 @@ struct frame {
 
 	uint8_t *		raw;
 
-	/* XXX replace by vbi_sampling_par. */
+	/** XXX replace by vbi_sampling_par. */
 	unsigned int		raw_start[2];
 	unsigned int		raw_count[2];
 
-	/* Current position. */
+	/** Current position. */
 
 	vbi_sliced *		sp;
 
 	unsigned int		last_line;
 
-	/* Number of lines extracted from current packet. */
+	/** Number of lines extracted from current packet. */
 	unsigned int		sliced_count;
 
 	uint8_t *		rp;
@@ -246,7 +264,7 @@ line_address			(struct frame *		f,
 
 	if (f->sp >= f->sliced_end) {
 		log ("Out of buffer space (%d lines)\n",
-		     f->sliced_end - f->sliced_begin);
+		     (int)(f->sliced_end - f->sliced_begin));
 
 		return NULL;
 	}
@@ -642,24 +660,38 @@ reset_frame			(struct frame *		f)
   	Add _vbi_dvb_demultiplex() here.
 */
 
-
+/**
+ * @internal
+ * Minimum lookahead to identify the packet header.
+ */
 #define HEADER_LOOKAHEAD 48
 
+/** @internal */
 struct _vbi_dvb_demux {
-	/* Must hold one PES packet, at most 6 + 65535 bytes. */
+	/** Wrap-around buffer. Must hold one PES packet,
+	    at most 6 + 65535 bytes. */
 	uint8_t			buffer[65536 + 16];
 
+	/** Output buffer for vbi_dvb_demux_demux(). */
 	vbi_sliced		sliced[64];
 
+	/** Wrap-around state. */
 	struct wrap		wrap;
 
+	/** Data unit demux state. */
 	struct frame		frame;
 
+	/** PTS of current frame. */
 	int64_t			frame_pts;
+
+	/** PTS of current packet. */
 	int64_t			packet_pts;
 
+	/** New frame commences in this packet. (We cannot reset
+	    immediately due to the coroutine design.) */
 	vbi_bool		new_frame;
 
+	/** vbi_dvb_demux_demux() data. */
 	vbi_dvb_demux_cb *	callback;
 	void *			user_data;
 };
@@ -890,8 +922,42 @@ demux_packet			(vbi_dvb_demux *	dx,
 	return FALSE;
 }
 
+/**
+ * @brief DVB VBI demux coroutine.
+ * @param dx DVB demultiplexer context allocated with vbi_dvb_pes_demux_new().
+ * @param sliced Demultiplexed sliced data will be stored here. You must
+ *   not change @a sliced and @a sliced_lines in successive calls until
+ *   a frame is complete (i.e. the function returns a value > 0).
+ * @param sliced_lines At most this number of sliced lines will be stored
+ *   at @a sliced.
+ * @param pts If not @c NULL the Presentation Time Stamp associated with the
+ *   first line of the demultiplexed frame will be stored here.
+ * @param buffer *buffer points to DVB PES data, will be incremented by the
+ *   number of bytes read from the buffer. This pointer need not align with
+ *   packet boundaries.
+ * @param buffer_left *buffer_left is the number of bytes left in @a buffer,
+ *   will be decremented by the number of bytes read. *buffer_left need not
+ *   align with packet size. The packet filter works faster with larger
+ *   buffers. When you read from an MPEG file, mapping the file into memory
+ *   and passing pointers to the mapped data will be fastest.
+ *
+ * This function takes an arbitrary number of DVB PES data bytes, filters
+ * out PRIVATE_STREAM_1 packets, filters out valid VBI data units, converts
+ * them to vbi_sliced format and stores the sliced data at @a sliced.
+ *
+ * @returns
+ * The number of sliced lines stored at @a sliced when a frame is complete,
+ * @c 0 if more data is needed (@a *buffer_left is @c 0) or the data
+ * contained errors.
+ *
+ * @bug
+ * Demultiplexing of raw VBI data is not supported yet,
+ * raw data will be discarded.
+ *
+ * @since 0.2.10
+ */
 unsigned int
-_vbi_dvb_demux_cor		(vbi_dvb_demux *	dx,
+vbi_dvb_demux_cor		(vbi_dvb_demux *	dx,
 				 vbi_sliced *		sliced,
 				 unsigned int 		sliced_lines,
 				 int64_t *		pts,
@@ -900,7 +966,6 @@ _vbi_dvb_demux_cor		(vbi_dvb_demux *	dx,
 {
 	assert (NULL != dx);
 	assert (NULL != sliced);
-	assert (NULL != pts);
 	assert (NULL != buffer);
 	assert (NULL != buffer_left);
 
@@ -908,7 +973,8 @@ _vbi_dvb_demux_cor		(vbi_dvb_demux *	dx,
 	dx->frame.sliced_end = sliced + sliced_lines;
 
 	if (!demux_packet (dx, buffer, buffer_left)) {
-		*pts = dx->frame_pts;
+		if (pts)
+			*pts = dx->frame_pts;
 
 		return dx->frame.sp - dx->frame.sliced_begin;
 	}
@@ -916,8 +982,29 @@ _vbi_dvb_demux_cor		(vbi_dvb_demux *	dx,
 	return 0;
 }
 
+/**
+ * @brief Feeds DVB VBI demux with data.
+ * @param dx DVB demultiplexer context allocated with vbi_dvb_pes_demux_new().
+ * @param buffer DVB PES data, need not align with packet boundaries.
+ * @param buffer_size Number of bytes in @a buffer, need not align with
+ *   packet size. The packet filter works faster with larger buffers.
+ *
+ * This function takes an arbitrary number of DVB PES data bytes, filters
+ * out PRIVATE_STREAM_1 packets, filters out valid VBI data units, converts
+ * them to vbi_sliced format and calls the vbi_dvb_demux_cb function given
+ * to vbi_dvb_pes_demux_new() when a new frame is complete.
+ *
+ * @returns
+ * @c FALSE if the data contained errors.
+ *
+ * @bug
+ * Demultiplexing of raw VBI data is not supported yet,
+ * raw data will be discarded.
+ *
+ * @since 0.2.10
+ */
 vbi_bool
-_vbi_dvb_demux_demux		(vbi_dvb_demux *	dx,
+vbi_dvb_demux_feed		(vbi_dvb_demux *	dx,
 				 const uint8_t *	buffer,
 				 unsigned int		buffer_size)
 {
@@ -928,8 +1015,51 @@ _vbi_dvb_demux_demux		(vbi_dvb_demux *	dx,
 	return demux_packet (dx, &buffer, &buffer_size);
 }
 
+/**
+ * @brief Resets DVB VBI demux.
+ * @param dx DVB demultiplexer context allocated with vbi_dvb_pes_demux_new().
+ *
+ * Resets the DVB demux to the initial state as after vbi_dvb_pes_demux_new(),
+ * useful for example after a channel change.
+ *
+ * @since 0.2.10
+ */
 void
-_vbi_dvb_demux_delete		(vbi_dvb_demux *	dx)
+vbi_dvb_demux_reset		(vbi_dvb_demux *	dx)
+{
+	assert (NULL != dx);
+
+	CLEAR (dx->wrap);
+
+	dx->wrap.buffer = dx->buffer;
+	dx->wrap.bp = dx->buffer;
+
+	dx->wrap.lookahead = HEADER_LOOKAHEAD;
+
+	CLEAR (dx->frame);
+
+	dx->frame.sliced_begin = dx->sliced;
+	dx->frame.sliced_end = dx->sliced + N_ELEMENTS (dx->sliced);
+
+	/* Raw data ignored for now. */
+
+	dx->frame_pts = 0;
+	dx->packet_pts = 0;
+
+	dx->new_frame = TRUE;
+}
+
+/**
+ * @brief Deletes DVB VBI demux.
+ * @param dx DVB demultiplexer context allocated with
+ *   vbi_dvb_pes_demux_new(), can be @c NULL.
+ *
+ * Frees all resources associated with @a dx.
+ *
+ * @since 0.2.10
+ */
+void
+vbi_dvb_demux_delete		(vbi_dvb_demux *	dx)
 {
 	if (NULL == dx)
 		return;
@@ -939,8 +1069,24 @@ _vbi_dvb_demux_delete		(vbi_dvb_demux *	dx)
 	free (dx);		
 }
 
+/**
+ * @brief Allocates DVB VBI demux.
+ * @param callback Function to be called by vbi_dvb_demux_demux() when
+ *   a new frame is available.
+ * @param user_data User pointer passed through to @a callback function.
+ *
+ * Allocates a new DVB VBI (EN 301 472, EN 301 775) demultiplexer taking
+ * a PES stream as input.
+ *
+ * @returns
+ * Pointer to newly allocated DVB demux context which must be
+ * freed with vbi_dvb_demux_delete() when done. @c NULL on failure
+ * (out of memory).
+ *
+ * @since 0.2.10
+ */
 vbi_dvb_demux *
-_vbi_dvb_demux_pes_new		(vbi_dvb_demux_cb *	callback,
+vbi_dvb_pes_demux_new		(vbi_dvb_demux_cb *	callback,
 				 void *			user_data)
 {
 	vbi_dvb_demux *dx;
@@ -951,20 +1097,50 @@ _vbi_dvb_demux_pes_new		(vbi_dvb_demux_cb *	callback,
 
 	CLEAR (*dx);
 
-	dx->wrap.buffer = dx->buffer;
-	dx->wrap.bp = dx->buffer;
-
-	dx->wrap.lookahead = HEADER_LOOKAHEAD;
-
-	dx->frame.sliced_begin = dx->sliced;
-	dx->frame.sliced_end = dx->sliced + N_ELEMENTS (dx->sliced);
-
-	/* Raw data ignored for now. */
-
-	dx->new_frame = TRUE;
+	vbi_dvb_demux_reset (dx);
 
 	dx->callback = callback;
 	dx->user_data = user_data;
 
 	return dx;
+}
+
+/* For compatibility with Zapping 0.8 */
+
+extern unsigned int
+_vbi_dvb_demux_cor		(vbi_dvb_demux *	dx,
+				 vbi_sliced *		sliced,
+				 unsigned int 		sliced_lines,
+				 int64_t *		pts,
+				 const uint8_t **	buffer,
+				 unsigned int *		buffer_left);
+extern void
+_vbi_dvb_demux_delete		(vbi_dvb_demux *	dx);
+extern vbi_dvb_demux *
+_vbi_dvb_demux_pes_new		(vbi_dvb_demux_cb *	callback,
+				 void *			user_data);
+
+unsigned int
+_vbi_dvb_demux_cor		(vbi_dvb_demux *	dx,
+				 vbi_sliced *		sliced,
+				 unsigned int 		sliced_lines,
+				 int64_t *		pts,
+				 const uint8_t **	buffer,
+				 unsigned int *		buffer_left)
+{
+	return vbi_dvb_demux_cor (dx, sliced, sliced_lines,
+				  pts, buffer, buffer_left);
+}
+
+void
+_vbi_dvb_demux_delete		(vbi_dvb_demux *	dx)
+{
+	vbi_dvb_demux_delete (dx);
+}
+
+vbi_dvb_demux *
+_vbi_dvb_demux_pes_new		(vbi_dvb_demux_cb *	callback,
+				 void *			user_data)
+{
+	return vbi_dvb_pes_demux_new (callback, user_data);
 }

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.h,v 1.1 2004/10/28 03:29:04 mschimek Exp $ */
+/* $Id: dvb_demux.h,v 1.2 2004/12/30 02:23:17 mschimek Exp $ */
 
 #ifndef __ZVBI_DVB_DEMUX_H__
 #define __ZVBI_DVB_DEMUX_H__
@@ -28,8 +28,32 @@
 #include "sliced.h"		/* vbi_sliced, vbi_service_set */
 #endif
 
+/* Public */
+
+/**
+ * @addtogroup DVBDemux
+ * @{
+ */
+
+/**
+ * @brief DVB VBI demultiplexer.
+ *
+ * The contents of this structure are private.
+ * Call vbi_dvb_pes_demux_new() to allocate a DVB demultiplexer.
+ */
 typedef struct _vbi_dvb_demux vbi_dvb_demux;
 
+/**
+ * @param dx DVB demultiplexer context allocated with vbi_dvb_pes_demux_new().
+ * @param user_data User data pointer given to vbi_dvb_pes_demux_new().
+ * @param sliced Pointer to demultiplexed sliced data.
+ * @param sliced_lines Number of lines in the @a sliced array.
+ * @param pts Presentation Time Stamp associated with the first sliced
+ *   line.
+ *
+ * The vbi_dvb_demux_demux() function calls a function of this type when
+ * a new frame of sliced data is complete.
+ */
 typedef vbi_bool
 vbi_dvb_demux_cb		(vbi_dvb_demux *	dx,
 				 void *			user_data,
@@ -38,22 +62,26 @@ vbi_dvb_demux_cb		(vbi_dvb_demux *	dx,
 				 int64_t		pts);
 
 extern void
-_vbi_dvb_demux_reset		(vbi_dvb_demux *	dx);
+vbi_dvb_demux_reset		(vbi_dvb_demux *	dx);
 extern unsigned int
-_vbi_dvb_demux_cor		(vbi_dvb_demux *	dx,
+vbi_dvb_demux_cor		(vbi_dvb_demux *	dx,
 				 vbi_sliced *		sliced,
 				 unsigned int 		sliced_lines,
 				 int64_t *		pts,
 				 const uint8_t **	buffer,
 				 unsigned int *		buffer_left);
 extern vbi_bool
-_vbi_dvb_demux_demux		(vbi_dvb_demux *	dx,
+vbi_dvb_demux_feed		(vbi_dvb_demux *	dx,
 				 const uint8_t *	buffer,
 				 unsigned int		buffer_size);
 extern void
-_vbi_dvb_demux_delete		(vbi_dvb_demux *	dx);
+vbi_dvb_demux_delete		(vbi_dvb_demux *	dx);
 extern vbi_dvb_demux *
-_vbi_dvb_demux_pes_new		(vbi_dvb_demux_cb *	callback,
+vbi_dvb_pes_demux_new		(vbi_dvb_demux_cb *	callback,
 				 void *			user_data);
+
+/** @} */
+
+/* Private */
 
 #endif /* __ZVBI_DVB_DEMUX_H__ */
