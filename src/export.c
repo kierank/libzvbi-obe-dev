@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.1 2002/01/12 16:18:41 mschimek Exp $ */
+/* $Id: export.c,v 1.2 2002/01/13 09:54:40 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -835,7 +835,7 @@ vbi_export_option_menu_set(vbi_export *export, const char *keyword,
 	if (!(oi = vbi_export_option_info_keyword(export, keyword)))
 		return FALSE;
 
-	if (entry > oi->max.num)
+	if (entry < 0 || entry > oi->max.num)
 		return FALSE;
 
 	switch (oi->type) {
