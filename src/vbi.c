@@ -22,12 +22,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.14 2004/11/26 05:54:55 mschimek Exp $ */
+/* $Id: vbi.c,v 1.15 2004/12/13 07:11:12 mschimek Exp $ */
 
 #include "site_def.h"
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #include <stdio.h>
@@ -129,7 +129,9 @@ vbi_event_enable(vbi_decoder *vbi, int mask)
  * @param handler Event handler function.
  * @param user_data Pointer passed to the handler.
  * 
- * @deprecated Use vbi_event_handler_register() in new code.
+ * @deprecated
+ * Replaces all existing handlers with this @a handler function,
+ * ignoring @a user_data. Use vbi_event_handler_register() in new code.
  * 
  * @return
  * FALSE on failure.
@@ -192,7 +194,9 @@ vbi_event_handler_add(vbi_decoder *vbi, int event_mask,
  * @param vbi Initialized vbi decoding context.
  * @param handler Event handler function.
  * 
- * @deprecated Use vbi_event_handler_register() in new code.
+ * @deprecated
+ * This functions lacks a user_data parameter.
+ * Use vbi_event_handler_register() in new code.
  */
 void
 vbi_event_handler_remove(vbi_decoder *vbi, vbi_event_handler handler)
