@@ -25,16 +25,23 @@
  *    for a list of possible options.
  *
  *  $Log: proxy-test.c,v $
+ *  Revision 1.4  2003/05/10 13:31:23  tomzo
+ *  - bugfix main loop: check for 0 result from vbi_capture_pull_sliced()
+ *    and for NULL pointer for sliced buffer
+ *  - added new "-debug 0..2" option: old "-trace" could only set level 1
+ *  - split off argv parsing from main function
+ *
  *  Revision 1.3  2003/05/03 12:07:48  tomzo
  *  - use vbi_capture_pull_sliced() instead of vbi_capture_read_sliced()
  *  - fixed copyright headers, added description to file headers
  *
  */
 
-static const char rcsid[] = "$Id: proxy-test.c,v 1.3 2003/05/03 12:07:48 tomzo Exp $";
+static const char rcsid[] = "$Id: proxy-test.c,v 1.4 2003/05/10 13:31:23 tomzo Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <time.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -48,8 +55,6 @@ static const char rcsid[] = "$Id: proxy-test.c,v 1.3 2003/05/03 12:07:48 tomzo E
 
 #define DEVICE_PATH   "/dev/vbi0"
 #define BUFFER_COUNT  5
-#define USAGE_STR     "Usage: %s [-trace] [-strict {0|1|2}] [-dev path] " \
-                      "[-api v4l|v4l2|proxy] {ttx|vps|wss} ...\n"
 
 typedef enum
 {
@@ -58,8 +63,11 @@ typedef enum
    TEST_API_PROXY,
 } PROXY_TEST_API;
 
-static char * p_dev_name = DEVICE_PATH;
+static char         * p_dev_name = DEVICE_PATH;
 static PROXY_TEST_API opt_api = TEST_API_PROXY;
+static unsigned int   opt_services;
+static int            opt_strict;
+static int            opt_debug_level;
 
 /* ----------------------------------------------------------------------------
 ** Resolve parity on an array in-place
@@ -162,131 +170,171 @@ static void TtxDecode_AddVpsData( const unsigned char * data )
    }
 }
 
-/* ----------------------------------------------------------------------------
-** Main entry point
+/* ---------------------------------------------------------------------------
+** Print usage and exit
 */
-int main ( int argc, char ** argv )
+static void usage_exit( const char *argv0, const char *argvn, const char * reason )
 {
-   vbi_capture      *  pVbiCapt;
-   vbi_raw_decoder  *  pVbiPar;
-   char             *  pErr;
-   int                 arg_idx;
-   unsigned int        services;
-   int                 strict;
-   int                 trace;
+   fprintf(stderr, "%s: %s: %s\n"
+                   "Usage: %s [ Options ] service ...\n"
+                   "       services            : ttx | vps | wss\n"
+                   "       -dev <path>         : device path\n"
+                   "       -api <type>         : v4l API: proxy|v4l2|v4l\n"
+                   "       -strict <level>     : service strictness level: 0..2\n"
+                   "       -debug <level>      : enable debug output: 1=warnings, 2=all\n"
+                   "       -help               : this message\n",
+                   argv0, reason, argvn, argv0);
 
-   trace = FALSE;
-   services = 0;
-   strict = 0;
-   arg_idx = 1;
+   exit(1);
+}
+
+/* ---------------------------------------------------------------------------
+** Parse numeric value in command line options
+*/
+static vbi_bool parse_argv_numeric( char * p_number, int * p_value )
+{
+   char * p_num_end;
+
+   if (*p_number != 0)
+   {
+      *p_value = strtol(p_number, &p_num_end, 0);
+
+      return (*p_num_end == 0);
+   }
+   else
+      return FALSE;
+}
+
+/* ---------------------------------------------------------------------------
+** Parse command line options
+*/
+static void parse_argv( int argc, char * argv[] )
+{
+   int arg_val;
+   int arg_idx = 1;
+
+   opt_debug_level = 0;
+   opt_services = 0;
+   opt_strict = 0;
 
    while (arg_idx < argc)
    {
       if ( (strcasecmp(argv[arg_idx], "ttx") == 0) ||
            (strcasecmp(argv[arg_idx], "teletext") == 0) )
       {
-         services |= VBI_SLICED_TELETEXT_B;
+         opt_services |= VBI_SLICED_TELETEXT_B;
          arg_idx += 1;
       }
       else if (strcasecmp(argv[arg_idx], "vps") == 0)
       {
-         services |= VBI_SLICED_VPS;
+         opt_services |= VBI_SLICED_VPS;
          arg_idx += 1;
       }
       else if (strcasecmp(argv[arg_idx], "wss") == 0)
       {
-         services |= VBI_SLICED_WSS_625 | VBI_SLICED_WSS_CPR1204;
+         opt_services |= VBI_SLICED_WSS_625 | VBI_SLICED_WSS_CPR1204;
          arg_idx += 1;
       }
       else if (strcasecmp(argv[arg_idx], "-dev") == 0)
       {
-         if (arg_idx + 1 >= argc)
+         if (arg_idx + 1 < argc)
          {
-            fprintf(stderr, "Missing device name after -dev\n" USAGE_STR, argv[0]);
-            exit(1);
-         }
-         p_dev_name = argv[arg_idx + 1];
-         arg_idx += 2;
-      }
-      else if (strcasecmp(argv[arg_idx], "-api") == 0)
-      {
-         if (arg_idx + 1 >= argc)
-         {
-            fprintf(stderr, "Missing API type after -api\n" USAGE_STR, argv[0]);
-            exit(1);
-         }
-         if ( (strcasecmp(argv[arg_idx + 1], "v4l") == 0) ||
-              (strcasecmp(argv[arg_idx + 1], "v4l1") == 0) )
-            opt_api = TEST_API_V4L;
-         else if (strcasecmp(argv[arg_idx + 1], "v4l2") == 0)
-            opt_api = TEST_API_V4L2;
-         else if (strcasecmp(argv[arg_idx + 1], "proxy") == 0)
-            opt_api = TEST_API_PROXY;
-         else
-         {
-            fprintf(stderr, "Invalid API type '%s'\n" USAGE_STR, argv[arg_idx + 1], argv[0]);
-            exit(1);
-         }
-         arg_idx += 2;
-      }
-      else if (strcasecmp(argv[arg_idx], "-trace") == 0)
-      {
-         trace = TRUE;
-         arg_idx += 1;
-      }
-      else if (strcasecmp(argv[arg_idx], "-strict") == 0)
-      {
-         char * p_num_end;
-         if ((arg_idx + 1 < argc) && (strlen(argv[arg_idx + 1]) > 0) &&
-             ((strict = strtol(argv[arg_idx + 1], &p_num_end, 0)) >= 0) &&
-             (*p_num_end == 0) )
-         {
+            p_dev_name = argv[arg_idx + 1];
+	    if (access(p_dev_name, R_OK | W_OK) == -1)
+               usage_exit(argv[0], argv[arg_idx +1], "failed to access device");
             arg_idx += 2;
          }
          else
+            usage_exit(argv[0], argv[arg_idx], "missing mode keyword after");
+      }
+      else if (strcasecmp(argv[arg_idx], "-api") == 0)
+      {
+         if (arg_idx + 1 < argc)
          {
-            fprintf(stderr, "-strict requires value 0..2\n" USAGE_STR, argv[0]);
-            exit(1);
+            if ( (strcasecmp(argv[arg_idx + 1], "v4l") == 0) ||
+                 (strcasecmp(argv[arg_idx + 1], "v4l1") == 0) )
+               opt_api = TEST_API_V4L;
+            else if (strcasecmp(argv[arg_idx + 1], "v4l2") == 0)
+               opt_api = TEST_API_V4L2;
+            else if (strcasecmp(argv[arg_idx + 1], "proxy") == 0)
+               opt_api = TEST_API_PROXY;
+            else
+               usage_exit(argv[0], argv[arg_idx +1], "unknown API keyword");
+            arg_idx += 2;
          }
+         else
+            usage_exit(argv[0], argv[arg_idx], "missing mode keyword after");
+      }
+      else if (strcasecmp(argv[arg_idx], "-trace") == 0)
+      {
+         opt_debug_level = 1;
+         arg_idx += 1;
+      }
+      else if (strcasecmp(argv[arg_idx], "-debug") == 0)
+      {
+         if ((arg_idx + 1 < argc) && parse_argv_numeric(argv[arg_idx + 1], &arg_val))
+         {
+            opt_debug_level = arg_val;
+            arg_idx += 2;
+         }
+         else
+            usage_exit(argv[0], argv[arg_idx], "missing debug level after");
+      }
+      else if (strcasecmp(argv[arg_idx], "-strict") == 0)
+      {
+         if ((arg_idx + 1 < argc) && parse_argv_numeric(argv[arg_idx + 1], &arg_val))
+         {
+            opt_strict = arg_val;
+            arg_idx += 2;
+         }
+         else
+            usage_exit(argv[0], argv[arg_idx], "missing strict level after");
       }
       else if (strcasecmp(argv[arg_idx], "-help") == 0)
       {
-         fprintf(stderr, USAGE_STR, argv[0]);
-         exit(0);
+         usage_exit(argv[0], "", "the following options are available");
       }
       else
-      {
-         fprintf(stderr, "Unknown argument '%s'\n" USAGE_STR, argv[arg_idx], argv[0]);
-         exit(1);
-      }
+         usage_exit(argv[0], argv[arg_idx], "unknown option or argument");
    }
-   if (services == 0)
+
+   if (opt_services == 0)
    {
-      fprintf(stderr, "Must specify at least one argument\n" USAGE_STR, argv[0]);
-      exit(1);
+      usage_exit(argv[0], "no service given", "Must specify at least one service");
    }
+}
+
+/* ----------------------------------------------------------------------------
+** Main entry point
+*/
+int main ( int argc, char ** argv )
+{
+   vbi_capture        * pVbiCapt;
+   vbi_raw_decoder    * pVbiPar;
+   vbi_sliced         * pVbiData;
+   vbi_capture_buffer * pVbiBuf;
+   char               * pErr;
+   struct timeval       timeout;
+   uint    lineCount;
+   uint    lastLineCount;
+   uint    line;
+   int     res;
+
+   parse_argv(argc, argv);
 
    pVbiCapt = NULL;
    if (opt_api == TEST_API_V4L2)
-      pVbiCapt = vbi_capture_v4l2_new(p_dev_name, BUFFER_COUNT, &services, strict, &pErr, trace);
+      pVbiCapt = vbi_capture_v4l2_new(p_dev_name, BUFFER_COUNT, &opt_services, opt_strict, &pErr, opt_debug_level);
    if (opt_api == TEST_API_V4L)
-      pVbiCapt = vbi_capture_v4l_new(p_dev_name, 0, &services, strict, &pErr, trace);
+      pVbiCapt = vbi_capture_v4l_new(p_dev_name, 0, &opt_services, opt_strict, &pErr, opt_debug_level);
    if (opt_api == TEST_API_PROXY)
-      pVbiCapt = vbi_capture_proxy_new(p_dev_name, BUFFER_COUNT, 0, &services, strict, &pErr, trace);
+      pVbiCapt = vbi_capture_proxy_new(p_dev_name, BUFFER_COUNT, 0, &opt_services, opt_strict, &pErr, opt_debug_level);
 
    if (pVbiCapt != NULL)
    {
       pVbiPar = vbi_capture_parameters(pVbiCapt);
       if (pVbiPar != NULL)
       {
-         vbi_sliced         * pVbiData;
-         vbi_capture_buffer * pVbiBuf;
-         struct timeval       timeout;
-         uint    lineCount;
-         uint    lastLineCount;
-         uint    line;
-         int     res;
-
          lastLineCount = 0;
 
          while(1)
@@ -295,38 +343,43 @@ int main ( int argc, char ** argv )
             timeout.tv_usec = 0;
 
             res = vbi_capture_pull_sliced(pVbiCapt, &pVbiBuf, &timeout);
-            if (res == -1)
+            if (res < 0)
             {
                perror("VBI read");
                break;
             }
-            lineCount = ((unsigned int) pVbiBuf->size) / sizeof(vbi_sliced);
-            pVbiData  = pVbiBuf->data;
-
-            if (lastLineCount != lineCount)
+            else if ((res > 0) && (pVbiBuf != NULL))
             {
-               fprintf(stderr, "%d lines\n", lineCount);
-               lastLineCount = lineCount;
-            }
+               lineCount = ((unsigned int) pVbiBuf->size) / sizeof(vbi_sliced);
+               pVbiData  = pVbiBuf->data;
 
-            for (line=0; line < lineCount; line++)
-            {
-               if ((pVbiData[line].id & VBI_SLICED_TELETEXT_B) != 0)
+               if (lastLineCount != lineCount)
                {
-                  char tmparr[46];
-                  UnHamParityArray(pVbiData[line].data+2, tmparr, 40);
-                  tmparr[40] = 0;
-                  printf("pkg %2d id=%d line %d: '%s'\n", line, pVbiData[line].id, pVbiData[line].line, tmparr);
+                  fprintf(stderr, "%d lines\n", lineCount);
+                  lastLineCount = lineCount;
                }
-               else if (pVbiData[line].id == VBI_SLICED_VPS)
+
+               for (line=0; line < lineCount; line++)
                {
-                  TtxDecode_AddVpsData(pVbiData[line].data);
-               }
-               else if (pVbiData[line].id == VBI_SLICED_WSS_625)
-               {
-                  printf("WSS 0x%02X%02X%02X\n", pVbiData[line].data[0], pVbiData[line].data[1], pVbiData[line].data[2]);
+                  if ((pVbiData[line].id & VBI_SLICED_TELETEXT_B) != 0)
+                  {
+                     char tmparr[46];
+                     UnHamParityArray(pVbiData[line].data+2, tmparr, 40);
+                     tmparr[40] = 0;
+                     printf("pkg %2d id=%d line %d: '%s'\n", line, pVbiData[line].id, pVbiData[line].line, tmparr);
+                  }
+                  else if (pVbiData[line].id == VBI_SLICED_VPS)
+                  {
+                     TtxDecode_AddVpsData(pVbiData[line].data);
+                  }
+                  else if (pVbiData[line].id == VBI_SLICED_WSS_625)
+                  {
+                     printf("WSS 0x%02X%02X%02X\n", pVbiData[line].data[0], pVbiData[line].data[1], pVbiData[line].data[2]);
+                  }
                }
             }
+            else
+               fprintf(stderr, "timeout\n");
          }
       }
 
