@@ -1,3 +1,11 @@
+2003-06-07      <tomzo@users.sf.net>
+
+        Periodic check-in for ongoing proxy implementation:
+        * src/proxy-msg.c: Optimized client/server message I/O via socket.
+        * daemon/proxyd.c: Added command line option -kill; Added devfs
+          support (use /dev/v4l/vbi as default device if it exists.)
+        Note: Changes in protocol require re-compilation of proxy clients.
+
 2003-06-01      <tomzo@users.sf.net>
 
         Periodic check-in for ongoing proxy implementation:
