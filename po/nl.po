@@ -1,4 +1,4 @@
-# Libzvbi Dutch translation -*- coding: iso-8859-1 -*-
+# Libzvbi Dutch translation -*- coding: utf-8 -*-
 # Copyleft (L) 2001 Ime Smits <ime@iae.nl>
 # Reviewed: Reinout van Schouwen <reinout@cs.vu.nl>
 # Adjusted: Guus Bonnema <abonnema@xs4all.nl>
@@ -7,12 +7,12 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-25 12:29+0200\n"
+"POT-Creation-Date: 2004-11-03 16:47+0100\n"
 "PO-Revision-Date: 2004-10-25 12:32+0200\n"
 "Last-Translator: Guus Bonnema <abonnema@xs4all.nl>\n"
 "Language-Team: Dutch <ime@iae.nl>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -95,6 +95,7 @@ msgstr "HTML-kop invoegen"
 #. TRANSLATORS: "lang=\"en\" refers to the page title
 #. "Teletext Page ...". Please specify "de", "fr", "es" etc.
 #: src/exp-html.c:220
+#, c-format
 msgid "<title lang=\"en\">"
 msgstr "<title lang=\"nl\">"
 
@@ -319,7 +320,7 @@ msgstr ""
 #: src/io-v4l.c:1076 src/io-v4l.c:1108 src/io-v4l.c:1131 src/io-v4l2.c:105
 #: src/io-v4l2k.c:182 src/io-v4l2k.c:537 src/io-v4l2k.c:975
 #: src/io-v4l2k.c:1091 src/io-v4l2k.c:1104 src/proxy-client.c:198
-#: src/proxy-client.c:1781
+#: src/proxy-client.c:1785
 msgid "Virtual memory exhausted."
 msgstr "Geen virtueel geheugen beschikbaar."
 
@@ -515,48 +516,48 @@ msgstr ""
 msgid "Protocol error (unexpected message)."
 msgstr ""
 
-#: src/proxy-client.c:578 src/proxy-client.c:630
+#: src/proxy-client.c:582 src/proxy-client.c:634
 msgid "Connection lost due to I/O error."
 msgstr ""
 
-#: src/proxy-client.c:751
+#: src/proxy-client.c:755
 #, c-format
 msgid "Incompatible server version %u.%u.%u."
 msgstr ""
 
-#: src/proxy-client.c:759
+#: src/proxy-client.c:763
 msgid "Incompatible server architecture (endianess mismatch)."
 msgstr ""
 
-#: src/proxy-client.c:1796 src/proxy-client.c:1806
+#: src/proxy-client.c:1800 src/proxy-client.c:1810
 #, fuzzy
 msgid "Proxy client interface not compiled."
 msgstr "bktr interface niet gecompileerd."
 
-#: src/proxy-msg.c:1182
+#: src/proxy-msg.c:1185
 #, fuzzy, c-format
 msgid "Cannot create socket: %s."
 msgstr "Kan bestand '%s' niet aanmaken: %s."
 
-#: src/proxy-msg.c:1190
+#: src/proxy-msg.c:1193
 #, fuzzy, c-format
 msgid "Invalid hostname or port: %s."
 msgstr "Ongeldige optie string \"%s\"."
 
-#: src/proxy-msg.c:1210
+#: src/proxy-msg.c:1213
 msgid "Connection via TCP/IP failed, server not running or unreachable."
 msgstr ""
 
-#: src/proxy-msg.c:1212
+#: src/proxy-msg.c:1215
 msgid "Connection via socket failed, server not running."
 msgstr ""
 
-#: src/proxy-msg.c:1221 src/proxy-msg.c:1263
+#: src/proxy-msg.c:1224 src/proxy-msg.c:1266
 #, c-format
 msgid "Socket I/O error: %s."
 msgstr ""
 
-#: src/proxy-msg.c:1256
+#: src/proxy-msg.c:1259
 #, c-format
 msgid "Cannot connect to server: %s."
 msgstr ""
