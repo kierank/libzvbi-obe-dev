@@ -1,3 +1,7 @@
+2005-01-22    <mschimek@users.sf.net>
+
+	* Release 0.2.13.
+
 2005-01-20    <mschimek@users.sf.net>
 
 	* src/hamm.c, src/hamm.h: Dox "since" missing.

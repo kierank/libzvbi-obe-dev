@@ -1,3 +1,12 @@
+libzvbi 0.2.13, 2005-01-23
+--------------------------
+This version has new, more reliable DVB VBI capture routines.  See the
+documentation of vbi_capture_dvb_new() for details.
+
+Fixes:
+- Include fix in test/wss.c.
+- GCC 4.0 compile fixes.
+
 libzvbi 0.2.12, 2005-01-18
 --------------------------
 Various error correction functions, generator and bit reversal
