@@ -2,29 +2,34 @@
 
 TESTS = exoptest cpptest raw_decoder
 
+check_PROGRAMS = \
+    cpptest \
+    raw_decoder
+
+cpptest_SOURCES = cpptest.cc
+
 if ENABLE_PROXY
 proxy_programs = proxy-test
 else
 proxy_programs =
 endif
 
-check_PROGRAMS = \
-    cpptest \
-    raw_decoder
+if HAVE_X
+x_programs = caption osc
+else
+x_programs =
+endif
 
 noinst_PROGRAMS = \
     unicode \
     glyph \
     explist \
-    caption \
     export \
-    osc \
     capture \
+    $(x_programs) \
     $(proxy_programs)
 
-cpptest_SOURCES = cpptest.cc
-
-EXTRA_DIST = $(TESTS) README uclist sim.c
+EXTRA_DIST = README exoptest uclist sim.c
 
 INCLUDES = -I$(top_srcdir) $(COMMON_INCLUDES) $(X_CFLAGS) \
 	-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations \
