@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.6 2002/10/22 04:42:40 mschimek Exp $ */
+/* $Id: io.h,v 1.7 2003/05/03 12:03:31 tomzo Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -70,6 +70,14 @@ extern vbi_capture *	vbi_capture_bktr_new (const char *	dev_name,
 					      int		strict,
 					      char **		errstr,
 					      vbi_bool		trace);
+
+extern vbi_capture *    vbi_capture_proxy_new(const char *dev_name,
+                                              int buffers,
+                                              int scanning,
+                                              unsigned int *services,
+                                              int strict,
+                                              char **pp_errorstr,
+                                              vbi_bool trace);
 
 extern int		vbi_capture_read_raw(vbi_capture *capture, void *data,
 					     double *timestamp, struct timeval *timeout);
