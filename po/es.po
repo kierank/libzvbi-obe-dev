@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
-"POT-Creation-Date: 2002-11-28 23:18+0100\n"
+"POT-Creation-Date: 2002-12-13 23:59+0100\n"
 "PO-Revision-Date: 2002-01-08 14:34+0100\n"
 "Last-Translator: Iñaki García Etxebarria <garetxe@users.sourceforge.net>\n"
 "Language-Team: Spanish <es@li.org>\n"

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2.c,v 1.12 2002/11/30 02:37:18 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2.c,v 1.13 2002/12/24 15:16:26 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -285,7 +285,7 @@ v4l2_fd(vbi_capture *vc)
 }
 
 static void
-print_vfmt(char *s, struct v4l2_format *vfmt)
+print_vfmt(const char *s, struct v4l2_format *vfmt)
 {
 	fprintf(stderr, "%s%d Hz, %d bpl, offs %d, "
 		"F1 %d+%d, F2 %d+%d, flags %08x\n", s,

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l2k.c,v 1.2 2002/11/30 02:37:18 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l2k.c,v 1.3 2002/12/24 15:16:26 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -289,7 +289,7 @@ v4l2_fd(vbi_capture *vc)
 }
 
 static void
-print_vfmt(char *s, struct v4l2_format *vfmt)
+print_vfmt(const char *s, struct v4l2_format *vfmt)
 {
 	fprintf(stderr, "%sformat %08x, %d Hz, %d bpl, offs %d, "
 		"F1 %d+%d, F2 %d+%d, flags %08x\n", s,

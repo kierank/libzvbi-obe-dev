@@ -1,3 +1,7 @@
+2002-12-14	<mschimek@users.sf.net>
+
+	* src/event.h: Wrong assumption on char signedness.
+
 2002-12-14	<garetxe@users.sf.net>
 
 	* it.po: Italian translation, contributed by Pino Toscano.

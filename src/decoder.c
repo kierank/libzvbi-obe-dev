@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.7 2002/10/22 04:42:40 mschimek Exp $ */
+/* $Id: decoder.c,v 1.8 2002/12/24 15:16:26 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -486,10 +486,10 @@ struct vbi_service_par {
 							    625 (FV = 50 Hz, FH = 15625 Hz) */
 	unsigned int	cri_frc;	/* Clock Run In and FRaming Code, LSB last txed bit of FRC */
 	unsigned int	cri_mask;	/* cri bits significant for identification, */
-	char		cri_bits;
-	char		frc_bits;	/* cri_bits at cri_rate, frc_bits at bit_rate */
-	short		payload;	/* in bits */
-	char		modulation;	/* payload modulation */
+	uint8_t		cri_bits;
+	uint8_t		frc_bits;	/* cri_bits at cri_rate, frc_bits at bit_rate */
+	uint16_t	payload;	/* in bits */
+	uint8_t		modulation;	/* payload modulation */
 };
 
 const struct vbi_service_par
