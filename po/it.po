@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: vbi\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-11-11 01:05+0100\n"
-"PO-Revision-Date: 2004-11-21 19:50+0100\n"
+"PO-Revision-Date: 2004-12-01 18:37+0100\n"
 "Last-Translator: Pino Toscano <toscano.pino@tiscali.it>\n"
 "Language-Team: Italian <kde-i18n-it@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -24,8 +24,8 @@ msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
 msgstr ""
-"Si avvicina alle proporzioni dell'immagine simile ad una reale TV. Questo "
-"raddoppierà la dimensione dell'immagine."
+"Si avvicina alle proporzioni dell'immagine in modo simile ad una reale TV. "
+"Questo raddoppierà la dimensione dell'immagine."
 
 #: src/exp-gfx.c:807 src/exp-gfx.c:1105
 #, c-format
@@ -121,39 +121,39 @@ msgstr "ASCII"
 
 #: src/exp-txt.c:80
 msgid "ISO-8859-1 (Latin-1 Western languages)"
-msgstr "ISO-8859-1 (Latin-1 Lingue Occidentali)"
+msgstr "ISO-8859-1 (Latin-1 lingue occidentali)"
 
 #: src/exp-txt.c:81
 msgid "ISO-8859-2 (Latin-2 Central and Eastern Europe languages)"
-msgstr "ISO-8859-2 (Latin-2 Lingue dell'Europa Centrale e Orientale)"
+msgstr "ISO-8859-2 (Latin-2 lingue dell'Europa centrale e orientale)"
 
 #: src/exp-txt.c:82
 msgid "ISO-8859-4 (Latin-3 Baltic languages)"
-msgstr "ISO-8859-4 (Latin-3 Lingue Baltiche)"
+msgstr "ISO-8859-4 (Latin-3 lingue baltiche)"
 
 #: src/exp-txt.c:83
 msgid "ISO-8859-5 (Cyrillic)"
-msgstr "ISO-8859-5 (Cirillico)"
+msgstr "ISO-8859-5 (cirillico)"
 
 #: src/exp-txt.c:84
 msgid "ISO-8859-7 (Greek)"
-msgstr "ISO-8859-7 (Greco)"
+msgstr "ISO-8859-7 (greco)"
 
 #: src/exp-txt.c:85
 msgid "ISO-8859-8 (Hebrew)"
-msgstr "ISO-8859-8 (Ebraico)"
+msgstr "ISO-8859-8 (ebraico)"
 
 #: src/exp-txt.c:86
 msgid "ISO-8859-9 (Turkish)"
-msgstr "ISO-8859-9 (Turco)"
+msgstr "ISO-8859-9 (turco)"
 
 #: src/exp-txt.c:87
 msgid "KOI8-R (Russian and Bulgarian)"
-msgstr "KOI8-R (Russo e Bulgaro)"
+msgstr "KOI8-R (russo e bulgaro)"
 
 #: src/exp-txt.c:88
 msgid "KOI8-U (Ukranian)"
-msgstr "KOI8-U (Ucraino)"
+msgstr "KOI8-U (ucraino)"
 
 #: src/exp-txt.c:89
 msgid "ISO-10646/UTF-8 (Unicode)"
@@ -193,7 +193,7 @@ msgstr "Bianco"
 
 #: src/exp-txt.c:103
 msgid "Any"
-msgstr "Ognuno"
+msgstr "Tutti"
 
 #. TRANSLATORS: Terminal control codes
 #: src/exp-txt.c:109
@@ -244,7 +244,7 @@ msgstr "Esporta questa pagina come file di testo"
 #. TRANSLATORS: Not Closed Caption pages.
 #: src/exp-vtx.c:78
 msgid "Can only export Teletext pages."
-msgstr "Possibile solo l'esportazione di pagine del Televideo."
+msgstr "Può solo esportare pagine del Televideo."
 
 #: src/exp-vtx.c:86
 msgid "Page is not cached, sorry."
@@ -274,8 +274,8 @@ msgstr "Modulo di esportazione sconosciuto '%s'."
 #, c-format
 msgid "Cannot initialize export module '%s', probably lack of memory."
 msgstr ""
-"Impossibile inizializzare il modulo di esportazione '%s', probabilmente "
-"mancanza di memoria."
+"Impossibile inizializzare il modulo di esportazione '%s', probabile mancanza "
+"di memoria."
 
 #: src/export.c:990
 #, c-format
@@ -285,11 +285,11 @@ msgstr "Impossibile creare il file '%s': %s."
 #: src/export.c:1062
 #, c-format
 msgid "Error while writing file '%s'"
-msgstr "Errore nella scrittura del file '%s'"
+msgstr "Errore durante la scrittura del file '%s'"
 
 #: src/export.c:1064
 msgid "Error while writing file"
-msgstr "Errore nella scrittura del file"
+msgstr "Errore durante la scrittura del file"
 
 #: src/export.c:1094
 #, c-format
@@ -341,7 +341,7 @@ msgstr "Non abbastanza memoria per allocare il buffer di cattura vbi (%d KB)."
 
 #: src/io-bktr.c:362
 msgid "BKTR driver interface not compiled."
-msgstr "Interfaccia BKTR non compilata."
+msgstr "Interfaccia del driver BKTR non compilata."
 
 #: src/io-v4l.c:763 src/io-v4l2k.c:877
 #, c-format
@@ -411,7 +411,7 @@ msgstr "%s (%s) non supporta la funzione select()."
 
 #: src/io-v4l.c:1311 src/io-v4l.c:1349
 msgid "V4L driver interface not compiled."
-msgstr "Driver dell'interfaccia V4L non compilato."
+msgstr "Interfaccia del drvier V4L non compilata."
 
 #. TRANSLATORS: Cannot identify '/dev/some'.
 #: src/io-v4l2.c:130
@@ -425,7 +425,7 @@ msgstr "Probabilmente non un dispositivo v4l2."
 
 #: src/io-v4l2.c:193 src/io-v4l2k.c:1247
 msgid "V4L2 driver interface not compiled."
-msgstr "Driver dell'interfaccia V4L2 non compilato."
+msgstr "Interfaccia del drvier V4L2 non compilata."
 
 #: src/io-v4l2k.c:162
 #, c-format
