@@ -25,17 +25,25 @@
 
   VBI stands for Vertical Blanking Interval, a gap between the image
   data transmitted in an analog video signal. This gap is used to
-  transmit AM modulated data for various data services like Teletext
-  and Closed Caption.
+  transmit data for various data services like Teletext and Closed Caption.
 
   The zvbi library provides routines to read from raw VBI sampling
   devices, to demodulate raw to sliced VBI data, and to interpret
   the data of several popular services. It has been written for
-  the Zapping TV viewer <http://zapping.sourceforge.net>.
+  the Zapping TV viewer: http://zapping.sourceforge.net.
+  
+  For details on using the library see the documentation in doc/html (built
+  only if you have Doxygen) and the files in the test directory.
 
-  For installation details see the file INSTALL. Information for
-  application writers is available in the doc and test directories.
-  Direct ideas, questions and bug reports to
-  <http://sourceforge.net/tracker/?group_id=2599> or e-mail
-  <mailto:zapping-misc@lists.sourceforge.net>, registration is not
+  Installation
+  ============
+
+  To build and install ZVBI type "./configure" and "make install". For
+  additional instructions see the INSTALL file.
+
+  Ideas, questions, patches and bug reports
+  =========================================
+  
+  http://sourceforge.net/tracker/?group_id=2599 or e-mail
+  mailto:zapping-misc@lists.sourceforge.net, registration is not
   required.
