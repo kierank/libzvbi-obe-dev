@@ -17,13 +17,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-client.c,v 1.6 2004/11/26 05:53:26 mschimek Exp $
+ *  $Id: proxy-client.c,v 1.7 2004/12/13 07:15:52 mschimek Exp $
  */
 
-static const char rcsid[] = "$Id: proxy-client.c,v 1.6 2004/11/26 05:53:26 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-client.c,v 1.7 2004/12/13 07:15:52 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #include <stdio.h>
