@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-bktr.c,v 1.11 2004/12/30 02:23:37 mschimek Exp $";
+"$Id: io-bktr.c,v 1.12 2005/01/24 00:11:53 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -69,7 +69,7 @@ static int
 bktr_read			(vbi_capture *		vc,
 				 vbi_capture_buffer **	raw,
 				 vbi_capture_buffer **	sliced,
-				 struct timeval *	timeout)
+				 const struct timeval *	timeout)
 {
 	vbi_capture_bktr *v = PARENT(vc, vbi_capture_bktr, capture);
 	vbi_capture_buffer *my_raw = v->raw_buffer;
@@ -232,14 +232,13 @@ vbi_capture_bktr_new		(const char *		dev_name,
 	v->dec.count[0]	= 16;
 	v->dec.count[1] = 16;
 
-	switch (v->dec.scanning) {
+	switch (scanning) {
 	default:
-		v->dec.scanning = 625;
-
 		/* fall through */
 
 	case 625:
 		/* Not confirmed */
+		v->dec.scanning = 625;
 		v->dec.sampling_rate = 35468950;
 		v->dec.offset = (int)(10.2e-6 * 35468950);
 		v->dec.start[0] = 22 + 1 - v->dec.count[0];
@@ -248,6 +247,7 @@ vbi_capture_bktr_new		(const char *		dev_name,
 
 	case 525:
 		/* Not confirmed */
+		v->dec.scanning = 525;
 		v->dec.sampling_rate = 28636363;
 		v->dec.offset = (int)(9.2e-6 * 28636363);
 		v->dec.start[0] = 10;
