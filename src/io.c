@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.6 2003/05/24 12:18:32 tomzo Exp $ */
+/* $Id: io.c,v 1.7 2003/06/01 19:35:40 tomzo Exp $ */
 
 #include <assert.h>
 
@@ -341,6 +341,45 @@ vbi_capture_get_poll_fd(vbi_capture *capture)
 {
 	if (capture)
 		return capture->get_poll_fd(capture);
+	else
+		return -1;
+}
+
+/**
+ * @param capture Initialized vbi capture context.
+ * @param flags Set to VBI_CHN_FLUSH_ONLY if the caller has already
+ *   sucessfully switched the channel; in this case only the VBI queue
+ *   is flushed; if connected to the proxy daemon other clients are
+ *   also notified.
+ * @param chn_prio Priority level to play nice with other device users.
+ * @param p_chn_desc Pointer to description of the channel to switch to.
+ *   For analog sources this comprises: Index of TV card input channel
+ *   (same as in VIDIOCSCHAN and VIDIOC_ENUMINPUT); TV frequency if the
+ *   input channel is a tuner (value format is same as in VIDIOCSFREQ
+ *   and VIDIOC_S_FREQUENCY); Index of TV tuner (usually zero, same as
+ *   in VIDIOC_S_FREQUENCY, i.e. Hz * 16/1000.); Video image standard.
+ * @param p_has_tuner Returns boolean flag: TRUE if the selected channel
+ *   supports selecting a TV frequency.
+ * @param p_scanning Returns the scan line count for the new video norm.
+ * @param errorstr If not @c NULL this function stores a pointer to an error
+ *   description here. You must free() this string when no longer needed.
+ *
+ * @return
+ * -1 in case of error, examine @c errno and @c errorstr for details.
+ */
+int
+vbi_capture_channel_change(vbi_capture *capture,
+			   int chn_flags, int chn_prio,
+			   vbi_channel_desc * p_chn_desc,
+			   vbi_bool * p_has_tuner, int * p_scanning,
+			   char ** errorstr)
+{
+	assert (capture != NULL);
+
+	if (capture->channel_change != NULL)
+		return capture->channel_change(capture, chn_flags, chn_prio,
+				       	       p_chn_desc, p_has_tuner,
+					       p_scanning, errorstr);
 	else
 		return -1;
 }

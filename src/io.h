@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.9 2003/05/24 12:18:47 tomzo Exp $ */
+/* $Id: io.h,v 1.10 2003/06/01 19:35:40 tomzo Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -42,6 +42,45 @@ typedef struct vbi_capture_buffer {
  * @brief Opaque device interface handle.
  **/
 typedef struct vbi_capture vbi_capture;
+
+/**
+ * @ingroup Device
+ * @brief TV input channel description for channel changes.
+ *
+ * This structure is passed to the channel switch function. Any of
+ * the elements in the union can be set to -1 if they shall remain
+ * unchanged.  Currently only analog channel switching is supported,
+ * i.e. type 0.
+ *
+ * The mode elements describe the color encoding or video norm; only
+ * one of them can be used. mode_std is a v4l2_std_id descriptor, see
+ * videodev2.h (2002 revision). mode_color is a v4l1 mode descriptor,
+ * i.e. 0=PAL, 1=NTSC, 2=SECAM, 3=AUTO. modes are converted as required
+ * for v4l1 or v4l2 devices.
+ */
+typedef struct {
+	int				type;
+	union {
+		struct {
+			int 		channel;
+			int 		freq;
+			int 		tuner;
+			int 		mode_color;
+			long long 	mode_std;
+		} analog;
+		struct {
+			char		reserved[64];
+		} x;
+	} u;
+} vbi_channel_desc;
+
+/**
+ * @ingroup Device
+ * @brief Flags for channel switching.
+ */
+enum {
+	VBI_CHN_FLUSH_ONLY = 0x01
+};
 
 /**
  * @addtogroup Device
@@ -99,7 +138,11 @@ extern unsigned int     vbi_capture_add_services(vbi_capture *capture,
                                                  vbi_bool reset, vbi_bool commit,
                                                  unsigned int services, int strict,
                                                  char ** errorstr);
-
+extern int		vbi_capture_channel_change(vbi_capture *capture,
+						   int chn_flags, int chn_prio,
+						   vbi_channel_desc * p_chn_desc,
+						   vbi_bool * p_has_tuner, int * p_scanning,
+						   char ** errorstr);
 extern void		vbi_capture_delete(vbi_capture *capture);
 /** @} */
 
@@ -147,12 +190,16 @@ extern const char _zvbi_intl_domainname[];
 struct vbi_capture {
 	vbi_bool		(* read)(vbi_capture *, vbi_capture_buffer **,
 					 vbi_capture_buffer **, struct timeval *);
-	void			(* flush)(vbi_capture *);
 	vbi_raw_decoder *	(* parameters)(vbi_capture *);
         unsigned int            (* add_services)(vbi_capture *vc,
                                          vbi_bool reset, vbi_bool commit,
                                          unsigned int services, int strict,
                                          char ** errorstr);
+	int			(* channel_change)(vbi_capture *vc,
+					 int chn_flags, int chn_prio,
+					 vbi_channel_desc * p_chn_desc,
+					 vbi_bool * p_has_tuner, int * p_scanning,
+					 char ** errorstr);
 	int			(* get_fd)(vbi_capture *);
 	int			(* get_poll_fd)(vbi_capture *);
 	void			(* _delete)(vbi_capture *);
