@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
-"POT-Creation-Date: 2003-02-16 21:40+0100\n"
+"POT-Creation-Date: 2003-04-06 05:52+0200\n"
 "PO-Revision-Date: 2002-09-27 14:10+0200\n"
 "Last-Translator: Christian Marillat <marillat.christian@wanadoo.fr>\n"
 "Language-Team: French <fr@li.org>\n"

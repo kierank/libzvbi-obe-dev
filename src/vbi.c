@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.8 2003/02/16 21:11:31 mschimek Exp $ */
+/* $Id: vbi.c,v 1.9 2003/04/06 06:11:06 mschimek Exp $ */
 
 #include "site_def.h"
 #include "../config.h"
@@ -38,6 +38,7 @@
 #include <sys/time.h>
 #include <pthread.h>
 
+#include "version.h"
 #include "vbi.h"
 #include "hamm.h"
 #include "lang.h"
@@ -809,6 +810,25 @@ vbi_decoder_new(void)
 	vbi_caption_init(vbi);
 
 	return vbi;
+}
+
+/**
+ * @param major Store major number here, can be NULL.
+ * @param minor Store minor number here, can be NULL.
+ * @param micro Store micro number here, can be NULL.
+ *
+ * Returns the library version defined in the libzvbi.h header file
+ * when the library was compiled. This function is available since
+ * version 0.2.5.
+ */
+void
+vbi_version			(unsigned int *		major,
+				 unsigned int *		minor,
+				 unsigned int *		micro)
+{
+	if (major) *major = VBI_VERSION_MAJOR;
+	if (minor) *minor = VBI_VERSION_MINOR;
+	if (micro) *micro = VBI_VERSION_MICRO;
 }
 
 /**
