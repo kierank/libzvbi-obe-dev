@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: trigger.c,v 1.6 2003/02/16 21:11:30 mschimek Exp $ */
+/* $Id: trigger.c,v 1.7 2003/10/14 20:18:55 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -303,6 +303,7 @@ parse_eacem(vbi_trigger *t, unsigned char *s1, unsigned int nuid, double now)
 
 			case 4: /* name */
 				strncpy(t->link.name, text, sizeof(t->link.name) - 1);
+				t->link.name[sizeof(t->link.name) - 1] = 0;
 				break;
 
                         case 5: /* priority */
@@ -313,6 +314,7 @@ parse_eacem(vbi_trigger *t, unsigned char *s1, unsigned int nuid, double now)
 
 			case 6: /* script */
 				strncpy(t->link.script, text, sizeof(t->link.script) - 1);
+				t->link.script[sizeof(t->link.script) - 1] = 0;
 				break;
 
 			default:
@@ -499,10 +501,12 @@ parse_atvef(vbi_trigger *t, unsigned char *s1, double now)
 
 			case 2: /* name */
 				strncpy(t->link.name, text, sizeof(t->link.name) - 1);
+				t->link.name[sizeof(t->link.name) - 1] = 0;
 				break;
 
 			case 3: /* script */
-				strncpy(t->link.script, text, sizeof(t->link.script) - 1);
+				strncpy(t->link.script, text, sizeof(t->link.script));
+				t->link.script[sizeof(t->link.script) - 1] = 0;
 				break;
 
 			case 4: /* type */
