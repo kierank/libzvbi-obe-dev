@@ -1,3 +1,8 @@
+2004-11-25    <mschimek@users.sf.net>
+
+	* src/io-dvb.c (dvb_read): Must subtract time waited in select
+	  from timeout.
+
 2004-11-11    <mschimek@users.sf.net>
 
 	* Release 0.2.9
