@@ -18,14 +18,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.h,v 1.6 2004/11/26 05:53:01 mschimek Exp $ */
+/* $Id: misc.h,v 1.7 2004/12/13 07:15:39 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
 
 /* Dox shall be system config independant. */
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #include <stddef.h>
