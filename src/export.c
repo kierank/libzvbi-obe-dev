@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.8 2002/06/14 07:59:27 mschimek Exp $ */
+/* $Id: export.c,v 1.9 2002/07/16 00:10:04 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -38,30 +38,85 @@
 #include "export.h"
 #include "vbi.h" /* vbi_asprintf */
 
+/**
+ * @addtogroup Export Exporting formatted Teletext and Closed Caption pages
+ * @ingroup Service
+ * 
+ * Once libzvbi received, decoded and formatted a Teletext or Closed
+ * Caption page you will want to render it on screen, print it as
+ * text or store it in various formats.
+ *
+ * Fortunately you don't have to do it all by yourself. libzvbi provides
+ * export modules converting a vbi_page into the desired format or
+ * rendering directly into memory.
+ *
+ * A minimalistic export example:
+ *
+ * @code
+ * static void
+ * export_my_page (vbi_page *pg)
+ * {
+ *         vbi_export *ex;
+ *         char *errstr;
+ *
+ *         if (!(ex = vbi_export_new ("html", &errstr))) {
+ *                 fprintf (stderr, "Cannot export as HTML: %s\n", errstr);
+ *                 free (errstr);
+ *                 return;
+ *         }
+ *
+ *         if (!vbi_export_file (ex, "my_page.html", pg))
+ *                 puts (vbi_export_errstr (ex));
+ *
+ *         vbi_export_delete (ex);
+ * }
+ * @endcode
+ */
+
+/**
+ * @addtogroup Exmod Internal export module interface
+ * @ingroup Export
+ *
+ * This is the private interface between the public libzvbi export
+ * functions and export modules. libzvbi client applications
+ * don't use this.
+ *
+ * Export modules @c #include @c "export.h" to get these
+ * definitions. See example module exp-templ.c.
+ */
+
+/**
+ * @addtogroup Render Teletext and Closed Caption page render functions
+ * @ingroup Export
+ * 
+ * These are functions to render Teletext and Closed Caption pages
+ * directly into memory, essentially a more direct interface to the
+ * functions of some important export modules.
+ */
+
 static vbi_bool initialized;
 static vbi_export_class *vbi_export_modules;
 
 /**
- * vbi_register_export_module:
- * @new: Static pointer to initialized #vbi_export_class structure.
+ * @param new_module Static pointer to initialized vbi_export_class structure.
  * 
- * Registers a new export module. Only export modules call this function.
- **/
+ * Registers a new export module.
+ */
 void
-vbi_register_export_module(vbi_export_class *new)
+vbi_register_export_module(vbi_export_class *new_module)
 {
 	vbi_export_class **xcp;
 
 	if (0)
 		fprintf(stderr, "libzvbi:vbi_register_export_module(\"%s\")\n",
-		        new->public.keyword);
+		        new_module->_public.keyword);
 
 	for (xcp = &vbi_export_modules; *xcp; xcp = &(*xcp)->next)
-		if (strcmp(new->public.keyword, (*xcp)->public.keyword) < 0)
+		if (strcmp(new_module->_public.keyword, (*xcp)->_public.keyword) < 0)
 			break;
 
-	new->next = *xcp;
-	*xcp = new;
+	new_module->next = *xcp;
+	*xcp = new_module;
 }
 
 /* AUTOREG not reliable, sigh. */
@@ -86,6 +141,7 @@ initialize(void)
 		NULL,
 		&vbi_export_class_tmpl,
 	};
+
 	vbi_export_class **xcp;
 
 	if (!vbi_export_modules)
@@ -96,15 +152,13 @@ initialize(void)
 }
 
 /**
- * vbi_ucs2be:
- * 
  * Helper function for export modules, since iconv seems
  * to be undecided what it really wants.
  * 
- * Return value: 
+ * @return 
  * 1 if iconv "UCS-2" is BE on this machine, 0 if LE,
  * -1 if unknown.
- **/
+ */
 int
 vbi_ucs2be(void)
 {
@@ -241,8 +295,7 @@ reset_error(vbi_export *e)
 }
 
 /**
- * vbi_export_info_enum:
- * @index: Index into the export module list, 0 ... n.
+ * @param index Index into the export module list, 0 ... n.
  *
  * Enumerates all available export modules. You should start at index 0,
  * incrementing.
@@ -250,10 +303,10 @@ reset_error(vbi_export *e)
  * Some modules may depend on machine features or the presence of certain
  * libraries, thus the list can vary from session to session.
  *
- * Return value:
- * Static pointer to a #vbi_export_info structure (no need to be freed),
- * %NULL if the index is out of bounds.
- **/
+ * @return
+ * Static pointer to a vbi_export_info structure (no need to be freed),
+ * @c NULL if the index is out of bounds.
+ */
 vbi_export_info *
 vbi_export_info_enum(int index)
 {
@@ -264,21 +317,20 @@ vbi_export_info_enum(int index)
 
 	for (xc = vbi_export_modules; xc && index > 0; xc = xc->next, index--);
 
-	return xc ? &xc->public : NULL;
+	return xc ? &xc->_public : NULL;
 }
 
 /**
- * vbi_export_info_keyword:
- * @keyword: Export module identifier as in #vbi_export_info and
+ * @param keyword Export module identifier as in vbi_export_info and
  *           vbi_export_new().
  * 
  * Similar to vbi_export_info_enum(), but this function attempts to find an
  * export module by keyword.
  * 
- * Return value:
- * Static pointer to a #vbi_export_info structure, %NULL if the named export
+ * @return
+ * Static pointer to a vbi_export_info structure, @c NULL if the named export
  * module has not been found.
- **/
+ */
 vbi_export_info *
 vbi_export_info_keyword(const char *keyword)
 {
@@ -296,29 +348,29 @@ vbi_export_info_keyword(const char *keyword)
 			break;
 
 	for (xc = vbi_export_modules; xc; xc = xc->next)
-		if (strncmp(keyword, xc->public.keyword, keylen) == 0)
-			return &xc->public;
+		if (strncmp(keyword, xc->_public.keyword, keylen) == 0)
+			return &xc->_public;
 
 	return NULL;
 }
 
 /**
- * vbi_export_info_export:
- * @export: Pointer to a #vbi_export object previously allocated with
+ * @param export Pointer to a vbi_export object previously allocated with
  *   vbi_export_new().
  *
- * Returns the export module info for the given @export object.
+ * Returns the export module info for the given @a export object.
  *
- * Return value: A static #vbi_export_info pointer or %NULL if @export
- * is %NULL.
- **/
+ * @return
+ * A static vbi_export_info pointer or @c NULL if @a export
+ * is @c NULL.
+ */
 vbi_export_info *
 vbi_export_info_export(vbi_export *export)
 {
 	if (!export)
 		return NULL;
 
-	return &export->class->public;
+	return &export->_class->_public;
 }
 
 static void
@@ -448,24 +500,23 @@ option_string(vbi_export *e, const char *s2)
 }
 
 /**
- * vbi_export_new:
- * @keyword: Export module identifier as in vbi_export_info.
- * @errstr: If not %NULL this function stores a pointer to an error
+ * @param keyword Export module identifier as in vbi_export_info.
+ * @param errstr If not @c NULL this function stores a pointer to an error
  *   description here. You must free() this string when no longer needed.
  * 
- * Creates a new export module instance to export a #vbi_page in
+ * Creates a new export module instance to export a vbi_page in
  * the respective module format. As a special service you can
- * initialize options by appending to the @keyword like this:
+ * initialize options by appending to the @param keyword like this:
  * 
- * <informalexample><programlisting>
- * vbi_export_new("keyword; quality=75.5, comment=\"example\"");  
- * </programlisting></informalexample>
+ * @code
+ * vbi_export_new ("keyword; quality=75.5, comment=@"example@"");
+ * @endcode
  * 
- * Return value:
- * Pointer to a newly allocated #vbi_export object which must be
- * freed by calling vbi_export_delete(). %NULL is returned and
- * the @errstr may be set (or %NULL) if some problem occurred.
- **/
+ * @return
+ * Pointer to a newly allocated vbi_export object which must be
+ * freed by calling vbi_export_delete(). @c NULL is returned and
+ * the @a errstr may be set (else @a NULL) if some problem occurred.
+ */
 vbi_export *
 vbi_export_new(const char *keyword, char **errstr)
 {
@@ -486,7 +537,7 @@ vbi_export_new(const char *keyword, char **errstr)
 	key[keylen] = 0;
 
 	for (xc = vbi_export_modules; xc; xc = xc->next)
-		if (strcmp(key, xc->public.keyword) == 0)
+		if (strcmp(key, xc->_public.keyword) == 0)
 			break;
 
 	if (!xc) {
@@ -494,19 +545,19 @@ vbi_export_new(const char *keyword, char **errstr)
 		return NULL;
 	}
 
-	if (!xc->new)
+	if (!xc->_new)
 		e = calloc(1, sizeof(*e));
 	else
-		e = xc->new();
+		e = xc->_new();
 
 	if (!e) {
 		vbi_asprintf(errstr, _("Cannot initialize export module '%s', "
 				       "probably lack of memory."),
-			     xc->public.label ? xc->public.label : keyword);
+			     xc->_public.label ? xc->_public.label : keyword);
 		return NULL;
 	}
 
-	e->class = xc;
+	e->_class = xc;
 	e->errstr = NULL;
 
 	e->name = NULL;
@@ -525,13 +576,12 @@ vbi_export_new(const char *keyword, char **errstr)
 }
 
 /**
- * vbi_export_delete:
- * @export: Pointer to a #vbi_export object previously allocated with
- *	     vbi_export_new(). Can be %NULL.
+ * @param export Pointer to a vbi_export object previously allocated with
+ *	     vbi_export_new(). Can be @c NULL.
  * 
- * This function frees all resources associated with the #vbi_export
+ * This function frees all resources associated with the vbi_export
  * object.
- **/
+ */
 void
 vbi_export_delete(vbi_export *export)
 {
@@ -548,25 +598,24 @@ vbi_export_delete(vbi_export *export)
 	if (export->creator)
 		free(export->creator);
 
-	xc = export->class;
+	xc = export->_class;
 
-	if (xc->new && xc->delete)
-		xc->delete(export);
+	if (xc->_new && xc->_delete)
+		xc->_delete(export);
 	else
 		free(export);
 }
 
 /**
- * vbi_export_option_info_enum:
- * @export: Pointer to a initialized #vbi_export object.
- * @index: Index in the option table 0 ... n.
+ * @param export Pointer to a initialized vbi_export object.
+ * @param index Index in the option table 0 ... n.
  *
  * Enumerates the options available for the given export module. You
  * should start at index 0, incrementing.
  *
- * Return value: Static pointer to a #vbi_option_info structure,
- * %NULL if @index is out of bounds.
- **/
+ * @return Static pointer to a vbi_option_info structure,
+ * @c NULL if @a index is out of bounds.
+ */
 vbi_option_info *
 vbi_export_option_info_enum(vbi_export *export, int index)
 {
@@ -580,7 +629,7 @@ vbi_export_option_info_enum(vbi_export *export, int index)
 	if (index < GENERIC)
 		return generic_options + index;
 
-	xc = export->class;
+	xc = export->_class;
 
 	if (xc->option_enum)
 		return xc->option_enum(export, index - GENERIC);
@@ -589,16 +638,15 @@ vbi_export_option_info_enum(vbi_export *export, int index)
 }
 
 /**
- * vbi_export_option_info_keyword:
- * @export: Pointer to a initialized #vbi_export object.
- * @keyword: Keyword of the option as in #vbi_option_info.
+ * @param export Pointer to a initialized vbi_export object.
+ * @param keyword Keyword of the option as in vbi_option_info.
  *
  * Similar to vbi_export_option_info_enum(), but tries to find the
  * option info based on the given keyword.
  *
- * Return value: Static pointer to a #vbi_option_info structure,
- * %NULL if the keyword wasn't found.
- **/
+ * @return Static pointer to a vbi_option_info structure,
+ * @c NULL if the keyword wasn't found.
+ */
 vbi_option_info *
 vbi_export_option_info_keyword(vbi_export *export, const char *keyword)
 {
@@ -615,7 +663,7 @@ vbi_export_option_info_keyword(vbi_export *export, const char *keyword)
 		if (strcmp(keyword, generic_options[i].keyword) == 0)
 			return generic_options + i;
 
-	xc = export->class;
+	xc = export->_class;
 
 	if (!xc->option_enum)
 		return NULL;
@@ -630,20 +678,18 @@ vbi_export_option_info_keyword(vbi_export *export, const char *keyword)
 }
 
 /**
- * vbi_export_option_get:
- * @export: Pointer to a initialized #vbi_export object.
- * @keyword: Keyword identifying the option, as in #vbi_option_info.
- * @value: A place to store the current option value.
+ * @param export Pointer to a initialized vbi_export object.
+ * @param keyword Keyword identifying the option, as in vbi_option_info.
+ * @param value A place to store the current option value.
  *
  * This function queries the current value of the named option.
- * When the option is of type #VBI_OPTION_STRING @value.str must be
+ * When the option is of type VBI_OPTION_STRING @a value.str must be
  * freed with free() when you don't need it any longer. When the
- * option is of type #VBI_OPTION_MENU then @value.num contains the
+ * option is of type VBI_OPTION_MENU then @a value.num contains the
  * selected entry.
  *
- * Return value:
- * %TRUE on success, otherwise @value remained unchanged.
- **/
+ * @return @c TRUE on success, otherwise @a value unchanged.
+ */
 vbi_bool
 vbi_export_option_get(vbi_export *export, const char *keyword,
 		      vbi_option_value *value)
@@ -666,7 +712,7 @@ vbi_export_option_get(vbi_export *export, const char *keyword,
 		if (!(value->str = vbi_export_strdup(export, NULL, export->creator)))
 			return FALSE;
 	} else {
-		xc = export->class;
+		xc = export->_class;
 
 		if (xc->option_get)
 			r = xc->option_get(export, keyword, value);
@@ -680,26 +726,27 @@ vbi_export_option_get(vbi_export *export, const char *keyword,
 }
 
 /**
- * vbi_export_option_set:
- * @export: Pointer to a initialized #vbi_export object.
- * @keyword: Keyword identifying the option, as in #vbi_option_info.
- * @Varargs: New value to set.
+ * @param export Pointer to a initialized vbi_export object.
+ * @param keyword Keyword identifying the option, as in vbi_option_info.
+ * @param Varargs New value to set.
  *
  * Sets the value of the named option. Make sure the value is casted
- * to the correct type (int, double, char *). Typical usage may be:
+ * to the correct type (int, double, char *).
  *
- * <informalexample><programlisting>
- * vbi_export_option_set(export, "quality", 75.5);
- * </programlisting></informalexample>
+ * Typical usage of vbi_export_option_set():
+ * @code
+ * vbi_export_option_set (export, "quality", 75.5);
+ * @endcode
  *
- * Mind that options of type #VBI_OPTION_MENU must be set by menu
- * entry (int), all other options by value. If necessary this will
+ * Mind that options of type @c VBI_OPTION_MENU must be set by menu
+ * entry number (int), all other options by value. If necessary it will
  * be replaced by the closest value possible. Use function
- * vbi_export_option_menu_set() to set all menu options by menu entry.  
+ * vbi_export_option_menu_set() to set options with menu
+ * by menu entry.  
  *
- * Return value:
- * %TRUE on success, otherwise the option is not changed.
- **/
+ * @return
+ * @c TRUE on success, otherwise the option is not changed.
+ */
 vbi_bool
 vbi_export_option_set(vbi_export *export, const char *keyword, ...)
 {
@@ -731,7 +778,7 @@ vbi_export_option_set(vbi_export *export, const char *keyword, ...)
 		if (!vbi_export_strdup(export, &export->creator, creator))
 			return FALSE;
 	} else {
-		xc = export->class;
+		xc = export->_class;
 
 		if (xc->option_set)
 			r = xc->option_set(export, keyword, args);
@@ -745,19 +792,18 @@ vbi_export_option_set(vbi_export *export, const char *keyword, ...)
 }
 
 /**
- * vbi_export_option_menu_get:
- * @export: Pointer to a initialized #vbi_export object.
- * @keyword: Keyword identifying the option, as in #vbi_option_info.
- * @entry: A place to store the current menu entry.
+ * @param export Pointer to a initialized vbi_export object.
+ * @param keyword Keyword identifying the option, as in vbi_option_info.
+ * @param entry A place to store the current menu entry.
  * 
  * Similar to vbi_export_option_get() this function queries the current
  * value of the named option, but returns this value as number of the
  * corresponding menu entry. Naturally this must be an option with
  * menu.
  * 
- * Return value: 
- * %TRUE on success, otherwise @value remained unchanged.
- **/
+ * @return 
+ * @c TRUE on success, otherwise @a value remained unchanged.
+ */
 vbi_bool
 vbi_export_option_menu_get(vbi_export *export, const char *keyword,
 			   int *entry)
@@ -815,18 +861,17 @@ vbi_export_option_menu_get(vbi_export *export, const char *keyword,
 }
 
 /**
- * vbi_export_option_menu_set:
- * @export: Pointer to a initialized #vbi_export object.
- * @keyword: Keyword identifying the option, as in #vbi_option_info.
- * @entry: Menu entry to be selected.
+ * @param export Pointer to a initialized vbi_export object.
+ * @param keyword Keyword identifying the option, as in vbi_option_info.
+ * @param entry Menu entry to be selected.
  * 
  * Similar to vbi_export_option_set() this function sets the value of
  * the named option, however it does so by number of the corresponding
  * menu entry. Naturally this must be an option with menu.
  *
- * Return value: 
- * %TRUE on success, otherwise the option is not changed.
- **/
+ * @return 
+ * @c TRUE on success, otherwise the option is not changed.
+ */
 vbi_bool
 vbi_export_option_menu_set(vbi_export *export, const char *keyword,
 			   int entry)
@@ -867,23 +912,22 @@ vbi_export_option_menu_set(vbi_export *export, const char *keyword,
 }
 
 /**
- * vbi_export_stdio:
- * @export: Pointer to a initialized #vbi_export object.
- * @fp: Buffered i/o stream to write to.
- * @pg: Page to be exported.
+ * @param export Pointer to a initialized vbi_export object.
+ * @param fp Buffered i/o stream to write to.
+ * @param pg Page to be exported.
  * 
- * This function writes the @pg contents, converted to the respective
- * export module format, to the stream @fp. You are responsible for
+ * This function writes the @a pg contents, converted to the respective
+ * export module format, to the stream @a fp. The caller is responsible for
  * opening and closing the stream, don't forget to check for i/o
  * errors after closing. Note this function may write incomplete files
  * when an error occurs.
  *
  * You can call this function as many times as you want, it does not
- * change #vbi_export state or the #vbi_page.
+ * change vbi_export state or the vbi_page.
  * 
- * Return value: 
- * %TRUE on success.
- **/
+ * @return 
+ * @c TRUE on success.
+ */
 vbi_bool
 vbi_export_stdio(vbi_export *export, FILE *fp, vbi_page *pg)
 {
@@ -895,7 +939,7 @@ vbi_export_stdio(vbi_export *export, FILE *fp, vbi_page *pg)
 	reset_error(export);
 	clearerr(fp);
 
-	success = export->class->export(export, fp, pg);
+	success = export->_class->export(export, fp, pg);
 
 	if (success && ferror(fp)) {
 		vbi_export_write_error(export);
@@ -906,22 +950,20 @@ vbi_export_stdio(vbi_export *export, FILE *fp, vbi_page *pg)
 }
 
 /**
- * vbi_export_file:
- * @export: Pointer to a initialized #vbi_export object.
- * @name: File to be created.
- * @pg: Page to be exported.
+ * @param export Pointer to a initialized vbi_export object.
+ * @param name File to be created.
+ * @param pg Page to be exported.
  * 
- * This function writes the @pg contents, converted to the respective
- * export module format, into a newly created file (as with fopen()) of
- * the given @name. When an error occured the incomplete file will be
- * deleted.
+ * This function writes the @a pg contents, converted to the respective
+ * export format, into a new file of the given @a name. When an error
+ * occured the incomplete file will be deleted.
  * 
  * You can call this function as many times as you want, it does not
- * change #vbi_export state or the #vbi_page.
+ * change vbi_export state or the vbi_page.
  * 
- * Return value: 
- * %TRUE on success.
- **/
+ * @return 
+ * @c TRUE on success.
+ */
 vbi_bool
 vbi_export_file(vbi_export *export, const char *name,
 		vbi_page *pg)
@@ -943,7 +985,7 @@ vbi_export_file(vbi_export *export, const char *name,
 
 	export->name = (char *) name;
 
-	success = export->class->export(export, fp, pg);
+	success = export->_class->export(export, fp, pg);
 
 	if (success && ferror(fp)) {
 		vbi_export_write_error(export);
@@ -965,15 +1007,13 @@ vbi_export_file(vbi_export *export, const char *name,
 }
 
 /**
- * vbi_export_error_printf:
- * @export: Pointer to a initialized #vbi_export object.
- * @templ: See printf().
- * @Varargs: See printf(). 
+ * @param export Pointer to a initialized vbi_export object.
+ * @param templ See printf().
+ * @param ... See printf(). 
  * 
- * Store an error description in the @export object. Including the current
- * error description (to append or prepend) is safe. Only export modules
- * call this function.
- **/
+ * Store an error description in the @a export object. Including the current
+ * error description (to append or prepend) is safe.
+ */
 void
 vbi_export_error_printf(vbi_export *export, const char *templ, ...)
 {
@@ -993,14 +1033,13 @@ vbi_export_error_printf(vbi_export *export, const char *templ, ...)
 }
 
 /**
- * vbi_export_write_error:
- * @export: Pointer to a initialized #vbi_export object.
+ * @param export Pointer to a initialized vbi_export object.
  * 
  * Similar to vbi_export_error_printf this function stores an error
- * description in the @export object, after examining the errno
+ * description in the @a export object, after examining the errno
  * variable and choosing an appropriate message. Only export
  * modules call this function.
- **/
+ */
 void
 vbi_export_write_error(vbi_export *export)
 {
@@ -1023,22 +1062,44 @@ vbi_export_write_error(vbi_export *export)
 	}
 }
 
-void
-vbi_export_unknown_option(vbi_export *e, const char *keyword)
+static char *
+module_name			(vbi_export *		export)
 {
-	vbi_export_error_printf(e, _("Export module '%s' has no option '%s'."),
-				e->class->public.label ?
-				_(e->class->public.label) : e->class->public.keyword,
-				keyword);
+	vbi_export_class *xc = export->_class;
+
+	if (xc->_public.label)
+		return _(xc->_public.label);
+	else
+		return xc->_public.keyword;
 }
 
+/**
+ * @param export Pointer to a initialized vbi_export object.
+ * @param keyword Name of the unknown option.
+ * 
+ * Store an error description in the @a export object.
+ */
 void
-vbi_export_invalid_option(vbi_export *e, const char *keyword, ...)
+vbi_export_unknown_option(vbi_export *export, const char *keyword)
+{
+	vbi_export_error_printf (export, _("Export module '%s' has no option '%s'."),
+				 module_name (export), keyword);
+}
+
+/**
+ * @param export Pointer to a initialized vbi_export object.
+ * @param keyword Name of the unknown option.
+ * @param ... Invalid value, type depending on the option.
+ * 
+ * Store an error description in the @a export object.
+ */
+void
+vbi_export_invalid_option(vbi_export *export, const char *keyword, ...)
 {
 	char buf[256];
 	vbi_option_info *oi;
 
-	if ((oi = vbi_export_option_info_keyword(e, keyword))) {
+	if ((oi = vbi_export_option_info_keyword(export, keyword))) {
 		va_list args;
 		char *s;
 
@@ -1071,21 +1132,32 @@ vbi_export_invalid_option(vbi_export *e, const char *keyword, ...)
 	} else
 		buf[0] = 0;
 
-	vbi_export_error_printf(e, _("Invalid argument %s for option %s of export module %s."),
-				buf, keyword, e->class->public.label ?
-				_(e->class->public.label) : e->class->public.keyword);
+	vbi_export_error_printf (export, _("Invalid argument %s for option %s of export module %s."),
+				 buf, keyword, module_name (export));
 }
 
+/**
+ * @param export Pointer to a initialized vbi_export object.
+ * @param d If non-zero, store pointer to allocated string here. When *d
+ *   is non-zero, free(*d) the old string first.
+ * @param s String to be duplicated.
+ * 
+ * Helper function for export modules.
+ *
+ * Same as the libc strdup(), except for @a d argument and setting
+ * the @a export error string on failure.
+ * 
+ * @return 
+ * @c NULL on failure, pointer to malloc()ed string otherwise.
+ */
 char *
-vbi_export_strdup(vbi_export *e, char **d, const char *s)
+vbi_export_strdup(vbi_export *export, char **d, const char *s)
 {
 	char *new = strdup(s ? s : "");
 
 	if (!new) {
-		vbi_export_error_printf(e, _("Out of memory in export module '%s'."),
-					e->class->public.label ?
-					_(e->class->public.label)
-					: e->class->public.keyword);
+		vbi_export_error_printf (export, _("Out of memory in export module '%s'."),
+					 module_name (export));
 		errno = ENOMEM;
 		return NULL;
 	}
@@ -1100,14 +1172,13 @@ vbi_export_strdup(vbi_export *e, char **d, const char *s)
 }
 
 /**
- * vbi_export_errstr:
- * @export: Pointer to a initialized #vbi_export object.
+ * @param export Pointer to a initialized vbi_export object.
  * 
- * Return value: 
+ * @return 
  * After an export function failed, this function returns a pointer
  * to a more detailed error description. Do not free this string. It
  * remains valid until the next call of an export function.
- **/
+ */
 char *
 vbi_export_errstr(vbi_export *export)
 {
