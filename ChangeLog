@@ -1,3 +1,37 @@
+2003-02-26	<mschimek@users.sf.net>
+
+	Added proxy daemon by Tom Zoerner:
+	* test/Makefile.am: Added proxy-test target.
+	* test: Added proxy-test.c
+	* src/Makefile.am: Added proxy targets.
+	* src: Added io-proxy.c, proxy-msg.c, proxy-msg.h. Added swap32()
+	  to proxy-msg.h, removed GNUism #include utils.h.
+	* Added daemon dir (since we need a different Makefile.am),
+	  added Makefile.am, proxyd.c, README.
+	* Makefile.am: Added daemon subdir.
+	* configure.in: Added --enable-proxy switch and daemon/Makefile.
+
+2003-02-26	<mschimek@users.sf.net>
+
+	* src/decoder.c (vbi_raw_decoder_add_services): There was
+	  a bug in the loop across the pattern array which caused
+	  heap corruption. Fix by Tom Zoerner. He also added some
+	  debug output, for now conditionally compiled in.
+	* src/decoder.c (vbi_raw_decoder_remove_services): In the
+	  pattern array job indices were not adapted. Fix by Tom.
+	* src/io-v4l.c (set_parameters): ioctl(VIDIOCSVBIFMT)
+	  result EINVAL led to a FALSE result value and regardless
+	  of the "strict" level to an abort. Actually EINVAL must
+	  be expected. Fix by Tom.
+	* src/io-v4l.c (v4l_new): v->dec.offset default values for
+	  scanning == 625 were refused by vbi_raw_decoder_add_services().
+	  Changed to be identical to the 525 case. Fix by Tom.
+	  See zapping-misc 2003-04-23 for details.
+
+2003-02-17	<mschimek@users.sf.net>
+
+	* src/vbi.c, src/vbi.h: Added vbi_version(). 
+	
 2003-02-16	<mschimek@users.sf.net>
 
 	* Release 0.2.4.

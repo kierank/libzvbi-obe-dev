@@ -1,0 +1,10 @@
+Libzvbi daemon
+
+This is a daemon proposed and implemented by Tom Zoerner. Its purpose
+is to share sliced vbi data amongst multiple clients using the same
+vbi capture device.
+
+Work is in progress. To compile the daemon and related files
+./configure with --enable-proxy. make install will not install the
+daemon yet, you have to start the executable from this directory.
+For a client example see the test directory.
