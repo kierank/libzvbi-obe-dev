@@ -1,3 +1,10 @@
+2002-09-26	<mschimek@users.sf.net>
+
+	* src/export.c, src/export.h, src/io.h, src/teletext.c: gettext()
+	  fix, should have been dgettext(). Oops.
+	* src/wss.c: Aspect ratio event reported incorrect 16:9 anamorphic
+	  aspect 16/9, changed to 3/4.
+
 2002-07-30	<mschimek@users.sf.net>
 
 	* src/cache.c: Fixed buffer overflow (SRTL bug).
@@ -105,7 +112,7 @@
 2002-04-01	Release 0.1.1 <mschimek@users.sf.net>
 
 	* po/de.po: Updated.
-	* po/es.po: Updated by Iñaki G. Etxebarria.
+	* po/es.po: Updated by I? G. Etxebarria.
 	* po/pl.po: Updated by Pawel Sakowski.
 	* Removed the version number from the library name,
 	  was a bad idea.

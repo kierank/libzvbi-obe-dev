@@ -18,9 +18,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: explist.c,v 1.4 2002/08/07 19:29:03 mschimek Exp $ */
+/* $Id: explist.c,v 1.5 2002/09/26 20:50:01 mschimek Exp $ */
 
 #undef NDEBUG
+
+#include "../config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,13 +30,14 @@
 #include <ctype.h>
 #include <assert.h>
 #include <getopt.h>
+#include <locale.h>
 
 #include <libzvbi.h>
 
 #ifndef _
 #ifdef ENABLE_NLS
 #    include <libintl.h>
-#    define _(String) gettext (String)
+#    define _(String) dgettext (PACKAGE, String)
 #    ifdef gettext_noop
 #        define N_(String) gettext_noop (String)
 #    else
@@ -501,6 +504,9 @@ int
 main(int argc, char **argv)
 {
 	int index, c;
+
+	setlocale (LC_ALL, "");
+	textdomain ("foobar"); /* we are not the library */
 
 	while ((c = getopt_long(argc, argv, "c", long_options, &index)) != -1)
 		switch (c) {

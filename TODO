@@ -1,4 +1,4 @@
-$Id: TODO,v 1.7 2002/08/07 19:29:03 mschimek Exp $
+$Id: TODO,v 1.8 2002/09/26 20:50:01 mschimek Exp $
 
 * 001 io: Add io-dvb. Generally speaking the i/o api is poor,
   should be improved.
@@ -27,6 +27,11 @@ $Id: TODO,v 1.7 2002/08/07 19:29:03 mschimek Exp $
 * 018 http://telepresence.dmem.strath.ac.uk/bt848/
 * 019 print should translate linefeeds to target charset (wchar...)
 * 020 VR triggers from VPS/PDC/XDS.
+* 021 Not relocatable (bindtextdomain)
 
 -------------------------------------------------------------------------------
 Ideas? Drop us a note at http://zapping.sourceforge.net.
+
+
+
+

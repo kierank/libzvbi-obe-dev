@@ -1,7 +1,7 @@
 0.2.2
 -----
 RH 7.3 build fix (zapping-Bugs-568052) and switch to gettext 0.11.
-Libzvbi can now build in a separate dir.  
+Several other bug fixes. Libzvbi can now build in a separate dir.
 
 0.2.1
 -----
