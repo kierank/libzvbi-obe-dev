@@ -9,6 +9,12 @@ INCLUDES  = -Wall -Wunused -Wmissing-prototypes -Wmissing-declarations
 INCLUDES += -D_REENTRANT -D_XOPEN_SOURCE=500 -D_BSD_SOURCE
 INCLUDES += $(X_CFLAGS) $(UNICODE_CFLAGS)
 
+if ENABLE_PROXY
+proxy_sources=io-proxy.c proxy-msg.c proxy-msg.h
+else
+proxy_sources=
+endif
+
 libzvbi_la_SOURCES = \
 	decoder.c decoder.h sliced.h \
 	io.c io.h \
@@ -32,7 +38,8 @@ libzvbi_la_SOURCES = \
 	hamm.c hamm.h \
 	lang.c lang.h \
 	tables.c tables.h \
-	bcd.h
+	bcd.h \
+	$(proxy_sources)
 
 libzvbiincludedir = $(includedir)
 libzvbiinclude_HEADERS = libzvbi.h
