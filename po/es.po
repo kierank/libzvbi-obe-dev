@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.5\n"
-"POT-Creation-Date: 2002-03-19 17:40+0100\n"
+"POT-Creation-Date: 2002-03-28 13:39+0100\n"
 "PO-Revision-Date: 2002-01-08 14:34+0100\n"
 "Last-Translator: Iñaki García Etxebarria <garetxe@users.sourceforge.net>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -19,18 +19,17 @@ msgid "Correct aspect ratio"
 msgstr "Relación de aspecto correcta"
 
 #: src/exp-gfx.c:734
-#, fuzzy
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
 msgstr ""
-"Aproximar una relación de tamaños similar a una TV real, esto añadirá "
-"información redundante"
+"Aproximar una relación de tamaños similar a una TV real, esto duplicará "
+"el tamaño de la imagen."
 
 #: src/exp-gfx.c:807 src/exp-gfx.c:1103
 #, c-format
 msgid "Unable to allocate %d KB image buffer."
-msgstr "no se puede reservar un buffer de %d KB."
+msgstr "No se puede reservar un buffer de %d KB."
 
 #: src/exp-gfx.c:897
 msgid "PPM"
@@ -43,7 +42,7 @@ msgstr "Exportar la página actual como PPM"
 #: src/exp-gfx.c:986
 #, c-format
 msgid "Unable to allocate %d byte buffer."
-msgstr "no se puede reservar un buffer de %d KB."
+msgstr "No se puede reservar un buffer de %d KB."
 
 #. NLS: .png title, must be Latin-1
 #: src/exp-gfx.c:1173 src/exp-html.c:232
@@ -53,13 +52,13 @@ msgstr "Página de Teletexto %3x.%x"
 
 #. NLS: .png title, must be Latin-1
 #: src/exp-gfx.c:1178 src/exp-html.c:235
-#, c-format
+#, c-format, ycp-format
 msgid "Teletext Page %3x"
 msgstr "Página de Teletexto %3x"
 
 #: src/exp-gfx.c:1247
 msgid "PNG"
-msgstr ""
+msgstr "PNG"
 
 #: src/exp-gfx.c:1248
 msgid "Export this page as PNG image"
@@ -79,7 +78,7 @@ msgstr ""
 
 #: src/exp-html.c:98
 msgid "Color (CSS)"
-msgstr ""
+msgstr "Color (CSS)"
 
 #: src/exp-html.c:99
 msgid "Store the page colors using CSS attributes"
@@ -104,11 +103,11 @@ msgstr "<title lang=\"es\">"
 #: src/exp-html.c:352 src/exp-txt.c:550
 #, c-format
 msgid "Character conversion Unicode (UCS-2) to %s not supported."
-msgstr "Conversión de caracter Unicode (UCS-2) -> %s no soportada"
+msgstr "Conversión de caracter Unicode (UCS-2) -> %s no soportada."
 
 #: src/exp-html.c:431
 msgid "Character conversion failed."
-msgstr "Conversión de caracter no soportada"
+msgstr "Conversión de caracter no soportada."
 
 #: src/exp-html.c:720
 msgid "HTML"
@@ -124,43 +123,43 @@ msgstr "ASCII"
 
 #: src/exp-txt.c:80
 msgid "ISO-8859-1 (Latin-1 Western languages)"
-msgstr ""
+msgstr "ISO-8859-1 (Latin-1 Idiomas occidentales)"
 
 #: src/exp-txt.c:81
 msgid "ISO-8859-2 (Latin-2 Central and Eastern Europe languages)"
-msgstr ""
+msgstr "ISO-8859-2 (Latin-2 Idiomas de Centroeuropa y Europa oriental)"
 
 #: src/exp-txt.c:82
 msgid "ISO-8859-4 (Latin-3 Baltic languages)"
-msgstr ""
+msgstr "ISO-8859-4 (Latin-3 Idiomas bálticos)"
 
 #: src/exp-txt.c:83
 msgid "ISO-8859-5 (Cyrillic)"
-msgstr ""
+msgstr "ISO-8859-5 (Cirílico)"
 
 #: src/exp-txt.c:84
 msgid "ISO-8859-7 (Greek)"
-msgstr ""
+msgstr "ISO-8859-7 (Griego)"
 
 #: src/exp-txt.c:85
 msgid "ISO-8859-8 (Hebrew)"
-msgstr ""
+msgstr "ISO-8859-8 (Hebreo)"
 
 #: src/exp-txt.c:86
 msgid "ISO-8859-9 (Turkish)"
-msgstr ""
+msgstr "ISO-8859-9 (Turco)"
 
 #: src/exp-txt.c:87
 msgid "KOI8-R (Russian and Bulgarian)"
-msgstr ""
+msgstr "KOI8-R (Ruso y búlgaro)"
 
 #: src/exp-txt.c:88
 msgid "KOI8-U (Ukranian)"
-msgstr ""
+msgstr "KOI8-U (Ucraniano)"
 
 #: src/exp-txt.c:89
 msgid "ISO-10646/UTF-8 (Unicode)"
-msgstr ""
+msgstr "ISO-10646/UTF-8 (Unicode)"
 
 #: src/exp-txt.c:101
 msgid "Black"
@@ -184,11 +183,11 @@ msgstr "Azul"
 
 #: src/exp-txt.c:102
 msgid "Magenta"
-msgstr ""
+msgstr "Magenta"
 
 #: src/exp-txt.c:102
 msgid "Cyan"
-msgstr ""
+msgstr "Cían"
 
 #: src/exp-txt.c:102
 msgid "White"
@@ -201,24 +200,24 @@ msgstr "Cualquiera"
 #. NLS: Insert terminal control codes
 #: src/exp-txt.c:109
 msgid "None"
-msgstr ""
+msgstr "Ninguno"
 
 #: src/exp-txt.c:109
 msgid "ANSI X3.64 / VT 100"
-msgstr ""
+msgstr "ANSI X3.64 / VT 100"
 
 #: src/exp-txt.c:109
 msgid "VT 200"
-msgstr ""
+msgstr "VT 200"
 
 #. NLS: Text export format menu
 #: src/exp-txt.c:116
 msgid "Format"
-msgstr ""
+msgstr "Formato"
 
 #: src/exp-txt.c:126
 msgid "Control codes"
-msgstr ""
+msgstr "Códigos de control"
 
 #: src/exp-txt.c:130
 msgid "Foreground"
@@ -236,16 +235,15 @@ msgstr "Fondo"
 #. any
 #: src/exp-txt.c:136
 msgid "Assumed terminal background color"
-msgstr "Color asumido de fondo de la terminal"
+msgstr "Color esperado de fondo de la terminal"
 
 #: src/exp-txt.c:600
 msgid "Text"
-msgstr ""
+msgstr "Texto"
 
 #: src/exp-txt.c:601
-#, fuzzy
 msgid "Export this page as text file"
-msgstr "Exportar la página actual como texto ANSI"
+msgstr "Exportar la página actual como texto"
 
 #: src/exp-vtx.c:77
 msgid "Can only export Teletext pages."
@@ -253,12 +251,11 @@ msgstr "Sólo se pueden exportar páginas de Teletexto."
 
 #: src/exp-vtx.c:85
 msgid "Page is not cached, sorry."
-msgstr "la página no está en la caché, lo siento."
+msgstr "La página no está en la caché, lo siento."
 
 #: src/exp-vtx.c:95
-#, fuzzy
 msgid "Cannot export this page, not displayable."
-msgstr "No se puede exportar esta página"
+msgstr "No se puede exportar esta página, no se puede mostrar"
 
 #: src/exp-vtx.c:131
 msgid "VTX"
@@ -274,50 +271,52 @@ msgstr ""
 #: src/export.c:400
 #, c-format
 msgid "Invalid option string \"%s\"."
-msgstr ""
+msgstr "Cadena de opción incorrecta \"%s\"."
 
 #: src/export.c:489
 #, c-format
 msgid "Unknown export module '%s'."
-msgstr ""
+msgstr "Módulo de exportación desconocido '%s'."
 
 #: src/export.c:499
 #, c-format
 msgid "Cannot initialize export module '%s', probably lack of memory."
 msgstr ""
+"No se puede iniciar el módulo de exportación '%s', "
+"probablemente falta de memoria."
 
 #: src/export.c:935
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot create file '%s': Error %d, %s."
-msgstr "No se puede crear '%s': %d, %s"
+msgstr "No se puede crear '%s': Error %d, %s."
 
 #: src/export.c:1010
 #, c-format
 msgid "Error while writing file '%s'"
-msgstr ""
+msgstr "Error al escribir el fichero '%s'"
 
 #: src/export.c:1012
 msgid "Error while writing file"
-msgstr ""
+msgstr "Error al escribir el fichero"
 
 #: src/export.c:1025
 #, c-format
 msgid "Export module '%s' has no option '%s'."
-msgstr ""
+msgstr "Módulo de exportación '%s' no contiene la opción '%s'."
 
 #: src/export.c:1070
 #, c-format
 msgid "Invalid argument %s for option %s of export module %s."
-msgstr ""
+msgstr "Argumento %s incorrecto para la opción %s del módulo %s."
 
 #: src/export.c:1081
 #, c-format
 msgid "Out of memory in export module '%s'."
-msgstr ""
+msgstr "Sin memoria en el módulo de exportación '%s'."
 
 #: src/export.c:1111
 msgid "Unknown error."
-msgstr ""
+msgstr "Error desconocido."
 
 #: src/io-v4l.c:511 src/io-v4l.c:774 src/io-v4l.c:792 src/io-v4l2.c:332
 #: src/io-v4l2.c:530 src/io-v4l2.c:578 src/io-v4l2.c:659
@@ -330,13 +329,13 @@ msgid "Cannot open '%s': %d, %s."
 msgstr "No se puede abrir '%s': %d, %s."
 
 #: src/io-v4l2.c:349
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot identify '%s': %d, %s."
-msgstr "No se puede abrir '%s': %d, %s."
+msgstr "No se puede identificar '%s': %d, %s."
 
 #: src/io-v4l2.c:351
 msgid "Probably not a v4l2 device."
-msgstr ""
+msgstr "Probablemente no es un dispositivo v4l2."
 
 #: src/io-v4l.c:545 src/io-v4l2.c:356
 #, c-format
@@ -347,18 +346,18 @@ msgstr "%s (%s) no es dispositivo de VBI crudo."
 #: src/io-v4l.c:696 src/io-v4l2.c:367 src/io-v4l2.c:543
 #, c-format
 msgid "%s (%s) does not support the select() function."
-msgstr ""
+msgstr "%s (%s) no soporta la función select()."
 
 #. mandatory, http://www.thedirks.org/v4l2/v4l2dsi.htm
 #: src/io-v4l2.c:375
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot query current videostandard of %s (%s): %d, %s."
 msgstr ""
-"No se pueden obtener los parámetros de vbi actuales de %s (%s): %d, %s.\n"
+"No se pueden obtener el estándar actual de %s (%s): %d, %s."
 
 #: src/io-v4l2.c:377 src/io-v4l2.c:642
 msgid "Probably a driver bug."
-msgstr ""
+msgstr "Probablemente un fallo del controlador."
 
 #: src/io-v4l2.c:397
 #, c-format
@@ -375,9 +374,9 @@ msgstr ""
 "solicitados."
 
 #: src/io-v4l.c:450 src/io-v4l2.c:451
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
-msgstr "%s (%s) está siendo utilizado.\n"
+msgstr "No se puede inicializar %s (%s), ya está siendo utilizado."
 
 #: src/io-v4l.c:456 src/io-v4l2.c:467
 #, c-format
@@ -390,11 +389,13 @@ msgid "Possibly a driver bug."
 msgstr "Posiblemente un fallo del driver."
 
 #: src/io-v4l.c:584 src/io-v4l2.c:499
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
-msgstr "%s (%s) ofrece un formato de muestreo no reconocido #%d."
+msgstr ""
+"%s (%s) ofrece un formato de muestreo no reconocido #%d. Esto puede "
+"ser un fallo del controlador o que libzvbi es demasiado vieja."
 
 #: src/io-v4l2.c:559
 #, c-format
@@ -440,7 +441,7 @@ msgstr ""
 
 #: src/io-v4l2.c:710
 msgid "V4L2 interface not compiled."
-msgstr ""
+msgstr "Interfaz V4L2 no compilado."
 
 #: src/io-v4l.c:499
 msgid "driver unknown"
@@ -457,11 +458,13 @@ msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
 msgstr ""
+"No se puede identificar %s (%s), el tamaño de cuadro vbi sugiere que no "
+"es un controlador bttv."
 
 #: src/io-v4l.c:661 src/io-v4l.c:721
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
-msgstr "No se puede establecer o determinar el estándar actual de %s (%s).\n"
+msgstr "No se puede establecer o determinar el estándar actual de %s (%s)."
 
 #: src/io-v4l.c:748
 #, c-format
@@ -469,64 +472,9 @@ msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
 "frequency %.2f MHz is too low."
 msgstr ""
-"No se pueden capturar los servicios de datos solicitados con %s (%s),\n"
+"No se pueden capturar los servicios de datos solicitados con %s (%s), "
 "la frecuencia de muestreo %.2f MHz es demasiado baja."
 
 #: src/io-v4l.c:850 src/io-v4l.c:859
 msgid "V4L interface not compiled."
-msgstr ""
-
-#~ msgid "Character conversion Unicode -> %s not supported"
-#~ msgstr "Conversión de caracter Unicode -> %s no soportada"
-
-#~ msgid "ANSI colors"
-#~ msgstr "Colores ANSI"
-
-#~ msgid "Insert ANSI color escape codes"
-#~ msgstr "Insertar códigos de escape ANSI"
-
-#~ msgid "Export this page as ASCII text"
-#~ msgstr "Exportar la página actual como texto ASCII"
-
-#~ msgid "Please contact the Zapzilla maintainers at <http://zapping.sf.net>."
-#~ msgstr ""
-#~ "Por favor contacte con los autores de Zapzilla en <http://zapping.sf.net>"
-
-#~ msgid "V4L/V4L2 VBI interface: Failed to read from the device"
-#~ msgstr "Interfaz VBI V4L/V4L2: Fallo al leer del dispositivo"
-
-#~ msgid "Sorry, %s (%s) cannot capture the requested data services.\n"
-#~ msgstr ""
-#~ "%s (%s) no puede capturar los servicios de datos solicitados, lo siento.\n"
-
-#~ msgid "%s (%s) reports improbable vbi frame size. %s\n"
-#~ msgstr "%s (%s) devuelve un tamaño de vbi improbable. %s\n"
-
-#~ msgid "Not enough memory to allocate vbi data buffers (%d KB).\n"
-#~ msgstr "No hay suficiente memoria para los buffers VBI (%d KB).\n"
-
-#~ msgid "V4L2 VBI interface: Capture stalled, no station tuned in?"
-#~ msgstr "Interfaz VBI V4L2: Captura detenida, ¿ninguna emisora sintonizada?"
-
-#~ msgid "V4L2 VBI interface: Failed to read from the device"
-#~ msgstr "Interfaz VBI V4L2: Fallo al leer del dispositivo"
-
-#~ msgid ""
-#~ "V4L2 VBI interface: Cannot dequeue buffer, driver or application bug?"
-#~ msgstr ""
-#~ "Interfaz VBI V4L2: No se puede obtener el buffer, ¿fallo del controlador "
-#~ "o de\n"
-#~ "la aplicación?"
-
-#~ msgid ""
-#~ "V4L2 VBI interface: Cannot enqueue buffer, driver or application bug?"
-#~ msgstr ""
-#~ "Interfaz VBI V4L2: No se puede mandar el buffer, ¿fallo del\n"
-#~ "controlador o de la aplicación?"
-
-#~ msgid ""
-#~ "Cannot query current videostandard of %s (%s): %d, %s. Probably a driver "
-#~ "bug.\n"
-#~ msgstr ""
-#~ "No se puede obtener el estándar de video actual de %s (%s): %d,\n"
-#~ "%s. Probablemente un fallo del controlador.\n"
+msgstr "Interfaz V4L no compilado."

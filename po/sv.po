@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.6\n"
-"POT-Creation-Date: 2002-03-19 17:40+0100\n"
+"POT-Creation-Date: 2002-03-28 13:39+0100\n"
 "PO-Revision-Date: 2002-01-08 14:43+0100\n"
 "Last-Translator: <snout@ctrl-c.liu.se>\n"
 "Language-Team: Swedish <sv@li.org>\n"
@@ -51,7 +51,7 @@ msgstr "Teletext sida %3x.%x"
 
 #. NLS: .png title, must be Latin-1
 #: src/exp-gfx.c:1178 src/exp-html.c:235
-#, c-format
+#, c-format, ycp-format
 msgid "Teletext Page %3x"
 msgstr "Teletext sida %3x"
 
