@@ -2,7 +2,7 @@
  *  libzvbi -- dvb driver interface
  *
  *  (c) 2003 Gerd Knorr <kraxel@bytesex.org> [SUSE Labs]
- *  (c) 2004 Michael H. Schimek (vbi_dvb_demux, new dvb_read)
+ *  (c) 2004-2005 Michael H. Schimek (vbi_dvb_demux, new dvb_read)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -282,12 +282,12 @@ dvb_read			(vbi_capture *		cap,
 		   value is determined by vbi_raw_decoder line count below,
 		   256 / 2 because fields don't really apply here and in
 		   practice even 32 should be enough. */
-		n_lines = _vbi_dvb_demux_cor (dvb->demux,
-					      sb->data,
-					      /* max sliced lines */ 128,
-					      &pts,
-					      &dvb->bp,
-					      &dvb->b_left);
+		n_lines = vbi_dvb_demux_cor (dvb->demux,
+					     sb->data,
+					     /* max sliced lines */ 128,
+					     &pts,
+					     &dvb->bp,
+					     &dvb->b_left);
 		if (n_lines > 0)
 			break;
 
@@ -337,7 +337,7 @@ dvb_delete(vbi_capture *cap)
     if (dvb->fd != -1)
 	close(dvb->fd);
 
-    _vbi_dvb_demux_delete (dvb->demux);
+    vbi_dvb_demux_delete (dvb->demux);
 
     /* Make unusable. */
     CLEAR (*dvb);
