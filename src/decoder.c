@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.4 2002/08/07 19:27:38 mschimek Exp $ */
+/* $Id: decoder.c,v 1.5 2002/08/22 22:11:04 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -612,6 +612,10 @@ vbi_sliced_name(unsigned int service)
 	return NULL;
 }
 
+#ifndef DECODER_PATTERN_DUMP
+#define DECODER_PATTERN_DUMP 0
+#endif
+
 /**
  * @param rd Initialized vbi_raw_decoder structure.
  * @param raw A raw vbi image as defined in the vbi_raw_decoder structure
@@ -659,7 +663,7 @@ vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out)
 		if (rd->interlaced && i == rd->count[0])
 			raw = raw1 + rd->bytes_per_line;
 
-		if (1) {
+		if (DECODER_PATTERN_DUMP) {
 			fprintf(stderr, "L%02d ", i);
 			for (j = 0; j < MAX_WAYS; j++)
 				if (pattern[j] < 1 || pattern[j] > 8)
