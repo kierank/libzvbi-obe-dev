@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.5 2002/09/26 20:48:22 mschimek Exp $ */
+/* $Id: teletext.c,v 1.6 2002/10/11 12:31:49 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -488,6 +488,8 @@ dump_pex26(struct pex26 *pt, int n)
 			pt->caf);
 }
 
+#if 0
+
 /*
 
 type	pre	text		____      post       ____
@@ -711,6 +713,8 @@ fprintf(stderr, "AT1 %08x\n", value);
 
 	return 0; /* invalid */
 }
+
+#endif
 
 /*
  *  Zapzilla navigation

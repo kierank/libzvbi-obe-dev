@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
-"POT-Creation-Date: 2002-10-04 04:25+0200\n"
+"POT-Creation-Date: 2002-10-11 13:24+0200\n"
 "PO-Revision-Date: 2002-01-08 14:34+0100\n"
 "Last-Translator: Iñaki García Etxebarria <garetxe@users.sourceforge.net>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -14,11 +14,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1\n"
 
-#: src/exp-gfx.c:731
+#: src/exp-gfx.c:732
 msgid "Correct aspect ratio"
 msgstr "Relación de aspecto correcta"
 
-#: src/exp-gfx.c:732
+#: src/exp-gfx.c:733
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
@@ -26,39 +26,39 @@ msgstr ""
 "Aproximar una relación de tamaños similar a una TV real, esto duplicará el "
 "tamaño de la imagen."
 
-#: src/exp-gfx.c:805 src/exp-gfx.c:1103
+#: src/exp-gfx.c:806 src/exp-gfx.c:1104
 #, c-format
 msgid "Unable to allocate %d KB image buffer."
 msgstr "No se puede reservar un buffer de %d KB."
 
-#: src/exp-gfx.c:894
+#: src/exp-gfx.c:895
 msgid "PPM"
 msgstr "PPM"
 
-#: src/exp-gfx.c:895
+#: src/exp-gfx.c:896
 msgid "Export this page as raw PPM image"
 msgstr "Exportar la página actual como PPM"
 
-#: src/exp-gfx.c:986
+#: src/exp-gfx.c:987
 #, c-format
 msgid "Unable to allocate %d byte buffer."
 msgstr "No se puede reservar un buffer de %d KB."
 
-#: src/exp-gfx.c:1173 src/exp-html.c:232
+#: src/exp-gfx.c:1174 src/exp-html.c:232
 #, c-format
 msgid "Teletext Page %3x.%x"
 msgstr "Página de Teletexto %3x.%x"
 
-#: src/exp-gfx.c:1178 src/exp-html.c:235
+#: src/exp-gfx.c:1179 src/exp-html.c:235
 #, c-format
 msgid "Teletext Page %3x"
 msgstr "Página de Teletexto %3x"
 
-#: src/exp-gfx.c:1246
+#: src/exp-gfx.c:1247
 msgid "PNG"
 msgstr "PNG"
 
-#: src/exp-gfx.c:1247
+#: src/exp-gfx.c:1248
 msgid "Export this page as PNG image"
 msgstr "Exportar la página actual como PNG"
 
@@ -275,36 +275,36 @@ msgstr ""
 "No se puede iniciar el módulo de exportación '%s', probablemente falta de "
 "memoria."
 
-#: src/export.c:983
+#: src/export.c:985
 #, c-format
 msgid "Cannot create file '%s': Error %d, %s."
 msgstr "No se puede crear '%s': Error %d, %s."
 
-#: src/export.c:1055
+#: src/export.c:1057
 #, c-format
 msgid "Error while writing file '%s'"
 msgstr "Error al escribir el fichero '%s'"
 
-#: src/export.c:1057
+#: src/export.c:1059
 msgid "Error while writing file"
 msgstr "Error al escribir el fichero"
 
-#: src/export.c:1087
+#: src/export.c:1089
 #, c-format
 msgid "Export module '%s' has no option '%s'."
 msgstr "Módulo de exportación '%s' no contiene la opción '%s'."
 
-#: src/export.c:1137
+#: src/export.c:1139
 #, c-format
 msgid "Invalid argument %s for option %s of export module %s."
 msgstr "Argumento %s incorrecto para la opción %s del módulo %s."
 
-#: src/export.c:1161
+#: src/export.c:1163
 #, c-format
 msgid "Out of memory in export module '%s'."
 msgstr "Sin memoria en el módulo de exportación '%s'."
 
-#: src/export.c:1188
+#: src/export.c:1190
 msgid "Unknown error."
 msgstr "Error desconocido."
 

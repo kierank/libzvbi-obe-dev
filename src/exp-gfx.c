@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.c,v 1.5 2002/10/07 14:58:07 mschimek Exp $ */
+/* $Id: exp-gfx.c,v 1.6 2002/10/11 12:31:48 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -103,7 +103,7 @@ init_gfx(void)
  * @return
  * Glyph number.
  */
-static int
+static unsigned int
 unicode_wstfont2(unsigned int c, int italic)
 {
 	static const unsigned short specials[] = {
@@ -113,16 +113,17 @@ unicode_wstfont2(unsigned int c, int italic)
 		0x20A0, 0x2030, 0x20AA, 0x2122, 0x2126, 0x215B, 0x215C, 0x215D,
 		0x215E, 0x2190, 0x2191, 0x2192, 0x2193, 0x25A0, 0x266A, 0xE800,
 		0xE75F };
-	int i;
+	const unsigned int invalid = 357;
+	unsigned int i;
 
 	if (c < 0x0180) {
 		if (c < 0x0080) {
 			if (c < 0x0020)
-				return 357; /* invalid */
+				return invalid;
 			else /* %3 Basic Latin (ASCII) 0x0020 ... 0x007F */
 				c = c - 0x0020 + 0 * 32;
 		} else if (c < 0x00A0)
-			return 357; /* invalid */
+			return invalid;
 		else /* %3 Latin-1 Supplement, Latin Extended-A 0x00A0 ... 0x017F */
 			c = c - 0x00A0 + 3 * 32;
 	} else if (c < 0xEE00) {
@@ -133,17 +134,17 @@ unicode_wstfont2(unsigned int c, int italic)
 				else /* %5 Greek 0x0370 ... 0x03CF */
 					c = c - 0x0370 + 12 * 32;
 			} else if (c < 0x0400)
-				return 357; /* invalid */
+				return invalid;
 			else /* %5 Cyrillic 0x0400 ... 0x045F */
 				c = c - 0x0400 + 15 * 32;
 		} else if (c < 0x0620) {
 			if (c < 0x05F0) {
 				if (c < 0x05D0)
-					return 357; /* invalid */
+					return invalid;
 				else /* %6 Hebrew 0x05D0 ... 0x05EF */
 					return c - 0x05D0 + 18 * 32;
 			} else if (c < 0x0600)
-				return 357; /* invalid */
+				return invalid;
 			else /* %6 Arabic 0x0600 ... 0x061F */
 				return c - 0x0600 + 19 * 32;
 		} else if (c >= 0xE600 && c < 0xE740)
@@ -155,7 +156,7 @@ unicode_wstfont2(unsigned int c, int italic)
 	} else if (c < 0xF000) { /* %4 G3 Graphics */
 		return c - 0xEF20 + 27 * 32;
 	} else /* 0xF000 ... 0xF7FF reserved for DRCS */
-		return 357; /* invalid */
+		return invalid;
 
 	if (italic)
 		return c + 31 * 32;
@@ -170,7 +171,7 @@ special:
 				return i + 10 * 32;
 		}
 
-	return 357; /* invalid */
+	return invalid;
 }
 
 /**
@@ -191,7 +192,7 @@ unicode_ccfont2(unsigned int c, int italic)
 		0x00ED, 0x00F3, 0x00FA, 0x00E7, 0x00F7, 0x00D1, 0x00F1, 0x25A0,
 		0x00AE, 0x00B0, 0x00BD, 0x00BF, 0x2122, 0x00A2, 0x00A3, 0x266A,
 		0x00E0, 0x0020, 0x00E8, 0x00E2, 0x00EA, 0x00EE, 0x00F4, 0x00FB };
-	int i;
+	unsigned int i;
 
 	if (c < 0x0020)
 		c = 15; /* invalid */
@@ -739,7 +740,7 @@ gfx_options[] = {
 static vbi_option_info *
 option_enum(vbi_export *e, int index)
 {
-	if (index < 0 || index >= elements(gfx_options))
+	if (index < 0 || index >= (int) elements(gfx_options))
 		return NULL;
 	else
 		return gfx_options + index;

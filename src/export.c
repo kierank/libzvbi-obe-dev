@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.11 2002/10/02 20:59:25 mschimek Exp $ */
+/* $Id: export.c,v 1.12 2002/10/11 12:31:48 mschimek Exp $ */
 
 #include "../config.h"
 
@@ -525,7 +525,7 @@ vbi_export_new(const char *keyword, char **errstr)
 	unsigned char key[256];
 	vbi_export_class *xc;
 	vbi_export *e;
-	int keylen;
+	unsigned int keylen;
 
 	if (!initialized)
 		initialize();
@@ -567,12 +567,14 @@ vbi_export_new(const char *keyword, char **errstr)
 	reset_options(e);
 
 	if (keyword[keylen] && !option_string(e, keyword + keylen + 1)) {
-		errstr && (*errstr = strdup(vbi_export_errstr(e)));
+		if (errstr)
+			*errstr = strdup(vbi_export_errstr(e));
 		vbi_export_delete(e);
 		return NULL;
 	}
 
-	errstr && (errstr = NULL);
+	if (errstr)
+		errstr = NULL;
 
 	return e;
 }
@@ -618,6 +620,7 @@ vbi_export_delete(vbi_export *export)
  * @return Static pointer to a vbi_option_info structure,
  * @c NULL if @a index is out of bounds.
  */
+/* XXX unsigned index */
 vbi_option_info *
 vbi_export_option_info_enum(vbi_export *export, int index)
 {
@@ -628,7 +631,7 @@ vbi_export_option_info_enum(vbi_export *export, int index)
 
 	reset_error(export);
 
-	if (index < GENERIC)
+	if (index < (int) GENERIC)
 		return generic_options + index;
 
 	xc = export->_class;
@@ -654,7 +657,7 @@ vbi_export_option_info_keyword(vbi_export *export, const char *keyword)
 {
 	vbi_export_class *xc;
 	vbi_option_info *oi;
-	int i;
+	unsigned int i;
 
 	if (!export || !keyword)
 		return NULL;

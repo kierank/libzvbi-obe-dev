@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.8 2002/10/02 20:59:25 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.9 2002/10/11 12:31:48 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,7 +140,7 @@ text_options[] = {
 static vbi_option_info *
 option_enum(vbi_export *e, int index)
 {
-	if (index < 0 || index >= elements(text_options))
+	if (index < 0 || index >= (int) elements(text_options))
 		return NULL;
 
 	return text_options + index;
@@ -182,9 +182,9 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 	text_instance *text = PARENT(e, text_instance, export);
 
 	if (KEYWORD("format")) {
-		int format = va_arg(args, int);
+		unsigned int format = va_arg(args, unsigned int);
 
-		if (format < 0 || format >= elements(formats)) {
+		if (format >= elements(formats)) {
 			vbi_export_invalid_option(e, keyword, format);
 			return FALSE;
 		}
@@ -276,14 +276,14 @@ static vbi_bool
 print_unicode(iconv_t cd, int endian, int unicode, char **p, int n)
 {
 	char in[2], *ip, *op;
-	int li, lo, r;
+	size_t li, lo, r;
 
 	in[0 + endian] = unicode;
 	in[1 - endian] = unicode >> 8;
 	ip = in; op = *p;
 	li = sizeof(in); lo = n;
 
-	r = iconv(cd, (void *) &ip, &li, (void *) &op, &lo);
+	r = iconv(cd, &ip, &li, &op, &lo);
 
 	if (r == -1 || (**p == 0x40 && unicode != 0x0040)) {
 		in[0 + endian] = 0x20;
@@ -291,7 +291,7 @@ print_unicode(iconv_t cd, int endian, int unicode, char **p, int n)
 		ip = in; op = *p;
 		li = sizeof(in); lo = n;
 
-		r = iconv(cd, (void *) &ip, &li, (void *) &op, &lo);
+		r = iconv(cd, &ip, &li, &op, &lo);
 
 		if (r == -1 || (r == 1 && **p == 0x40))
 			goto error;

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.7 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: caption.c,v 1.8 2002/10/11 12:31:48 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -770,7 +770,7 @@ xds_separator(vbi_decoder *vbi, uint8_t *buf)
 	xds_sub_packet *sp = cc->curr_sp;
 	int c1 = vbi_parity(buf[0]);
 	int c2 = vbi_parity(buf[1]);
-	int class, type;
+	unsigned int class, type;
 
 	XDS_SEP_DEBUG(printf("XDS %02x %02x\n", buf[0], buf[1]));
 

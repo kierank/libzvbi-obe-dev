@@ -4,7 +4,7 @@
  *  Placed in the public domain.
  */
 
-/* $Id: exp-templ.c,v 1.4 2002/10/02 20:59:25 mschimek Exp $ */
+/* $Id: exp-templ.c,v 1.5 2002/10/11 12:31:48 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -125,7 +125,7 @@ static vbi_option_info *
 option_enum(vbi_export *e, int index)
 {
 	/* Enumeration 0 ... n */
-	if (index < 0 || index >= elements(tmpl_options))
+	if (index < 0 || index >= (int) elements(tmpl_options))
 		return NULL;
 
 	return tmpl_options + index;
@@ -181,7 +181,8 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 		}
 		tmpl->day = day;
 	} else if (strcmp(keyword, "prime") == 0) {
-		int i, value = va_arg(args, int);
+		unsigned int i;
+		int value = va_arg(args, int);
 		unsigned int d, dmin = UINT_MAX;
 
 		/* or return an error */

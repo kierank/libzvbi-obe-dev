@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.5 2002/08/22 22:11:04 mschimek Exp $ */
+/* $Id: decoder.c,v 1.6 2002/10/11 12:31:48 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,9 +53,8 @@
  * plain bytes, with linear interpolation of samples.
  * Could be further improved with a lowpass filter.
  */
-static inline int
-sample(vbi_bit_slicer *d, uint8_t *raw,
-       int offs, int bpp, int endian)
+static inline unsigned int
+sample(uint8_t *raw, int offs, int bpp, int endian)
 {
 	unsigned char frac = offs;
 	int raw0, raw1;
@@ -130,7 +129,7 @@ bit_slicer_tmpl(vbi_bit_slicer *d, uint8_t *raw,
 			} else {
 				cl += d->cri_rate;
 
-				if (cl >= d->oversampling_rate) {
+				if (cl >= (unsigned int) d->oversampling_rate) {
 					cl -= d->oversampling_rate;
 
 					c = c * 2 + b;
@@ -141,7 +140,7 @@ bit_slicer_tmpl(vbi_bit_slicer *d, uint8_t *raw,
 						c = 0;
 
 						for (j = d->frc_bits; j > 0; j--) {
-							c = c * 2 + (sample(d, raw, i, bpp, endian) >= tr);
+							c = c * 2 + (sample(raw, i, bpp, endian) >= tr);
     							i += d->step;
 						}
 
@@ -153,9 +152,9 @@ bit_slicer_tmpl(vbi_bit_slicer *d, uint8_t *raw,
 						
 						switch (d->endian) {
 						case 3:
-							for (j = 0; j < d->payload; j++) {
+							for (j = 0; j < (unsigned int) d->payload; j++) {
 					    			c >>= 1;
-								c += (sample(d, raw, i, bpp, endian) >= tr) << 7;
+								c += (sample(raw, i, bpp, endian) >= tr) << 7;
 			    					i += d->step;
 
 								if ((j & 7) == 7)
@@ -166,8 +165,8 @@ bit_slicer_tmpl(vbi_bit_slicer *d, uint8_t *raw,
 							break;
 
 						case 2:
-							for (j = 0; j < d->payload; j++) {
-								c = c * 2 + (sample(d, raw, i, bpp, endian) >= tr);
+							for (j = 0; j < (unsigned int) d->payload; j++) {
+								c = c * 2 + (sample(raw, i, bpp, endian) >= tr);
 			    					i += d->step;
 
 								if ((j & 7) == 7)
@@ -181,7 +180,7 @@ bit_slicer_tmpl(vbi_bit_slicer *d, uint8_t *raw,
 							for (j = d->payload; j > 0; j--) {
 								for (k = 0; k < 8; k++) {
 						    			c >>= 1;
-									c += (sample(d, raw, i, bpp, endian) >= tr) << 7;
+									c += (sample(raw, i, bpp, endian) >= tr) << 7;
 			    						i += d->step;
 								}
 
@@ -193,7 +192,7 @@ bit_slicer_tmpl(vbi_bit_slicer *d, uint8_t *raw,
 						case 0:
 							for (j = d->payload; j > 0; j--) {
 								for (k = 0; k < 8; k++) {
-									c = c * 2 + (sample(d, raw, i, bpp, endian) >= tr);
+									c = c * 2 + (sample(raw, i, bpp, endian) >= tr);
 			    						i += d->step;
 								}
 
@@ -843,7 +842,7 @@ vbi_raw_decoder_add_services(vbi_raw_decoder *rd, unsigned int services, int str
 		double signal;
 		int skip = 0;
 
-		if (rd->num_jobs >= MAX_JOBS)
+		if (rd->num_jobs >= (int) MAX_JOBS)
 			break;
 
 		if (!(vbi_services[i].id & services))

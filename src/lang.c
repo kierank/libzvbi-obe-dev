@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: lang.c,v 1.3 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: lang.c,v 1.4 2002/10/11 12:31:49 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -44,7 +44,7 @@ vbi_font_descriptors[88] = {
 	{ LATIN_G0, LATIN_G2, FRENCH,		"Français" },
 	{ LATIN_G0, LATIN_G2, PORTUG_SPANISH,	"Português / Español" },
 	{ LATIN_G0, LATIN_G2, CZECH_SLOVAK,	"Cesky / Slovencina" },
-	{ LATIN_G0, LATIN_G2, NO_SUBSET		},
+	{ LATIN_G0, LATIN_G2, NO_SUBSET,	0 },
 
 	/* 8 - Eastern Europe */
 	{ LATIN_G0, LATIN_G2, POLISH,		"Polski" },
@@ -52,9 +52,9 @@ vbi_font_descriptors[88] = {
 	{ LATIN_G0, LATIN_G2, SWE_FIN_HUN,	"Svenska / Suomi / Magyar" },
 	{ LATIN_G0, LATIN_G2, ITALIAN,		"Italiano" },
 	{ LATIN_G0, LATIN_G2, FRENCH,		"Français" },
-	{ LATIN_G0, LATIN_G2, NO_SUBSET		},
+	{ LATIN_G0, LATIN_G2, NO_SUBSET,	0 },
 	{ LATIN_G0, LATIN_G2, CZECH_SLOVAK,	"Cesky / Slovencina" },
-	{ LATIN_G0, LATIN_G2, NO_SUBSET		},
+	{ LATIN_G0, LATIN_G2, NO_SUBSET,	0 },
 
 	/* 16 - Western Europe and Turkey */
 	{ LATIN_G0, LATIN_G2, ENGLISH,		"English" },
@@ -64,16 +64,16 @@ vbi_font_descriptors[88] = {
 	{ LATIN_G0, LATIN_G2, FRENCH,		"Français" },
 	{ LATIN_G0, LATIN_G2, PORTUG_SPANISH,	"Português / Español" },
 	{ LATIN_G0, LATIN_G2, TURKISH,		"Türkçe" },
-	{ LATIN_G0, LATIN_G2, NO_SUBSET		},
+	{ LATIN_G0, LATIN_G2, NO_SUBSET,	0 },
 
 	/* 24 - Central and Southeast Europe */
-	{ LATIN_G0, LATIN_G2, NO_SUBSET		},
-	{ LATIN_G0, LATIN_G2, NO_SUBSET		},
-	{ LATIN_G0, LATIN_G2, NO_SUBSET		},
-	{ LATIN_G0, LATIN_G2, NO_SUBSET		},
-	{ LATIN_G0, LATIN_G2, NO_SUBSET		},
+	{ LATIN_G0, LATIN_G2, NO_SUBSET,	0 },
+	{ LATIN_G0, LATIN_G2, NO_SUBSET,	0 },
+	{ LATIN_G0, LATIN_G2, NO_SUBSET,	0 },
+	{ LATIN_G0, LATIN_G2, NO_SUBSET,	0 },
+	{ LATIN_G0, LATIN_G2, NO_SUBSET,	0 },
 	{ LATIN_G0, LATIN_G2, SERB_CRO_SLO,	"Srbski / Hrvatski / Slovenscina" },
-	{ LATIN_G0, LATIN_G2, NO_SUBSET		},
+	{ LATIN_G0, LATIN_G2, NO_SUBSET,	0 },
 	{ LATIN_G0, LATIN_G2, RUMANIAN,		"Româna" },
 
 	/* 32 - Cyrillic */
@@ -84,63 +84,63 @@ vbi_font_descriptors[88] = {
 	{ CYRILLIC_2_G0, CYRILLIC_G2, NO_SUBSET, "Russky / Balgarski " },
 	{ CYRILLIC_3_G0, CYRILLIC_G2, NO_SUBSET, "Ukrayins'ka" },
 	{ LATIN_G0, LATIN_G2, CZECH_SLOVAK,	"Cesky / Slovencina" },
-	{ 0, 0, NO_SUBSET,			},
+	{ 0, 0, NO_SUBSET,			0 },
 
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
 
 	/* 48 */
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
 	{ LATIN_G0, LATIN_G2, TURKISH,		"Türkçe" },
 	{ GREEK_G0, GREEK_G2, NO_SUBSET,	"Ellinika'" },
 
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
 
 	/* 64 - Arabic */
 	{ LATIN_G0, ARABIC_G2, ENGLISH,		"Alarabia / English" },
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
 	{ LATIN_G0, ARABIC_G2, FRENCH,		"Alarabia / Français" },
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
 	{ ARABIC_G0, ARABIC_G2, NO_SUBSET,	"Alarabia" },
 
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
 
 	/* 80 */
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
-	{ 0, 0, NO_SUBSET			},
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
+	{ 0, 0, NO_SUBSET,			0 },
 	{ HEBREW_G0, ARABIC_G2, NO_SUBSET,	"Ivrit" },
-	{ 0, 0, NO_SUBSET			},
+	{ 0, 0, NO_SUBSET,			0 },
 	{ ARABIC_G0, ARABIC_G2, NO_SUBSET,	"Alarabia" },
 };
 
@@ -517,7 +517,7 @@ composed[12 * 16] = {
 unsigned int
 vbi_teletext_composed_unicode(unsigned int a, unsigned int c)
 {
-	int i;
+	unsigned int i;
 
 	assert(a <= 15);
 	assert(c >= 0x20 && c <= 0x7F);

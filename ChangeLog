@@ -1,3 +1,8 @@
+2002-10-11	<mschimek@users.sf.net>
+
+	* src/packet.c, test/capture.c: Wrong assumption on char signedness.
+	* src/trigger.c (parse_atvef): Fix in type identification.
+
 2002-10-07	<mschimek@users.sf.net>
 
 	* src/exp-gfx.c (vbi_draw_vt_page_region): Flash fix. Zapping

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-html.c,v 1.4 2002/10/02 20:59:25 mschimek Exp $ */
+/* $Id: exp-html.c,v 1.5 2002/10/11 12:31:48 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -106,8 +106,9 @@ html_options[] = {
 
 static vbi_option_info *
 option_enum(vbi_export *e, int index)
+     /* XXX unsigned index */
 {
-	if (index < 0 || index >= elements(html_options))
+	if (index < 0 || index >= (int) elements(html_options))
 		return NULL;
 	else
 		return html_options + index;
@@ -655,7 +656,7 @@ export(vbi_export *e, FILE *fp, vbi_page *pgp)
 
 			if (vbi_is_print(acp[j].unicode)) {
 				char in[2], out[1], *ip = in, *op = out;
-				int li = sizeof(in), lo = sizeof(out);
+				size_t li = sizeof(in), lo = sizeof(out);
 
 				in[0 + endian] = acp[j].unicode;
 				in[1 - endian] = acp[j].unicode >> 8;
