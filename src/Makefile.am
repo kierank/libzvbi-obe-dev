@@ -22,11 +22,10 @@ INCLUDES  = \
 	-Wunused \
 	-Wmissing-prototypes \
 	-Wmissing-declarations
-# INCLUDES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE to enable pthread_rwlocks
+# INCLUDES += -D_GNU_SOURCE to declare pthread_rwlocks and asprintf, if any.
 INCLUDES += \
 	-D_REENTRANT \
-	-D_XOPEN_SOURCE=500 \
-	-D_BSD_SOURCE
+	-D_GNU_SOURCE
 INCLUDES += \
 	$(X_CFLAGS) \
 	$(UNICODE_CFLAGS)
@@ -35,17 +34,22 @@ if ENABLE_PROXY
 proxy_sources = \
 	proxy-client.c proxy-client.h \
 	proxy-msg.c proxy-msg.h
+proxy_libs = \
+	libzvbi-chains.la
 else
 proxy_sources =
+proxy_libs =
 endif
 
-lib_LTLIBRARIES = libzvbi.la
+lib_LTLIBRARIES = libzvbi.la $(proxy_libs)
 
 libzvbi_la_SOURCES = \
 	bcd.h \
 	cache.c cache.h \
 	caption.c cc.h \
 	decoder.c decoder.h sliced.h \
+	dvb.h \
+	dvb_mux.c dvb_mux.h \
 	exp-gfx.c exp-gfx.h \
 	exp-html.c \
 	exp-templ.c \
@@ -60,7 +64,7 @@ libzvbi_la_SOURCES = \
 	io-v4l2.c videodev2.h \
 	io-v4l2k.c videodev2k.h \
 	lang.c lang.h \
-	misc.h \
+	misc.c misc.h \
 	packet.c teletext.c vt.h \
 	search.c search.h ure.c ure.h \
 	tables.c tables.h \
@@ -117,6 +121,13 @@ libzvbi.h: version.h $(LIBZVBI_HDRS)
 	done
 	echo -e "\n#ifdef __cplusplus\n}\n#endif" >> $@
 	echo -e "\n#endif /* __LIBZVBI_H__ */" >> $@
+
+libzvbi_chains_la_SOURCES = \
+	chains.c \
+	io.c \
+	misc.c \
+	proxy-client.c \
+	proxy-msg.c
 
 _videodev.h: Makefile.am $(structpr) videodev.h
 	$(srcdir)/$(structpr) <$(srcdir)/videodev.h \
