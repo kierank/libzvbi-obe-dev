@@ -10,13 +10,16 @@ data]
 
 The VBI proxy is developed as a solution to this problem.  Afterall
 there's no good reason that only one app should be able to capture VBI,
-since there are many independent data streams, e.g. VPS/PDC, WSS,
-teletext, and inside teletext besides the regular pages also subtitles,
-Nextview, Teleweb and possibly more binary coded data streams.
+since there are many independent data streams, e.g. VPS/PDC (channel
+identification and programme labels for video recoding), WSS (widescreen
+and surround sound signalling), teletext, and inside teletext besides
+the regular pages also subtitles, Nextview Electronic PRogramme Guide,
+Teleweb (enhanced teletext based on HTML) and possibly more binary coded
+data streams.
 
 In particular there are some TV apps which always open /dev/vbi (for
 subtitles, WSS or whatever) so it's currently impossible to capture
-data services like Nextview EPG in the background.
+any of the above data services in the background.
 
 As a second, optional feature, the proxy may in the future be used to
 coordinate channel changes between multiple VBI background applications
@@ -73,13 +76,8 @@ The list will be updated in CVS along with the implementation.
 - libzvbi.h: should contain HAVE_PROXY macro or other means to query
   if proxy interface is available at compile time (version number is not
   enough since proxy support might have been disabled config.h)
-- merge of different client's service parameters: instead of merging the
-  parameters once in the daemon and passing them in one call to add_services,
-  add them with separate calls in the order of connect time (i.e. first
-  client's services have highest priority).  This is the only way to deal
-  with differing strict levels properly  --> also requires routing service
-  requests through io.c with new interface function to adapt size of raw
-  buffer
+- services merge: new function add_services() has been added to io.h;
+  still TODO: changing norm or buffer count
 - add raw buffer forward, possibly based on shared memory to avoid copying
   (mmapped DMA buffers can probably not directly be shared though, so
   one copy will be required in conjunction with streams buffers; copying
@@ -109,6 +107,7 @@ The list will be updated in CVS along with the implementation.
   socket(7).  Possibly a sub-directory should be used and permissions
   set on the directory.  On in X11 way a key file could be used.
 - manage channel change requests (see discussion on mailing list)
+- add "-kill" option to daemon: kill already running daemon
 
 Questions indirectly related to the daemon:
 
