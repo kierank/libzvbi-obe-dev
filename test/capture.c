@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.9 2004/04/03 00:08:34 mschimek Exp $ */
+/* $Id: capture.c,v 1.10 2004/06/18 14:12:17 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -51,8 +51,14 @@ int			dump_sliced;
 int			bin_sliced;
 int			do_read = TRUE;
 int			do_sim;
+int			ignore_error;
 
 #include "sim.c"
+
+extern void
+vbi_capture_set_log_fp		(vbi_capture *		capture,
+				 FILE *			fp);
+extern vbi_bool vbi_capture_force_read_mode;
 
 /*
  *  Dump
@@ -417,14 +423,27 @@ mainloop(void)
 					     &sliced_buffer, &tv);
 		}
 
+		if (0) {
+			fputc ('.', stdout);
+			fflush (stdout);
+		}
+ 
 		switch (r) {
 		case -1:
-			fprintf(stderr, "VBI read error: %d, %s\n",
-				errno, strerror(errno));
-			exit(EXIT_FAILURE);
+			fprintf(stderr, "VBI read error: %d, %s%s\n",
+				errno, strerror(errno),
+				ignore_error ? " (ignored)" : "");
+			if (ignore_error)
+				continue;
+			else
+				exit(EXIT_FAILURE);
 		case 0: 
-			fprintf(stderr, "VBI read timeout\n");
-			exit(EXIT_FAILURE);
+			fprintf(stderr, "VBI read timeout%s\n",
+				ignore_error ? " (ignored)" : "");
+			if (ignore_error)
+				continue;
+			else
+				exit(EXIT_FAILURE);
 		case 1:
 			break;
 		default:
@@ -451,12 +470,13 @@ mainloop(void)
 	}
 }
 
-static const char short_options[] = "d:lnpstv";
+static const char short_options[] = "123de:lnpstv";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options[] = {
 	{ "device",	required_argument,	NULL,		'd' },
+	{ "ignore-error", no_argument,		NULL,		'e' },
 	{ "pid",	required_argument,	NULL,		'i' },
 	{ "dump-ttx",	no_argument,		NULL,		't' },
 	{ "dump-xds",	no_argument,		&dump_xds,	TRUE },
@@ -470,6 +490,9 @@ long_options[] = {
 	{ "sim",	no_argument,		NULL,		's' },
 	{ "ntsc",	no_argument,		NULL,		'n' },
 	{ "pal",	no_argument,		NULL,		'p' },
+	{ "v4l",	no_argument,		NULL,		'1' },
+	{ "v4l2-read",	no_argument,		NULL,		'2' },
+	{ "v4l2-mmap",	no_argument,		NULL,		'3' },
 	{ "verbose",	no_argument,		NULL,		'v' },
 	{ 0, 0, 0, 0 }
 };
@@ -485,16 +508,28 @@ main(int argc, char **argv)
 	char *errstr;
 	unsigned int services;
 	int scanning = 625;
-	vbi_bool verbose = FALSE;
+	int verbose = 0;
 	int c, index;
+	int interface = 0;
 
 	while ((c = getopt_long(argc, argv, short_options,
 				long_options, &index)) != -1)
 		switch (c) {
 		case 0: /* set flag */
 			break;
+		case '2':
+			/* Preliminary hack for tests. */
+			vbi_capture_force_read_mode = TRUE;
+			/* fall through */
+		case '1':
+		case '3':
+			interface = c - '0';
+			break;
 		case 'd':
 			dev_name = optarg;
+			break;
+		case 'e':
+			ignore_error ^= TRUE;
 			break;
 		case 'i':
 			pid = atoi (optarg);
@@ -515,7 +550,7 @@ main(int argc, char **argv)
 			dump_ttx ^= TRUE;
 			break;
 		case 'v':
-			verbose ^= TRUE;
+			++verbose;
 			break;
 		default:
 			fprintf(stderr, "Unknown option\n");
@@ -540,7 +575,7 @@ main(int argc, char **argv)
 							   &services,
 							   /* strict */ -1,
 							   &errstr,
-							   verbose);
+							   !!verbose);
 				if (cap) {
 					vbi_capture_dvb_filter (cap, pid);
 					break;
@@ -554,52 +589,66 @@ main(int argc, char **argv)
 				exit(EXIT_FAILURE);
 			}
 
-			cap = vbi_capture_v4l2_new (dev_name,
-						    /* buffers */ 5,
-						    &services,
-						    /* strict */ -1,
-						    &errstr,
-						    /* trace */ verbose);
-			if (cap)
-				break;
+			if (1 != interface) {
+				cap = vbi_capture_v4l2_new (dev_name,
+							    /* buffers */ 5,
+							    &services,
+							    /* strict */ -1,
+							    &errstr,
+							    /* trace */
+							    !!verbose);
+				if (cap)
+					break;
 
-			fprintf (stderr, "Cannot capture vbi data "
-				 "with v4l2 interface:\n%s\n", errstr);
+				fprintf (stderr, "Cannot capture vbi data "
+					 "with v4l2 interface:\n%s\n", errstr);
 
-			free (errstr);
+				free (errstr);
+			}
 
-			cap = vbi_capture_v4l_new (dev_name,
-						   scanning,
-						   &services,
-						   /* strict */ -1,
-						   &errstr,
-						   /* trace */ verbose);
-			if (cap)
-				break;
+			if (interface < 2) {
+				cap = vbi_capture_v4l_new (dev_name,
+							   scanning,
+							   &services,
+							   /* strict */ -1,
+							   &errstr,
+							   /* trace */
+							   !!verbose);
+				if (cap)
+					break;
 
-			fprintf (stderr, "Cannot capture vbi data "
-				 "with v4l interface:\n%s\n", errstr);
+				fprintf (stderr, "Cannot capture vbi data "
+					 "with v4l interface:\n%s\n", errstr);
 
-			free (errstr);
+				free (errstr);
+			}
 
-			cap = vbi_capture_bktr_new (dev_name,
-						    scanning,
-						    &services,
-						    /* strict */ -1,
-						    &errstr,
-						    /* trace */ verbose);
-			if (cap)
-				break;
+			/* BSD interface */
+			if (1) {
+				cap = vbi_capture_bktr_new (dev_name,
+							    scanning,
+							    &services,
+							    /* strict */ -1,
+							    &errstr,
+							    /* trace */
+							    !!verbose);
+				if (cap)
+					break;
 
-			fprintf (stderr, "Cannot capture vbi data "
-				 "with bktr interface:\n%s\n", errstr);
+				fprintf (stderr, "Cannot capture vbi data "
+					 "with bktr interface:\n%s\n", errstr);
 
-			free (errstr);
+				free (errstr);
+			}
 
 			exit(EXIT_FAILURE);
 		} while (0);
 
 		assert ((par = vbi_capture_parameters(cap)));
+	}
+
+	if (verbose > 1) {
+		vbi_capture_set_log_fp (cap, stderr);
 	}
 
 	if (-1 == pid)
