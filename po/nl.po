@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-19 05:32+0100\n"
+"POT-Creation-Date: 2005-01-24 00:01+0100\n"
 "PO-Revision-Date: 2004-10-25 12:32+0200\n"
 "Last-Translator: Guus Bonnema <abonnema@xs4all.nl>\n"
 "Language-Team: Dutch <ime@iae.nl>\n"
@@ -16,11 +16,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/exp-gfx.c:734
+#: src/exp-gfx.c:746
 msgid "Correct aspect ratio"
 msgstr "Corrigeer beeldverhouding"
 
-#: src/exp-gfx.c:735
+#: src/exp-gfx.c:747
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
@@ -28,39 +28,39 @@ msgstr ""
 "Een standaard TV (4:3) verhouding benaderen. De beeldgrootte wordt hierdoor "
 "verdubbeld."
 
-#: src/exp-gfx.c:808 src/exp-gfx.c:1106
+#: src/exp-gfx.c:820 src/exp-gfx.c:1118
 #, c-format
 msgid "Unable to allocate %d KB image buffer."
 msgstr "Onvoldoende geheugen voor een %d kB buffer."
 
-#: src/exp-gfx.c:897
+#: src/exp-gfx.c:909
 msgid "PPM"
 msgstr "PPM"
 
-#: src/exp-gfx.c:898
+#: src/exp-gfx.c:910
 msgid "Export this page as raw PPM image"
 msgstr "Exporteer deze pagina in PPM-formaat"
 
-#: src/exp-gfx.c:989
+#: src/exp-gfx.c:1001
 #, c-format
 msgid "Unable to allocate %d byte buffer."
 msgstr "Onvoldoende geheugen voor een %d byte buffer."
 
-#: src/exp-gfx.c:1176 src/exp-html.c:231
+#: src/exp-gfx.c:1188 src/exp-html.c:231
 #, c-format
 msgid "Teletext Page %3x.%x"
 msgstr "Teletekst pagina %3x.%x"
 
-#: src/exp-gfx.c:1180 src/exp-html.c:233
+#: src/exp-gfx.c:1192 src/exp-html.c:233
 #, c-format
 msgid "Teletext Page %3x"
 msgstr "Teletekst pagina %3x"
 
-#: src/exp-gfx.c:1249
+#: src/exp-gfx.c:1261
 msgid "PNG"
 msgstr "PNG"
 
-#: src/exp-gfx.c:1250
+#: src/exp-gfx.c:1262
 msgid "Export this page as PNG image"
 msgstr "Exporteren in PNG-formaat"
 
@@ -523,7 +523,7 @@ msgstr ""
 msgid "Incompatible server architecture (endianess mismatch)."
 msgstr ""
 
-#: src/proxy-client.c:1863 src/proxy-client.c:1911
+#: src/proxy-client.c:1861 src/proxy-client.c:1909
 #, fuzzy
 msgid "Proxy client interface not compiled."
 msgstr "bktr interface niet gecompileerd."

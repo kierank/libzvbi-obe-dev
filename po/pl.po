@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-19 05:32+0100\n"
+"POT-Creation-Date: 2005-01-24 00:01+0100\n"
 "PO-Revision-Date: 2004-10-25 12:24+0200\n"
 "Last-Translator: Pawe³ Sakowski <pawel@sakowski.eu.org>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -13,49 +13,49 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/exp-gfx.c:734
+#: src/exp-gfx.c:746
 msgid "Correct aspect ratio"
 msgstr "Popraw proporcje ekranu"
 
-#: src/exp-gfx.c:735
+#: src/exp-gfx.c:747
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
 msgstr "Zbli¿a proporcje obrazu do prawdziwej TV. Podwoi to rozmiar obrazu."
 
-#: src/exp-gfx.c:808 src/exp-gfx.c:1106
+#: src/exp-gfx.c:820 src/exp-gfx.c:1118
 #, c-format
 msgid "Unable to allocate %d KB image buffer."
 msgstr "Nie mogê zaallokowaæ %d kB bufora obrazu."
 
-#: src/exp-gfx.c:897
+#: src/exp-gfx.c:909
 msgid "PPM"
 msgstr "PPM"
 
-#: src/exp-gfx.c:898
+#: src/exp-gfx.c:910
 msgid "Export this page as raw PPM image"
 msgstr "Eksportuj tê stronê jako czysty obraz PPM"
 
-#: src/exp-gfx.c:989
+#: src/exp-gfx.c:1001
 #, c-format
 msgid "Unable to allocate %d byte buffer."
 msgstr "Nie mogê zaallokowaæ %d kB bufora obrazu."
 
-#: src/exp-gfx.c:1176 src/exp-html.c:231
+#: src/exp-gfx.c:1188 src/exp-html.c:231
 #, c-format
 msgid "Teletext Page %3x.%x"
 msgstr "Strona teletekstu %3x.%x"
 
-#: src/exp-gfx.c:1180 src/exp-html.c:233
+#: src/exp-gfx.c:1192 src/exp-html.c:233
 #, c-format
 msgid "Teletext Page %3x"
 msgstr "Strona teletekstu %3x"
 
-#: src/exp-gfx.c:1249
+#: src/exp-gfx.c:1261
 msgid "PNG"
 msgstr "PNG"
 
-#: src/exp-gfx.c:1250
+#: src/exp-gfx.c:1262
 msgid "Export this page as PNG image"
 msgstr "Eksportuj tê stronê jako obraz PNG"
 
@@ -520,7 +520,7 @@ msgstr ""
 msgid "Incompatible server architecture (endianess mismatch)."
 msgstr ""
 
-#: src/proxy-client.c:1863 src/proxy-client.c:1911
+#: src/proxy-client.c:1861 src/proxy-client.c:1909
 #, fuzzy
 msgid "Proxy client interface not compiled."
 msgstr "Interfejs V4L nie wkompilowany."

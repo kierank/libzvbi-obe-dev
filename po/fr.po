@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.11\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-19 05:32+0100\n"
+"POT-Creation-Date: 2005-01-24 00:01+0100\n"
 "PO-Revision-Date: 2005-01-17 14:26+0100\n"
 "Last-Translator: Christian Marillat <marillat.christian@wanadoo.fr>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -13,11 +13,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/exp-gfx.c:734
+#: src/exp-gfx.c:746
 msgid "Correct aspect ratio"
 msgstr "Corriger les proportions"
 
-#: src/exp-gfx.c:735
+#: src/exp-gfx.c:747
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
@@ -25,39 +25,39 @@ msgstr ""
 "Approche les proportions d'une image d'une vraie TV. Cela doublera la taille "
 "de l'image."
 
-#: src/exp-gfx.c:808 src/exp-gfx.c:1106
+#: src/exp-gfx.c:820 src/exp-gfx.c:1118
 #, c-format
 msgid "Unable to allocate %d KB image buffer."
 msgstr "Incapable d'allouer %d Ko d'image tampon."
 
-#: src/exp-gfx.c:897
+#: src/exp-gfx.c:909
 msgid "PPM"
 msgstr "PPM"
 
-#: src/exp-gfx.c:898
+#: src/exp-gfx.c:910
 msgid "Export this page as raw PPM image"
 msgstr "Exporter cette page en une image PPM brute"
 
-#: src/exp-gfx.c:989
+#: src/exp-gfx.c:1001
 #, c-format
 msgid "Unable to allocate %d byte buffer."
 msgstr "Incapable d'allouer %d octets de mémoire tampon."
 
-#: src/exp-gfx.c:1176 src/exp-html.c:231
+#: src/exp-gfx.c:1188 src/exp-html.c:231
 #, c-format
 msgid "Teletext Page %3x.%x"
 msgstr "Page Télétexte %3x.%x"
 
-#: src/exp-gfx.c:1180 src/exp-html.c:233
+#: src/exp-gfx.c:1192 src/exp-html.c:233
 #, c-format
 msgid "Teletext Page %3x"
 msgstr "Page Télétexte %3x"
 
-#: src/exp-gfx.c:1249
+#: src/exp-gfx.c:1261
 msgid "PNG"
 msgstr "PNG"
 
-#: src/exp-gfx.c:1250
+#: src/exp-gfx.c:1262
 msgid "Export this page as PNG image"
 msgstr "Exporter cette page en une image PNG"
 
@@ -523,7 +523,7 @@ msgstr "Version du serveur incompatible %u.%u.%u."
 msgid "Incompatible server architecture (endianess mismatch)."
 msgstr "Architecture du serveur incompatible (disparité endianess)."
 
-#: src/proxy-client.c:1863 src/proxy-client.c:1911
+#: src/proxy-client.c:1861 src/proxy-client.c:1909
 msgid "Proxy client interface not compiled."
 msgstr "L'interface client pour le proxy pas été compilée."
 
