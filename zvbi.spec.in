@@ -1,26 +1,23 @@
-Name: zvbi
-Version: @VERSION@
-Release: 1
-Summary: Raw VBI, Teletext and Closed Caption decoding library
-Copyright: GPL
-Group: Applications/Multimedia
-Url: http://zapping.sourceforge.net/
-Source: http://prdownloads.sourceforge.net/zapping/zvbi-@VERSION@.tar.bz2
-Packager: Michael H. Schimek <mschimek@users.sourceforge.net>
-Buildroot: %{_tmppath}/%{name}-root
-PreReq: /sbin/install-info
-Prefix: %{_prefix}
-Provides: zvbi
-
-Requires: gettext >= 0.11.2
+Name:		zvbi
+Summary:	Raw VBI, Teletext and Closed Caption decoding library
+Version:	@VERSION@
+Release:	1
+Copyright:	GPL
+Group:		Applications/Multimedia
+Url:		http://zapping.sourceforge.net/
+Source:		http://prdownloads.sourceforge.net/zapping/%{name}-%{version}.tar.bz2
+Packager:	Michael H. Schimek <mschimek@users.sourceforge.net>
+Buildroot:	%{_tmppath}/%{name}-%{version}-root
+PreReq: 	/sbin/install-info
+Prefix:		%{_prefix}
+Provides:	zvbi
+Requires:	gettext >= 0.11.2
 
 %description
-This library provides routines to access raw vbi sampling devices
-(currently the V4L and V4L2 API are supported), a versatile raw vbi
-bit slicer, decoders for various data services and basic search,
-render and export functions for text pages. The library is the
-vbi decoding backbone of the Zapping Gnome TV viewer and Zapzilla
-Teletext browser. Documentation included.
+Routines to access raw VBI capture devices (currently the V4L and
+V4L2 API are supported), a versatile VBI bit slicer, decoders
+for various data services and basic search, render and export
+functions for Closed Caption and Teletext pages.
 
 %prep
 %setup -q
@@ -43,7 +40,6 @@ rm -rf %{buildroot}
 %files
 %defattr (-, root, root)
 %doc AUTHORS BUGS COPYING ChangeLog NEWS README TODO doc/html
-
 %{_libdir}/libzvbi*
 %{_includedir}/libzvbi.h
 
