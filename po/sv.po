@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.6\n"
-"POT-Creation-Date: 2002-01-14 03:31+0100\n"
+"POT-Creation-Date: 2002-01-26 12:30+0100\n"
 "PO-Revision-Date: 2002-01-08 14:43+0100\n"
 "Last-Translator: <snout@ctrl-c.liu.se>\n"
 "Language-Team: Swedish <sv@li.org>\n"
@@ -25,7 +25,7 @@ msgstr ""
 "Närma mig en aspektratio liknande den i en riktig TV. Detta kommer att lägga "
 "till överflödig information"
 
-#: src/exp-gfx.c:807 src/exp-gfx.c:1102
+#: src/exp-gfx.c:807 src/exp-gfx.c:1103
 #, c-format
 msgid "Unable to allocate %d KB image buffer."
 msgstr "Kunde inte begära %d KB bildbuffer."
@@ -44,22 +44,22 @@ msgid "Unable to allocate %d byte buffer."
 msgstr "Kunde inte begära %d KB bildbuffer."
 
 #. NLS: .png title, must be Latin-1
-#: src/exp-gfx.c:1172 src/exp-html.c:232
+#: src/exp-gfx.c:1173 src/exp-html.c:232
 #, c-format
 msgid "Teletext Page %3x.%x"
 msgstr "Teletext sida %3x.%x"
 
 #. NLS: .png title, must be Latin-1
-#: src/exp-gfx.c:1177 src/exp-html.c:235
+#: src/exp-gfx.c:1178 src/exp-html.c:235
 #, c-format
 msgid "Teletext Page %3x"
 msgstr "Teletext sida %3x"
 
-#: src/exp-gfx.c:1246
+#: src/exp-gfx.c:1247
 msgid "PNG"
 msgstr "PNG"
 
-#: src/exp-gfx.c:1247
+#: src/exp-gfx.c:1248
 msgid "Export this page as PNG image"
 msgstr "Spara denna sida som PNG-bild"
 
@@ -99,7 +99,7 @@ msgstr "Inkludera HTML-header"
 msgid "<title lang=\"en\">"
 msgstr "<title lang=\"se\">"
 
-#: src/exp-html.c:352 src/exp-txt.c:548
+#: src/exp-html.c:352 src/exp-txt.c:550
 #, fuzzy, c-format
 msgid "Character conversion Unicode (UCS-2) to %s not supported."
 msgstr "Teckenkonvertering unicode -> %s stöds ej"
@@ -238,11 +238,11 @@ msgstr "Bakgrund"
 msgid "Assumed terminal background color"
 msgstr "Antagen bakgrundsfärg i terminalen"
 
-#: src/exp-txt.c:598
+#: src/exp-txt.c:600
 msgid "Text"
 msgstr ""
 
-#: src/exp-txt.c:599
+#: src/exp-txt.c:601
 #, fuzzy
 msgid "Export this page as text file"
 msgstr "Spara sidan som ANSI-text"
@@ -287,45 +287,45 @@ msgstr ""
 msgid "Cannot initialize export module '%s', probably lack of memory."
 msgstr ""
 
-#: src/export.c:933
+#: src/export.c:935
 #, fuzzy, c-format
 msgid "Cannot create file '%s': Error %d, %s."
 msgstr "Kan inte skapa filen '%s': %s"
 
-#: src/export.c:1008
+#: src/export.c:1010
 #, c-format
 msgid "Error while writing file '%s'"
 msgstr ""
 
-#: src/export.c:1010
+#: src/export.c:1012
 msgid "Error while writing file"
 msgstr ""
 
-#: src/export.c:1023
+#: src/export.c:1025
 #, c-format
 msgid "Export module '%s' has no option '%s'."
 msgstr ""
 
-#: src/export.c:1032
+#: src/export.c:1034
 #, c-format
 msgid "Invalid argument for option '%s' of export module '%s'."
 msgstr ""
 
-#: src/export.c:1043
+#: src/export.c:1045
 #, c-format
 msgid "Out of memory in export module '%s'."
 msgstr ""
 
-#: src/export.c:1073
+#: src/export.c:1075
 msgid "Unknown error."
 msgstr ""
 
-#: src/io-v4l.c:504 src/io-v4l.c:764 src/io-v4l.c:782 src/io-v4l2.c:325
+#: src/io-v4l.c:506 src/io-v4l.c:767 src/io-v4l.c:785 src/io-v4l2.c:325
 #: src/io-v4l2.c:523 src/io-v4l2.c:571 src/io-v4l2.c:647
 msgid "Virtual memory exhausted."
 msgstr "Slut på virtuellt minne."
 
-#: src/io-v4l.c:513 src/io-v4l2.c:334
+#: src/io-v4l.c:515 src/io-v4l2.c:334
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Kan inte öppna enheten '%s': %d, %s."
@@ -339,13 +339,13 @@ msgstr "Kan inte öppna enheten '%s': %d, %s."
 msgid "Probably not a v4l2 device."
 msgstr ""
 
-#: src/io-v4l.c:538 src/io-v4l2.c:349
+#: src/io-v4l.c:540 src/io-v4l2.c:349
 #, fuzzy, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) är inge rå VBI-enhet.\n"
 
 #. Mandatory; dequeue buffer is non-blocking.
-#: src/io-v4l.c:552 src/io-v4l2.c:360 src/io-v4l2.c:536
+#: src/io-v4l.c:554 src/io-v4l2.c:360 src/io-v4l2.c:536
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr ""
@@ -365,18 +365,18 @@ msgstr ""
 msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr "Kan inte få VBI-parametrar från 5s (%s): %d, %s.\n"
 
-#: src/io-v4l.c:406 src/io-v4l.c:696 src/io-v4l.c:752 src/io-v4l2.c:407
+#: src/io-v4l.c:408 src/io-v4l.c:697 src/io-v4l.c:755 src/io-v4l2.c:407
 #: src/io-v4l2.c:513
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "Tyvärr, %s (%s) kan inte spela in någon av de begärda tjänsterna."
 
-#: src/io-v4l.c:443 src/io-v4l2.c:444
+#: src/io-v4l.c:445 src/io-v4l2.c:444
 #, fuzzy, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "%s (%s) används redan.\n"
 
-#: src/io-v4l.c:449 src/io-v4l2.c:460
+#: src/io-v4l.c:451 src/io-v4l2.c:460
 #, fuzzy, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr ""
@@ -387,7 +387,7 @@ msgstr ""
 msgid "Possibly a driver bug."
 msgstr ""
 
-#: src/io-v4l.c:586 src/io-v4l2.c:492
+#: src/io-v4l.c:588 src/io-v4l2.c:492
 #, fuzzy, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -424,7 +424,7 @@ msgstr ""
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
 msgstr "Kan inte köa strömmande i/o-buffer nr. %d till %s (%s): %d, %s."
 
-#: src/io-v4l.c:793 src/io-v4l2.c:658
+#: src/io-v4l.c:796 src/io-v4l2.c:658
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Inte nog minne för att skapa VBI-inspelningsbuffer (%d KB)."
@@ -442,28 +442,28 @@ msgstr ""
 msgid "V4L2 interface not compiled."
 msgstr ""
 
-#: src/io-v4l.c:492
+#: src/io-v4l.c:494
 msgid "driver unknown"
 msgstr "okänd drivare"
 
-#: src/io-v4l.c:627
+#: src/io-v4l.c:629
 #, c-format
 msgid "Cannot capture with %s (%s), has no standard vbi interface."
 msgstr "Kan inte läsa med %s (%s), den har inget standard VBI-gränssnitt."
 
-#: src/io-v4l.c:636 src/io-v4l.c:713
-#, c-format
-msgid "Cannot set or determine current videostandard of %s (%s).\n"
-msgstr "Kan inte ställa in eller avgöra nuvarande videostandard av %s (%s).\n"
-
-#: src/io-v4l.c:681
+#: src/io-v4l.c:647
 #, c-format
 msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
 msgstr ""
 
-#: src/io-v4l.c:738
+#: src/io-v4l.c:663 src/io-v4l.c:714
+#, fuzzy, c-format
+msgid "Cannot set or determine current videostandard of %s (%s)."
+msgstr "Kan inte ställa in eller avgöra nuvarande videostandard av %s (%s).\n"
+
+#: src/io-v4l.c:741
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -472,7 +472,7 @@ msgstr ""
 "Kan inte spela in de begärda datatjänsterna med %s (%s), "
 "inspelningsfrekvensen %.2f är för låg."
 
-#: src/io-v4l.c:840 src/io-v4l.c:849
+#: src/io-v4l.c:843 src/io-v4l.c:852
 msgid "V4L interface not compiled."
 msgstr ""
 

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.2 2002/01/17 19:55:24 garetxe Exp $";
+static char rcsid[] = "$Id: io-v4l.c,v 1.3 2002/02/10 11:47:09 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -545,18 +545,9 @@ v4l_new(char *dev_name, int given_fd, int scanning,
 		guess_bttv_v4l(v, &strict, given_fd, scanning, trace);
 	}
 
-	printv("%s (%s) is a v4l2 vbi device\n", dev_name, driver_name);
+	printv("%s (%s) is a v4l vbi device\n", dev_name, driver_name);
 
 	v->select = FALSE; /* FIXME if possible */
-
-#ifdef REQUIRE_SELECT
-	if (!v->select) {
-		vbi_asprintf(errorstr, _("%s (%s) does not support "
-					 "the select() function."),
-			     dev_name, driver_name);
-		goto failure;
-	}
-#endif
 
 	printv("Hinted video standard %d, guessed %d\n",
 	       scanning, v->dec.scanning);
@@ -623,6 +614,8 @@ v4l_new(char *dev_name, int given_fd, int scanning,
 		 */
 		printv("Driver doesn't support VIDIOCGVBIFMT, "
 		       "will assume bttv interface\n");
+
+		v->select = TRUE; /* it does */
 
 		if (0 && !strstr(driver_name, "bttv")
 		      && !strstr(driver_name, "BTTV")) {
@@ -692,6 +685,15 @@ v4l_new(char *dev_name, int given_fd, int scanning,
 		v->time_per_frame 		=
 			(v->dec.scanning == 625) ? 1.0 / 25 : 1001.0 / 30000;
 	}
+
+#ifdef REQUIRE_SELECT
+	if (!v->select) {
+		vbi_asprintf(errorstr, _("%s (%s) does not support "
+					 "the select() function."),
+			     dev_name, driver_name);
+		goto failure;
+	}
+#endif
 
 	if (*services == 0) {
 		vbi_asprintf(errorstr, _("Sorry, %s (%s) cannot capture any of the "

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.3 2002/01/15 03:19:53 mschimek Exp $ */
+/* $Id: export.c,v 1.4 2002/02/10 11:47:09 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -363,7 +363,7 @@ option_string(vbi_export *e, const char *s2)
 {
 	vbi_option_info *oi;
 	char *s, *s1, *keyword, *string, quote;
-	vbi_bool r;
+	vbi_bool r = TRUE;
 
 	if (!(s = s1 = vbi_export_strdup(e, NULL, s2)))
 		return FALSE;
@@ -384,7 +384,7 @@ option_string(vbi_export *e, const char *s2)
 
 		keyword = s;
 
-		while (isalnum(*s) || *s == '-' || *s == '_')
+		while (isalnum(*s) || *s == '_')
 			s++;
 
 		if (!*s)
@@ -666,8 +666,10 @@ vbi_export_option_get(vbi_export *export, const char *keyword,
 
 		if (xc->option_get)
 			r = xc->option_get(export, keyword, value);
-		else
+		else {
+			vbi_export_unknown_option(export, keyword);
 			r = FALSE;
+		}
 	}
 
 	return r;
@@ -774,7 +776,7 @@ vbi_export_option_menu_get(vbi_export *export, const char *keyword,
 
 	r = FALSE;
 
-	for (i = 0; i <= oi->max.num; i++) {
+	for (i = oi->min.num; i <= oi->max.num; i++) {
 		switch (oi->type) {
 		case VBI_OPTION_BOOL:
 		case VBI_OPTION_INT:
@@ -827,7 +829,7 @@ vbi_export_option_menu_set(vbi_export *export, const char *keyword,
 {
 	vbi_option_info *oi;
 
-	if (!export || !keyword || entry < 0)
+	if (!export || !keyword)
 		return FALSE;
 
 	reset_error(export);
@@ -835,7 +837,7 @@ vbi_export_option_menu_set(vbi_export *export, const char *keyword,
 	if (!(oi = vbi_export_option_info_keyword(export, keyword)))
 		return FALSE;
 
-	if (entry < 0 || entry > oi->max.num)
+	if (entry < oi->min.num || entry > oi->max.num)
 		return FALSE;
 
 	switch (oi->type) {
@@ -1029,8 +1031,44 @@ vbi_export_unknown_option(vbi_export *e, const char *keyword)
 void
 vbi_export_invalid_option(vbi_export *e, const char *keyword, ...)
 {
-	vbi_export_error_printf(e, _("Invalid argument for option '%s' of export module '%s'."),
-				keyword, e->class->public.label ?
+	char buf[256];
+	vbi_option_info *oi;
+
+	if ((oi = vbi_export_option_info_keyword(e, keyword))) {
+		va_list args;
+		char *s;
+
+		va_start(args, keyword);
+
+		switch (oi->type) {
+		case VBI_OPTION_BOOL:
+		case VBI_OPTION_INT:
+		case VBI_OPTION_MENU:
+			snprintf(buf, sizeof(buf) - 1, "'%d'", va_arg(args, int));
+			break;
+		case VBI_OPTION_REAL:
+			snprintf(buf, sizeof(buf) - 1, "'%f'", va_arg(args, double));
+			break;
+		case VBI_OPTION_STRING:
+			s = va_arg(args, char *);
+			if (s == NULL)
+				strncpy(buf, 4, "NULL");
+			else
+				snprintf(buf, sizeof(buf) - 1, "'%s'", s);
+			break;
+		default:
+			fprintf(stderr, __PRETTY_FUNCTION__
+				": unknown export option type %d\n", oi->type);
+			strncpy(buf, 1, "?");
+			break;
+		}
+
+		va_end(args);
+	} else
+		buf[0] = 0;
+
+	vbi_export_error_printf(e, _("Invalid argument %s for option %s of export module %s."),
+				buf, keyword, e->class->public.label ?
 				_(e->class->public.label) : e->class->public.keyword);
 }
 

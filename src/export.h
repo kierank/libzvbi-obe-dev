@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.h,v 1.1 2002/01/12 16:18:41 mschimek Exp $ */
+/* $Id: export.h,v 1.2 2002/02/10 11:47:09 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -92,7 +92,7 @@ typedef struct vbi_export_info {
  *   <row><entry>Type:</><entry>int</></row>
  *   <row><entry>Default:</><entry>def.num or menu.num[def.num]</></row>
  *   <row><entry>Bounds:</><entry>min.num ... max.num, step.num or menu</></row>
- *   <row><entry>Menu:</><entry>%NULL or menu.num[min.num (0) ... max.num], step.num (1)</></row>
+ *   <row><entry>Menu:</><entry>%NULL or menu.num[min.num ... max.num], step.num (1)</></row>
  *   </tbody></tgroup></informaltable>
  * @VBI_OPTION_REAL:
  *   A real value, optional a vector of possible values.
@@ -100,7 +100,7 @@ typedef struct vbi_export_info {
  *   <row><entry>Type:</><entry>double</></row>
  *   <row><entry>Default:</><entry>def.dbl or menu.dbl[def.num]</></row>
  *   <row><entry>Bounds:</><entry>min.dbl ... max.dbl, step.dbl or menu</></row>
- *   <row><entry>Menu:</><entry>%NULL or menu.dbl[min.num (0) ... max.num], step.num (1)</></row>
+ *   <row><entry>Menu:</><entry>%NULL or menu.dbl[min.num ... max.num], step.num (1)</></row>
  *   </tbody></tgroup></informaltable>
  * @VBI_OPTION_STRING:
  *   A null terminated string. Note the menu version differs from
@@ -114,7 +114,7 @@ typedef struct vbi_export_info {
  *   <row><entry>Type:</><entry>char *</></row>
  *   <row><entry>Default:</><entry>def.str or menu.str[def.num]</></row>
  *   <row><entry>Bounds:</><entry>not applicable</></row>
- *   <row><entry>Menu:</><entry>%NULL or menu.str[min.num (0) ... max.num], step.num (1)</></row>
+ *   <row><entry>Menu:</><entry>%NULL or menu.str[min.num ... max.num], step.num (1)</></row>
  *   </tbody></tgroup></informaltable>
  * @VBI_OPTION_MENU:
  *   Choice between a number of named options. For example:
@@ -126,8 +126,8 @@ typedef struct vbi_export_info {
  *   <informaltable frame=none><tgroup cols=2><tbody>
  *   <row><entry>Type:</><entry>int</></row>
  *   <row><entry>Default:</><entry>def.num</></row>
- *   <row><entry>Bounds:</><entry>min.num (0) ... max.num, step.num (1)</></row>
- *   <row><entry>Menu:</><entry>menu.str[min.num (0) ... max.num], step.num (1).
+ *   <row><entry>Bounds:</><entry>min.num ... max.num, step.num (1)</></row>
+ *   <row><entry>Menu:</><entry>menu.str[min.num ... max.num], step.num (1).
  *      These strings are gettext'ized N_(), see the gettext() manuals for details.</></row>
  *   </tbody></tgroup></informaltable>
  **/

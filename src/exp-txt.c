@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.3 2002/01/21 07:57:10 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.4 2002/02/10 11:47:09 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,7 +119,7 @@ text_options[] = {
 	VBI_OPTION_STRING_INITIALIZER
 	  ("charset", NULL, "", NULL),
 	VBI_OPTION_STRING_INITIALIZER
-	  ("gfx-chr", N_("Graphics char"),
+	  ("gfx_chr", N_("Graphics char"),
 	   "#", N_("Replacement for block graphic characters: "
 		   "a single character or decimal (32) or hex (0x20) code")),
 	VBI_OPTION_MENU_INITIALIZER
@@ -156,7 +156,7 @@ option_get(vbi_export *e, const char *keyword, vbi_option_value *value)
 	} else if (strcmp(keyword, "charset") == 0) {
 		if (!(value->str = vbi_export_strdup(e, NULL, text->charset)))
 			return FALSE;
-	} else if (strcmp(keyword, "gfx-chr") == 0) {
+	} else if (strcmp(keyword, "gfx_chr") == 0) {
 		if (!(value->str = vbi_export_strdup(e, NULL, "x")))
 			return FALSE;
 		value->str[0] = text->gfx_chr;
@@ -195,7 +195,7 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 			return FALSE;
 		} else if (!vbi_export_strdup(e, &text->charset, string))
 			return FALSE;
-	} else if (strcmp(keyword, "gfx-chr") == 0) {
+	} else if (strcmp(keyword, "gfx_chr") == 0) {
 		char *s, *string = va_arg(args, char *);
 		int value;
 

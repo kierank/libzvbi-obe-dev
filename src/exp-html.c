@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-html.c,v 1.1 2002/01/12 16:18:36 mschimek Exp $ */
+/* $Id: exp-html.c,v 1.2 2002/02/10 11:47:09 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -91,7 +91,7 @@ html_delete(vbi_export *e)
 static vbi_option_info
 html_options[] = {
 	VBI_OPTION_STRING_INITIALIZER
-	  ("gfx-chr", N_("Graphics char"),
+	  ("gfx_chr", N_("Graphics char"),
 	   "#", N_("Replacement for block graphic characters: "
 		   "a single character or decimal (32) or hex (0x20) code")),
 	VBI_OPTION_BOOL_INITIALIZER
@@ -118,7 +118,7 @@ option_get(vbi_export *e, const char *keyword, vbi_option_value *value)
 {
 	html_instance *html = PARENT(e, html_instance, export);
 
-	if (strcmp(keyword, "gfx-chr") == 0) {
+	if (strcmp(keyword, "gfx_chr") == 0) {
 		if (!(value->str = vbi_export_strdup(e, NULL, "x")))
 			return FALSE;
 		value->str[0] = html->gfx_chr;
@@ -139,7 +139,7 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 {
 	html_instance *html = PARENT(e, html_instance, export);
 
-	if (strcmp(keyword, "gfx-chr") == 0) {
+	if (strcmp(keyword, "gfx_chr") == 0) {
 		char *s, *string = va_arg(args, char *);
 		int value;
 

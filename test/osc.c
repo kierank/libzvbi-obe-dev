@@ -18,7 +18,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.2 2002/01/15 03:20:25 mschimek Exp $ */
+/* $Id: osc.c,v 1.3 2002/02/10 11:47:10 mschimek Exp $ */
+
+#undef NDEBUG
 
 #include <stdio.h>
 #include <stdlib.h>

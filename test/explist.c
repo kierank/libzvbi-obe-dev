@@ -18,10 +18,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: explist.c,v 1.2 2002/01/13 09:54:58 mschimek Exp $ */
+/* $Id: explist.c,v 1.3 2002/02/10 11:47:10 mschimek Exp $ */
+
+#undef NDEBUG
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 #include <assert.h>
 #include <getopt.h>
 
@@ -84,6 +88,25 @@ do {									\
 		       && oi->def.type <= oi->max.type);		\
 	}								\
 } while (0)
+
+static void
+keyword_check(char *keyword)
+{
+	int i, l;
+
+	assert(keyword != NULL);
+	l = strlen(keyword);
+	assert(strlen(keyword) > 0);
+
+	for (i = 0; i < l; i++) {
+		if (isalnum(keyword[i]))
+			continue;
+		if (strchr("_", keyword[i]))
+			continue;
+		fprintf(stderr, "Bad keyword: '%s'\n", keyword);
+		exit(EXIT_FAILURE);
+	}
+}
 
 static void
 print_current(vbi_option_info *oi, vbi_option_value current)
@@ -291,14 +314,16 @@ dump_option_info(vbi_export *ex, vbi_option_info *oi)
 	printf("  * type=%s keyword=%s label=\"%s\" tooltip=\"%s\"\n",
 	       type_str, oi->keyword, _(oi->label), _(oi->tooltip));
 
+	keyword_check(oi->keyword);
+
 	switch (oi->type) {
 	case VBI_OPTION_BOOL:
 	case VBI_OPTION_INT:
 		BOUNDS_CHECK(num);
 		if (oi->menu.num) {
 			printf("    %d menu entries, default=%d: ",
-			       oi->max.num + 1, oi->def.num);
-			for (i = 0; i <= oi->max.num; i++)
+			       oi->max.num - oi->min.num + 1, oi->def.num);
+			for (i = oi->min.num; i <= oi->max.num; i++)
 				printf("%d%s", oi->menu.num[i],
 				       (i < oi->max.num) ? ", " : "");
 			printf("\n");
@@ -332,8 +357,8 @@ dump_option_info(vbi_export *ex, vbi_option_info *oi)
 		BOUNDS_CHECK(dbl);
 		if (oi->menu.dbl) {
 			printf("    %d menu entries, default=%d: ",
-			       oi->max.num + 1, oi->def.num);
-			for (i = 0; i <= oi->max.num; i++)
+			       oi->max.num - oi->min.num + 1, oi->def.num);
+			for (i = oi->min.num; i <= oi->max.num; i++)
 				printf("%f%s", oi->menu.dbl[i],
 				       (i < oi->max.num) ? ", " : "");
 		} else
@@ -365,8 +390,8 @@ dump_option_info(vbi_export *ex, vbi_option_info *oi)
 		if (oi->menu.str) {
 			BOUNDS_CHECK(str);
 			printf("    %d menu entries, default=%d: ",
-			       oi->max.num + 1, oi->def.num);
-			for (i = 0; i <= oi->max.num; i++)
+			       oi->max.num - oi->min.num + 1, oi->def.num);
+			for (i = oi->min.num; i <= oi->max.num; i++)
 				printf("%s%s", oi->menu.str[i],
 				       (i < oi->max.num) ? ", " : "");
 		} else
@@ -390,8 +415,8 @@ dump_option_info(vbi_export *ex, vbi_option_info *oi)
 
 	case VBI_OPTION_MENU:
 		printf("    %d menu entries, default=%d: ",
-		       oi->max.num + 1, oi->def.num);
-		for (i = 0; i <= oi->max.num; i++) {
+		       oi->max.num - oi->min.num + 1, oi->def.num);
+		for (i = oi->min.num; i <= oi->max.num; i++) {
 			assert(oi->menu.str[i] != NULL);
 			printf("%s%s", _(oi->menu.str[i]),
 			       (i < oi->max.num) ? ", " : "");
@@ -447,6 +472,8 @@ list_modules(void)
 		       "  tooltip=\"%s\" mime_type=%s extension=%s\n",
 		       xi->keyword, _(xi->label),
 		       _(xi->tooltip), xi->mime_type, xi->extension);
+
+		keyword_check(xi->keyword);
 
 		if (!(ex = vbi_export_new(xi->keyword, &errstr))) {
 			printf("Could not open '%s': %s\n",

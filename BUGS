@@ -1,4 +1,5 @@
 * "./osc --sim --pal" caption not recognized
-
+* v4l and v4l2 i/o can ignore timeout parameter
+  > maybe a sleep() loop works, but what about timestamping?
 
 

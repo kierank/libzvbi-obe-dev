@@ -1,3 +1,7 @@
+2002-02-08	I/O stuff <mschimek@users.sf.net>
+
+	* src/io-v4l.c: Enabled select() for bttv.
+
 2002-01-19	Fixes <mschimek@users.sf.net>
 
 	* src/io.c: vbi_capture_delete() not NULL safe, corrected.

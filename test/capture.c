@@ -18,7 +18,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.1 2002/01/15 03:24:27 mschimek Exp $ */
+/* $Id: capture.c,v 1.2 2002/02/10 11:47:10 mschimek Exp $ */
+
+#undef NDEBUG
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -388,10 +390,10 @@ mainloop(void)
 	double timestamp;
 	struct timeval tv;
 
-	if (do_read || do_sim) {
-		assert((raw = malloc(src_w * src_h)));
-		assert((sliced = malloc(sizeof(vbi_sliced) * src_h)));
-	}
+	raw = malloc(src_w * src_h);
+	sliced = malloc(sizeof(vbi_sliced) * src_h);
+
+	assert(raw && sliced);
 
 	for (quit = FALSE; !quit;) {
 		int r;
