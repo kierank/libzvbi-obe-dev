@@ -1,10 +1,66 @@
-Libzvbi daemon
+About Linux "VBI proxy"
+-----------------------
 
-This is a daemon proposed and implemented by Tom Zoerner. Its purpose
-is to share sliced vbi data amongst multiple clients using the same
-vbi capture device.
+The "video4linux" drivers allow capturing only to one VBI client at
+the same time.  This means, if you have a background application like
+the nxtvepg daemon running, you won't be able to start a teletext
+application.  [Note that although the v4l2 API allows multiple clients
+to open the device, still only one client may capture the same frame's
+data]
 
-Work is in progress. To compile the daemon and related files
-./configure with --enable-proxy. make install will not install the
-daemon yet, you have to start the executable from this directory.
-For a client example see the test directory.
+The VBI proxy is developed as a solution to this problem.  Afterall
+there's no good reason that only one app should be able to capture VBI,
+since there are many independent data streams, e.g. VPS/PDC, WSS,
+teletext, and inside teletext besides the regular pages also subtitles,
+Nextview, Teleweb and possibly more binary coded data streams.
+
+In particular there are some TV apps which always open /dev/vbi (for
+subtitles, WSS or whatever) so it's currently impossible to capture
+data services like Nextview EPG in the background.
+
+As a second, optional feature, the proxy may in the future be used to
+coordinate channel changes between multiple VBI background applications
+or between video and VBI apps;  the latter is mainly interesting for
+v4l2 drivers, where it's no longer possible to determine if a TV app
+is running before switching the channel in a background app. That's
+because in contrary to v4l1 the video device can be opened in any case.
+Hence VBI currently may annoy v4l2 users by switching the channel
+while you're watching TV.
+
+One drawback of the proxy is that it requires to adapt all cooperating
+VBI clients.  Hopefully the solution will be simple and elegant enough
+to convince many authors to switch to libzvbi, or at least implement
+the protocol.
+
+
+2003-04-27
+----------
+
+I've got a working prototype for the VBI proxy based on libzvbi. Both
+nxtvepg and alevt are already adapted for it.  Now you can run nxtvepg
+and alevt in parallel, or multiple instances of alevt etc.  The client
+interface to the proxy will probably not change (except for a few
+additional functions to control channel changes) so authors could
+already start to adapt their apps if interested.  Note the proxy daemon
+is not complete yet, esp. dynamically merging different service requests
+(i.e. services which read different VBI regions) might not work, it's
+also not optimized at all yet.
+
+I've made a demo proxy client "proxy-test" which serves as an example
+how to work with libzvbi.  The daemon is called "proxyd".  Both apps
+print usage info with -help. You can also look at my patch for alevt or
+nxtvepg/epgvbi/btdrv4linux.c inside switch USE_LIBZVBI.  The effort for
+the adaption should be only a few hours.
+
+As basis you need zvbi-0.2.4 from http://zapping.sourceforge.net/,
+proxy.tar.bz2 from http://nxtvepg.sourceforge.net/tmp/, unpacked in
+the zvbi-0.2.4/src directory (you may need to merge rules for the proxy
+modules manually into your own Makefile), and optionally alevt-1.6.1 and
+nxtvepg-2.5.2pre0 from http://www.nefkom.net/tomzo/prj/nxtvepg/devel/.
+If you're using a v4l2 driver you should upgrade to the latest version
+from http://bytesex.org/snapshot/ and apply my patches from the above
+tmp directory.
+
+If you've got any questions, feel free to ask.
+
+-tom

@@ -1,17 +1,16 @@
-2003-02-26	<mschimek@users.sf.net>
+2003-04-26	<mschimek@users.sf.net>
 
 	Added proxy daemon by Tom Zoerner:
 	* test/Makefile.am: Added proxy-test target.
 	* test: Added proxy-test.c
 	* src/Makefile.am: Added proxy targets.
-	* src: Added io-proxy.c, proxy-msg.c, proxy-msg.h. Added swap32()
-	  to proxy-msg.h, removed GNUism #include utils.h.
+	* src: Added io-proxy.c, proxy-msg.c, proxy-msg.h.
 	* Added daemon dir (since we need a different Makefile.am),
 	  added Makefile.am, proxyd.c, README.
 	* Makefile.am: Added daemon subdir.
-	* configure.in: Added --enable-proxy switch and daemon/Makefile.
+	* configure.in: Added --disable-proxy switch and daemon/Makefile.
 
-2003-02-26	<mschimek@users.sf.net>
+2003-04-26	<mschimek@users.sf.net>
 
 	* src/decoder.c (vbi_raw_decoder_add_services): There was
 	  a bug in the loop across the pattern array which caused
