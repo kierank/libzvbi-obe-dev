@@ -1,3 +1,8 @@
+2002-10-07	<mschimek@users.sf.net>
+
+	* src/exp-gfx.c (vbi_draw_vt_page_region): Flash fix. Zapping
+	  not affected.
+
 2002-10-04	<mschimek@users.sf.net>
 
 	* Release 0.2.2.

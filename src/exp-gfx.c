@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.c,v 1.4 2002/10/02 20:59:25 mschimek Exp $ */
+/* $Id: exp-gfx.c,v 1.5 2002/10/07 14:58:07 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -578,7 +578,7 @@ vbi_draw_vt_page_region(vbi_page *pg,
 {
 	vbi_rgba pen[64], *canvast = canvas;
 	int count, row_adv;
-	int conceal, unicode;
+	int conceal, off, unicode;
 	vbi_char *ac;
 	int i;
 
@@ -603,6 +603,7 @@ vbi_draw_vt_page_region(vbi_page *pg,
 	row_adv = rowstride * 10 - width * 12 * sizeof(*canvast);
 
 	conceal = !reveal;
+	off = !flash_on;
 
 	if (pg->drcs_clut)
 		for (i = 2; i < 2 + 8 + 32; i++)
@@ -612,7 +613,7 @@ vbi_draw_vt_page_region(vbi_page *pg,
 		ac = &pg->text[row * pg->columns + column];
 
 		for (count = width; count > 0; count--, ac++) {
-			if ((ac->conceal & conceal) || !flash_on)
+			if ((ac->conceal & conceal) || (ac->flash & off))
 				unicode = 0x0020;
 			else
 				unicode = ac->unicode;
