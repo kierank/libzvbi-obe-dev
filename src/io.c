@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.4 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: io.c,v 1.5 2003/05/17 13:01:10 tomzo Exp $ */
 
 #include <assert.h>
 
@@ -253,6 +253,44 @@ vbi_capture_parameters(vbi_capture *capture)
 	assert (capture != NULL);
 
 	return capture->parameters(capture);
+}
+
+/**
+ * @param capture Initialized vbi capture context.
+ * @param commit TRUE to apply all previously added services to
+ *   the device; when doing subsequent calls of this function,
+ *   commit should be set TRUE for the last call.  Reading data
+ *   cannot continue before changes were commited (because capturing
+ *   has to be suspended to allow resizing the VBI image.)
+ * @param services This must point to a set of @ref VBI_SLICED_
+ *   symbols describing the
+ *   data services to be decoded. On return the services actually
+ *   decodable will be stored here. See vbi_raw_decoder_add()
+ *   for details. If you want to capture raw data only, set to
+ *   @c VBI_SLICED_VBI_525, @c VBI_SLICED_VBI_625 or both.
+ * @param strict Will be passed to vbi_raw_decoder_add().
+ * @param errorstr If not @c NULL this function stores a pointer to an error
+ *   description here. You must free() this string when no longer needed.
+ * @param trace If @c TRUE print progress messages on stderr.
+ *
+ * Add one or more services to an already initialized capture context.
+ * Can be used to dynamically change the set of active services.
+ * Internally the function will restart parameter negotiation with the
+ * VBI device driver and then call vbi_raw_decoder_add_services().
+ * You may call vbi_raw_decoder_reset() before using this function
+ * to rebuild your service mask from scratch.
+ *
+ * @return
+ * Bitmask of supported services, including previously added services.
+ */
+unsigned int
+vbi_capture_add_services(vbi_capture *capture, vbi_bool commit,
+                         unsigned int services, int strict,
+                         char ** errorstr)
+{
+	assert (capture != NULL);
+
+	return capture->add_services(capture, commit, services, strict, errorstr);
 }
 
 /**

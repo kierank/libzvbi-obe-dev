@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.7 2003/05/03 12:03:31 tomzo Exp $ */
+/* $Id: io.h,v 1.8 2003/05/17 13:01:10 tomzo Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -94,6 +94,9 @@ extern int		vbi_capture_pull(vbi_capture *capture, vbi_capture_buffer **raw_buff
 					 vbi_capture_buffer **sliced_buffer, struct timeval *timeout);
 extern vbi_raw_decoder *vbi_capture_parameters(vbi_capture *capture);
 extern int		vbi_capture_fd(vbi_capture *capture);
+extern unsigned int     vbi_capture_add_services(vbi_capture *capture, vbi_bool commit,
+                                                 unsigned int services, int strict,
+                                                 char ** errorstr);
 
 extern void		vbi_capture_delete(vbi_capture *capture);
 /** @} */
@@ -142,7 +145,11 @@ extern const char _zvbi_intl_domainname[];
 struct vbi_capture {
 	vbi_bool		(* read)(vbi_capture *, vbi_capture_buffer **,
 					 vbi_capture_buffer **, struct timeval *);
+	void			(* flush)(vbi_capture *);
 	vbi_raw_decoder *	(* parameters)(vbi_capture *);
+        unsigned int            (* add_services)(vbi_capture *vc, vbi_bool commit,
+                                         unsigned int services, int strict,
+                                         char ** errorstr);
 	int			(* get_fd)(vbi_capture *);
 	void			(* _delete)(vbi_capture *);
 };
