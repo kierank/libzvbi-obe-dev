@@ -1,5 +1,12 @@
 2004-11-03    <mschimek@users.sf.net>
 
+	* src/dvb_mux.c (_vbi_dvb_multiplex_sliced,
+	  _vbi_dvb_multiplex_samples), src/dvb_demux.c (demux_data_units):
+	  D'oh! Got stuffing wrong.
+	* src/dvb_mux.c (_vbi_dvb_multiplex_sliced),
+	  src/dvb_demux.c (demux_data_units): Don't reverse VPS bits.
+	* src/dvb_demux.c: Improved data unit loop to handle field packets.
+	* src/io-dvb.c: Ported to new vbi_dvb_demux, untested.
 	* po/de.po, po/fr.po, po/es.po, po/nl.po, po/pl.po, po/sv.po:
 	  Converted to UTF-8.
 

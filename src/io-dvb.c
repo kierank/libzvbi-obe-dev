@@ -38,76 +38,25 @@
 #include "hamm.h"
 #include "io.h"
 #include "vbi.h"
+#include "dvb_demux.h"
 
 /* ----------------------------------------------------------------------- */
 
 
 struct vbi_capture_dvb {
-    vbi_capture	   cap;
-    int            fd;
-    int            debug;
-    int            resync;
-    unsigned char  buffer[1024*8];
-    unsigned int   bbytes;
-    unsigned int   psize;
+    vbi_capture		cap;
+    vbi_dvb_demux *	demux;
+    int 		fd;
+    int     	        debug;
+    vbi_capture_buffer	sliced_buffer;
+    vbi_sliced		sliced_data[128];
+    double		sample_time;
+    uint8_t		pes_buffer[1024*8];
+    const uint8_t *	bp;
+    unsigned int	b_left;
 };
 
 /* ----------------------------------------------------------------------- */
-
-#define bitswap vbi_bit_reverse
-
-static int dvb_payload(struct vbi_capture_dvb *dvb,
-		       unsigned char *buf, unsigned int len,
-		       vbi_sliced *dest)
-{
-    int i,j,line;
-    int slices = 0;
-
-    if (dvb->debug > 1)
-	fprintf(stderr,"dvb-vbi: new PES packet\n");
-    if (buf[0] < 0x10 || buf[0] > 0x1f)
-	return slices;  /* no EBU teletext data */
-
-    for (i = 1; i < len; i += buf[i+1]+2) {
-	line = buf[i+2] & 0x1f;
-	if (buf[i+2] & 0x20)
-	    line += 312;
-	if (dvb->debug > 2)
-	    fprintf(stderr,"dvb-vbi: id 0x%02x len %d | line %3d framing 0x%02x\n",
-		    buf[i], buf[i+1], line, buf[i+3]);
-	switch (buf[i]) {
-	case 0x02:
-	    dest[slices].id   = VBI_SLICED_TELETEXT_B;
-	    dest[slices].line = line;
-	    for (j = 0; j < sizeof(dest[slices].data) && j < buf[i+1]-2; j++)
-		dest[slices].data[j] = bitswap[buf[i+j+4]];
-	    slices++;
-	    break;
-	}
-    }
-    return slices;
-}
-
-static int dvb_wait(int fd, struct timeval *timeout)
-{
-    struct timeval tv = *timeout;
-    int rc;
-    
-    fd_set set;
-    FD_ZERO(&set);
-    FD_SET(fd,&set);
-    rc = select(fd+1,&set,NULL,NULL,&tv);
-    switch (rc) {
-    case -1:
-	perror("dvb-vbi: select");
-	return -1;
-    case 0:
-	fprintf(stderr,"dvb-vbi: timeout\n");
-	return -1;
-    default:
-	return 0;
-    }
-}
 
 static struct vbi_capture_dvb* dvb_init(char *dev, char **errstr, int debug)
 {
@@ -117,6 +66,11 @@ static struct vbi_capture_dvb* dvb_init(char *dev, char **errstr, int debug)
     if (NULL == dvb)
 	return NULL;
     memset(dvb,0,sizeof(*dvb));
+
+    if (!(dvb->demux = _vbi_dvb_demux_pes_new (NULL, NULL))) {
+        free (dvb);
+	return NULL;
+    }
 
     dvb->debug = debug;
     dvb->fd = open(dev, O_RDWR | O_NONBLOCK);
@@ -139,91 +93,90 @@ static int dvb_read(vbi_capture *cap,
 		    struct timeval *timeout)
 {
     struct vbi_capture_dvb *dvb = (struct vbi_capture_dvb*)cap;
-    static unsigned char peshdr[4] = { 0x00, 0x00, 0x01, 0xbd };
-    vbi_sliced *dest = (vbi_sliced *)(*sliced)->data;
-    unsigned int off;
-    int lines = 0;
-    int ret = 0;
-    int rc;
+    vbi_capture_buffer *sb;
+    unsigned int n_lines;
+    int64_t pts;
 
-    if (0 != dvb_wait(dvb->fd,timeout))
-	return -1;
-    rc = read(dvb->fd, dvb->buffer + dvb->bbytes,
-	      sizeof(dvb->buffer) - dvb->bbytes);
-    switch (rc) {
-    case -1:
-	perror("read");
-	return -1;
-    case 0:
-	fprintf(stderr,"EOF\n");
-	return -1;
-    };
-    if (dvb->debug > 1)
-	fprintf(stderr,"dvb-vbi: read %d bytes (@%d)\n",rc,dvb->bbytes);
-    dvb->bbytes += rc;
-
-    if (dvb->resync) {
-	/* grep for start code in resync mode */
-	unsigned char *start;
-	start = memmem(dvb->buffer,dvb->bbytes,peshdr,4);
-	if (NULL != start) {
-	    if (dvb->debug)
-		fprintf(stderr,"vbi-dvb: start code found, RESYNC cleared\n");
-	    dvb->bbytes -= (start - dvb->buffer);
-	    memmove(dvb->buffer,start,dvb->bbytes);
-	    dvb->resync = 0;
-	} else {
-	    if (dvb->debug)
-		fprintf(stderr,"vbi-dvb: RESYNC [still no pes start magic]\n");
-	    dvb->bbytes = 0;
-	    dvb->resync = 1;
-	    return ret;
-	}
+    if (!sliced || !(sb = *sliced)) {
+	sb = &dvb->sliced_buffer;
+	sb->data = dvb->sliced_data;
     }
 
-    for (;;) {
-	if (6 > dvb->bbytes) {
-	    /* need header */
-	    return ret;
-	}
-	if (0 != memcmp(dvb->buffer,peshdr,4)) {
-	    if (dvb->debug)
-		fprintf(stderr,"vbi-dvb: RESYNC [no pes start magic]\n");
-	    dvb->bbytes = 0;
-	    dvb->resync = 1;
-	    return ret;
-	}
-	dvb->psize = dvb->buffer[4] << 8 | dvb->buffer[5];
-	if (dvb->psize+6 > sizeof(dvb->buffer)) {
-	    if (dvb->debug)
-		fprintf(stderr,"vbi-dvb: RESYNC [insane payload size %d]\n",dvb->psize);
-	    dvb->bbytes = 0;
-	    dvb->resync = 1;
-	    return ret;
-	}
-	if (dvb->psize+6 > dvb->bbytes) {
-	    /* need more data */
-	    return ret;
-	}
-
-	/* ok, have a complete PES packet, pass it on ... */
-	off = dvb->buffer[8]+9;
-	rc = dvb_payload(dvb,dvb->buffer+off,dvb->psize-off, dest + lines);
-	if (rc > 0) {
+    do {
+	if (0 == dvb->b_left) {
 	    struct timeval tv;
-	    ret = 1;
-	    lines += rc;
-	    gettimeofday(&tv, NULL);
-	    (*sliced)->size      = lines * sizeof(vbi_sliced);
-	    (*sliced)->timestamp = tv.tv_sec + tv.tv_usec * (1 / 1e6);
+	    fd_set set;
+	    int rc;
+
+	    FD_ZERO (&set);
+	    FD_SET (dvb->fd, &set);
+
+	    /* Note Linux select() may change tv. */
+	    tv = *timeout;
+
+	    rc = select (dvb->fd + 1, &set, NULL, NULL, &tv);
+	    switch (rc) {
+	    case -1:
+		perror("dvb-vbi: select");
+		return -1; /* error */
+	    case 0:
+		fprintf(stderr,"dvb-vbi: timeout\n");
+		return 0; /* timeout */
+	    default:
+		break;
+	    }
+
+	    rc = read (dvb->fd, dvb->pes_buffer, sizeof (dvb->pes_buffer));
+	    switch (rc) {
+	    case -1:
+		perror("read");
+		return -1; /* error */
+	    case 0:
+		/* XXX EOF or false select? Perhaps poll(2) is better. */
+		fprintf(stderr,"EOF\n");
+		return -1; /* error */
+	    }
+
+	    /* XXX inaccurate. Should be the time when we received the
+	       first byte of the first packet containing data of the
+	       returned frame. Or so. */
+	    gettimeofday (&tv, NULL);
+	    dvb->sample_time = tv.tv_sec + tv.tv_usec * (1 / 1e6);
+
+	    dvb->bp = dvb->pes_buffer;
+	    dvb->b_left = rc;
 	}
 
-	dvb->bbytes -= (dvb->psize+6);
-	if (dvb->bbytes) {
-	    /* shift buffer */
-	    memmove(dvb->buffer,dvb->buffer + dvb->psize+6,dvb->bbytes);
-	}
+	/* Demultiplexer coroutine. Returns when one frame is complete
+	   or the buffer is empty, advancing bp and b_left. Don't change
+	   sb->data in flight. */
+	/* XXX max sliced lines needs an API change. Currently this value
+	   is determined by vbi_raw_decoder line count below, 256 / 2
+	   because fields don't really apply here and in practice even
+	   32 should be enough. */
+	n_lines = _vbi_dvb_demux_cor (dvb->demux,
+				      sb->data, /* max sliced lines */ 128,
+				      &pts,
+				      &dvb->bp, &dvb->b_left);
+    } while (0 == n_lines);
+
+    if (sliced) {
+	sb->size = n_lines * sizeof (vbi_sliced);
+	sb->timestamp = dvb->sample_time;
+	/* XXX PTS needs an API change.
+	   sb->sample_time = dvb->sample_time;
+	   sb->stream_time = pts; (first sliced line) */
+
+	*sliced = sb;
     }
+
+    if (raw && *raw) {
+	/* Not implemented yet. */
+	sb = *raw;
+	sb->size = 0;
+    }
+
+    return 1; /* success */
 }
 
 static vbi_raw_decoder* dvb_parameters(vbi_capture *cap)
@@ -241,6 +194,9 @@ dvb_delete(vbi_capture *cap)
 
     if (dvb->fd != -1)
 	close(dvb->fd);
+
+    _vbi_dvb_demux_delete (dvb->demux);
+
     free(dvb);
 }
 
