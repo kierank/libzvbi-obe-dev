@@ -22,10 +22,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.c,v 1.7 2002/10/22 04:42:40 mschimek Exp $ */
+/* $Id: exp-gfx.c,v 1.8 2004/12/13 07:13:10 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #include <stdio.h>
@@ -487,6 +487,7 @@ draw_blank(int canvas_type, uint8_t *canvas, unsigned int rowstride,
 }
 
 /**
+ * @param pg Source vbi_page, see vbi_fetch_cc_page().
  * @param fmt Target format. For now only VBI_PIXFMT_RGBA32_LE (vbi_rgba) permitted.
  * @param canvas Pointer to destination image (currently an array of vbi_rgba), this
  *   must be at least @a rowstride * @a height * 26 bytes large.
