@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.7 2002/08/22 22:11:56 mschimek Exp $ */
+/* $Id: osc.c,v 1.8 2002/10/22 04:43:18 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -383,15 +383,21 @@ mainloop(void)
 	}
 }
 
+const char short_options[] = "d:npsv";
+
+#ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options[] = {
 	{ "device",	required_argument,	NULL,		'd' },
 	{ "ntsc",	no_argument,		NULL,		'n' },
 	{ "pal",	no_argument,		NULL,		'p' },
-	{ "sim",	no_argument,		&do_sim,	TRUE },
+	{ "sim",	no_argument,		NULL,		's' },
 	{ "verbose",	no_argument,		NULL,		'v' },
 	{ 0, 0, 0, 0 }
 };
+#else
+#define getopt_long(ac, av, s, l, i) getopt(ac, av, s)
+#endif
 
 int
 main(int argc, char **argv)
@@ -403,7 +409,8 @@ main(int argc, char **argv)
 	vbi_bool verbose = FALSE;
 	int c, index;
 
-	while ((c = getopt_long(argc, argv, "d:npv", long_options, &index)) != -1)
+	while ((c = getopt_long(argc, argv, short_options,
+				long_options, &index)) != -1)
 		switch (c) {
 		case 0: /* set flag */
 			break;
@@ -415,6 +422,9 @@ main(int argc, char **argv)
 			break;
 		case 'p':
 			scanning = 625;
+			break;
+		case 's':
+			do_sim ^= TRUE;
 			break;
 		case 'v':
 			verbose ^= TRUE;
@@ -430,29 +440,55 @@ main(int argc, char **argv)
 		| VBI_SLICED_WSS_625 | VBI_SLICED_WSS_CPR1204;
 
 	if (do_sim) {
-		par = init_sim(scanning, services);
+		par = init_sim (scanning, services);
 	} else {
-		cap = vbi_capture_v4l2_new(dev_name, /* buffers */ 5,
-			&services, /* strict */ -1, &errstr, /* trace */ verbose);
+		do {
+			cap = vbi_capture_v4l2_new (dev_name,
+						    /* buffers */ 5,
+						    &services,
+						    /* strict */ -1,
+						    &errstr,
+						    /* trace */ verbose);
+			if (cap)
+				break;
 
-		if (!cap) {
-			fprintf(stderr, "Failed to open v4l2 device:\n%s\n", errstr);
+			fprintf (stderr, "Cannot capture vbi data "
+				 "with v4l2 interface:\n%s\n", errstr);
 
-			if (errstr)
-				free(errstr);
+			free (errstr);
 
-			cap = vbi_capture_v4l_new(dev_name, scanning,
-				&services, /* strict */ -1, &errstr,
-				/* trace */ verbose);
+			cap = vbi_capture_v4l_new (dev_name,
+						   scanning,
+						   &services,
+						   /* strict */ -1,
+						   &errstr,
+						   /* trace */ verbose);
+			if (cap)
+				break;
 
-			if (!cap) {
-				fprintf(stderr, "Failed to open v4l device:\n%s\n", errstr);
-		
-				exit(EXIT_FAILURE);
-			}
-		}
+			fprintf (stderr, "Cannot capture vbi data "
+				 "with v4l interface:\n%s\n", errstr);
 
-		assert((par = vbi_capture_parameters(cap)));
+			free (errstr);
+
+			cap = vbi_capture_bktr_new (dev_name,
+						    scanning,
+						    &services,
+						    /* strict */ -1,
+						    &errstr,
+						    /* trace */ verbose);
+			if (cap)
+				break;
+
+			fprintf (stderr, "Cannot capture vbi data "
+				 "with bktr interface:\n%s\n", errstr);
+
+			free (errstr);
+
+			exit(EXIT_FAILURE);
+		} while (0);
+
+		assert ((par = vbi_capture_parameters(cap)));
 	}
 
 	assert(par->sampling_format == VBI_PIXFMT_YUV420);

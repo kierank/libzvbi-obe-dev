@@ -40,7 +40,7 @@ osc
 	raw vbi decoder. Works only on X11 5:6:5 LE display. Options:
 	-d | --device name
 			Default is /dev/vbi.
-	--sim		Create artificial raw vbi data instead of
+	-s | --sim	Create artificial raw vbi data instead of
 			opening a vbi device, to test decoding in
 			absence of a real source.
 	-v | --verbose	Trace device access on stderr, may reveal
@@ -50,12 +50,14 @@ osc
 			When not given libzvbi may have to guess
 			which can fail. Default is PAL.
 
+	(--long options are only available on GNU systems.)
+
 capture
 	Capture sliced vbi data. Purpose: test vbi device interface,
 	raw vbi decoder. Options:
 	-d | --device name
 			Default is /dev/vbi.
-	--sim		Create artificial raw vbi data instead of
+	-s | --sim	Create artificial raw vbi data instead of
 			opening a vbi device, to test decoding in
 			absence of a real source.
 	-v | --verbose	Trace device access on stderr, may reveal
@@ -70,7 +72,7 @@ capture
 
 	Options to write sliced vbi data _as_ASCII_ to standard output:
 
-	--dump-ttx	Teletext data (PAL).
+	-t | --dump-ttx Teletext data (PAL).
 	--dump-cc	Closed Caption data, excluding XDS (PAL & NTSC).
 	--dump-xds	eXtended Data Service data (station name etc; NTSC).
 	--dump-wss	Wide Screen Signalling (PAL & NTSC-Japan).
@@ -81,9 +83,9 @@ capture
 	output. This can be piped
 		"./capture <options> --sliced | ./export <options>" or
 		"./capture <options> --sliced | ./caption".
-	--sliced	Write sliced vbi data.
+	-l | --sliced	Write sliced vbi data.
+
+	(--long options are only available on GNU systems.)
 
 The ultimate test is http://zapping.sourceforge.net, the TV viewer this
 library was written for.
-
-

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: explist.c,v 1.5 2002/09/26 20:50:01 mschimek Exp $ */
+/* $Id: explist.c,v 1.6 2002/10/22 04:43:18 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -494,11 +494,17 @@ list_modules(void)
 	puts("-- end of list --");
 }
 
+const char short_options[] = "c";
+
+#ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options[] = {
-	{ "check", no_argument, NULL, 'c' },
+	{ "check",	no_argument,		NULL,		'c' },
 	{ 0, 0, 0, 0 }
 };
+#else
+#define getopt_long(ac, av, s, l, i) getopt(ac, av, s)
+#endif
 
 int
 main(int argc, char **argv)
@@ -508,12 +514,12 @@ main(int argc, char **argv)
 	setlocale (LC_ALL, "");
 	textdomain ("foobar"); /* we are not the library */
 
-	while ((c = getopt_long(argc, argv, "c", long_options, &index)) != -1)
+	while ((c = getopt_long(argc, argv, short_options,
+				long_options, &index)) != -1)
 		switch (c) {
 		case 'c':
 			check = TRUE;
 			break;
-
 		default:
 			fprintf(stderr, "Unknown option\n");
 			exit(EXIT_FAILURE);
