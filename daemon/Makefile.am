@@ -6,13 +6,20 @@ zvbi_chains_SOURCES = chains.c
 sbin_PROGRAMS = zvbid
 zvbid_SOURCES = proxyd.c
 
-man_MANS = zvbid.1 zvbi-chains.1
+man_MANS = \
+	zvbid.1 \
+	zvbi-chains.1
 
-INCLUDES = -I$(top_srcdir) \
+EXTRA_DIST = \
+	$(man_MANS) \
+	zvbid.init.in
+
+AM_CPPFLAGS = \
+	-I$(top_srcdir) \
 	-DLIBZVBI_CHAINS_PATH=\"libzvbi-chains.so\" \
-	-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations \
-	-D_REENTRANT -D_GNU_SOURCE
+	-D_REENTRANT \
+	-D_GNU_SOURCE
 
-LDADD = $(top_builddir)/src/libzvbi.la $(LIBS)
-
-EXTRA_DIST = $(man_MANS) zvbid.init.in
+LDADD = \
+	$(top_builddir)/src/libzvbi.la \
+	$(LIBS)

@@ -1,9 +1,14 @@
+## Process this file with automake to produce Makefile.in
+
 noinst_PROGRAMS = x11font
 
 EXTRA_DIST = README
 
-INCLUDES = -I$(top_srcdir) \
-	-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations \
-	-D_REENTRANT -D_GNU_SOURCE
+AM_CPPFLAGS = \
+	-I$(top_srcdir) \
+	-D_REENTRANT \
+	-D_GNU_SOURCE
 
-LDADD = $(top_builddir)/src/.libs/libzvbi.a $(LIBS)
+LDADD = \
+	$(top_builddir)/src/.libs/libzvbi.a
+	$(LIBS)
