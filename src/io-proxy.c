@@ -18,6 +18,12 @@
  *
  *
  *  $Log: io-proxy.c,v $
+ *  Revision 1.5  2003/05/10 13:30:24  tomzo
+ *  - bugfix proxy_read(): loop around select() until a complete VBI frame was
+ *    received or timeout expired; before the func returned 0 when a partial
+ *    message was received only, falsely indicating a timeout to the caller
+ *  - fixed debug level on dprintfx() messages
+ *
  *  Revision 1.4  2003/05/03 12:05:58  tomzo
  *  - added documentation for vbi_capture_proxy_new()
  *  - removed swap32 inline function from proxyd.c and io-proxy.c: use new macro
@@ -26,7 +32,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: io-proxy.c,v 1.4 2003/05/03 12:05:58 tomzo Exp $";
+static const char rcsid[] = "$Id: io-proxy.c,v 1.5 2003/05/10 13:30:24 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -163,7 +169,7 @@ static vbi_bool proxy_client_connect_server( vbi_capture_proxy *v )
    }
    else
    {
-      dprintf2("connect_server: Hostname or port not configured\n");
+      dprintf1("connect_server: Hostname or port not configured\n");
       if (use_tcp_ip && (v->p_srv_host == NULL))
          vbi_asprintf(&v->p_errorstr, "%s", _("Server hostname not configured"));
       else if (v->p_srv_port == NULL)
@@ -213,11 +219,11 @@ static vbi_bool proxy_client_check_msg( vbi_capture_proxy *v, uint len, VBIPROXY
          break;
 
       case MSG_TYPE_CONNECT_REQ:
-         dprintf2("check_msg: recv server msg type %d\n", pHead->type);
+         dprintf1("check_msg: recv server msg type %d\n", pHead->type);
          result = FALSE;
          break;
       default:
-         dprintf2("check_msg: unknown msg type %d\n", pHead->type);
+         dprintf1("check_msg: unknown msg type %d\n", pHead->type);
          result = FALSE;
          break;
    }
@@ -236,14 +242,14 @@ static vbi_bool proxy_client_take_message( vbi_capture_proxy *v, VBIPROXY_MSG_BO
    vbi_bool result = FALSE;
 
    /*if (v->io.readHeader.type != MSG_TYPE_DATA_IND) //XXX */
-   dprintf1("take_message: recv msg type %d, len %d\n", v->io.readHeader.type, v->io.readHeader.len);
+   dprintf2("take_message: recv msg type %d, len %d\n", v->io.readHeader.type, v->io.readHeader.len);
 
    switch (v->io.readHeader.type)
    {
       case MSG_TYPE_CONNECT_CNF:
          if (v->state == CLNT_STATE_WAIT_CON_CNF)
          {
-            dprintf1("take_message: CONNECT_CNF: reply version %x, protocol %x\n", pMsg->connect_cnf.magics.protocol_version, pMsg->connect_cnf.magics.protocol_compat_version);
+            dprintf2("take_message: CONNECT_CNF: reply version %x, protocol %x\n", pMsg->connect_cnf.magics.protocol_version, pMsg->connect_cnf.magics.protocol_compat_version);
             /* first server message received: contains version info */
             /* note: nxtvepg and endian magics are already checked */
             if (pMsg->connect_cnf.magics.protocol_compat_version != VBIPROXY_COMPAT_VERSION)
@@ -270,7 +276,7 @@ static vbi_bool proxy_client_take_message( vbi_capture_proxy *v, VBIPROXY_MSG_BO
       case MSG_TYPE_CONNECT_REJ:
          if (v->state == CLNT_STATE_WAIT_CON_CNF)
          {
-            dprintf1("take_message: CONNECT_REJ: reply version %x, protocol %x\n", pMsg->connect_rej.magics.protocol_version, pMsg->connect_rej.magics.protocol_compat_version);
+            dprintf2("take_message: CONNECT_REJ: reply version %x, protocol %x\n", pMsg->connect_rej.magics.protocol_version, pMsg->connect_rej.magics.protocol_compat_version);
             if (v->p_errorstr != NULL)
             {
                free(v->p_errorstr);
@@ -292,7 +298,7 @@ static vbi_bool proxy_client_take_message( vbi_capture_proxy *v, VBIPROXY_MSG_BO
             if (pMsg->data_ind.line_count > v->dec.count[0] + v->dec.count[1])
             {  /* more lines than req. for service -> would overflow the allocated slicer buffer
                ** -> discard extra lines (should never happen; proxy checks for line counts) */
-               dprintf1("take_message: DATA_IND: too many lines: %d > %d\n", pMsg->data_ind.line_count, v->dec.count[0] + v->dec.count[1]);
+               dprintf2("take_message: DATA_IND: too many lines: %d > %d\n", pMsg->data_ind.line_count, v->dec.count[0] + v->dec.count[1]);
                pMsg->data_ind.line_count = v->dec.count[0] + v->dec.count[1];
             }
             v->p_data_ind = pMsg;
@@ -311,7 +317,7 @@ static vbi_bool proxy_client_take_message( vbi_capture_proxy *v, VBIPROXY_MSG_BO
 
    if ((result == FALSE) && (v->p_errorstr == NULL))
    {
-      dprintf2("take_message: message type %d (len %d) not expected in state %d\n", v->io.readHeader.type, v->io.readHeader.len, v->state);
+      dprintf1("take_message: message type %d (len %d) not expected in state %d\n", v->io.readHeader.type, v->io.readHeader.len, v->state);
       vbi_asprintf(&v->p_errorstr, "%s", _("Proxy protocol error (unecpected message)"));
    }
    if (pMsg != NULL)
@@ -465,11 +471,53 @@ static void proxy_client_handle_socket( vbi_capture_proxy *v )
 }
 
 /* ----------------------------------------------------------------------------
-** Wait for I/O event on socket
+** Substract time spent waiting in select from a given max. timeout struct
+** - note that we don't use the Linux select(2) feature to return the
+**   time not slept in the timeout struct, because that's not portable
+** - instead gettimeofday(2) must be called before and after the select(2)
+**   and the delta calculated from that
+*/
+static void proxy_update_timeout_delta( struct timeval * tv_start,
+                                        struct timeval * tv_stop,
+				        struct timeval * timeout )
+{
+	struct timeval delta;
+
+	/* first calculate difference between start and stop time */
+	delta.tv_sec = tv_stop->tv_sec - tv_start->tv_sec;
+	if (tv_stop->tv_usec < tv_start->tv_usec) {
+		delta.tv_usec = 1000000 + tv_stop->tv_usec - tv_start->tv_usec;
+		delta.tv_sec += 1;
+	}
+	else
+		delta.tv_usec = tv_stop->tv_usec - tv_start->tv_usec;
+
+	assert((delta.tv_sec >= 0) && (delta.tv_usec >= 0));
+
+	/* substract delta from the given max. timeout */
+	timeout->tv_sec -= delta.tv_sec;
+	if (timeout->tv_usec < delta.tv_usec) {
+		timeout->tv_usec = 1000000 + timeout->tv_usec - delta.tv_usec;
+		timeout->tv_sec -= 1;
+	}
+	else
+		timeout->tv_usec -= delta.tv_usec;
+
+	/* check if timeout was underrun -> set rest to zero */
+	if ( (timeout->tv_sec < 0) || (timeout->tv_usec < 0) ) {
+		timeout->tv_sec  = 0;
+		timeout->tv_usec = 0;
+	}
+}
+
+/* ----------------------------------------------------------------------------
+** Wait for I/O event on socket with the given timeout
 */
 static int
 proxy_client_wait_select( vbi_capture_proxy *v, struct timeval * timeout )
 {
+	struct timeval tv_start;
+	struct timeval tv_stop;
         struct timeval tv;
         fd_set fd_rd;
         fd_set fd_wr;
@@ -479,6 +527,8 @@ proxy_client_wait_select( vbi_capture_proxy *v, struct timeval * timeout )
                 return -1;
 
         do {
+        	pthread_testcancel();
+
                 FD_ZERO(&fd_rd);
                 FD_ZERO(&fd_wr);
 
@@ -489,12 +539,16 @@ proxy_client_wait_select( vbi_capture_proxy *v, struct timeval * timeout )
 
                 tv = *timeout; /* Linux kernel overwrites this */
 
+		gettimeofday(&tv_start, NULL);
                 ret = select(v->io.sock_fd + 1, &fd_rd, &fd_wr, NULL, &tv);
+		gettimeofday(&tv_stop, NULL);
+
+		proxy_update_timeout_delta(&tv_start, &tv_stop, timeout);
 
         } while ((ret < 0) && (errno == EINTR));
 
         if (ret > 0) {
-                dprintf1("handle_socket: wait r/w %d/%d -> sock r/w %d/%d\n", v->ev_hand.blockOnRead, v->ev_hand.blockOnWrite, FD_ISSET(v->io.sock_fd, &fd_rd), FD_ISSET(v->io.sock_fd, &fd_wr));
+                dprintf2("handle_socket: wait r/w %d/%d -> sock r/w %d/%d\n", v->ev_hand.blockOnRead, v->ev_hand.blockOnWrite, FD_ISSET(v->io.sock_fd, &fd_rd), FD_ISSET(v->io.sock_fd, &fd_wr));
 
                 v->ev_hand.blockOnRead  = FD_ISSET(v->io.sock_fd, &fd_rd);
                 v->ev_hand.blockOnWrite = FD_ISSET(v->io.sock_fd, &fd_wr);
@@ -532,7 +586,7 @@ static vbi_bool proxy_client_start_acq( vbi_capture_proxy *v )
                     break;
 
             proxy_client_handle_socket(v);
-        }
+         }
       }
       else
       {  /* connect failed -> abort */
@@ -540,7 +594,7 @@ static vbi_bool proxy_client_start_acq( vbi_capture_proxy *v )
       }
    }
    else
-      dprintf2("start_acq: acq already enabled\n");
+      dprintf1("start_acq: acq already enabled\n");
 
    return (v->state != CLNT_STATE_NULL);
 }
@@ -558,7 +612,7 @@ static void proxy_client_stop_acq( vbi_capture_proxy *v )
       proxy_client_close(v);
    }
    else
-      dprintf2("stop_acq: acq not enabled\n");
+      dprintf1("stop_acq: acq not enabled\n");
 }
 
 /* ----------------------------------------------------------------------------
@@ -581,14 +635,14 @@ static vbi_bool proxy_client_check_timeouts( vbi_capture_proxy *v )
           (v->state == CLNT_STATE_WAIT_CONNECT) ||
           (v->state == CLNT_STATE_WAIT_CON_CNF) ))
    {
-      dprintf2("check_timeouts: network timeout\n");
+      dprintf1("check_timeouts: network timeout\n");
       vbi_asprintf(&v->p_errorstr, "%s", _("Lost connection (I/O timeout)"));
       proxy_client_close(v);
    }
    else if ( (v->state == CLNT_STATE_RETRY) &&
              (now > v->io.lastIoTime + CLNT_RETRY_INTERVAL) )
    {
-      dprintf1("check_timeouts: initiate connect retry\n");
+      dprintf2("check_timeouts: initiate connect retry\n");
       v->io.lastIoTime = now;
       if ( proxy_client_connect_server(v) )
       {
@@ -603,7 +657,7 @@ static vbi_bool proxy_client_check_timeouts( vbi_capture_proxy *v )
 
    if (v->state == CLNT_STATE_ERROR)
    {  /* an error has occured and the upper layer is not yet informed */
-      dprintf1("check_timeouts: report error\n");
+      dprintf2("check_timeouts: report error\n");
       v->state = CLNT_STATE_RETRY;
       stopped = TRUE;
    }
@@ -627,17 +681,19 @@ proxy_read( vbi_capture *vc, vbi_capture_buffer **raw,
                 v->sliced_buffer.data = NULL;
         }
 
-        ret = proxy_client_wait_select(v, timeout);
-        if (ret <= 0)
-                return ret;
+	do {
+        	ret = proxy_client_wait_select(v, timeout);
+        	if (ret <= 0)
+                	return ret;
+
+        	proxy_client_handle_socket(v);
+
+	} while (v->p_data_ind == NULL);
 
         if (raw != NULL) {
-                /* warn that raw buffer is not available */
+                /* XXX TODO raw buffer forward not implemented */
         }
 
-        pthread_testcancel();
-
-        proxy_client_handle_socket(v);
         if (proxy_client_check_timeouts(v))
            return -1;
 
