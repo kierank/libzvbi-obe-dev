@@ -1,7 +1,7 @@
 /*
  *  libzvbi - V4L2 (version 2002-10 and later) interface
  *
- *  Copyright (C) 2002-2004 Michael H. Schimek
+ *  Copyright (C) 2002-2005 Michael H. Schimek
  *  Copyright (C) 2003-2004 Tom Zoerner
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.25 2004/12/30 02:24:24 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.26 2005/01/15 10:24:23 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -43,12 +43,10 @@ static const char rcsid [] =
 #include <string.h>
 #include <math.h>
 #include <errno.h>
-//#include <fcntl.h>
 #include <unistd.h>		/* read(), dup2() */
 #include <assert.h>
 #include <sys/time.h>		/* timeval */
 #include <sys/types.h>		/* fd_set */
-//#include <sys/ioctl.h>
 #include <sys/ioctl.h>		/* for (_)videodev2k.h */
 #include <sys/mman.h>		/* PROT_READ, MAP_SHARED */
 #include <asm/types.h>		/* for videodev2k.h */
@@ -111,6 +109,7 @@ typedef struct vbi_capture_v4l2 {
 	vbi_capture_buffer	sliced_buffer;
 	int			flush_frame_count;
 
+	vbi_bool		start1_fix;
 } vbi_capture_v4l2;
 
 
@@ -749,7 +748,7 @@ static void
 print_vfmt(const char *s, struct v4l2_format *vfmt)
 {
 	fprintf(stderr, "%sformat %08x [%c%c%c%c], %d Hz, %d bpl, offs %d, "
-		"F1 %d+%d, F2 %d+%d, flags %08x\n", s,
+		"F1 %d...%d, F2 %d...%d, flags %08x\n", s,
 		vfmt->fmt.vbi.sample_format,
 		(char)((vfmt->fmt.vbi.sample_format      ) & 0xff),
 		(char)((vfmt->fmt.vbi.sample_format >>  8) & 0xff),
@@ -757,8 +756,10 @@ print_vfmt(const char *s, struct v4l2_format *vfmt)
 		(char)((vfmt->fmt.vbi.sample_format >> 24) & 0xff),
 		vfmt->fmt.vbi.sampling_rate, vfmt->fmt.vbi.samples_per_line,
 		vfmt->fmt.vbi.offset,
-		vfmt->fmt.vbi.start[0], vfmt->fmt.vbi.count[0],
-		vfmt->fmt.vbi.start[1], vfmt->fmt.vbi.count[1],
+		vfmt->fmt.vbi.start[0],
+		vfmt->fmt.vbi.start[0] + vfmt->fmt.vbi.count[0] - 1,
+		vfmt->fmt.vbi.start[1],
+		vfmt->fmt.vbi.start[1] + vfmt->fmt.vbi.count[1] - 1,
 		vfmt->fmt.vbi.flags);
 }
 
@@ -853,6 +854,10 @@ v4l2_update_services(vbi_capture *vc,
 		vfmt.fmt.vbi.start[1]		= dec_temp.start[1];
 		vfmt.fmt.vbi.count[1]		= dec_temp.count[1];
 
+		if (v->start1_fix
+		    && 625 == v->dec.scanning)
+			vfmt.fmt.vbi.start[1] -= 1;
+
 		if (v->do_trace)
 			print_vfmt("VBI capture parameters requested: ", &vfmt);
 		if ((v->has_try_fmt != 1) || commit) {
@@ -916,10 +921,19 @@ v4l2_update_services(vbi_capture *vc,
 	v->dec.start[0] 		= vfmt.fmt.vbi.start[0];
 	v->dec.count[0] 		= vfmt.fmt.vbi.count[0];
 	v->dec.start[1] 		= vfmt.fmt.vbi.start[1];
+
+	if (v->start1_fix
+	    && 625 == v->dec.scanning
+	    && 319 == v->dec.start[1])
+		v->dec.start[1] += 1;
+
 	v->dec.count[1] 		= vfmt.fmt.vbi.count[1];
-	v->dec.interlaced		= !!(vfmt.fmt.vbi.flags & V4L2_VBI_INTERLACED);
-	v->dec.synchronous		= !(vfmt.fmt.vbi.flags & V4L2_VBI_UNSYNC);
-	v->time_per_frame 		= (v->dec.scanning == 625) ? 1.0 / 25 : 1001.0 / 30000;
+	v->dec.interlaced		= !!(vfmt.fmt.vbi.flags
+					     & V4L2_VBI_INTERLACED);
+	v->dec.synchronous		= !(vfmt.fmt.vbi.flags
+					    & V4L2_VBI_UNSYNC);
+	v->time_per_frame 		= ((v->dec.scanning == 625)
+					   ? 1.0 / 25 : 1001.0 / 30000);
 	v->dec.sampling_format          = VBI_PIXFMT_YUV420;
 
  	if (vfmt.fmt.vbi.sample_format != V4L2_PIX_FMT_GREY) {
@@ -1107,6 +1121,9 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 
 	v->do_trace = trace;
 
+	if (0)
+		v->capture.sys_log_fp = stderr;
+
 	printv ("Try to open V4L2 2.6 VBI device, "
 		"libzvbi interface rev.\n  %s\n", rcsid);
 
@@ -1160,6 +1177,13 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 
 	printv("%s (%s) is a v4l2 vbi device,\n", v->p_dev_name, v->vcap.card);
 	printv("driver %s, version 0x%08x\n", v->vcap.driver, v->vcap.version);
+
+	if (0 == strcmp (v->vcap.driver, "bttv")) {
+		if (v->vcap.version <= 0x00090F)
+			v->start1_fix = TRUE;
+	} else if (0 == strcmp (v->vcap.driver, "saa7134")) {
+		v->start1_fix = TRUE;
+	}
 
 	v->has_try_fmt = -1;
 	v->buf_req_count = buffers;
