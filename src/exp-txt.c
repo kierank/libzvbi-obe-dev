@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.6 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.7 2002/08/07 19:28:31 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -146,25 +146,27 @@ option_enum(vbi_export *e, int index)
 	return text_options + index;
 }
 
+#define KEYWORD(str) (strcmp(keyword, str) == 0)
+
 static vbi_bool
 option_get(vbi_export *e, const char *keyword, vbi_option_value *value)
 {
 	text_instance *text = PARENT(e, text_instance, export);
 
-	if (strcmp(keyword, "format") == 0) {
+	if (KEYWORD("format")) {
 		value->num = text->format;
-	} else if (strcmp(keyword, "charset") == 0) {
+	} else if (KEYWORD("charset")) {
 		if (!(value->str = vbi_export_strdup(e, NULL, text->charset)))
 			return FALSE;
-	} else if (strcmp(keyword, "gfx_chr") == 0) {
+	} else if (KEYWORD("gfx_chr")) {
 		if (!(value->str = vbi_export_strdup(e, NULL, "x")))
 			return FALSE;
 		value->str[0] = text->gfx_chr;
-	} else if (strcmp(keyword, "control") == 0) {
+	} else if (KEYWORD("control")) {
 		value->num = text->term;
-	} else if (strcmp(keyword, "fg") == 0) {
+	} else if (KEYWORD("fg")) {
 		value->num = text->def_fg;
-	} else if (strcmp(keyword, "bg") == 0) {
+	} else if (KEYWORD("bg")) {
 		value->num = text->def_bg;
 	} else {
 		vbi_export_unknown_option(e, keyword);
@@ -179,7 +181,7 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 {
 	text_instance *text = PARENT(e, text_instance, export);
 
-	if (strcmp(keyword, "format") == 0) {
+	if (KEYWORD("format")) {
 		int format = va_arg(args, int);
 
 		if (format < 0 || format >= elements(formats)) {
@@ -187,7 +189,7 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 			return FALSE;
 		}
 		text->format = format;
-	} else if (strcmp(keyword, "charset") == 0) {
+	} else if (KEYWORD("charset")) {
 		char *string = va_arg(args, char *);
 
 		if (!string) {
@@ -195,7 +197,7 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 			return FALSE;
 		} else if (!vbi_export_strdup(e, &text->charset, string))
 			return FALSE;
-	} else if (strcmp(keyword, "gfx_chr") == 0) {
+	} else if (KEYWORD("gfx_chr")) {
 		char *s, *string = va_arg(args, char *);
 		int value;
 
@@ -211,7 +213,7 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 				value = string[0];
 		}
 		text->gfx_chr = (value < 0x20 || value > 0xE000) ? 0x20 : value;
-	} else if (strcmp(keyword, "control") == 0) {
+	} else if (KEYWORD("control")) {
 		int term = va_arg(args, int);
 
 		if (term < 0 || term > 2) {
@@ -219,7 +221,7 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 			return FALSE;
 		}
 		text->term = term;
-	} else if (strcmp(keyword, "fg") == 0) {
+	} else if (KEYWORD("fg")) {
 		int col = va_arg(args, int);
 
 		if (col < 0 || col > 8) {
@@ -227,7 +229,7 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 			return FALSE;
 		}
 		text->def_fg = col;
-	} else if (strcmp(keyword, "bg") == 0) {
+	} else if (KEYWORD("bg")) {
 		int col = va_arg(args, int);
 
 		if (col < 0 || col > 8) {
@@ -316,7 +318,8 @@ print_unicode(iconv_t cd, int endian, int unicode, char **p, int n)
  *   from @a column, @a row to @a column + @a width - 1,
  *   @a row + @a height - 1 and all intermediate rows to their
  *   full pg->columns width. In this mode runs of spaces at
- *   the start and end of rows are collapsed into single spaces.
+ *   the start and end of rows are collapsed into single spaces,
+ *   blank lines are suppressed.
  * @param ltr Currently ignored, please set to @c TRUE.
  * @param column First source column, 0 ... pg->columns - 1.
  * @param row First source row, 0 ... pg->rows - 1.
@@ -342,9 +345,14 @@ vbi_print_page_region(vbi_page *pg, char *buf, int size,
 {
 	int endian = vbi_ucs2be();
 	int column0, column1, row0, row1;
-	int x, y, spaces;
+	int x, y, spaces, doubleh, doubleh0;
 	iconv_t cd;
 	char *p;
+
+	if (1)
+		fprintf (stderr, "vbi_print_page_region '%s' "
+		         "table=%d col=%d row=%d width=%d height=%d\n",
+			 format, table, column, row, width, height);
 
 	column0 = column;
 	row0 = row;
@@ -362,13 +370,20 @@ vbi_print_page_region(vbi_page *pg, char *buf, int size,
 
 	p = buf;
 
+	doubleh = 0;
+
 	for (y = row0; y <= row1; y++) {
-		int x0, x1;
+		int x0, x1, xl;
 
 		x0 = (table || y == row0) ? column0 : 0;
-		x1 = (table || y == row1) ? column1 : pg->columns;
+		x1 = (table || y == row1) ? column1 : (pg->columns - 1);
+
+		xl = (table || y != row0 || (y + 1) != row1) ? -1 : column1;
+
+		doubleh0 = doubleh;
 
 		spaces = 0;
+		doubleh = 0;
 
 		for (x = x0; x <= x1; x++) {
 			vbi_char ac = pg->text[y * pg->columns + x];
@@ -377,18 +392,42 @@ vbi_print_page_region(vbi_page *pg, char *buf, int size,
 				if (ac.size > VBI_DOUBLE_SIZE)
 					ac.unicode = 0x0020;
 			} else {
-				if (ac.size == VBI_OVER_TOP || ac.size == VBI_OVER_BOTTOM)
-					continue; /* double-width/size right */
-				else if (ac.size >= VBI_DOUBLE_HEIGHT2) {
-					/* double-height/size lower */
+				switch (ac.size) {
+				case VBI_NORMAL_SIZE:
+				case VBI_DOUBLE_WIDTH:
+					break;
+
+				case VBI_DOUBLE_HEIGHT:
+				case VBI_DOUBLE_SIZE:
+					doubleh++;
+					break;
+
+				case VBI_OVER_TOP:
+				case VBI_OVER_BOTTOM:
+					continue;
+
+				case VBI_DOUBLE_HEIGHT2:
+				case VBI_DOUBLE_SIZE2:
 					if (y > row0)
 						ac.unicode = 0x0020;
+					break;
+				}
+
+				/*
+				 *  Special case two lines row0 ... row1, and all chars
+				 *  in row0, column0 ... column1 are double height: Skip
+				 *  row1, don't wrap around.
+				 */
+				if (x == xl && doubleh >= (x - x0)) {
+					x1 = xl;
+					y = row1;
 				}
 
 				if (ac.unicode == 0x20 || !vbi_is_print(ac.unicode)) {
 					spaces++;
+					continue;
 				} else {
-					if ((x0 + spaces) < x || y == row0) {
+					if (spaces < (x - x0) || y == row0) {
 						for (; spaces > 0; spaces--)
 							if (!print_unicode(cd, endian, 0x0020,
 									   &p, buf + size - p))
@@ -402,21 +441,31 @@ vbi_print_page_region(vbi_page *pg, char *buf, int size,
 				goto failure;
 		}
 
-		/* if (!table) discard trailing spaces and blank lines */
+		/* if !table discard trailing spaces and blank lines */
 
 		if (y < row1) {
 			int left = buf + size - p;
 
 			if (left < 1)
 				goto failure;
-			if (table)
-				*p++ = '\n';
-			else if (!print_unicode(cd, endian, 0x0020, &p, left))
-				goto failure;
-		} else {
-			for (; spaces > 0; spaces--)
-				if (!print_unicode(cd, endian, 0x0020, &p, buf + size - p))
+
+			if (table) {
+				*p++ = '\n'; /* XXX convert this (eg utf16) */
+			} else if (spaces >= (x1 - x0)) {
+				; /* suppress blank line */
+			} else {
+				/* exactly one space between adjacent rows */
+				if (!print_unicode(cd, endian, 0x0020, &p, left))
 					goto failure;
+			}
+		} else {
+			if (doubleh0 > 0) {
+				; /* prentend this is a blank double height lower row */
+			} else {
+				for (; spaces > 0; spaces--)
+					if (!print_unicode(cd, endian, 0x0020, &p, buf + size - p))
+						goto failure;
+			}
 		}
 	}
 
