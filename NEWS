@@ -4,7 +4,10 @@ This version has new, more reliable DVB VBI capture routines.  See the
 documentation of vbi_capture_dvb_new() for details.
 
 Fixes:
+- vbi_capture_bktr_new() ignored the scanning parameter, always
+  assuming 625.
 - Include fix in test/wss.c.
+- vbi_unham8() return type signedness fix.
 - GCC 4.0 compile fixes.
 
 libzvbi 0.2.12, 2005-01-18

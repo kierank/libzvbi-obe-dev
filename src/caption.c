@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.17 2005/01/20 01:40:14 mschimek Exp $ */
+/* $Id: caption.c,v 1.18 2005/01/24 00:13:39 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -797,7 +797,7 @@ xds_separator(vbi_decoder *vbi, uint8_t *buf)
 		class = (c1 - 1) >> 1;
 
 		if (class > elements(cc->sub_packet)
-		    || c2 > elements(cc->sub_packet[0])) {
+		    || c2 > (int) elements(cc->sub_packet[0])) {
 			XDS_SEP_DEBUG(printf("XDS ignore packet %d/0x%02x\n", class, c2));
 			cc->curr_sp = NULL;
 			return;
@@ -882,7 +882,7 @@ itv_separator(vbi_decoder *vbi, struct caption *cc, char c)
 	if (c >= 0x20) {
 		if (c == '<') // s4-nbc omitted CR
 			itv_separator(vbi, cc, 0);
-		else if (cc->itv_count > sizeof(cc->itv_buf) - 2)
+		else if (cc->itv_count > (int) sizeof(cc->itv_buf) - 2)
 			cc->itv_count = 0;
 
 		cc->itv_buf[cc->itv_count++] = c;

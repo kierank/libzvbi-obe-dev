@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.3 2005/01/15 10:24:09 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.4 2005/01/24 00:13:40 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -313,7 +313,7 @@ dump_pattern_line		(const vbi3_raw_decoder *rd,
 		else
 			line = sp->start[field] + (row >> 1);
 	} else {
-		if (row >= sp->count[0]) {
+		if (row >= (unsigned int) sp->count[0]) {
 			if (0 == sp->start[1])
 				line = 0;
 			else
@@ -366,7 +366,8 @@ _vbi3_raw_decoder_dump		(const vbi3_raw_decoder *rd,
 
 	sp = &rd->sampling;
 
-	for (i = 0; i < (sp->count[0] + sp->count[1]); ++i) {
+	for (i = 0; i < ((unsigned int) sp->count[0]
+			 + (unsigned int) sp->count[1]); ++i) {
 		fputs ("  ", fp);
 		dump_pattern_line (rd, i, fp);
 	}
@@ -442,7 +443,7 @@ decode_pattern			(vbi3_raw_decoder *	rd,
 
 			sliced->id = job->id;
 
-			if (i >= sp->count[0]) {
+			if (i >= (unsigned int) sp->count[0]) {
 				if (0 == sp->start[1])
 					sliced->line = 0;
 				else
@@ -562,7 +563,7 @@ vbi3_raw_decoder_decode		(vbi3_raw_decoder *	rd,
 		if (sliced >= sliced_end)
 			break;
 
-		if (sp->interlaced && i == sp->count[0])
+		if (sp->interlaced && i == (unsigned int) sp->count[0])
 			raw = raw1 + sp->bytes_per_line;
 
 		sliced = decode_pattern (rd, sliced, pattern, i, raw);
@@ -703,7 +704,7 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 			break;
 		}
 
-		if (rate > sp->sampling_rate) {
+		if (rate > (unsigned int) sp->sampling_rate) {
 			log ("Sampling rate %f MHz too low "
 			     "for service 0x%08x (%s)",
 			     sp->sampling_rate / 1e6,

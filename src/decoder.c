@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.17 2005/01/20 01:40:14 mschimek Exp $ */
+/* $Id: decoder.c,v 1.18 2005/01/24 00:13:39 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -543,8 +543,8 @@ vbi_raw_decoder_resize		(vbi_raw_decoder *	rd,
 	{
 		if ((rd->start[0] == start[0])
 		    && (rd->start[1] == start[1])
-		    && (rd->count[0] == count[0])
-		    && (rd->count[1] == count[1])) {
+		    && (rd->count[0] == (int) count[0])
+		    && (rd->count[1] == (int) count[1])) {
 			pthread_mutex_unlock (&rd->mutex);
 			return;
 		}

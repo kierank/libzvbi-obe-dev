@@ -1,6 +1,24 @@
-2005-01-22    <mschimek@users.sf.net>
+2005-01-23    <mschimek@users.sf.net>
 
 	* Release 0.2.13.
+
+2005-01-22    <mschimek@users.sf.net>
+
+	* src/io.h: read return type ought to be int, not bool.
+	* src/io-bktr.c (bktr_read): Const pointer parameter fix.
+	* src/io-bktr.c (vbi_capture_bktr_new): Ignored scanning parameter,
+	  always assuming 625.
+	* src/dvb_demux.c (demux_samples): Potential deref of uninitialized
+	  vbi_sliced pointer.
+	* src/decoder.c (vbi_raw_decoder_resize), src/caption.c
+	  (xds_separator, itv_separator): Signedness fix.
+	* m4/autogen.sh: Made required versions changeable for tests.
+	* src/Makefile.am (INCLUDES), daemon/Makefile.am (INCLUDES),
+	  contrib/Makefile.am (INCLUDES), test/Makefile.am (INCLUDES):
+	  Removed warning options, they belong into CFLAGS.
+	* test/Makefile.am (INCLUDES): Removed unused COMMON_INCLUDES.
+	* src/Makefile.am (INCLUDE): Removed unused X_CFLAGS.
+	* src/hamm.h (vbi_unham8): Must return signed int.
 
 2005-01-20    <mschimek@users.sf.net>
 

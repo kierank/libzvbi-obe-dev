@@ -6,11 +6,24 @@ else
 proxy_dirs =
 endif
 
-EXTRA_DIST = mkinstalldirs config.rpath BUGS zvbi.spec.in zvbi.spec depcomp
+EXTRA_DIST = \
+	BUGS \
+	config.rpath \
+	depcomp \
+	mkinstalldirs \
+	zvbi.spec.in
 
 DISTCLEANFILES = site_def.h
 
-SUBDIRS = m4 src $(proxy_dirs) po test doc contrib
+# Attn order matters.
+SUBDIRS = \
+	m4 \
+	src \
+	$(proxy_dirs) \
+	contrib \
+	test \
+	po \
+	doc
 
 ACLOCAL_AMFLAGS = -I m4
 
