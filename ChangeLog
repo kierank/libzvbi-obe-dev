@@ -1,3 +1,8 @@
+2002-04-09	<mschimek@users.sf.net>
+
+	* src/caption.c: Added ASCII range check before Unicode txl,
+	  re zapping-misc 2002-04-09.
+
 2002-04-01	Release 0.1.1 <mschimek@users.sf.net>
 
 	* po/de.po: Updated.
