@@ -35,6 +35,11 @@
  *
  *
  *  $Log: proxyd.c,v $
+ *  Revision 1.4  2003/05/17 13:03:41  tomzo
+ *  Use new io.h API function vbi_capture_add_services()
+ *  - adapted vbi_proxy_update_services(): call add_services() for each client
+ *  - removed obsolete function vbi_proxy_merge_parameters()
+ *
  *  Revision 1.3  2003/05/10 13:29:43  tomzo
  *  - bugfix: busy loop until the first client connect (unless -nodetach was used)
  *  - copy group and permissions from VBI device onto socket path
@@ -46,7 +51,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxyd.c,v 1.3 2003/05/10 13:29:43 tomzo Exp $";
+static const char rcsid[] = "$Id: proxyd.c,v 1.4 2003/05/17 13:03:41 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -304,34 +309,6 @@ static PROXY_QUEUE * vbi_proxy_queue_force_free( void )
 }
 
 /* ----------------------------------------------------------------------------
-** Merge service parameters from all clients
-*/
-static void vbi_proxy_merge_parameters( unsigned int * p_services,
-                                        int          * p_buffer_count,
-                                        int          * p_strict,
-                                        int          * p_scanning )
-{
-   PROXY_CLNT   * req;
-
-   *p_buffer_count = 0;
-   *p_services = 0;
-   for (req = pReqChain; req != NULL; req = req->p_next)
-   {
-      *p_services |= req->services;
-
-      if (req->buffer_count > *p_buffer_count)
-         *p_buffer_count = req->buffer_count;
-   }
-
-   if (*p_buffer_count < 1)
-      *p_buffer_count = 1;
-
-   /* XXX FIXME */
-   *p_scanning = 0;
-   *p_strict = 0;
-}
-
-/* ----------------------------------------------------------------------------
 ** Start VBI acquisition (for the first client)
 */
 static vbi_bool vbi_proxy_start_acquisition( char ** pp_errorstr )
@@ -339,51 +316,50 @@ static vbi_bool vbi_proxy_start_acquisition( char ** pp_errorstr )
    PROXY_QUEUE * p_buf;
    char        * p_errorstr;
    vbi_bool     result;
-   unsigned int services;
    unsigned int tmp_services;
-   int          buffer_count;
-   int          strict;
-   int          scanning;
    int          idx;
 
    /* assign dummy error string if necessary */
+   result = FALSE;
    p_errorstr = NULL;
    if (pp_errorstr == NULL)
       pp_errorstr = &p_errorstr;
 
-   vbi_proxy_merge_parameters(&services, &buffer_count, &strict, &scanning);
-
-   tmp_services = services;
-   proxy.p_capture = vbi_capture_v4l2_new(p_dev_name, buffer_count, &tmp_services, strict, pp_errorstr, opt_debug_level);
-   if (proxy.p_capture == NULL)
+   if (pReqChain != NULL)
    {
-      tmp_services = services;
-      proxy.p_capture = vbi_capture_v4l_new(p_dev_name, scanning, &tmp_services, strict, pp_errorstr, opt_debug_level);
-   }
-
-   if (proxy.p_capture != NULL)
-   {
-      proxy.p_decoder = vbi_capture_parameters(proxy.p_capture);
-      if (proxy.p_decoder != NULL)
+      tmp_services = pReqChain->services;
+      proxy.p_capture = vbi_capture_v4l2_new(p_dev_name, pReqChain->buffer_count, &tmp_services,
+                                             pReqChain->strict, pp_errorstr, opt_debug_level);
+      if (proxy.p_capture == NULL)
       {
-         proxy.max_lines = proxy.p_decoder->count[0] + proxy.p_decoder->count[1];
-         assert(proxy.max_lines > 0);
-
-         for (idx=0; idx < SRV_BUFFER_COUNT; idx++)  /* XXX increase with number of clients */
-         {
-            p_buf = malloc(QUEUE_ELEM_SIZE(p_buf, proxy.max_lines));
-            p_buf->max_lines = proxy.max_lines;
-            vbi_proxy_queue_add_free(p_buf);
-         }
+	 tmp_services = pReqChain->services;
+	 /* XXX scanning: useless to keep for each client */
+	 proxy.p_capture = vbi_capture_v4l_new(p_dev_name, pReqChain->scanning, &tmp_services,
+	                                       pReqChain->strict, pp_errorstr, opt_debug_level);
       }
 
-      /* get file handle for select(2) to wait for VBI data */
-      proxy.vbi_fd = vbi_capture_fd(proxy.p_capture);
+      if (proxy.p_capture != NULL)
+      {
+	 proxy.p_decoder = vbi_capture_parameters(proxy.p_capture);
+	 if (proxy.p_decoder != NULL)
+	 {
+	    proxy.max_lines = proxy.p_decoder->count[0] + proxy.p_decoder->count[1];
+	    assert(proxy.max_lines > 0);
 
-      result = TRUE;
+	    for (idx=0; idx < SRV_BUFFER_COUNT; idx++)  /* XXX increase with number of clients */
+	    {
+	       p_buf = malloc(QUEUE_ELEM_SIZE(p_buf, proxy.max_lines));
+	       p_buf->max_lines = proxy.max_lines;
+	       vbi_proxy_queue_add_free(p_buf);
+	    }
+	 }
+
+	 /* get file handle for select(2) to wait for VBI data */
+	 proxy.vbi_fd = vbi_capture_fd(proxy.p_capture);
+
+	 result = TRUE;
+      }
    }
-   else
-      result = FALSE;
 
    if ((pp_errorstr == &p_errorstr) && (p_errorstr != NULL))
       free(p_errorstr);
@@ -413,14 +389,11 @@ static void vbi_proxy_stop_acquisition( void )
 
 /* ----------------------------------------------------------------------------
 ** Update service mask after a client was added or closed
-** - TODO: update buffer_count; allocate new VBI lines
+** - TODO: update buffer_count
 */
-static vbi_bool vbi_proxy_update_services( char ** pp_errorstr )
+static vbi_bool vbi_proxy_update_services( PROXY_CLNT * new_req, char ** pp_errorstr )
 {
-   unsigned int services;
-   int          buffer_count;
-   int          strict;
-   int          scanning;
+   PROXY_CLNT   * req;
    vbi_bool     result;
 
    if (proxy.con_count > 0)
@@ -433,20 +406,18 @@ static vbi_bool vbi_proxy_update_services( char ** pp_errorstr )
       else
       {  /* capturing already enabled */
 
-         vbi_proxy_merge_parameters(&services, &buffer_count, &strict, &scanning);
+	 vbi_raw_decoder_reset(proxy.p_decoder);
 
-         if (proxy.p_decoder->services & ~ services)
-         {  /* remove obsolete services */
-            dprintf1("update_services: removing 0x%X\n", proxy.p_decoder->services & ~ services);
-            proxy.p_decoder->services =
-               vbi_raw_decoder_remove_services(proxy.p_decoder, proxy.p_decoder->services & ~ services);
-         }
-         if ((proxy.p_decoder->services & services) != services)
-         {  /* add new services */
-            dprintf1("update_services: adding 0x%X\n", services & ~ proxy.p_decoder->services);
-            proxy.p_decoder->services =
-               vbi_raw_decoder_add_services(proxy.p_decoder, services & ~ proxy.p_decoder->services, strict);
-         }
+	 for (req = pReqChain; req != NULL; req = req->p_next)
+	 {
+            vbi_capture_add_services(proxy.p_capture, (req->p_next == NULL),
+                                     req->services, req->strict,
+                                     /* return error strings only for the new client */
+                                     ((req == new_req) ? pp_errorstr : NULL) );
+	 }
+
+	 proxy.max_lines = proxy.p_decoder->count[0] + proxy.p_decoder->count[1];
+
          dprintf1("update_services: new service mask 0x%X\n", proxy.p_decoder->services);
          result = TRUE;
       }
@@ -496,6 +467,7 @@ static void vbi_proxyd_forward_data( void )
       }
       else if (res < 0)
       {
+	 /* XXX abort upon error (esp. EBUSY) */
          perror("VBI read");
       }
 
@@ -536,24 +508,38 @@ static void vbi_proxyd_close( PROXY_CLNT * req, vbi_bool close_all )
 static void vbi_proxyd_add_connection( int listen_fd, vbi_bool isLocal )
 {
    PROXY_CLNT * req;
+   PROXY_CLNT * p_walk;
    int sock_fd;
 
    sock_fd = vbi_proxy_msg_accept_connection(listen_fd);
    if (sock_fd != -1)
    {
-      dprintf1("add_connection: fd %d\n", sock_fd);
+      req = calloc(sizeof(*req), 1);
+      if (req != NULL)
+      {
+         dprintf1("add_connection: fd %d\n", sock_fd);
 
-      req = malloc(sizeof(PROXY_CLNT));
-      memset(req, 0, sizeof(PROXY_CLNT));
+         req->state         = REQ_STATE_WAIT_CON_REQ;
+         req->io.lastIoTime = time(NULL);
+         req->io.sock_fd    = sock_fd;
 
-      req->state         = REQ_STATE_WAIT_CON_REQ;
-      req->io.lastIoTime = time(NULL);
-      req->io.sock_fd    = sock_fd;
+         /* append request to the end of the chain
+         ** note: order is significant for priority in adding services */
+         if (pReqChain != NULL)
+         {
+            p_walk = pReqChain;
+            while (p_walk->p_next != NULL)
+               p_walk = p_walk->p_next;
 
-      /* insert request into the chain */
-      req->p_next = pReqChain;
-      pReqChain  = req;
-      proxy.con_count  += 1;
+            p_walk->p_next = req;
+         }
+         else
+            pReqChain = req;
+
+         proxy.con_count  += 1;
+      }
+      else
+         dprintf1("add_connection: fd %d: virtual memory exhausted, abort\n", sock_fd);
    }
 }
 
@@ -633,7 +619,7 @@ static vbi_bool vbi_proxyd_take_message( PROXY_CLNT *req, VBIPROXY_MSG_BODY * pM
                req->services     = pMsg->connect_req.services;
                req->strict       = pMsg->connect_req.strict;
                req->buffer_count = pMsg->connect_req.buffer_count;
-               open_result = vbi_proxy_update_services(&p_errorstr);
+               open_result = vbi_proxy_update_services(req, &p_errorstr);
                if (proxy.p_decoder != NULL)
                   req->services &= proxy.p_decoder->services;
 
@@ -912,7 +898,7 @@ static void vbi_proxyd_handle_sockets( fd_set * rd, fd_set * wr )
          }
          free(tmp);
 
-         vbi_proxy_update_services(NULL);
+         vbi_proxy_update_services(req, NULL);
       }
       else
       {
@@ -966,7 +952,7 @@ static void vbi_proxyd_set_address( vbi_bool do_tcp_ip, const char * pIpStr, con
 /* ----------------------------------------------------------------------------
 ** Emulate device permissions on the socket file
 */
-static void proxy_set_perm( void )
+static void vbi_proxyd_set_perm( void )
 {
    struct stat st;
 
@@ -1095,7 +1081,7 @@ static vbi_bool vbi_proxyd_listen( void )
       }
    }
    else
-      vbi_proxy_msg_logger(LOG_ERR, -1, 0, "a nxtvepg daemon is already running", NULL);
+      vbi_proxy_msg_logger(LOG_ERR, -1, 0, "a proxy daemon is already running", NULL);
 
    return result;
 }
@@ -1103,7 +1089,7 @@ static vbi_bool vbi_proxyd_listen( void )
 /* ---------------------------------------------------------------------------
 ** Proxy main loop
 */
-static void proxy_main_loop( void )
+static void vbi_proxyd_main_loop( void )
 {
    struct timeval timeout;
    fd_set  rd, wr;
@@ -1219,7 +1205,6 @@ static void proxy_parse_argv( int argc, char * argv[] )
          }
          else
             proxy_usage_exit(argv[0], argv[arg_idx], "missing debug level after");
-         arg_idx += 1;
       }
       else if (strcasecmp(argv[arg_idx], "-nodetach") == 0)
       {
@@ -1314,9 +1299,10 @@ int main( int argc, char ** argv )
    /* start listening for client connections (at least on the named socket in /tmp) */
    if (vbi_proxyd_listen())
    {
-      proxy_set_perm();
+      /* copy VBI device permissions to the listening socket */
+      vbi_proxyd_set_perm();
 
-      proxy_main_loop();
+      vbi_proxyd_main_loop();
    }
    vbi_proxyd_destroy();
 
