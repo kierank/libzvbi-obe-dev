@@ -1,29 +1,48 @@
 /*
- *  Proxy daemon
+ *  VBI proxy daemon
+ *
+ *  Copyright (C) 2002, 2003 Tom Zoerner (and others)
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License Version 2 as
- *  published by the Free Software Foundation. You find a copy of this
- *  license in the file COPYRIGHT in the root directory of this release.
+ *  it under the terms of the GNU General Public License version 2 as
+ *  published by the Free Software Foundation.
  *
- *  THIS PROGRAM IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
- *  BUT WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF
- *  MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
  *  Description:
  *
- *    TODO
+ *    This is the main module of the VBI proxy daemon.  Please refer to
+ *    the README file for information on the daemon's general purpose.
  *
- *  Author:
- *          Tom Zoerner
+ *    When started, the daemon will at first only create a named socket in
+ *    /tmp for the device given on the command line and wait for client
+ *    connections.  When a client connects the VBI device is opened and
+ *    configured for the requested services.  If more clients connect, the
+ *    daemon will attempt to merge the service parameters and re-configure
+ *    the device if necessary.
  *
- *  Originally derived from alevtd by Gerd Knorr, then adapted/extended
- *  for nxtvepg and again adapted/reduced for the VBI proxy by myself.
+ *    Socket and client handling was originally derived from alevtd by
+ *    Gerd Knorr, then adapted/extended for nxtvepg and again adapted/reduced
+ *    for the VBI proxy by Tom Zoerner.
+ *
+ *
+ *  $Log: proxyd.c,v $
+ *  Revision 1.2  2003/05/03 12:06:36  tomzo
+ *  - removed swap32 inline function from proxyd.c and io-proxy.c: use new macro
+ *    VBIPROXY_ENDIAN_MISMATCH instead (contains swapped value of endian magic)
+ *  - fixed copyright headers, added description to file headers
+ *
  */
 
-static const char rcsid[] = "$Id: proxyd.c,v 1.1 2003/04/29 18:20:41 mschimek Exp $";
+static const char rcsid[] = "$Id: proxyd.c,v 1.2 2003/05/03 12:06:36 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -39,7 +58,6 @@ static const char rcsid[] = "$Id: proxyd.c,v 1.1 2003/04/29 18:20:41 mschimek Ex
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-/* #include <utils.h> ? */
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -50,28 +68,6 @@ static const char rcsid[] = "$Id: proxyd.c,v 1.1 2003/04/29 18:20:41 mschimek Ex
 
 #include "bcd.h"
 #include "proxy-msg.h"
-
-#ifndef __GNUC__
-#define __inline__
-#endif
-
-static __inline__ const unsigned int
-swap32 (unsigned int x)
-{
-#if __GNUC__ >= 3
-#if #cpu (i686)
-	if (!__builtin_constant_p (x)) {
-		__asm__ __volatile__ ("bswap %0" : "=r" (x) : "0" (x));
-		return x;
-	}
-#endif
-#endif
-	return
-		  (((x) & 0xFFUL) << 24)
-		| (((x) & 0xFF00UL) << 8)
-		| (((x) & 0xFF0000UL) >> 8)
-		| (((x) & 0xFF000000UL) >> 24);
-}
 
 #define dprintf1(fmt, arg...)    if (opt_debug_level >= 1) printf("proxyd: " fmt, ## arg)
 #define dprintf2(fmt, arg...)    if (opt_debug_level >= 2) printf("proxyd: " fmt, ## arg)
@@ -576,7 +572,7 @@ static vbi_bool vbi_proxyd_check_msg( uint len, VBIPROXY_MSG_HEADER * pHead,
                *pEndianSwap = FALSE;
                result       = TRUE;
             }
-            else if (pBody->connect_req.magics.endian_magic == swap32(VBIPROXY_ENDIAN_MAGIC))
+            else if (pBody->connect_req.magics.endian_magic == VBIPROXY_ENDIAN_MISMATCH)
             {
                *pEndianSwap = TRUE;
                result       = TRUE;
@@ -1285,6 +1281,7 @@ int main( int argc, char ** argv )
 
    vbi_proxyd_set_max_conn(opt_max_clients);
    vbi_proxyd_set_address(FALSE, NULL, NULL);
+   vbi_proxy_msg_set_debug_level(opt_debug_level);
    vbi_proxy_msg_set_logging(opt_debug_level > 0, opt_syslog_level, opt_log_level, p_opt_log_name);
 
    vbi_proxyd_init();
