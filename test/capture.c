@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.8 2004/02/18 07:56:06 mschimek Exp $ */
+/* $Id: capture.c,v 1.9 2004/04/03 00:08:34 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -602,7 +602,8 @@ main(int argc, char **argv)
 		assert ((par = vbi_capture_parameters(cap)));
 	}
 
-	assert (par->sampling_format == VBI_PIXFMT_YUV420);
+	if (-1 == pid)
+		assert (par->sampling_format == VBI_PIXFMT_YUV420);
 
 	src_w = par->bytes_per_line / 1;
 	src_h = par->count[0] + par->count[1];
