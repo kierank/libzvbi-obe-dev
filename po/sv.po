@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.6\n"
-"POT-Creation-Date: 2002-03-09 09:06+0100\n"
+"POT-Creation-Date: 2002-03-19 17:40+0100\n"
 "PO-Revision-Date: 2002-01-08 14:43+0100\n"
 "Last-Translator: <snout@ctrl-c.liu.se>\n"
 "Language-Team: Swedish <sv@li.org>\n"
@@ -320,116 +320,116 @@ msgstr ""
 msgid "Unknown error."
 msgstr ""
 
-#: src/io-v4l.c:506 src/io-v4l.c:769 src/io-v4l.c:787 src/io-v4l2.c:325
-#: src/io-v4l2.c:523 src/io-v4l2.c:571 src/io-v4l2.c:647
+#: src/io-v4l.c:511 src/io-v4l.c:774 src/io-v4l.c:792 src/io-v4l2.c:332
+#: src/io-v4l2.c:530 src/io-v4l2.c:578 src/io-v4l2.c:659
 msgid "Virtual memory exhausted."
 msgstr "Slut på virtuellt minne."
 
-#: src/io-v4l.c:515 src/io-v4l2.c:334
+#: src/io-v4l.c:520 src/io-v4l2.c:341
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Kan inte öppna enheten '%s': %d, %s."
 
-#: src/io-v4l2.c:342
+#: src/io-v4l2.c:349
 #, fuzzy, c-format
 msgid "Cannot identify '%s': %d, %s."
 msgstr "Kan inte öppna enheten '%s': %d, %s."
 
-#: src/io-v4l2.c:344
+#: src/io-v4l2.c:351
 msgid "Probably not a v4l2 device."
 msgstr ""
 
-#: src/io-v4l.c:540 src/io-v4l2.c:349
+#: src/io-v4l.c:545 src/io-v4l2.c:356
 #, fuzzy, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) är inge rå VBI-enhet.\n"
 
 #. Mandatory; dequeue buffer is non-blocking.
-#: src/io-v4l.c:691 src/io-v4l2.c:360 src/io-v4l2.c:536
+#: src/io-v4l.c:696 src/io-v4l2.c:367 src/io-v4l2.c:543
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr ""
 
 #. mandatory, http://www.thedirks.org/v4l2/v4l2dsi.htm
-#: src/io-v4l2.c:368
+#: src/io-v4l2.c:375
 #, fuzzy, c-format
 msgid "Cannot query current videostandard of %s (%s): %d, %s."
 msgstr "Kan inte få VBI-parametrar från 5s (%s): %d, %s.\n"
 
-#: src/io-v4l2.c:370 src/io-v4l2.c:630
+#: src/io-v4l2.c:377 src/io-v4l2.c:642
 msgid "Probably a driver bug."
 msgstr ""
 
-#: src/io-v4l2.c:390
+#: src/io-v4l2.c:397
 #, fuzzy, c-format
 msgid "Cannot query current vbi parameters of %s (%s): %d, %s."
 msgstr "Kan inte få VBI-parametrar från 5s (%s): %d, %s.\n"
 
-#: src/io-v4l.c:408 src/io-v4l.c:699 src/io-v4l.c:757 src/io-v4l2.c:407
-#: src/io-v4l2.c:513
+#: src/io-v4l.c:413 src/io-v4l.c:704 src/io-v4l.c:762 src/io-v4l2.c:414
+#: src/io-v4l2.c:520
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "Tyvärr, %s (%s) kan inte spela in någon av de begärda tjänsterna."
 
-#: src/io-v4l.c:445 src/io-v4l2.c:444
+#: src/io-v4l.c:450 src/io-v4l2.c:451
 #, fuzzy, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "%s (%s) används redan.\n"
 
-#: src/io-v4l.c:451 src/io-v4l2.c:460
+#: src/io-v4l.c:456 src/io-v4l2.c:467
 #, fuzzy, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr ""
 "Kunde inte ställa in VBI-parametrarna för %s (%s), möjligtvis ett drivarfel. "
 "%s\n"
 
-#: src/io-v4l2.c:463 src/io-v4l2.c:555
+#: src/io-v4l2.c:470 src/io-v4l2.c:562
 msgid "Possibly a driver bug."
 msgstr ""
 
-#: src/io-v4l.c:579 src/io-v4l2.c:492
+#: src/io-v4l.c:584 src/io-v4l2.c:499
 #, fuzzy, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
 "libzvbi is too old."
 msgstr "%s (%s) har ett okänt VBI-hämtningsformat nr. %d. %s"
 
-#: src/io-v4l2.c:552
+#: src/io-v4l2.c:559
 #, c-format
 msgid "Cannot request streaming i/o buffers from %s (%s): %d, %s."
 msgstr "Kan inte få strömmande i/o-buffrar från %s (%s): %d, %s."
 
-#: src/io-v4l2.c:560
+#: src/io-v4l2.c:567
 #, fuzzy, c-format
 msgid ""
 "%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
 "exhausted."
 msgstr "%s (%s) gav inga stömmande i/o-buffrar, slut på fysiskt minne?"
 
-#: src/io-v4l2.c:585
+#: src/io-v4l2.c:592
 #, c-format
 msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %d, %s."
 msgstr ""
 "Fråga till strömmande i/o-buffer nr. %d från %s (%s) misslyckades: %d, %s."
 
-#: src/io-v4l2.c:602
+#: src/io-v4l2.c:614
 #, c-format
 msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %d, %s."
 msgstr ""
 "Minnesmappning av strömmande i/o-buffer nr. %d från %s (%s) misslyckades: %"
 "d, %s."
 
-#: src/io-v4l2.c:626
+#: src/io-v4l2.c:638
 #, c-format
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %d, %s."
 msgstr "Kan inte köa strömmande i/o-buffer nr. %d till %s (%s): %d, %s."
 
-#: src/io-v4l.c:798 src/io-v4l2.c:658
+#: src/io-v4l.c:803 src/io-v4l2.c:670
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Inte nog minne för att skapa VBI-inspelningsbuffer (%d KB)."
 
-#: src/io-v4l2.c:668
+#: src/io-v4l2.c:680
 #, c-format
 msgid ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "
@@ -438,32 +438,32 @@ msgstr ""
 "%s (%s) har inget läsgränssnitt för VBI, möjligen är det en endast skrivbar "
 "enhet eller ett drivarfel."
 
-#: src/io-v4l2.c:698
+#: src/io-v4l2.c:710
 msgid "V4L2 interface not compiled."
 msgstr ""
 
-#: src/io-v4l.c:494
+#: src/io-v4l.c:499
 msgid "driver unknown"
 msgstr "okänd drivare"
 
-#: src/io-v4l.c:622
+#: src/io-v4l.c:627
 #, c-format
 msgid "Cannot capture with %s (%s), has no standard vbi interface."
 msgstr "Kan inte läsa med %s (%s), den har inget standard VBI-gränssnitt."
 
-#: src/io-v4l.c:640
+#: src/io-v4l.c:645
 #, c-format
 msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
 msgstr ""
 
-#: src/io-v4l.c:656 src/io-v4l.c:716
+#: src/io-v4l.c:661 src/io-v4l.c:721
 #, fuzzy, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr "Kan inte ställa in eller avgöra nuvarande videostandard av %s (%s).\n"
 
-#: src/io-v4l.c:743
+#: src/io-v4l.c:748
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -472,7 +472,7 @@ msgstr ""
 "Kan inte spela in de begärda datatjänsterna med %s (%s), "
 "inspelningsfrekvensen %.2f är för låg."
 
-#: src/io-v4l.c:845 src/io-v4l.c:854
+#: src/io-v4l.c:850 src/io-v4l.c:859
 msgid "V4L interface not compiled."
 msgstr ""
 

@@ -1,3 +1,10 @@
+2002-03-19	<mschimek@users.sf.net>
+
+	* src/io-v4l.c: Read loop fix, restored pthread_testcancel();
+	  (still needed despite select()?), ETIME not ignored.
+	* src/io-v4l2.c: Read loop fix, pthread_testcancel();
+	* Changes suggested by gcc 3.0.4.
+
 2002-03-16	<mschimek@users.sf.net>
 
 	* src/Makefile.am: Automated libzvbi.h version #defines.

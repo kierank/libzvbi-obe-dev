@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static char rcsid[] = "$Id: io-v4l.c,v 1.3 2002/02/10 11:47:09 mschimek Exp $";
+static char rcsid[] = "$Id: io-v4l.c,v 1.4 2002/03/19 19:27:40 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -104,6 +104,8 @@ v4l_read(vbi_capture *vc, vbi_capture_buffer **raw,
 
 		if (r <= 0)
 			return r; /* timeout or error */
+
+		break;
 	}
 
 	if (!raw)
@@ -114,9 +116,12 @@ v4l_read(vbi_capture *vc, vbi_capture_buffer **raw,
 		(*raw)->size = v->raw_buffer[0].size;
 
 	for (;;) {
+		/* from zapping/libvbi/v4lx.c */
+		pthread_testcancel();
+
 		r = read(v->fd, (*raw)->data, (*raw)->size);
 
-		if (r == -1  && (errno == EINTR || errno == ETIME))
+		if (r == -1 && (errno == EINTR || errno == ETIME))
 			continue;
 
 		if (r == (*raw)->size)

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: lang.c,v 1.1 2002/01/12 16:18:47 mschimek Exp $ */
+/* $Id: lang.c,v 1.2 2002/03/19 19:27:40 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
@@ -476,7 +476,8 @@ vbi_teletext_unicode(vbi_character_set s, vbi_national_subset n, unsigned int c)
 		return 0xEF00u + c;
 
 	default:
-		fprintf(stderr, __PRETTY_FUNCTION__ ": unknown char set %d\n", s);
+		fprintf(stderr, "%s: unknown char set %d\n",
+			__PRETTY_FUNCTION__, s);
 		exit(EXIT_FAILURE);
 	}
 }
