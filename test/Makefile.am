@@ -4,7 +4,8 @@ noinst_PROGRAMS = $(TESTS)
 
 EXTRA_DIST = README uclist sim.c
 
-INCLUDES = -I$(top_srcdir)/src $(COMMON_INCLUDES) \
+INCLUDES = -I$(top_srcdir)/src $(COMMON_INCLUDES) $(X_CFLAGS) \
 	-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations
+
 LDADD = $(top_builddir)/src/.libs/libzvbi.a \
-	-lpthread -lm $(PNG_LIB) $(X_LIBS) -lX11
+	-lpthread -lm $(PNG_LIB) $(X_LIBS)

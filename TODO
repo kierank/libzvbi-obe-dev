@@ -1,4 +1,4 @@
-$Id: TODO,v 1.5 2002/06/24 03:25:55 mschimek Exp $
+$Id: TODO,v 1.6 2002/07/16 00:13:57 mschimek Exp $
 
 * io: Add io-dvb. Generally speaking the i/o api is poor,
   should be improved.
@@ -25,7 +25,6 @@ $Id: TODO,v 1.5 2002/06/24 03:25:55 mschimek Exp $
 * Check what's wrong on Prime, CNI and Hebrew subtitles.
 * Add VPT decoder.
 * Make Teletext column 41 optional.
-* Investigate other documentation tools, that gtk-doc is suboptimal.
 * http://telepresence.dmem.strath.ac.uk/bt848/
 
 -------------------------------------------------------------------------------

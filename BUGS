@@ -1,4 +1,4 @@
-$Id: BUGS,v 1.8 2002/06/25 04:37:30 mschimek Exp $
+$Id: BUGS,v 1.9 2002/07/16 00:13:57 mschimek Exp $
 
 * "./osc --sim --pal" caption not recognized
 * v4l and v4l2 i/o can ignore timeout parameter
@@ -6,3 +6,4 @@ $Id: BUGS,v 1.8 2002/06/25 04:37:30 mschimek Exp $
 * vbi_print_page_region() doesn't work as it should:
   Try spaces between words and double height rows.
 * test/export asserts/crashes w/SRTL text.
+* print should translate linefeeds to target charset (wchar...)

@@ -18,9 +18,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.4 2002/04/09 12:29:17 mschimek Exp $ */
+/* $Id: osc.c,v 1.5 2002/07/16 00:13:57 mschimek Exp $ */
 
 #undef NDEBUG
+
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,10 +33,11 @@
 
 #include <libzvbi.h>
 
+#ifndef X_DISPLAY_MISSING
+
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <X11/Xutil.h>
-//#include <X11/xpm.h>
 
 vbi_capture *		cap;
 vbi_raw_decoder *	par;
@@ -467,3 +470,15 @@ main(int argc, char **argv)
 
 	exit(EXIT_SUCCESS);	
 }
+
+
+#else /* X_DISPLAY_MISSING */
+
+int
+main(int argc, char **argv)
+{
+	printf("Could not find X11 or has been disabled at configuration time\n");
+	exit(EXIT_FAILURE);
+}
+
+#endif

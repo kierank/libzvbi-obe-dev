@@ -18,9 +18,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.4 2002/04/09 12:29:17 mschimek Exp $ */
+/* $Id: caption.c,v 1.5 2002/07/16 00:13:57 mschimek Exp $ */
 
 #undef NDEBUG
+
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -705,7 +707,7 @@ main(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-	printf("Could not find X11\n");
+	printf("Could not find X11 or has been disabled at configuration time\n");
 	exit(EXIT_FAILURE);
 }
 
