@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.22 2003/04/06 06:10:38 mschimek Exp $
+dnl $Id: configure.in,v 1.23 2003/04/29 05:50:49 mschimek Exp $
 
 AC_INIT(configure.in)
 AM_INIT_AUTOMAKE(zvbi, 0.2.5)
@@ -18,13 +18,15 @@ test -e site_def.h || cat <<EOF >site_def.h
 
 #ifndef SITE_DEF_H
 #define SITE_DEF_H
-#define CACHE_DEBUG 0
-#define CACHE_STATUS 0
+/* #define CACHE_DEBUG 1 */
+/* #define CACHE_STATUS 1 */
+/* #define DECODER_PATTERN_DUMP 1 */
+/* #define DECODER_SERVICE_DIAG 1 */
 #endif /* SITE_DEF_H */
 EOF
 
 dnl
-dnl Check how to link pthreads functions
+dnl Check how to link pthreads functions.
 dnl
 AC_CHECK_LIB(pthread, pthread_create,,[
   AC_TRY_LINK(, pthread_create();,,[
@@ -84,8 +86,9 @@ dnl (PNG page export)
 dnl
 PNG_LIB=""
 HAVE_PNG="yes"
-AC_CHECK_LIB(png, png_destroy_write_struct, PNG_LIB="-lpng -lz -lm", HAVE_PNG="no", -lz -lm)
-if test "x$HAVE_PNG" = "xyes"; then
+AC_CHECK_LIB(png, png_destroy_write_struct,
+  PNG_LIB="-lpng -lz -lm", HAVE_PNG="no", -lz -lm)
+if test "$HAVE_PNG" = yes; then
   AC_DEFINE(HAVE_LIBPNG, 1, [Define if you have libpng])
 fi
 AC_SUBST(PNG_LIB)
@@ -95,10 +98,11 @@ dnl X libraries.
 dnl (Test programs)
 dnl
 AC_PATH_XTRA
-test "x$no_x" = "xyes" || X_LIBS="$X_LIBS -lX11"
+test "$no_x" = yes || X_LIBS="$X_LIBS -lX11"
 
 dnl
 dnl GNU getopt_long
+dnl (Test programs)
 dnl
 AC_CHECK_FUNCS(getopt_long)
 
@@ -106,61 +110,81 @@ dnl
 dnl Enable OS dependent device interfaces.
 dnl (Linux videodev.h, videodev2.h, bktr dependencies)
 dnl
-auto_enable_v4l=no
-auto_enable_bktr=no
+enable_v4l_auto=no
+enable_bktr_auto=no
 
 case "`uname -s`" in
   Linux)
-    auto_enable_v4l=yes
+    enable_v4l_auto=yes
     ;;
   OpenBSD | FreeBSD | NetBSD | BSDi)
-    auto_enable_bktr=yes
+    enable_bktr_auto=yes
     ;;
   *)
     ;;
 esac
 
-AC_MSG_CHECKING(whether to build the Video4Linux interface)
+AC_MSG_CHECKING([whether to build the Video4Linux interface])
 AC_ARG_ENABLE(v4l,
-  AC_HELP_STRING([--enable-v4l], [Include the V4L and V4L2 interface (auto)]),,
-  enable_v4l=$auto_enable_v4l)
+  AC_HELP_STRING([--enable-v4l],
+  [Include the V4L and V4L2 interface (auto)]),,
+  enable_v4l=$enable_v4l_auto)
 AC_MSG_RESULT($enable_v4l)
-if test "x$enable_v4l" = "xyes"; then
+if test "$enable_v4l" = yes; then
   AC_DEFINE(ENABLE_V4L, 1, [Define to build V4L interface])
   AC_DEFINE(ENABLE_V4L2, 1, [Define to build V4L2 / V4L2 2.5 interface])
 fi
 
-AC_MSG_CHECKING(whether to build the *BSD bktr driver interface)
+AC_MSG_CHECKING([whether to build the *BSD bktr driver interface])
 AC_ARG_ENABLE(bktr,
-  AC_HELP_STRING([--enable-bktr], [Include the *BSD bktr driver interface (auto)]),,
-  enable_bktr=$auto_enable_bktr)
+  AC_HELP_STRING([--enable-bktr],
+  [Include the *BSD bktr driver interface (auto)]),,
+  enable_bktr=$enable_bktr_auto)
 AC_MSG_RESULT($enable_bktr)
-if test "x$enable_bktr" = "xyes"; then
+if test "$enable_bktr" = yes; then
   AC_DEFINE(ENABLE_BKTR, 1, [Define to build bktr driver interface])
 fi
+
+dnl
+dnl Enable vbi proxy, until the code settled this defaults to no.
+dnl
+AC_MSG_CHECKING([whether to build the vbi proxy daemon and interface])
+AC_ARG_ENABLE(proxy,
+  AC_HELP_STRING([--enable-proxy],
+  [Build the vbi proxy daemon and interface (no)]),,
+  enable_proxy=no)
+AC_MSG_RESULT($enable_proxy)
+if test "$enable_proxy" = yes; then
+  AC_DEFINE(ENABLE_PROXY, 1,
+  [Define to build proxy daemon and and interface])
+fi
+AM_CONDITIONAL(ENABLE_PROXY, [test "$enable_proxy" = yes])
 
 dnl
 dnl Native language support.
 dnl
 AM_GNU_GETTEXT([external], [need-ngettext])
 LIBS="$LTLIBINTL $LIBS"
-if test "x${prefix}" = "xNONE"; then
-  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR, "${ac_default_prefix}/share/locale", [ld])
+if test "${prefix}" = NONE; then
+  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR,
+    "${ac_default_prefix}/share/locale", [ld])
 else
-  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR, "${prefix}/share/locale", [ld])
+  AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR,
+    "${prefix}/share/locale", [ld])
 fi
 
 dnl 
 dnl Build docs from the sources if Doxygen is installed.
 dnl 
 AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, yes, no)
-AM_CONDITIONAL(HAVE_DOXYGEN, [test "x$HAVE_DOXYGEN" = "xyes"])
+AM_CONDITIONAL(HAVE_DOXYGEN, [test "$HAVE_DOXYGEN" = yes])
 
 AC_OUTPUT([
   Makefile
   po/Makefile.in
   src/Makefile
   test/Makefile
+  daemon/Makefile
   doc/Makefile
   doc/Doxyfile
   contrib/Makefile
