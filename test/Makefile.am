@@ -1,12 +1,23 @@
 ## Process this file with automake to produce Makefile.in
 
-TESTS = exoptest cpptest raw_decoder
+TESTS = \
+	cpptest \
+	exoptest \
+	hamm \
+	raw_decoder
 
 check_PROGRAMS = \
 	cpptest \
+	hamm \
 	raw_decoder
 
 cpptest_SOURCES = cpptest.cc
+
+check_SCRIPTS = \
+	exoptest
+
+# exoptest uses explist, build that first
+exoptest : explist
 
 if ENABLE_PROXY
 proxy_programs = proxy-test
@@ -30,7 +41,13 @@ noinst_PROGRAMS = \
 	$(x_programs) \
 	$(proxy_programs)
 
-EXTRA_DIST = README exoptest uclist sim.c
+noinst_SCRIPTS = \
+	uclist
+
+EXTRA_DIST = \
+	README \
+	uclist \
+	sim.c
 
 INCLUDES = -I$(top_srcdir) $(COMMON_INCLUDES) $(X_CFLAGS) \
 	-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations \
