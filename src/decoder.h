@@ -17,13 +17,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.h,v 1.6 2003/05/17 13:02:26 tomzo Exp $ */
+/* $Id: decoder.h,v 1.7 2004/12/13 07:12:29 mschimek Exp $ */
 
 #ifndef DECODER_H
 #define DECODER_H
 
 #ifdef HAVE_CONFIG_H
-#  include "../config.h"
+#  include "config.h"
 #endif
 
 #include "bcd.h"
@@ -40,95 +40,95 @@
  * @brief Image format used as source to vbi_bit_slice() and vbi_raw_decode().
  *
  * @htmlonly
- * <table border=1>
- * <tr><th>Symbol</th><th>Byte&nbsp;0</th><th>Byte&nbsp;1</th><th>Byte&nbsp;2</th><th>Byte&nbsp;3</th></tr>
- * <tr><td colspan=5>Planar YUV 4:2:0 data.</td></tr>
- * <tr><td>VBI_PIXFMT_YUV420</td><td colspan=4>
- *  <table>
- *   <tr><th>Y plane</th><th>U plane</th><th>V plane</th></tr>
- *   <tr><td><table border=1>
- *    <tr><td>Y00</td><td>Y01</td><td>Y02</td><td>Y03</td></tr>
- *    <tr><td>Y10</td><td>Y11</td><td>Y12</td><td>Y13</td></tr>
- *    <tr><td>Y20</td><td>Y21</td><td>Y22</td><td>Y23</td></tr>
- *    <tr><td>Y30</td><td>Y31</td><td>Y32</td><td>Y33</td></tr>
- *   </table></td>
- *   <td><table border=1>
- *    <tr><td>Cb00</td><td>Cb01</td></tr>
- *    <tr><td>Cb10</td><td>Cb11</td></tr>
- *   </table></td>
- *   <td><table border=1>
- *    <tr><td>Cr00</td><td>Cr01</td></tr>
- *    <tr><td>Cr10</td><td>Cr11</td></tr>
- *   </table></td>
- *  </tr></table></td>
- * </tr>
- * <tr><td colspan=5>Packed YUV 4:2:2 data.</td></tr>
- * <tr><td>VBI_PIXFMT_YUYV</td><td>Y0</td><td>Cb</td><td>Y1</td><td>Cr</td></tr>
- * <tr><td>VBI_PIXFMT_YVYU</td><td>Y0</td><td>Cr</td><td>Y1</td><td>Cb</td></tr>
- * <tr><td>VBI_PIXFMT_UYVY</td><td>Cb</td><td>Y0</td><td>Cr</td><td>Y1</td></tr>
- * <tr><td>VBI_PIXFMT_VYUY</td><td>Cr</td><td>Y0</td><td>Cb</td><td>Y1</td></tr>
- * <tr><td colspan=5>Packed 32 bit RGB data.</td></tr>
- * <tr><td>VBI_PIXFMT_RGBA32_LE VBI_PIXFMT_ARGB32_BE</td>
- * <td>r7&nbsp;...&nbsp;r0</td><td>g7&nbsp;...&nbsp;g0</td>
- * <td>b7&nbsp;...&nbsp;b0</td><td>a7&nbsp;...&nbsp;a0</td></tr>
- * <tr><td>VBI_PIXFMT_BGRA32_LE VBI_PIXFMT_ARGB32_BE</td>
- * <td>b7&nbsp;...&nbsp;b0</td><td>g7&nbsp;...&nbsp;g0</td>
- * <td>r7&nbsp;...&nbsp;r0</td><td>a7&nbsp;...&nbsp;a0</td></tr>
- * <tr><td>VBI_PIXFMT_ARGB32_LE VBI_PIXFMT_BGRA32_BE</td>
- * <td>a7&nbsp;...&nbsp;a0</td><td>r7&nbsp;...&nbsp;r0</td>
- * <td>g7&nbsp;...&nbsp;g0</td><td>b7&nbsp;...&nbsp;b0</td></tr>
- * <tr><td>VBI_PIXFMT_ABGR32_LE VBI_PIXFMT_RGBA32_BE</td>
- * <td>a7&nbsp;...&nbsp;a0</td><td>b7&nbsp;...&nbsp;b0</td>
- * <td>g7&nbsp;...&nbsp;g0</td><td>r7&nbsp;...&nbsp;r0</td></tr>
- * <tr><td colspan=5>Packed 24 bit RGB data.</td></tr>
- * <tr><td>VBI_PIXFMT_RGBA24</td>
- * <td>r7&nbsp;...&nbsp;r0</td><td>g7&nbsp;...&nbsp;g0</td>
- * <td>b7&nbsp;...&nbsp;b0</td><td>&nbsp;</td></tr>
- * <tr><td>VBI_PIXFMT_BGRA24</td>
- * <td>b7&nbsp;...&nbsp;b0</td><td>g7&nbsp;...&nbsp;g0</td>
- * <td>r7&nbsp;...&nbsp;r0</td><td>&nbsp;</td></tr>
- * <tr><td colspan=5>Packed 16 bit RGB data.</td></tr>
- * <tr><td>VBI_PIXFMT_RGB16_LE</td>
- * <td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
- * <td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g5&nbsp;g4&nbsp;g3</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGR16_LE</td>
- * <td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
- * <td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g5&nbsp;g4&nbsp;g3</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_RGB16_BE</td>
- * <td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g5&nbsp;g4&nbsp;g3</td>
- * <td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGR16_BE</td>
- * <td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g5&nbsp;g4&nbsp;g3</td>
- * <td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr>
- * <tr><td colspan=5>Packed 15 bit RGB data.</td></tr>
- * <tr><td>VBI_PIXFMT_RGBA15_LE</td>
- * <td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
- * <td>a0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGRA15_LE</td>
- * <td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
- * <td>a0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ARGB15_LE</td>
- * <td>g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;a0</td>
- * <td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3&nbsp;g2</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ABGR15_LE</td>
- * <td>g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;a0</td>
- * <td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3&nbsp;g2</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_RGBA15_BE</td>
- * <td>a0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3</td>
- * <td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGRA15_BE</td>
- * <td>a0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3</td>
- * <td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ARGB15_BE</td>
- * <td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3&nbsp;g2</td>
- * <td>g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;a0</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ABGR15_BE</td>
- * <td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3&nbsp;g2</td>
- * <td>g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;a0</td>
- * <td>&nbsp;</td><td>&nbsp;</td></tr>
- * </table>
- */
+<table border=1>
+<tr><th>Symbol</th><th>Byte&nbsp;0</th><th>Byte&nbsp;1</th><th>Byte&nbsp;2</th><th>Byte&nbsp;3</th></tr>
+<tr><td colspan=5>Planar YUV 4:2:0 data.</td></tr>
+<tr><td>VBI_PIXFMT_YUV420</td><td colspan=4>
+ <table>
+  <tr><th>Y plane</th><th>U plane</th><th>V plane</th></tr>
+  <tr><td><table border=1>
+   <tr><td>Y00</td><td>Y01</td><td>Y02</td><td>Y03</td></tr>
+   <tr><td>Y10</td><td>Y11</td><td>Y12</td><td>Y13</td></tr>
+   <tr><td>Y20</td><td>Y21</td><td>Y22</td><td>Y23</td></tr>
+   <tr><td>Y30</td><td>Y31</td><td>Y32</td><td>Y33</td></tr>
+  </table></td>
+  <td><table border=1>
+   <tr><td>Cb00</td><td>Cb01</td></tr>
+   <tr><td>Cb10</td><td>Cb11</td></tr>
+  </table></td>
+  <td><table border=1>
+   <tr><td>Cr00</td><td>Cr01</td></tr>
+   <tr><td>Cr10</td><td>Cr11</td></tr>
+  </table></td>
+ </tr></table></td>
+</tr>
+<tr><td colspan=5>Packed YUV 4:2:2 data.</td></tr>
+<tr><td>VBI_PIXFMT_YUYV</td><td>Y0</td><td>Cb</td><td>Y1</td><td>Cr</td></tr>
+<tr><td>VBI_PIXFMT_YVYU</td><td>Y0</td><td>Cr</td><td>Y1</td><td>Cb</td></tr>
+<tr><td>VBI_PIXFMT_UYVY</td><td>Cb</td><td>Y0</td><td>Cr</td><td>Y1</td></tr>
+<tr><td>VBI_PIXFMT_VYUY</td><td>Cr</td><td>Y0</td><td>Cb</td><td>Y1</td></tr>
+<tr><td colspan=5>Packed 32 bit RGB data.</td></tr>
+<tr><td>VBI_PIXFMT_RGBA32_LE VBI_PIXFMT_ARGB32_BE</td>
+<td>r7&nbsp;...&nbsp;r0</td><td>g7&nbsp;...&nbsp;g0</td>
+<td>b7&nbsp;...&nbsp;b0</td><td>a7&nbsp;...&nbsp;a0</td></tr>
+<tr><td>VBI_PIXFMT_BGRA32_LE VBI_PIXFMT_ARGB32_BE</td>
+<td>b7&nbsp;...&nbsp;b0</td><td>g7&nbsp;...&nbsp;g0</td>
+<td>r7&nbsp;...&nbsp;r0</td><td>a7&nbsp;...&nbsp;a0</td></tr>
+<tr><td>VBI_PIXFMT_ARGB32_LE VBI_PIXFMT_BGRA32_BE</td>
+<td>a7&nbsp;...&nbsp;a0</td><td>r7&nbsp;...&nbsp;r0</td>
+<td>g7&nbsp;...&nbsp;g0</td><td>b7&nbsp;...&nbsp;b0</td></tr>
+<tr><td>VBI_PIXFMT_ABGR32_LE VBI_PIXFMT_RGBA32_BE</td>
+<td>a7&nbsp;...&nbsp;a0</td><td>b7&nbsp;...&nbsp;b0</td>
+<td>g7&nbsp;...&nbsp;g0</td><td>r7&nbsp;...&nbsp;r0</td></tr>
+<tr><td colspan=5>Packed 24 bit RGB data.</td></tr>
+<tr><td>VBI_PIXFMT_RGBA24</td>
+<td>r7&nbsp;...&nbsp;r0</td><td>g7&nbsp;...&nbsp;g0</td>
+<td>b7&nbsp;...&nbsp;b0</td><td>&nbsp;</td></tr>
+<tr><td>VBI_PIXFMT_BGRA24</td>
+<td>b7&nbsp;...&nbsp;b0</td><td>g7&nbsp;...&nbsp;g0</td>
+<td>r7&nbsp;...&nbsp;r0</td><td>&nbsp;</td></tr>
+<tr><td colspan=5>Packed 16 bit RGB data.</td></tr>
+<tr><td>VBI_PIXFMT_RGB16_LE</td>
+<td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
+<td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g5&nbsp;g4&nbsp;g3</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGR16_LE</td>
+<td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
+<td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g5&nbsp;g4&nbsp;g3</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_RGB16_BE</td>
+<td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g5&nbsp;g4&nbsp;g3</td>
+<td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGR16_BE</td>
+<td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g5&nbsp;g4&nbsp;g3</td>
+<td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td colspan=5>Packed 15 bit RGB data.</td></tr>
+<tr><td>VBI_PIXFMT_RGBA15_LE</td>
+<td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
+<td>a0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGRA15_LE</td>
+<td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
+<td>a0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ARGB15_LE</td>
+<td>g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;a0</td>
+<td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3&nbsp;g2</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ABGR15_LE</td>
+<td>g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;a0</td>
+<td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3&nbsp;g2</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_RGBA15_BE</td>
+<td>a0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3</td>
+<td>g2&nbsp;g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_BGRA15_BE</td>
+<td>a0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3</td>
+<td>g2&nbsp;g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ARGB15_BE</td>
+<td>b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;g4&nbsp;g3&nbsp;g2</td>
+<td>g1&nbsp;g0&nbsp;r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;a0</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>VBI_PIXFMT_ABGR15_BE</td>
+<td>r4&nbsp;r3&nbsp;r2&nbsp;r1&nbsp;r0&nbsp;g4&nbsp;g3&nbsp;g2</td>
+<td>g1&nbsp;g0&nbsp;b4&nbsp;b3&nbsp;b2&nbsp;b1&nbsp;b0&nbsp;a0</td>
+<td>&nbsp;</td><td>&nbsp;</td></tr>
+</table>
+@endhtmlonly */
 /* Attn: keep this in sync with rte, don't change order */
 typedef enum {
 	VBI_PIXFMT_YUV420 = 1,
@@ -161,6 +161,36 @@ typedef enum {
 } vbi_pixfmt;
 
 /* Private */
+
+typedef uint64_t vbi_pixfmt_set;
+
+#define VBI_MAX_PIXFMTS 64
+#define VBI_PIXFMT_SET(pixfmt) (((vbi_pixfmt_set) 1) << (pixfmt))
+#define VBI_PIXFMT_SET_YUV (VBI_PIXFMT_SET (VBI_PIXFMT_YUV420) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_YUYV) |		\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_YVYU) |		\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_UYVY) |		\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_VYUY))
+#define VBI_PIXFMT_SET_RGB (VBI_PIXFMT_SET (VBI_PIXFMT_RGBA32_LE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_RGBA32_BE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_BGRA32_LE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_BGRA32_BE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_RGB24) |		\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_BGR24) |		\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_RGB16_LE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_RGB16_BE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_BGR16_LE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_BGR16_BE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_RGBA15_LE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_RGBA15_BE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_BGRA15_LE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_BGRA15_BE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_ARGB15_LE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_ARGB15_BE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_ABGR15_LE) |	\
+			    VBI_PIXFMT_SET (VBI_PIXFMT_ABGR15_BE))
+#define VBI_PIXFMT_SET_ALL (VBI_PIXFMT_SET_YUV |			\
+			    VBI_PIXFMT_SET_RGB)
 
 #define VBI_PIXFMT_BPP(fmt)						\
 	(((fmt) == VBI_PIXFMT_YUV420) ? 1 :				\
