@@ -1,3 +1,11 @@
+2004-10-27    <mschimek@users.sf.net>
+
+	* src/dvb_mux.c (_vbi_dvb_mux_delete): NULL and CLEAR fix.
+	(_vbi_dvb_mux_pes_new): Fixed data_identifier position.
+	* src/dvb_mux.c, src/dvb_mux.h: Added, experimental.
+	* test/capture.c: Changed PTS source to timestamps.
+	* test/export.c: Extended to consume DVB streams.
+	
 2004-10-25    <mschimek@users.sf.net>
 
 	* po/POTFILES.in: Added proxy-client.c, proxy-msg.c.
