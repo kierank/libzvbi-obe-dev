@@ -1,3 +1,12 @@
+2005-04-27    <mschimek@users.sf.net>
+
+	* test/caption.c, test/osc.c: vbi_printable() undefined.
+	* test/osc.c (decode_vps): s/vbi_bit_reverse[]/vbi_rev8(). 
+	(decode_ttx): s/vbi_hamm16()/vbi_unham16p().
+	* configure.in: Bumped version number to 0.2.16. HAVE_X
+	  conditional was backwards, didn't compile test/osc and
+	  test/caption.
+
 2005-03-28    <mschimek@users.sf.net>
 
 	* Release 0.2.15.
