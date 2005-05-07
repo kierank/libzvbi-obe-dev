@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.12 2004/10/05 23:45:24 mschimek Exp $ */
+/* $Id: io.c,v 1.13 2005/05/07 03:40:27 mschimek Exp $ */
 
 #include <assert.h>
 
@@ -494,17 +494,21 @@ vbi_capture_io_update_timeout	(struct timeval *	timeout,
 	/* first calculate difference between start and current time */
 	timeval_subtract (&delta, &tv_stop, tv_start);
 
-	assert((delta.tv_sec >= 0) && (delta.tv_usec >= 0));
+	if ((delta.tv_sec | delta.tv_usec) < 0) {
+		delta.tv_sec = 0;
+		delta.tv_usec = 0;
+	} else {
+		/* substract delta from the given max. timeout */
+		timeval_subtract (timeout, timeout, &delta);
 
-	/* substract delta from the given max. timeout */
-	timeval_subtract (timeout, timeout, &delta);
-
-	/* check if timeout was underrun -> set rest timeout to zero */
-	if ( (timeout->tv_sec < 0) || (timeout->tv_usec < 0) ) {
-		timeout->tv_sec  = 0;
-		timeout->tv_usec = 0;
+		/* check if timeout was underrun -> set rest timeout to zero */
+		if ((timeout->tv_sec | timeout->tv_usec) < 0) {
+			timeout->tv_sec  = 0;
+			timeout->tv_usec = 0;
+		}
 	}
 }
+
 
 /**
  * @internal
