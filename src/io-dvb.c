@@ -142,9 +142,10 @@ select_read			(vbi_capture_dvb *	dvb,
 	ssize_t actual;
 
  select_again:
+	/* tv = timeout - (now - start). */
 	timeout_subtract_elapsed (&tv, timeout, now, start);
 
-	/* Shortcut. */
+	/* Shortcut: don't wait if timeout is zero or elapsed. */
 	if ((tv.tv_sec | tv.tv_usec) > 0) {
 		fd_set set;
 		int r;

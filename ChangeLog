@@ -1,3 +1,9 @@
+2005-05-07    <mschimek@users.sf.net>
+
+	* src/io.c (vbi_capture_io_update_timeout): Replaced assertion that
+	  time increments between successive gettimeofday calls, which isn't
+	  necessarily true, by absolute value of delta.
+
 2005-04-27    <mschimek@users.sf.net>
 
 	* test/caption.c, test/osc.c: vbi_printable() undefined.
