@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.2 2005/01/20 03:35:38 mschimek Exp $ */
+/* $Id: wss.c,v 1.3 2005/05/11 20:14:17 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -425,7 +425,7 @@ usage				(FILE *			fp)
 		 my_name);
 }
 
-static const char short_options[] = "dhv";
+static const char short_options[] = "d:hv";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -457,7 +457,7 @@ main				(int			argc,
 			break;
 
 		case 'd':
-			dev_name = optarg;
+			dev_name = strdup (optarg);
 			break;
 
 		case 'h':
