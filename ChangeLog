@@ -1,3 +1,10 @@
+2005-05-11    <mschimek@users.sf.net>
+
+	* test/wss.c: -d takes an argument. Crashed due to NULL string pointer.
+	* test/osc.c, test/capture.c:
+	(short_options): -d takes an argument, not -e.
+	  Crashed due to NULL string pointer.
+
 2005-05-07    <mschimek@users.sf.net>
 
 	* src/io.c (vbi_capture_io_update_timeout): Replaced assertion that
