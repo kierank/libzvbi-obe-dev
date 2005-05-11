@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.16 2005/02/25 18:34:47 mschimek Exp $ */
+/* $Id: capture.c,v 1.17 2005/05/11 20:15:18 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -483,7 +483,7 @@ mainloop(void)
 	}
 }
 
-static const char short_options[] = "123de:lnpstvPT";
+static const char short_options[] = "123d:elnpstvPT";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -542,7 +542,7 @@ main(int argc, char **argv)
 			interface = c - '0';
 			break;
 		case 'd':
-			dev_name = optarg;
+			dev_name = strdup (optarg);
 			break;
 		case 'e':
 			ignore_error ^= TRUE;
