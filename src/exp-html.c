@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-html.c,v 1.7 2004/12/13 07:17:08 mschimek Exp $ */
+/* $Id: exp-html.c,v 1.8 2005/05/25 02:26:54 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -617,7 +617,12 @@ export(vbi_export *e, FILE *fp, vbi_page *pgp)
 						} else {
 							html->foreground = acp[j].foreground;
 							html->background = acp[j].background;
-							html->flash = s->flash;
+							if (s) {
+								/* XXX acp[j].flash? */
+								html->flash = s->flash;
+							} else {
+								html->flash = FALSE;
+							}
 							fputs("<span style=\"color:", html->fp);
 							hash_color(html->fp, pg.color_map[html->foreground]);
 							fputs(";background-color:", html->fp);
