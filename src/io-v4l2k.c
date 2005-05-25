@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.27 2005/01/20 01:40:14 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.28 2005/05/25 02:26:41 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -109,7 +109,8 @@ typedef struct vbi_capture_v4l2 {
 	vbi_capture_buffer	sliced_buffer;
 	int			flush_frame_count;
 
-	vbi_bool		start1_fix;
+	vbi_bool		pal_start1_fix;
+	vbi_bool		saa7134_ntsc_fix;
 } vbi_capture_v4l2;
 
 
@@ -854,9 +855,15 @@ v4l2_update_services(vbi_capture *vc,
 		vfmt.fmt.vbi.start[1]		= dec_temp.start[1];
 		vfmt.fmt.vbi.count[1]		= dec_temp.count[1];
 
-		if (v->start1_fix
+		if (v->pal_start1_fix
 		    && 625 == v->dec.scanning)
 			vfmt.fmt.vbi.start[1] -= 1;
+
+		if (v->saa7134_ntsc_fix
+		    && 525 == v->dec.scanning) {
+			vfmt.fmt.vbi.start[0] = 10 + 6;
+			vfmt.fmt.vbi.start[1] = 273 + 6;
+		}
 
 		if (v->do_trace)
 			print_vfmt("VBI capture parameters requested: ", &vfmt);
@@ -922,7 +929,7 @@ v4l2_update_services(vbi_capture *vc,
 	v->dec.count[0] 		= vfmt.fmt.vbi.count[0];
 	v->dec.start[1] 		= vfmt.fmt.vbi.start[1];
 
-	if (v->start1_fix
+	if (v->pal_start1_fix
 	    && 625 == v->dec.scanning
 	    && 319 == v->dec.start[1])
 		v->dec.start[1] += 1;
@@ -1180,9 +1187,12 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 
 	if (0 == strcmp ((char *) v->vcap.driver, "bttv")) {
 		if (v->vcap.version <= 0x00090F)
-			v->start1_fix = TRUE;
+			v->pal_start1_fix = TRUE;
 	} else if (0 == strcmp ((char *) v->vcap.driver, "saa7134")) {
-		v->start1_fix = TRUE;
+		if (v->vcap.version <= 0x00020C)
+			v->saa7134_ntsc_fix = TRUE;
+
+		v->pal_start1_fix = TRUE;
 	}
 
 	v->has_try_fmt = -1;
