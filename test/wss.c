@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.3 2005/05/11 20:14:17 mschimek Exp $ */
+/* $Id: wss.c,v 1.4 2005/05/25 02:27:06 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -448,8 +448,9 @@ main				(int			argc,
 
 	my_name = argv[0];
 
-	dev_name = "/dev/video";
-	
+	dev_name = strdup ("/dev/video");
+	assert (NULL != dev_name);
+
 	while (-1 != (c = getopt_long (argc, argv, short_options,
 				       long_options, &index))) {
 		switch (c) {
@@ -457,7 +458,9 @@ main				(int			argc,
 			break;
 
 		case 'd':
+			free (dev_name);
 			dev_name = strdup (optarg);
+			assert (NULL != dev_name);
 			break;
 
 		case 'h':
