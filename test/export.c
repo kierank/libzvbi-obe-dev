@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.10 2004/12/31 06:05:20 mschimek Exp $ */
+/* $Id: export.c,v 1.11 2005/05/25 02:27:33 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -43,10 +43,12 @@ int			cr;
 vbi_dvb_demux *		dx;
 
 static void
-handler(vbi_event *ev, void *unused)
+handler(vbi_event *ev, void *user_data)
 {
 	FILE *fp;
 	vbi_page page;
+
+	user_data = user_data;
 
 	fprintf(stderr, "%cPage %03x.%02x ",
 		cr,

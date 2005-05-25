@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: unicode.c,v 1.5 2004/10/25 16:56:30 mschimek Exp $ */
+/* $Id: unicode.c,v 1.6 2005/05/25 02:27:33 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -92,6 +92,9 @@ int
 main (int argc, char **argv)
 {
 	unsigned int i, j;
+
+	argc = argc;
+	argv = argv;
 
 	putwstr ("libzvbi unicode test -*- coding: utf-8 -*-\n\n");
 	putwstr ("ETS 300 706 Table 36: Latin National Option Sub-sets\n\n");

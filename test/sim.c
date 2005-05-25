@@ -346,7 +346,7 @@ read_sim(uint8_t *raw_data, vbi_sliced *sliced_data,
 						odd(caption_text[caption_i + 1]))
 					* AMP + DC;
 
-			if ((caption_i += 2) > sizeof(caption_text))
+			if ((caption_i += 2) > (int) sizeof(caption_text))
 				caption_i = 0;
 		}
 
@@ -389,7 +389,7 @@ read_sim(uint8_t *raw_data, vbi_sliced *sliced_data,
 						odd(caption_text[caption_i + 1]))
 					* AMP + DC;
 
-			if ((caption_i += 2) > sizeof(caption_text))
+			if ((caption_i += 2) > (int) sizeof(caption_text))
 				caption_i = 0;
 		}
 

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: glyph.c,v 1.5 2005/01/20 01:40:48 mschimek Exp $ */
+/* $Id: glyph.c,v 1.6 2005/05/25 02:27:33 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -132,17 +132,23 @@ print_set(const char *name, int s)
 int
 main(int argc, char **argv)
 {
-	int i, j;
+	unsigned int i;
+
+	argc = argc;
+	argv = argv;
 
 	new_page();
 
 	putwstr("ETS 300 706 Table 36: Latin National Option Sub-sets\n\n");
 
 	for (i = 1; i < 14; i++) {
+		unsigned int j;
+
 		for (j = 0; j < sizeof(national) / sizeof(national[0]); j++) {
 			putwchar(vbi_teletext_unicode(1, i, national[j]));
 			putwchar(' ');
 		}
+
 		putwchar('\n');
 	}
 
@@ -165,6 +171,8 @@ main(int argc, char **argv)
 	putwstr("ETS 300 706 Table 47: G1 Block Mosaics Set\n\n");
 
 	for (i = 0; i < 16; i++) {
+		unsigned int j;
+
 		for (j = 2; j < 8; j++) {
 			if (j == 4 || j == 5)
 				putwchar(' ');
@@ -188,13 +196,17 @@ main(int argc, char **argv)
 	putwstr("\n\n");
 
 	for (i = 0; i < 16; i++) {
+		unsigned int j;
+
 		putwchar(vbi_teletext_unicode(2, 0, 0x40 + i));
 		putwstr("  ");
+
 		for (j = 0x40; j < 0x60; j++) {
 			unsigned int c = vbi_teletext_composed_unicode(i, j);
 
 			putwchar((c == 0) ? '-' : c);
 		}
+
 		putwchar('\n');
 	}
 
@@ -209,13 +221,17 @@ main(int argc, char **argv)
 	putwstr("\n\n");
 
 	for (i = 0; i < 16; i++) {
+		unsigned int j;
+
 		putwchar(vbi_teletext_unicode(2, 0, 0x40 + i));
 		putwstr("  ");
+
 		for (j = 0x60; j < 0x80; j++) {
 			unsigned int c = vbi_teletext_composed_unicode(i, j);
 
 			putwchar((c == 0) ? '-' : c);
 		}
+
 		putwchar('\n');
 	}
 
@@ -228,10 +244,13 @@ main(int argc, char **argv)
 	putwstr("EIA 608 Closed Captioning Basic Character Set\n\n");
 
 	for (i = 0; i < 8; i++) {
+		unsigned int j;
+
 		for (j = 0x20; j < 0x80; j += 8) {
 			putwchar(vbi_caption_unicode(j + i));
 			putwchar(' ');
 		}
+
 		putwchar('\n');
 	}
 

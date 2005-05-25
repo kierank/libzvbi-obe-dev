@@ -1,3 +1,17 @@
+libzvbi 0.2.16, 2005-05-25
+--------------------------
+This version adds a new demultiplexer to extract XDS data from a
+caption stream (EIA 608).
+
+Fixes:
+- test/caption, test/osc did not compile due to a bug in the
+  configure script.
+- Removed a misplaced assertion in vbi_capture_io_update_timeout().
+- test/osc, test/capture, test/wss -d option segfaulted.
+- Fixed NTSC VBI capturing in the Linux saa7134 0.2.13 driver and
+  added a partial work-around here for older versions.
+- The HTML export module segfaulted.  Fix by Bernhard Rosenkraenzer.
+
 libzvbi 0.2.15, 2005-03-28
 --------------------------
 This is a bugfix release. Due to an incorrect bytes per line check
