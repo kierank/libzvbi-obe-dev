@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.3 2005/02/25 18:32:19 mschimek Exp $ */
+/* $Id: decode.c,v 1.4 2005/05/25 02:25:16 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -47,6 +47,7 @@ static vbi_bool			dump_idl	= FALSE;
 static vbi_bool			dump_vps	= FALSE;
 static vbi_bool			dump_vps_r	= FALSE;
 static vbi_bool			dump_wss	= FALSE;
+static vbi_bool			dump_xds	= FALSE;
 static vbi_bool			dump_network	= FALSE;
 static vbi_bool			dump_hex	= FALSE;
 static vbi_bool			dump_bin	= FALSE;
@@ -61,6 +62,7 @@ static unsigned int		idl_address	= 0;
 static vbi_pfc_demux *		pfc;
 static vbi_dvb_demux *		dvb;
 static vbi_idl_demux *		idl;
+static vbi_xds_demux *		xds;
 
 extern void
 _vbi_pfc_block_dump		(const vbi_pfc_block *	pb,
@@ -79,6 +81,467 @@ vbi_printable			(int			c)
 		return '.';
 
 	return c;
+}
+
+static vbi_bool
+xds_cb				(vbi_xds_demux *	xd,
+				 const vbi_xds_packet *	xp,
+				 void *			user_data)
+{
+	static const char *month_names [] = {
+		"0?", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug",
+		"Sep", "Oct", "Nov", "Dec", "13?", "14?", "15?"
+	};
+	static const char *map_type [] = {
+		"unknown", "mono", "simulated stereo", "stereo",
+		"stereo surround", "data service", "unknown", "none"
+	};
+	static const char *sap_type [] = {
+		"unknown", "mono", "video descriptions", "non-program audio",
+		"special effects", "data service", "unknown", "none"
+	};
+	static const char *language [] = {
+		"unknown", "English", "Spanish", "French", "German",
+		"Italian", "Other", "none"
+	};
+	static const char *cgmsa [] = {
+		"copying permitted", "-", "one copy allowed",
+		"no copying permitted"
+	};
+	static const char *scrambling [] = {
+		"no pseudo-sync pulse",
+		"pseudo-sync pulse on; color striping off",
+		"pseudo-sync pulse on; 2-line color striping on",
+		"pseudo-sync pulse on; 4-line color striping on"
+	};
+	static const char *day_names [] = {
+		"0?", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+	};
+	unsigned int i;
+
+	xd = xd;
+	user_data = user_data;
+
+	printf ("XDS packet 0x%02x%02x ",
+		(unsigned int) xp->xds_class * 2 + 1,
+		(unsigned int) xp->xds_subclass);
+
+	switch (xp->xds_class) {
+	case VBI_XDS_CLASS_CURRENT:
+		printf ("cur.program ");
+
+		/* fall through */
+
+	case VBI_XDS_CLASS_FUTURE:
+		if (VBI_XDS_CLASS_FUTURE == xp->xds_class)
+			printf ("fut.program ");
+
+		switch (xp->xds_subclass) {
+		case VBI_XDS_PROGRAM_ID:
+		{
+			unsigned int month, day, hour, min;
+
+			printf ("id");
+
+			if (4 != xp->buffer_size) {
+			invalid:
+				printf (" <invalid>");
+				break;
+			}
+
+			month	= xp->buffer[3] & 15;
+			day	= xp->buffer[2] & 31;
+			hour	= xp->buffer[1] & 31;
+			min	= xp->buffer[0] & 63;
+
+			if (month == 0 || month > 12
+			    || day == 0 || day > 31
+			    || hour > 23 || min > 59)
+				goto invalid;
+
+			printf (" %d %s %02d:%02d UTC, D=%d L=%d Z=%d T=%d\n",
+				day, month_names[month], hour, min,
+				!!(xp->buffer[1] & 0x20),
+				!!(xp->buffer[2] & 0x20),
+				!!(xp->buffer[3] & 0x20),
+				!!(xp->buffer[3] & 0x10));
+
+			break;
+		}
+
+		case VBI_XDS_PROGRAM_LENGTH:
+		{
+			unsigned int lhour, lmin;
+
+			printf ("length");
+
+			switch (xp->buffer_size) {
+			case 2:
+			case 4:
+			case 5:
+				break;
+
+			default:
+				goto invalid;
+			}
+
+			lhour	= xp->buffer[1] & 63;
+			lmin	= xp->buffer[0] & 63;
+
+			if (lmin > 59)
+				goto invalid;
+
+			printf (": %02d:%02d", lhour, lmin);
+
+			if (xp->buffer_size >= 4) {
+				unsigned int ehour, emin;
+
+				ehour	= xp->buffer[3] & 63;
+				emin	= xp->buffer[2] & 63;
+
+				if (emin > 59)
+					goto invalid;
+
+				printf (" elapsed: %02d:%02d", ehour, emin);
+
+				if (xp->buffer_size >= 5) {
+					unsigned int esec;
+
+					esec = xp->buffer[4] & 63;
+
+					if (esec > 59)
+						goto invalid;
+
+					printf (":%02d", esec);
+				}
+			}
+
+			break;
+		}
+
+		case VBI_XDS_PROGRAM_NAME:
+			printf ("name");
+			break;
+
+		case VBI_XDS_PROGRAM_TYPE:
+		{
+			unsigned int i;
+
+			printf ("type");
+
+			if (xp->buffer_size < 1)
+				goto invalid;
+
+			for (i = 0; i < xp->buffer_size; ++i) {
+				printf ((i > 0) ? ", %s" : " %s",
+					vbi_prog_type_string
+						(VBI_PROG_CLASSF_EIA_608,
+						 xp->buffer[i]));
+			}
+
+			break;
+		}
+
+		case VBI_XDS_PROGRAM_RATING:
+		{
+			unsigned int r, g;
+
+			printf ("rating");
+			
+			if (2 != xp->buffer_size)
+				goto invalid;
+
+			r	= xp->buffer[0] & 7;
+			g	= xp->buffer[1] & 7;
+
+			printf (" movie: %s, tv: ",
+				vbi_rating_string (VBI_RATING_AUTH_MPAA, r));
+
+			if (xp->buffer[0] & 0x10) {
+				if (xp->buffer[0] & 0x20)
+					printf ("%s", vbi_rating_string
+						(VBI_RATING_AUTH_TV_CA_FR, g));
+				else
+					printf ("%s", vbi_rating_string
+						(VBI_RATING_AUTH_TV_CA_EN, g));
+			} else {
+				printf ("%s D=%d L=%d S=%d V=%d",
+					vbi_rating_string
+					(VBI_RATING_AUTH_TV_US, g),
+					!!(xp->buffer[0] & 0x20),
+					!!(xp->buffer[1] & 0x08),
+					!!(xp->buffer[1] & 0x10),
+					!!(xp->buffer[1] & 0x20));
+			}
+
+			break;
+		}
+
+		case VBI_XDS_PROGRAM_AUDIO_SERVICES:
+			printf ("audio services");
+
+			if (2 != xp->buffer_size)
+				goto invalid;
+
+			printf (" main: %s, %s; second: %s, %s",
+				map_type[xp->buffer[0] & 7],
+				language[(xp->buffer[0] >> 3) & 7],
+				sap_type[xp->buffer[1] & 7],
+				language[(xp->buffer[1] >> 3) & 7]);
+
+			break;
+
+		case VBI_XDS_PROGRAM_CAPTION_SERVICES:
+			printf ("caption services");
+
+			if (xp->buffer_size < 1
+			    || xp->buffer_size > 8)
+				goto invalid;
+
+			for (i = 0; i < xp->buffer_size; ++i) {
+				printf (" line %u, channel %u, %s: %s;",
+					(xp->buffer[i] & 4) ? 284 : 21,
+					(xp->buffer[i] & 2) ? 2 : 1,
+					(xp->buffer[i] & 1) ?
+					"text" : "captioning",
+					language[(xp->buffer[i] >> 3) & 7]);
+			}
+
+			break;
+
+		case VBI_XDS_PROGRAM_CGMS:
+			printf ("cgms");
+
+			if (1 != xp->buffer_size)
+				goto invalid;
+
+			printf (" %s", cgmsa[(xp->buffer[0] >> 3) & 3]);
+
+			if (xp->buffer[0] & 0x18)
+				printf (", %s",
+					scrambling[(xp->buffer[0] >> 1) & 3]);
+
+			printf(", analog_source=%u", xp->buffer[0] & 1);
+
+			break;
+
+		case VBI_XDS_PROGRAM_ASPECT_RATIO:
+		{
+			unsigned int first_line, last_line;
+
+			printf ("aspect");
+
+			if (2 != xp->buffer_size
+			    && 3 != xp->buffer_size)
+				goto invalid;
+
+			first_line	= 22 + (xp->buffer[0] & 63);
+			last_line	= 262 - (xp->buffer[1] & 63);
+
+			printf (" active picture %u ... %u%s",
+				first_line, last_line,
+				(3 == xp->buffer_size
+				 && (xp->buffer[2] & 1)) ?
+				" (anamorphic)" : "");
+
+			break;
+		}
+
+		case VBI_XDS_PROGRAM_DESCRIPTION_BEGIN ...
+		     VBI_XDS_PROGRAM_DESCRIPTION_END - 1:
+			printf ("description %u", xp->xds_subclass
+				- VBI_XDS_PROGRAM_DESCRIPTION_BEGIN);
+			break;
+
+		default:
+			printf ("??");
+			break;
+		}
+
+		break;
+
+	case VBI_XDS_CLASS_CHANNEL:
+		printf ("channel ");
+
+		switch (xp->xds_subclass) {
+		case VBI_XDS_CHANNEL_NAME:
+			printf ("name");
+			break;
+
+		case VBI_XDS_CHANNEL_CALL_LETTERS:
+			printf ("call letters");
+			break;
+
+		case VBI_XDS_CHANNEL_TAPE_DELAY:
+		{
+			unsigned int hour, min;
+
+			printf ("tape delay");
+
+			if (2 != xp->buffer_size)
+				goto invalid;
+
+			hour	= xp->buffer[1] & 31;
+			min	= xp->buffer[0] & 63;
+
+			if (min > 59)
+				goto invalid;
+
+			printf (" %02d:%02d", hour, min);
+
+			break;
+		}
+
+		default:
+			printf ("??");
+			break;
+		}
+
+		break;
+
+	case VBI_XDS_CLASS_MISC:
+		printf ("misc ");
+
+		switch (xp->xds_subclass) {
+		case VBI_XDS_MISC_TIME_OF_DAY:
+			printf ("time of day");
+
+			if (6 != xp->buffer_size)
+				goto invalid;
+
+			printf (" %s, %d %s %d",
+				day_names [xp->buffer[4] & 7],
+				xp->buffer[2] & 31,
+				month_names[xp->buffer[3] & 15],
+				1990 + (xp->buffer[5] & 63));
+
+			printf (" %02d:%02d UTC",
+				xp->buffer[1] & 31,
+				xp->buffer[0] & 63);
+
+			printf (" D=%u, L=%u, Z=%u, T=%u",
+				!!(xp->buffer[1] & 0x20),
+				!!(xp->buffer[2] & 0x20),
+				!!(xp->buffer[3] & 0x20),
+				!!(xp->buffer[3] & 0x10));
+
+			break;
+
+		case VBI_XDS_MISC_IMPULSE_CAPTURE_ID:
+			printf ("capture id");
+			
+			if (6 != xp->buffer_size)
+				goto invalid;
+
+			printf (" %d %s",
+				xp->buffer[2] & 31,
+				month_names[xp->buffer[3] & 15]);
+
+			printf (" %02d:%02d",
+				xp->buffer[1] & 31,
+				xp->buffer[0] & 63);
+
+			printf (" length %02d:%02d",
+				xp->buffer[5] & 63,
+				xp->buffer[4] & 63);
+
+			printf (" D=%u, L=%u, Z=%u, T=%u",
+				!!(xp->buffer[1] & 0x20),
+				!!(xp->buffer[2] & 0x20),
+				!!(xp->buffer[3] & 0x20),
+				!!(xp->buffer[3] & 0x10));
+
+			break;
+
+		case VBI_XDS_MISC_SUPPLEMENTAL_DATA_LOCATION:
+		{
+			unsigned int i;
+
+			printf ("supplemental data");
+
+			if (xp->buffer_size < 1)
+				goto invalid;
+
+			for (i = 0; i < xp->buffer_size; ++i) {
+				printf (" field %u line %u;",
+					!!(xp->buffer[i] & 0x20),
+					xp->buffer[i] & 31);
+			}
+
+			break;
+		}
+
+		case VBI_XDS_MISC_LOCAL_TIME_ZONE:
+			printf ("time zone");
+			
+			if (1 != xp->buffer_size)
+				goto invalid;
+
+			printf (" UTC%+05d ods=%u",
+				(xp->buffer[0] & 31) * -100,
+				!!(xp->buffer[0] & 0x20));
+
+			break;
+
+		case 0x40:	/* out-of-band channel number */
+			printf ("out of band channel number");
+
+			if (2 != xp->buffer_size)
+				goto invalid;
+
+			printf (" %u",
+				(xp->buffer[0] & 63) |
+				((xp->buffer[1] & 63) << 6));
+
+			break;
+
+		default:
+			printf ("??");
+			break;
+		}
+
+		break;
+
+	case VBI_XDS_CLASS_PUBLIC_SERVICE:
+		printf ("pub.service");
+		break;
+
+	case VBI_XDS_CLASS_RESERVED:
+		printf ("reserved");
+		break;
+
+	case VBI_XDS_CLASS_UNDEFINED:
+		printf ("undefined");
+		break;
+
+	default:
+		printf ("??");
+		break;
+	}
+
+	printf (" >");
+
+	for (i = 0; i < xp->buffer_size; ++i) {
+		char c = vbi_printable (xp->buffer[i]);
+
+		putchar (c);
+	}
+
+	printf ("<\n");
+
+	return TRUE;
+}
+
+static void
+caption				(const uint8_t		buffer[2],
+				 unsigned int		line)
+{
+	if (dump_xds && 284 == line) {
+		if (!vbi_xds_demux_feed (xds, buffer)) {
+			printf ("Parity error in XDS data\n");
+			return;
+		}
+	}
 }
 
 #if 0
@@ -201,22 +664,28 @@ packet_8302			(const uint8_t		buffer[42],
 #endif
 
 static vbi_bool
-page_function_clear		(vbi_pfc_demux *	pfc,
+page_function_clear_cb		(vbi_pfc_demux *	pfc,
 		                 const vbi_pfc_block *	block,
 				 void *			user_data)
 {
+	pfc = pfc;
+	user_data = user_data;
+
 	_vbi_pfc_block_dump (block, stdout, dump_bin);
 
 	return TRUE;
 }
 
 static vbi_bool
-idl_format_a			(vbi_idl_demux *	idl,
+idl_format_a_cb			(vbi_idl_demux *	idl,
 				 const uint8_t *	buffer,
 				 unsigned int		n_bytes,
 				 unsigned int		flags,
 				 void *			user_data)
 {
+	idl = idl;
+	user_data = user_data;
+
 	if (!dump_bin)
 		printf ("IDL-A%s%s ",
 			(flags & VBI_IDL_DATA_LOST) ? " <data lost>" : "",
@@ -536,6 +1005,7 @@ decode				(const vbi_sliced *	s,
 		case VBI_SLICED_CAPTION_525_F1:
 		case VBI_SLICED_CAPTION_525_F2:
 		case VBI_SLICED_CAPTION_525:
+			caption (s->data, s->line);
 			break;
 
 		case VBI_SLICED_WSS_625:
@@ -673,7 +1143,7 @@ abort:
 }
 
 static const char
-short_options [] = "12abc:d:hinp:rs:tvwxPTV";
+short_options [] = "12abc:d:ehinp:rs:tvwxPTV";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -684,6 +1154,7 @@ long_options [] = {
 	{ "bin",	no_argument,		NULL,		'b' },
 	{ "idl-ch",	required_argument,	NULL,		'c' },
 	{ "idl-addr",	required_argument,	NULL,		'd' },
+	{ "xds",	no_argument,		NULL,		'e' },
 	{ "help",	no_argument,		NULL,		'h' },
 	{ "idl",	no_argument,		NULL,		'i' },
 	{ "network",	no_argument,		NULL,		'n' },
@@ -724,6 +1195,7 @@ usage				(FILE *			fp,
 		 "               Decode Teletext IDL format A data from\n"
 		 "               channel N (for example 8), service packet\n"
 		 "               address NNN (default is 0)\n"
+		 "-e | --xds     Decode eXtended Data Service data\n"
 		 "-i | --idl     Any Teletext IDL packets (M/30, M/31)\n"
 		 "-t | --ttx     Decode any Teletext packet\n"
 #if 0
@@ -799,6 +1271,10 @@ main				(int			argc,
 			idl_address = strtol (optarg, NULL, 10);
 			break;
 
+		case 'e':
+			dump_xds ^= TRUE;
+			break;
+
 		case 'h':
 			usage (stdout, argv);
 			exit (EXIT_SUCCESS);
@@ -863,15 +1339,25 @@ main				(int			argc,
 	}
 
 	if (0 != pfc_pgno) {
-		pfc = vbi_pfc_demux_new (pfc_pgno, pfc_stream,
-					 page_function_clear, NULL);
+		pfc = vbi_pfc_demux_new (pfc_pgno,
+					 pfc_stream,
+					 page_function_clear_cb,
+					 /* user_data */ NULL);
 		assert (NULL != pfc);
 	}
 
 	if (0 != idl_channel) {
-		idl = vbi_idl_a_demux_new (idl_channel, idl_address,
-					   idl_format_a, NULL);
+		idl = vbi_idl_a_demux_new (idl_channel,
+					   idl_address,
+					   idl_format_a_cb,
+					   /* user_data */ NULL);
 		assert (NULL != idl);
+	}
+
+	if (dump_xds) {
+		xds = vbi_xds_demux_new (xds_cb,
+					 /* used_data */ NULL);
+		assert (NULL != xds);
 	}
 
 	c = getchar ();
