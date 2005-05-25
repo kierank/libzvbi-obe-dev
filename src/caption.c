@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.18 2005/01/24 00:13:39 mschimek Exp $ */
+/* $Id: caption.c,v 1.19 2005/05/25 02:25:49 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +35,6 @@
 
 #define elements(array) (sizeof(array) / sizeof(array[0]))
 
-#define XDS_DEBUG(x) /* x */
 #define ITV_DEBUG(x) /* x */
 #define XDS_SEP_DEBUG(x) /* x */
 #define XDS_SEP_DUMP(x) /* x */
@@ -85,45 +84,6 @@ language[8] = {
 #else
 #define UNUSED
 #endif
-
-static const char *
-map_type[] UNUSED = {
-	"unknown", "mono", "simulated stereo", "stereo",
-	"stereo surround", "data service", "unknown", "none"
-};
-
-static const char *
-sap_type[] UNUSED = {
-	"unknown", "mono", "video descriptions", "non-program audio",
-	"special effects", "data service", "unknown", "none"
-};
-
-static const char *
-cgmsa[] UNUSED = {
-	"copying permitted",
-	"-",
-	"one generation copy allowed",
-	"no copying permitted"
-};
-
-static const char *
-scrambling[] UNUSED = {
-	"no pseudo-sync pulse",
-	"pseudo-sync pulse on; color striping off",
-	"pseudo-sync pulse on; 2-line color striping on",
-	"pseudo-sync pulse on; 4-line color striping on"
-};
-
-static const char *
-month_names[] UNUSED = {
-	"0?", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug",
-	"Sep", "Oct", "Nov", "Dec", "13?", "14?", "15?"
-};
-
-static const char *
-day_names[] UNUSED = {
-	"0?", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
-};
 
 static uint32_t hcrc[128];
 
@@ -206,8 +166,6 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 	switch (_class) {
 	case XDS_CURRENT: /* 0 */
 	case XDS_FUTURE: /* 1 */
-		XDS_DEBUG(printf((class == XDS_CURRENT) ? "Current " : "Next "));
-
 		if (!(vbi->event_mask & (VBI_EVENT_ASPECT | VBI_EVENT_PROG_INFO)))
 			return;
 
@@ -226,14 +184,6 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			day = buffer[2] & 31;
 			hour = buffer[1] & 31;
 			min = buffer[0] & 63;
-
-			XDS_DEBUG(printf("PIN: %d %s %02d:%02d UTC, "
-					 "D=%d L=%d Z=%d T(ape delayed)=%d\n",
-					 day, month_names[month], hour, min,
-					 !!(buffer[1] & 0x20),
-					 !!(buffer[2] & 0x20),
-					 !!(buffer[3] & 0x20),
-					 !!(buffer[3] & 0x10)));
 
 			if (month == 0 || month > 12
 			    || day == 0 || day > 31
@@ -280,14 +230,6 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 					esec = buffer[4] & 63;
 			}
 
-			XDS_DEBUG(
-				printf("length: %02d:%02d, ", lhour, lmin);
-				printf("elapsed: %02d:%02d", ehour, emin);
-				if (length >= 5)
-					printf(":%02d", esec);
-				printf("\n");
-			)
-
 			if (lmin > 59 || emin > 59 || esec > 59)
 				return;
 
@@ -303,13 +245,6 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 		case 3:		/* program name */
 			if (length < 2)
 				return;
-
-			XDS_DEBUG(
-				printf("program title: '");
-				for (i = 0; i < length; i++)
-					putchar(vbi_printable (buffer[i]));
-				printf("'\n");
-			)
 
 			neq = xds_strfu(pi->title, buffer, length);
 
@@ -332,15 +267,6 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 		case 4:		/* program type */
 		{
 			int neq;
-
-			XDS_DEBUG(
-				printf("program type: ");
-				for (i = 0; i < length; i++)
-					printf((i > 0) ? ", %s" : "%s",
-						vbi_prog_type_str_by_id(
-						 VBI_PROG_CLASSF_EIA_608, buffer[i]));
-				printf("\n");
-			)
 
 			neq = (pi->type_classf != VBI_PROG_CLASSF_EIA_608);
 			pi->type_classf = VBI_PROG_CLASSF_EIA_608;
@@ -375,28 +301,6 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 				dlsv |= VBI_RATING_S;
 			if (buffer[1] & 0x20)
 				dlsv |= VBI_RATING_V;
-
-			XDS_DEBUG(
-				printf("program movie rating: %s, tv rating: ",
-					vbi_rating_str_by_id(VBI_RATING_AUTH_MPAA, r));
-				if (buffer[0] & 0x10) {
-					if (buffer[0] & 0x20)
-						puts(vbi_rating_str_by_id(VBI_RATING_AUTH_TV_CA_FR, g));
-					else
-						puts(vbi_rating_str_by_id(VBI_RATING_AUTH_TV_CA_EN, g));
-				} else {
-					printf("%s; ", vbi_rating_str_by_id(VBI_RATING_AUTH_TV_US, g));
-					if (buffer[1] & 0x20)
-						printf("violence; ");
-					if (buffer[1] & 0x10)
-						printf("sexual situations; ");
-					if (buffer[1] & 8)
-						printf("indecent language; ");
-					if (buffer[0] & 0x20)
-						printf("sexually suggestive dialog");
-					putchar('\n');
-				}
-			)
 
 			if ((buffer[0] & 0x08) == 0) {
 				if (r == 0) return;
@@ -455,11 +359,6 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			if (length != 2)
 				return;
 
-			XDS_DEBUG(printf("main audio: %s, %s; "
-					 "second audio program: %s, %s\n",
-					 map_type[buffer[0] & 7], language[(buffer[0] >> 3) & 7],
-					 sap_type[buffer[1] & 7], language[(buffer[1] >> 3) & 7]));
-
 			for (i = 0; i < 2; i++) {
 				int l = (buffer[i] >> 3) & 7;
 				vbi_audio_mode m = mode[i][buffer[i] & 7];
@@ -511,29 +410,12 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 
 			xds_intfu(pi->caption_services, services);
 
-			XDS_DEBUG(
-				printf("program caption services:\n");
-				for (i = 0; i < length; i++)
-					printf("Line %3d, channel %d, %s: %s\n",
-						(buffer[i] & 4) ? 284 : 21,
-						(buffer[i] & 2) ? 2 : 1,
-						(buffer[i] & 1) ? "text      " : "captioning",
-						language[(buffer[i] >> 3) & 7]);
-			)
-
 			break;
 		}
 
 		case 8:		/* copy generation management system */
 			if (length != 1)
 				return;
-
-			XDS_DEBUG(
-				printf("CGMS: %s", cgmsa[(buffer[0] >> 3) & 3]);
-				if (buffer[0] & 0x18)
-					printf("; %s", scrambling[(buffer[0] >> 1) & 3]);
-				printf("; analog source: %d", buffer[0] & 1);
-			)
 
 			xds_intfu(pi->cgms_a, buffer[0] & 63);
 
@@ -558,12 +440,6 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			else
 				r->ratio = 1.0;
 
-			XDS_DEBUG(printf("program aspect ratio info: "
-					 "active start %d, end %d%s\n",
-					 (buffer[0] & 63) + 22, 262 - (buffer[1] & 63),
-					 (length >= 3 && (buffer[2] & 1)) ?
-					 " (anamorphic)" : ""));
-
 			if (memcmp(r, &vbi->prog_info[0].aspect, sizeof(*r)) != 0) {
 				vbi->prog_info[0].aspect = *r;
 				vbi->aspect_source = 3;
@@ -581,21 +457,12 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 		{
 			int line = type & 7;
 
-			XDS_DEBUG(
-				printf("program descr. line %d: >", line + 1);
-				for (i = 0; i < length; i++)
-					putchar(vbi_printable (buffer[i]));
-				printf("<\n");
-			)
-
 			neq = xds_strfu(pi->description[line], buffer, length);
 
 			break;
 		}
 
 		default:
-			XDS_DEBUG(printf("<unknown %d/%02x length %d>\n",
-					 class, type, length));
 			return; /* no event */
 		}
 
@@ -647,13 +514,6 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 				n->cycle = 3;
 			}
 
-			XDS_DEBUG(
-				printf("Network name: '");
-				for (i = 0; i < length; i++)
-					putchar(vbi_printable (buffer[i]));
-				printf("'\n");
-			)
-
 			break;
 
 		case 2:		/* network call letters */
@@ -664,13 +524,6 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 				}
 			}
 
-			XDS_DEBUG(
-				printf("Network call letters: '");
-				for (i = 0; i < length; i++)
-					putchar(vbi_printable (buffer[i]));
-				printf("'\n");
-			)
-
 			break;
 
 		case 3:		/* channel tape delay */
@@ -680,14 +533,9 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			n->tape_delay =
 				(buffer[1] & 31) * 60 + (buffer[0] & 63);
 
-			XDS_DEBUG(printf("Channel tape delay: %02d:%02d",
-					 buffer[1] & 31, buffer[0] & 63));
-
 			break;
 
 		default:
-			XDS_DEBUG(printf("<unknown %d/%02x length %d>\n",
-					 class, type, length));
 			break;
 		}
 
@@ -698,73 +546,33 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 		case 1:		/* time of day */
 			if (length != 6)
 				return;
-			XDS_DEBUG(
-				printf("Time of day (UTC): %s, %d %s %d ",
-					day_names[buffer[4] & 7],
-					buffer[2] & 31, month_names[buffer[3] & 15],
-					1990 + (buffer[5] & 63));
-				printf("%02d:%02d ", buffer[1] & 31, buffer[0] & 63);
-				printf("D(ST)=%d, L(eap day)=%d, "
-					"(Second )Z(ero)=%d, T(ape delayed)=%d\n",
-					!!(buffer[1] & 0x20),
-					!!(buffer[2] & 0x20),
-					!!(buffer[3] & 0x20),
-					!!(buffer[3] & 0x10));
-			)
 			break;
 
 		case 2:		/* impulse capture id */
 			if (length != 6)
 				return;
-			XDS_DEBUG(
-				printf("Impulse capture id: %d %s ",
-					buffer[2] & 31, month_names[buffer[3] & 15]);
-				printf("%02d:%02d ", buffer[1] & 31, buffer[0] & 63);
-				printf("length %02d:%02d ",
-					buffer[5] & 63, buffer[4] & 63);
-				printf("D=%d, L=%d, Z=%d, T(ape delayed)=%d\n",
-					!!(buffer[1] & 0x20),
-					!!(buffer[2] & 0x20),
-					!!(buffer[3] & 0x20),
-					!!(buffer[3] & 0x10));
-			)
 			break;
 
 		case 3:		/* supplemental data location */
-			XDS_DEBUG(
-				for (i = 0; i < length; i++)
-					printf("Supplemental data: field %d, line %d\n",
-					       !!(buffer[i] & 0x20), buffer[i] & 31);
-			)
 			break;
 
 		case 4:		/* local time zone */
 			if (length != 1)
 				return;
-			XDS_DEBUG(printf("Local time zone: UTC + %d h; D(ST)=%d\n",
-				buffer[0] & 31, !!(buffer[0] & 0x20)));
 			break;
 
 		case 0x40:	/* out-of-band channel number */
 			if (length != 2)
 				return;
-			XDS_DEBUG(
-				i = (buffer[0] & 63) | ((buffer[1] & 63) << 6);
-				printf("Out-of-band channel %d -- ?\n", i);
-			)
 			break;
 
 		default:
-			XDS_DEBUG(printf("<unknown %d/%02x length %d>\n",
-					 class, type, length));
 			break;
 		}
 
 		break;
 
 	default:
-		XDS_DEBUG(printf("<unknown %d/%02x length %d>\n",
-				 class, type, length));
 		break;
 	}
 }
