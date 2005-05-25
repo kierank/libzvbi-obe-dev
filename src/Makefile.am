@@ -78,6 +78,7 @@ libzvbi_la_SOURCES = \
 	trigger.c trigger.h \
 	vbi.c vbi.h event.h \
 	wss.c wss.h \
+	xds_demux.c xds_demux.h \
 	$(proxy_sources)
 
 libzvbiincludedir = $(includedir)
@@ -106,6 +107,7 @@ LIBZVBI_HDRS = \
 	dvb_demux.h \
 	idl_demux.h \
 	pfc_demux.h \
+	xds_demux.h \
 	io.h \
 	proxy-msg.h \
 	proxy-client.h \
