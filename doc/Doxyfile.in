@@ -79,7 +79,8 @@ FILE_PATTERNS          = *.c \
                          ure.h \
                          vbi.h \
                          vt.h \
-                         wss.h
+                         wss.h \
+			 xds_demux.h
 RECURSIVE              = NO
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
