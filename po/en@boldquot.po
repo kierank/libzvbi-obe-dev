@@ -29,10 +29,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: zvbi 0.2.14\n"
+"Project-Id-Version: zvbi 0.2.16\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-24 00:01+0100\n"
-"PO-Revision-Date: 2005-01-24 00:01+0100\n"
+"POT-Creation-Date: 2005-05-26 06:26+0200\n"
+"PO-Revision-Date: 2005-05-26 06:26+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -132,11 +132,11 @@ msgstr "Character conversion Unicode (UCS-2) to %s not supported."
 msgid "Character conversion failed."
 msgstr "Character conversion failed."
 
-#: src/exp-html.c:718
+#: src/exp-html.c:723
 msgid "HTML"
 msgstr "HTML"
 
-#: src/exp-html.c:719
+#: src/exp-html.c:724
 msgid "Export this page as HTML page"
 msgstr "Export this page as HTML page"
 
@@ -339,8 +339,8 @@ msgstr "BKTR driver"
 
 #: src/io-bktr.c:202 src/io-bktr.c:283 src/io-bktr.c:301 src/io-v4l.c:164
 #: src/io-v4l.c:1086 src/io-v4l.c:1124 src/io-v4l.c:1152 src/io-v4l2.c:105
-#: src/io-v4l2k.c:181 src/io-v4l2k.c:536 src/io-v4l2k.c:991
-#: src/io-v4l2k.c:1115 src/io-v4l2k.c:1133 src/proxy-client.c:198
+#: src/io-v4l2k.c:182 src/io-v4l2k.c:537 src/io-v4l2k.c:998
+#: src/io-v4l2k.c:1122 src/io-v4l2k.c:1140 src/proxy-client.c:198
 #: src/proxy-client.c:1558
 msgid "Virtual memory exhausted."
 msgstr "Virtual memory exhausted."
@@ -350,12 +350,12 @@ msgstr "Virtual memory exhausted."
 msgid "Cannot open '%s': %s."
 msgstr "Cannot open '%s': %s."
 
-#: src/io-bktr.c:271 src/io-v4l.c:712 src/io-v4l.c:1071 src/io-v4l2k.c:978
+#: src/io-bktr.c:271 src/io-v4l.c:712 src/io-v4l.c:1071 src/io-v4l2k.c:985
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "Sorry, %s (%s) cannot capture any of the requested data services."
 
-#: src/io-bktr.c:312 src/io-v4l.c:175 src/io-v4l2k.c:547
+#: src/io-bktr.c:312 src/io-v4l.c:175 src/io-v4l2k.c:548
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Not enough memory to allocate vbi capture buffer (%d KB)."
@@ -364,7 +364,7 @@ msgstr "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgid "BKTR driver interface not compiled."
 msgstr "BKTR driver interface not compiled."
 
-#: src/io-v4l.c:763 src/io-v4l2k.c:884
+#: src/io-v4l.c:763 src/io-v4l2k.c:891
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "Cannot initialize %s (%s), the device is already in use."
@@ -374,7 +374,7 @@ msgstr "Cannot initialize %s (%s), the device is already in use."
 msgid "Could not set the vbi capture parameters for %s (%s): %s."
 msgstr "Could not set the vbi capture parameters for %s (%s): %s."
 
-#: src/io-v4l.c:915 src/io-v4l2k.c:940
+#: src/io-v4l.c:915 src/io-v4l2k.c:947
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -402,7 +402,7 @@ msgstr ""
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr "Cannot set or determine current videostandard of %s (%s)."
 
-#: src/io-v4l.c:1043 src/io-v4l2k.c:950
+#: src/io-v4l.c:1043 src/io-v4l2k.c:957
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -411,7 +411,7 @@ msgstr ""
 "Cannot capture the requested data services with %s (%s), the sampling "
 "frequency %.2f MHz is too low."
 
-#: src/io-v4l.c:1160 src/io-v4l2.c:120 src/io-v4l2k.c:1150
+#: src/io-v4l.c:1160 src/io-v4l2.c:120 src/io-v4l2k.c:1157
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Cannot open '%s': %d, %s."
@@ -420,7 +420,7 @@ msgstr "Cannot open '%s': %d, %s."
 msgid "driver unknown"
 msgstr "driver unknown"
 
-#: src/io-v4l.c:1192 src/io-v4l2k.c:1173
+#: src/io-v4l.c:1192 src/io-v4l2k.c:1180
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) is not a raw vbi device."
@@ -434,20 +434,20 @@ msgstr "%s (%s) does not support the select() function."
 msgid "V4L driver interface not compiled."
 msgstr "V4L driver interface not compiled."
 
-#: src/io-v4l2.c:207 src/io-v4l2k.c:1295
+#: src/io-v4l2.c:207 src/io-v4l2k.c:1305
 msgid "V4L2 driver interface not compiled."
 msgstr "V4L2 driver interface not compiled."
 
-#: src/io-v4l2k.c:161
+#: src/io-v4l2k.c:162
 #, c-format
 msgid "Cannot request streaming i/o buffers from %s (%s): %s."
 msgstr "Cannot request streaming i/o buffers from %s (%s): %s."
 
-#: src/io-v4l2k.c:165 src/io-v4l2k.c:893
+#: src/io-v4l2k.c:166 src/io-v4l2k.c:900
 msgid "Possibly a driver bug."
 msgstr "Possibly a driver bug."
 
-#: src/io-v4l2k.c:170
+#: src/io-v4l2k.c:171
 #, c-format
 msgid ""
 "%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
@@ -456,36 +456,36 @@ msgstr ""
 "%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
 "exhausted."
 
-#: src/io-v4l2k.c:196
+#: src/io-v4l2k.c:197
 #, c-format
 msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %s."
 msgstr "Querying streaming i/o buffer #%d from %s (%s) failed: %s."
 
-#: src/io-v4l2k.c:229
+#: src/io-v4l2k.c:230
 #, c-format
 msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %s."
 msgstr "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %s."
 
-#: src/io-v4l2k.c:254
+#: src/io-v4l2k.c:255
 #, c-format
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %s."
 msgstr "Cannot enqueue streaming i/o buffer #%d to %s (%s): %s."
 
-#: src/io-v4l2k.c:258 src/io-v4l2k.c:696 src/io-v4l2k.c:712
+#: src/io-v4l2k.c:259 src/io-v4l2k.c:697 src/io-v4l2k.c:713
 msgid "Probably a driver bug."
 msgstr "Probably a driver bug."
 
-#: src/io-v4l2k.c:692 src/io-v4l2k.c:709
+#: src/io-v4l2k.c:693 src/io-v4l2k.c:710
 #, c-format
 msgid "Cannot query current videostandard of %s (%s): %s."
 msgstr "Cannot query current videostandard of %s (%s): %s."
 
-#: src/io-v4l2k.c:804
+#: src/io-v4l2k.c:805
 #, c-format
 msgid "Cannot query current vbi parameters of %s (%s): %s."
 msgstr "Cannot query current vbi parameters of %s (%s): %s."
 
-#: src/io-v4l2k.c:842
+#: src/io-v4l2k.c:843
 #, c-format
 msgid ""
 "Sorry, %s (%s) cannot capture any of the requested data services with "
@@ -494,21 +494,21 @@ msgstr ""
 "Sorry, %s (%s) cannot capture any of the requested data services with "
 "scanning %d."
 
-#: src/io-v4l2k.c:890
+#: src/io-v4l2k.c:897
 #, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr "Could not set the vbi capture parameters for %s (%s): %d, %s."
 
-#: src/io-v4l2k.c:1166
+#: src/io-v4l2k.c:1173
 #, c-format
 msgid "Cannot identify '%s': %d, %s."
 msgstr "Cannot identify '%s': %d, %s."
 
-#: src/io-v4l2k.c:1168
+#: src/io-v4l2k.c:1175
 msgid "Probably not a v4l2 device."
 msgstr "Probably not a v4l2 device."
 
-#: src/io-v4l2k.c:1211
+#: src/io-v4l2k.c:1221
 #, c-format
 msgid ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "
