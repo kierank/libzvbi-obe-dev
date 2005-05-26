@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: idl_demux.h,v 1.2 2005/02/25 18:33:47 mschimek Exp $ */
+/* $Id: idl_demux.h,v 1.3 2005/05/26 04:08:44 mschimek Exp $ */
 
 #ifndef __ZVBI_IDL_DEMUX_H__
 #define __ZVBI_IDL_DEMUX_H__
@@ -31,7 +31,7 @@
 /* Public */
 
 /**
- * @addtogroup IDLDemux Teletext IDL Packet Demultiplexer
+ * @addtogroup IDLDemux Teletext IDL packet demultiplexer
  * @ingroup LowDec
  * @brief Functions to decode data transmissions in Teletext
  *   Independent Data Line packets (EN 300 708 section 6).

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pfc_demux.c,v 1.2 2005/02/25 18:34:23 mschimek Exp $ */
+/* $Id: pfc_demux.c,v 1.3 2005/05/26 04:08:44 mschimek Exp $ */
 
 #include "../config.h"
 
@@ -31,7 +31,7 @@
 #define FILLER_BYTE 0x03
 
 /**
- * @addtogroup PFCDemux Teletext Page Function Clear Demultiplexer
+ * @addtogroup PFCDemux Teletext Page Function Clear demultiplexer
  * @ingroup LowDec
  * @brief Separating data transmitted in Page Function Clear
  *   Teletext packets (ETS 300 708 section 4).

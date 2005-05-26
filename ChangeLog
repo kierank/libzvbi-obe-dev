@@ -4,9 +4,9 @@
 
 2005-05-25    <mschimek@users.sf.net>
 
+	* doc/Doxyfile.in (FILE_PATTERNS): Added xds_demux.h.
 	* test/decode.c: Added xds_demux test code.
-	* src/caption.c: Moved the XDS debugging code into test/decode.c,
-	  using the new xds_demux.
+	* src/caption.c: Moved the XDS debugging code to xds_demux.c.
 	* src/Makefile.am (libzvbi_la_SOURCES): Added xds_demux.c/.h.
 	(LIBZVBI_HDRS): Added xds_demux.h.
 	* src/xds_demux.c, src/xds_demux.h: New XDS demultiplexer from

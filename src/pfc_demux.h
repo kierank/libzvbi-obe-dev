@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pfc_demux.h,v 1.2 2005/02/25 18:34:29 mschimek Exp $ */
+/* $Id: pfc_demux.h,v 1.3 2005/05/26 04:08:44 mschimek Exp $ */
 
 #ifndef __ZVBI_PFC_DEMUX_H__
 #define __ZVBI_PFC_DEMUX_H__
@@ -74,6 +74,9 @@ typedef struct _vbi_pfc_demux vbi_pfc_demux;
  * 
  * Function called by vbi_pfc_demux_demux() when a
  * new data block is available.
+ *
+ * @returns
+ * FALSE on error, will be returned by vbi_pfc_demux_feed().
  */
 typedef vbi_bool
 vbi_pfc_demux_cb		(vbi_pfc_demux *	dx,

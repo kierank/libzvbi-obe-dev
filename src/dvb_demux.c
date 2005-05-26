@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.6 2005/01/24 00:12:05 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.7 2005/05/26 04:08:44 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>
@@ -29,7 +29,7 @@
 #include "misc.h"		/* CLEAR() */
 
 /**
- * @addtogroup DVBDemux DVB VBI Demultiplexer
+ * @addtogroup DVBDemux DVB VBI demultiplexer
  * @ingroup Raw
  * @brief Separating VBI data from a DVB PES stream
  *   (EN 301 472, EN 301 775).

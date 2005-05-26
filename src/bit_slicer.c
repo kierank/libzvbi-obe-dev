@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.c,v 1.3 2004/12/14 07:30:54 mschimek Exp $ */
+/* $Id: bit_slicer.c,v 1.4 2005/05/26 04:08:44 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +43,7 @@ do {									\
 } while (0)
 
 /*
- * $addtogroup BitSlicer Bit Slicer
+ * $addtogroup BitSlicer Bit slicer
  * $ingroup Raw
  * $brief Converting a single scan line of raw VBI
  *   data to sliced VBI data.
