@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: xds_demux.h,v 1.2 2005/05/25 02:26:20 mschimek Exp $ */
+/* $Id: xds_demux.h,v 1.3 2005/05/26 04:08:11 mschimek Exp $ */
 
 #ifndef __ZVBI_XDS_DEMUX_H__
 #define __ZVBI_XDS_DEMUX_H__
@@ -95,7 +95,10 @@ typedef enum {
 typedef unsigned int vbi_xds_subclass;
 
 /**
- * @brief XDS Packet passed to the XDS demux callback.
+ * @brief XDS Packet.
+ * A pointer to this structure is passed to the XDS demux callback.
+ *
+ * @note The structure may grow in the future.
  */
 typedef struct {
 	vbi_xds_class		xds_class;
@@ -131,6 +134,9 @@ typedef struct _vbi_xds_demux vbi_xds_demux;
  * The XDS demux calls a function of this type when an XDS packet
  * has been completely received, all bytes have correct parity and the
  * packet checksum is correct. Other packets are discarded.
+ *
+ * @returns
+ * FALSE on error, will be returned by vbi_xds_demux_feed().
  */
 typedef vbi_bool
 vbi_xds_demux_cb		(vbi_xds_demux *	xd,
