@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_mux.c,v 1.5 2005/01/19 04:23:53 mschimek Exp $ */
+/* $Id: dvb_mux.c,v 1.6 2005/06/11 22:07:05 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>		/* abort() */
@@ -211,6 +211,10 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			break;
 		}
 
+		/* Pad to data_unit_length if necessary. */
+		if (fixed_length)
+			memset (p, 0xFF, length);
+
 		if (s->line < 32) {
 			/* Unknown line (0) or first field. */
 			p[2] = (3 << 6) + (1 << 5) + s->line;
@@ -224,8 +228,7 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			goto skip;
 		} else if (s->line < f2start + 32) {
 			/* Second field. */
-			p[2] = (3 << 6) + (0 << 5)
-				+ s->line - f2start;
+			p[2] = (3 << 6) + (0 << 5) + s->line - f2start;
 		} else {
 			if (DVB_MUX_LOG)
 				fprintf (stderr,
@@ -242,7 +245,7 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			   framing_code [8], magazine_and_packet_address [16],
 			   data_block [320] (msb first transmitted) */
 			p[0] = DATA_UNIT_EBU_TELETEXT_NON_SUBTITLE;
-			p[1] = 44;
+			p[1] = length - 2;
 			p[3] = 0xE4; /* vbi_rev8 (0x27); */
 
 			for (i = 0; i < 42; ++i)
@@ -252,7 +255,7 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			   reserved [2], field_parity, line_offset [5],
 			   data_block [16] (msb first) */
 			p[0] = DATA_UNIT_ZVBI_CLOSED_CAPTION_525;
-			p[1] = 3;
+			p[1] = length - 2;
 			p[3] = vbi_rev8 (s->data[0]);
 			p[4] = vbi_rev8 (s->data[1]);
 		} else if (s->id & (VBI_SLICED_VPS)) {
@@ -260,7 +263,7 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			   reserved [2], field_parity, line_offset [5],
 			   vps_data_block [104] (msb first) */
 			p[0] = DATA_UNIT_VPS;
-			p[1] = 14;
+			p[1] = length - 2;
 
 			for (i = 0; i < 13; ++i)
 				p[3 + i] = s->data[i];
@@ -269,7 +272,7 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			   reserved[2], field_parity, line_offset [5],
 			   wss_data_block[14] (msb first), reserved[2] */
 			p[0] = DATA_UNIT_WSS;
-			p[1] = 3;
+			p[1] = length - 2;
 			p[3] = vbi_rev8 (s->data[0]);
 			p[4] = vbi_rev8 (s->data[1]) | 3;
 		} else if (s->id & VBI_SLICED_CAPTION_625) {
@@ -277,7 +280,7 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			   reserved[2], field_parity, line_offset [5],
 			   data_block[16] (msb first) */
 			p[0] = DATA_UNIT_CLOSED_CAPTION;
-			p[1] = 3;
+			p[1] = length - 2;
 			p[3] = vbi_rev8 (s->data[0]);
 			p[4] = vbi_rev8 (s->data[1]);
 		} else if (s->id & VBI_SLICED_WSS_CPR1204) {
@@ -285,7 +288,7 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			   reserved[2], field_parity, line_offset [5],
 			   wss_data_block[20] (msb first), reserved[4] */
 			p[0] = DATA_UNIT_ZVBI_WSS_CPR1204;
-			p[1] = 4;
+			p[1] = length - 2;
 			p[3] = s->data[0];
 			p[4] = s->data[1];
 			p[5] = s->data[2] | 0xF;
@@ -296,13 +299,7 @@ _vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 			goto skip;
 		}
 
-		i = p[1] + 2;
-		p += i;
-
-		/* Pad to data_unit_length 0x2C if necessary. */
-		while (i++ < length)
-			*p++ = 0xFF;
-
+		p += length;
 		p_left -= length;
 
 	skip:
@@ -609,7 +606,7 @@ ts_packet_output		(vbi_dvb_mux *		mx,
    write into a client supplied buffer, that might save a copy. */
 
 vbi_bool
-_vbi_dvb_mux_mux		(vbi_dvb_mux *		mx,
+_vbi_dvb_mux_feed		(vbi_dvb_mux *		mx,
 				 int64_t		pts,
 				 const vbi_sliced *	sliced,
 				 unsigned int		sliced_size,
