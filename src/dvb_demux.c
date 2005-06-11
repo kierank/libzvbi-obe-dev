@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.7 2005/05/26 04:08:44 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.8 2005/06/11 22:08:20 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>
@@ -39,9 +39,9 @@
 #  define DVB_DEMUX_LOG 0
 #endif
 
-#define log(templ, args...)						\
+#define log(level, templ, args...)					\
 do {									\
-	if (DVB_DEMUX_LOG)						\
+	if (DVB_DEMUX_LOG >= level)					\
 		fprintf (stderr, "%s: " templ, __FUNCTION__ , ##args);	\
 } while (0)
 
@@ -257,13 +257,14 @@ line_address			(struct frame *		f,
 	vbi_sliced *s;
 
 	if (f->sp >= f->sliced_end) {
-		log ("Out of buffer space (%d lines)\n",
+		log (1, "Out of buffer space (%d lines)\n",
 		     (int)(f->sliced_end - f->sliced_begin));
 
 		return NULL;
 	}
 
 	line = lofp_to_line (lofp, system);
+	log (2, "Line number %u\n", line);
 
 	if (line > 0) {
 		if (raw) {
@@ -274,7 +275,7 @@ line_address			(struct frame *		f,
 			if (line < f->raw_start[0]
 			    || line >= (f->raw_start[field]
 					+ f->raw_count[field])) {
-				log ("Raw line %u outside sampling range "
+				log (1, "Raw line %u outside sampling range "
 				     "%u ... %u, %u ... %u\n",
 				     line,
 				     f->raw_start[0],
@@ -306,7 +307,7 @@ line_address			(struct frame *		f,
 			if (0 == f->sliced_count)
 				return NULL;
 
-			log ("Illegal line order %u >= %u\n",
+			log (1, "Illegal line order %u >= %u\n",
 			     line, f->last_line);
 
 			return NULL;
@@ -350,6 +351,8 @@ line_address			(struct frame *		f,
 static void
 discard_raw			(struct frame *		f)
 {
+	log (2, "Discard raw VBI packet\n");
+
 	memset (f->rp, 0, 720);
 
 	memmove (f->raw_sp + 1, f->raw_sp,
@@ -375,9 +378,15 @@ demux_samples			(struct frame *		f,
 	offset = p[3] * 256 + p[4];
 	n_pixels = p[5];
 
+	log (2, "Raw VBI packet offset=%u n_pixels=%u "
+	     "first_segment=%u last_segment=%u\n",
+	     offset, n_pixels,
+	     !!(p[2] & (1 << 7)),
+	     !!(p[2] & (1 << 6)));
+
 	/* n_pixels <= 251 has been checked by caller. */
 	if (0 == n_pixels || (offset + n_pixels) > 720) {
-		log ("Illegal segment size %u ... %u (%u pixels)\n",
+		log (1, "Illegal segment size %u ... %u (%u pixels)\n",
 		     offset, offset + n_pixels, n_pixels);
 
 		discard_raw (f);
@@ -389,7 +398,7 @@ demux_samples			(struct frame *		f,
 		/* First segment. */
 
 		if (f->raw_offset > 0) {
-			log ("Last segment missing, line %u, offset %u\n",
+			log (2, "Last segment missing, line %u, offset %u\n",
 			     f->raw_sp->line, f->raw_offset);
 
 			discard_raw (f);
@@ -411,14 +420,14 @@ demux_samples			(struct frame *		f,
 		line = lofp_to_line (p[2], system);
 
 		if (0 == f->raw_offset) {
-			log ("First segment missing of line %u, offset %u\n",
-			     line, offset);
+			log (1, "First segment missing of line %u, "
+			     "offset %u\n", line, offset);
 
 			/* Recoverable error. */
 			return 1;
 		} else if (line != f->raw_sp->line
 			   || offset != f->raw_offset) {
-			log ("Segment(s) missing or out of order, "
+			log (1, "Segment(s) missing or out of order, "
 			     "expected line %u, offset %u, "
 			     "got line %u, offset %u\n",
 			     f->raw_sp->line, f->raw_offset,
@@ -472,6 +481,9 @@ demux_data_units		(struct frame *		f,
 		data_unit_id = p[0];
 		data_unit_length = p[1];
 
+		log (2, "data_unit_id=0x%02x data_unit_length=%u\n",
+		     data_unit_id, data_unit_length);
+
 		/* EN 301 775 section 4.3.1: Data units
 		   must not cross PES packet boundaries. */
 		if (p + data_unit_length > end2)
@@ -485,7 +497,7 @@ demux_data_units		(struct frame *		f,
 		case DATA_UNIT_EBU_TELETEXT_SUBTITLE:
 			if (data_unit_length < 1 + 1 + 42) {
 			bad_length:
-				log ("data_unit_length %u too small "
+				log (1, "data_unit_length %u too small "
 				     "for data_unit_id %u\n",
 				     data_unit_length, data_unit_id);
 
@@ -504,7 +516,7 @@ demux_data_units		(struct frame *		f,
 			for (i = 0; i < 42; ++i)
 				s->data[i] = vbi_rev8 (p[4 + i]);
 
-			if (0) {
+			if (DVB_DEMUX_LOG >= 2) {
 				fprintf (stderr, "DU-TTX %u >", s->line);
 				for (i = 0; i < 42; ++i)
 					fputc (vbi_printable (s->data[i]),
@@ -590,7 +602,7 @@ demux_data_units		(struct frame *		f,
 		case DATA_UNIT_MONOCHROME_SAMPLES:
 			if (data_unit_length < 1 + 2 + 1 + p[5]) {
 			bad_sample_length:
-				log ("data_unit_length %u too small "
+				log (1, "data_unit_length %u too small "
 				     "for data_unit_id %u with %u samples\n",
 				     data_unit_length, data_unit_id, p[5]);
 
@@ -613,7 +625,7 @@ demux_data_units		(struct frame *		f,
 #endif
 
 		default:
-			log ("Unknown data_unit_id %u\n", data_unit_id);
+			log (1, "Unknown data_unit_id %u\n", data_unit_id);
 			break;
 		}
 
@@ -713,14 +725,14 @@ timestamp			(int64_t *		pts,
 	t |= p[3] << 7;
 	t |= p[4] >> 1;
 
-	if (0) {
+	if (DVB_DEMUX_LOG >= 2) {
 		int64_t old_pts;
 		int64_t new_pts;
 
 		old_pts = *pts;
 		new_pts = t | (((int64_t) p[0] & 0x0E) << 29);
 
-		fprintf (stderr, "TS%x 0x%llx %+lld\n",
+		fprintf (stderr, "TS%x 0x%llx (%+lld)\n",
 			 mark, new_pts, new_pts - old_pts);
 	}
 
@@ -777,7 +789,7 @@ demux_packet			(vbi_dvb_demux *	dx,
 				r = demux_data_units (&dx->frame, &p, &left);
 
 				if (0 == r) {
-					/* Bad packet, discard. */
+					log (2, "Bad packet, discard\n");
 					dx->new_frame = TRUE;
 					break;
 				}
@@ -787,6 +799,8 @@ demux_packet			(vbi_dvb_demux *	dx,
 					   Packet continues previous frame. */
 					break;
 				}
+
+				log (2, "New frame\n");
 
 				/* A new frame commences in this packet.
 				   We must flush dx->frame before we extract
@@ -823,7 +837,10 @@ demux_packet			(vbi_dvb_demux *	dx,
 			/* packet_start_code_prefix [24] == 0x000001,
 			   stream_id [8] == PRIVATE_STREAM_1 */
 
-			if (__builtin_expect (p[2] & ~1, TRUE)) {
+			log (2, "packet_start_code=%02x%02x%02x%02x\n",
+			     p[0], p[1], p[2], p[3]);
+
+			if (likely (p[2] & ~1)) {
 				/* Not 000001 or xx0000 or xxxx00. */
 				p += 3;
 			} else if (0 != (p[0] | p[1]) || 1 != p[2]) {
@@ -837,7 +854,7 @@ demux_packet			(vbi_dvb_demux *	dx,
 				goto outer_continue;
 			}
 
-			if (__builtin_expect (p >= scan_end, FALSE)) {
+			if (unlikely (p >= scan_end)) {
 				dx->wrap.skip = p - scan_begin;
 				goto outer_continue;
 			}
@@ -846,6 +863,8 @@ demux_packet			(vbi_dvb_demux *	dx,
 		/* Packet header */
 
 		packet_length = p[4] * 256 + p[5];
+
+		log (2, "packet_length=%u\n", packet_length);
 
 		dx->wrap.skip = (p - scan_begin) + 6 + packet_length;
 
@@ -858,9 +877,13 @@ demux_packet			(vbi_dvb_demux *	dx,
 		/* PES_header_data_length [8] */
 		header_length = p[8];
 
+		log (2, "header_length=%u\n", header_length);
+
 		/* EN 300 472 section 4.2: 0x24. */
 		if (36 != header_length)
 			continue;
+
+		log (2, "data_identifier=%u\n", p[9 + 36]);
 
 		/* data_identifier (EN 301 775 section 4.3.2) */
 		switch (p[9 + 36]) {
