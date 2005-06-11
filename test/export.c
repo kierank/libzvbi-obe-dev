@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.11 2005/05/25 02:27:33 mschimek Exp $ */
+/* $Id: export.c,v 1.12 2005/06/11 22:11:51 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -33,6 +33,7 @@
 #include <unistd.h>
 
 #include "src/libzvbi.h"
+#include "sliced.h"
 
 vbi_decoder *		vbi;
 vbi_bool		quit = FALSE;
@@ -115,10 +116,8 @@ pes_mainloop			(void)
 			unsigned int lines;
 			int64_t pts;
 
-			lines = vbi_dvb_demux_cor (dx,
-						   sliced, 64,
-						   &pts,
-						   &bp, &left);
+			lines = vbi_dvb_demux_cor (dx, sliced, 64,
+						   &pts, &bp, &left);
 			if (lines > 0) {
 				vbi_decode (vbi, sliced, lines,
 					    pts / 90000.0);
@@ -133,72 +132,23 @@ pes_mainloop			(void)
 }
 
 static void
-stream(void)
+old_mainloop			(void)
 {
-	char buf[256];
-	double time = 0.0, dt;
-	int index, items, i;
-	vbi_sliced *s, sliced[40];
+	for (;;) {
+		vbi_sliced sliced[40];
+		double timestamp;
+		int n_lines;
 
-	while (!quit) {
-		if (ferror(stdin) || !fgets(buf, 255, stdin))
-			goto abort;
+		n_lines = read_sliced (sliced, &timestamp, /* max_lines */ 40);
+		if (n_lines < 0)
+			break;
 
-		dt = strtod(buf, NULL);
-		items = fgetc(stdin);
+		vbi_decode (vbi, sliced, n_lines, timestamp);
 
-		assert(items < 40);
-
-		for (s = sliced, i = 0; i < items; s++, i++) {
-			index = fgetc(stdin);
-			s->line = (fgetc(stdin) + 256 * fgetc(stdin)) & 0xFFF;
-
-			if (index < 0)
-				goto abort;
-
-			switch (index) {
-			case 0:
-				s->id = VBI_SLICED_TELETEXT_B;
-				fread(s->data, 1, 42, stdin);
-				break;
-			case 1:
-				s->id = VBI_SLICED_CAPTION_625; 
-				fread(s->data, 1, 2, stdin);
-				break; 
-			case 2:
-				s->id = VBI_SLICED_VPS; 
-				fread(s->data, 1, 13, stdin);
-				break;
-			case 3:
-				s->id = VBI_SLICED_WSS_625; 
-				fread(s->data, 1, 2, stdin);
-				break;
-			case 4:
-				s->id = VBI_SLICED_WSS_CPR1204; 
-				fread(s->data, 1, 3, stdin);
-				break;
-			case 7:
-				s->id = VBI_SLICED_CAPTION_525; 
-				fread(s->data, 1, 2, stdin);
-				break;
-			default:
-				fprintf(stderr, "\nOops! Unknown data %d "
-					"in sample file\n", index);
-				exit(EXIT_FAILURE);
-			}
-		}
-
-		if (feof(stdin) || ferror(stdin))
-			goto abort;
-
-		vbi_decode(vbi, sliced, items, time);
-
-		time += dt;
+		if (quit)
+			return;
 	}
 
-	return;
-
-abort:
 	fprintf(stderr, "\rEnd of stream, page %03x not found\n", pgno);
 }
 
@@ -250,7 +200,9 @@ main(int argc, char **argv)
 
 		pes_mainloop ();
 	} else {
-		stream ();
+		open_sliced (stdin);
+
+		old_mainloop ();
 	}
 
 	exit(EXIT_SUCCESS);

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.c,v 1.1 2005/06/10 07:41:14 mschimek Exp $ */
+/* $Id: sliced.c,v 1.2 2005/06/11 22:12:02 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -34,7 +34,7 @@
 #include "src/libzvbi.h"
 #include "sliced.h"
 
-/* Reader for the old ad-hoc sliced VBI file format.
+/* Reader for old test/capture --sliced output.
    ATTN this code is not reentrant. */
 
 static FILE *			file;
