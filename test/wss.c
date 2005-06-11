@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.4 2005/05/25 02:27:06 mschimek Exp $ */
+/* $Id: wss.c,v 1.5 2005/06/11 22:13:11 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -412,16 +412,17 @@ static void
 usage				(FILE *			fp)
 {
 	fprintf (fp,
-		 "Test/demo app extracting Wide Screen Signalling\n"
-		 "(EN 300 294) from video images.  PAL/SECAM only.\n"
-		 "May not work with all devices.\n\n"
-		 "Usage: %s [options]\n\n"
-		 "Options:\n"
-		 "-d | --device name   Video device name (/dev/video)\n"
-		 "-h | --help          Print this message\n"
-		 "-v | --verbose       Increase verbosity\n"
-		 "\n"
-		 "(--long options only available on GNU & compatible.)\n",
+ "Libzvbi test/wss version " VERSION "\n"
+ "Copyright (C) 2005 Michael H. Schimek\n"
+ "This program is licensed under GPL 2. NO WARRANTIES.\n\n"
+ "Test/demo app extracting Wide Screen Signalling data (EN 300 294) from\n"
+ "video images.  PAL/SECAM only.  V4L2 only.  May not work with all\n"
+ "devices due to hardware or driver limitations.\n\n"
+ "Usage: %s [options]\n\n"
+ "Options:\n"
+ "-d | --device name   Video device name (default /dev/video)\n"
+ "-h | --help          Print this message\n"
+ "-v | --verbose       Increase verbosity\n",
 		 my_name);
 }
 

@@ -1,3 +1,31 @@
+2005-06-10    <mschimek@users.sf.net>
+
+	* src/dvb_mux.c (_vbi_dvb_multiplex_sliced): Didn't write the
+	  correct data_unit_length in compatibility mode (data_identifier
+	  in range 0x10 ... 0x1F), breaking test/capture --pes output.
+	* src/dvb_demux.c: Added more log points.
+	* src/misc.h (__builtin_expect, likely, unlikely), 
+	  src/dvb_demux.c (demux_packet), src/bit_slicer.c (BIT_SLICER):
+	  Replaced __builtin_expect() by more readable likely()/unlikely()
+	  macros.  Thanks to Linux hackers for the idea.
+	* src/dvb_mux.h, src/dvb_mux.c:
+	(_vbi_dvb_mux_mux): Renamed to _vbi_dvb_mux_feed for consistency.
+	* test/README: Added sliced2pes and updated test/capture options.
+	* test/Makefile.am (noinst_PROGRAMS): Added sliced2pes.
+	(caption_SOURCES, capture_SOURCES, decode_SOURCES, export_SOURCES):
+	  Added sliced.c and sliced.h which now contain the code to read
+	  old test/capture --sliced output.
+	* test/caption.c: Cleaned up and added support for DVB PES
+	  input (PAL/SECAM caption).
+	* test/sliced2pes.c: Added to convert old test/capture --sliced
+	  output to DVB PES format.
+	* test/decode.c (main): Option -a didn't toggle all decode options
+	  as it should and didn't enable/disable XDS.
+	* test/decode.c, test/export.c, test/caption.c, test/sliced.c,
+	  test/sliced.h:
+	  Moved the code reading old test/capture --sliced output into
+	  the new files sliced.c/h.
+
 2005-05-25    <mschimek@users.sf.net>
 
 	* Release 0.2.16.
