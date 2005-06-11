@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.c,v 1.4 2005/05/26 04:08:44 mschimek Exp $ */
+/* $Id: bit_slicer.c,v 1.5 2005/06/11 22:08:47 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,7 +143,7 @@ bit_slicer_##fmt		(vbi3_bit_slicer *	bs,		\
 			b = ((t + (oversampling / 2))			\
 				/ oversampling) >= tr;			\
 									\
-    			if (__builtin_expect (b ^ b1, 0)) {		\
+    			if (unlikely (b ^ b1)) {			\
 				cl = bs->oversampling_rate >> 1;	\
 			} else {					\
 				cl += bs->cri_rate;			\
