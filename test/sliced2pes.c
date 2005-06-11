@@ -1,7 +1,7 @@
 /*
  *  libzvbi test
  *
- *  Copyright (C) 2004 Michael H. Schimek
+ *  Copyright (C) 2004-2005 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced2pes.c,v 1.1 2005/06/10 07:48:08 mschimek Exp $ */
+/* $Id: sliced2pes.c,v 1.2 2005/06/11 22:09:57 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -34,6 +34,8 @@
 #include <getopt.h>
 #endif
 
+#include "src/libzvbi.h"
+#define TEST 1 /* public dvb_mux only */
 #include "src/dvb_mux.h"
 #include "sliced.h"
 
@@ -95,14 +97,14 @@ usage				(FILE *			fp,
 				 char **		argv)
 {
 	fprintf (fp,
-	 "Libzvbi PES converter version " VERSION "\n"
-	 "Copyright (C) 2004-2005 Michael H. Schimek\n"
-	 "This program is licensed under GPL 2. NO WARRANTIES.\n\n"
-	 "Converts old test/capture --sliced output to DVB PES format.\n\n"
-	 "Usage: %s < old file > PES file\n"
-	 "Options:\n"
-	 "-h | --help    Print this message.\n",
-	 argv[0]);
+ "Libzvbi test/sliced2pes version " VERSION "\n"
+ "Copyright (C) 2004-2005 Michael H. Schimek\n"
+ "This program is licensed under GPL 2. NO WARRANTIES.\n\n"
+ "Converts old test/capture --sliced output to DVB PES format.\n\n"
+ "Usage: %s < old file > PES file\n"
+ "Options:\n"
+ "-h | --help    Print this message\n",
+		 argv[0]);
 }
 
 int
@@ -129,7 +131,7 @@ main				(int			argc,
 	}
 
 	if (isatty (STDIN_FILENO)) {
-		fprintf (stderr, "No vbi data on stdin\n");
+		fprintf (stderr, "No vbi data on stdin.\n");
 		exit (EXIT_FAILURE);
 	}
 
