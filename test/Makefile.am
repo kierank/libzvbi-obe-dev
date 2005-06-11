@@ -38,10 +38,27 @@ noinst_PROGRAMS = \
 	explist \
 	export \
 	glyph \
+	sliced2pes \
 	unicode \
 	wss \
 	$(proxy_programs) \
 	$(x_programs)
+
+caption_SOURCES = \
+	caption.c \
+	sliced.c sliced.h
+
+decode_SOURCES = \
+	decode.c \
+	sliced.c sliced.h
+
+export_SOURCES = \
+	export.c \
+	sliced.c sliced.h
+
+sliced2pes_SOURCES = \
+	sliced2pes.c \
+	sliced.c sliced.h
 
 noinst_SCRIPTS = \
 	uclist
