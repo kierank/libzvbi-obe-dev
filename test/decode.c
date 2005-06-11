@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.5 2005/05/26 04:07:33 mschimek Exp $ */
+/* $Id: decode.c,v 1.6 2005/06/11 22:10:10 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -37,17 +37,18 @@
 #endif
 
 #include "src/libzvbi.h"
+#include "sliced.h"
 
 static vbi_bool			source_pes	= FALSE;
 
-static vbi_bool			dump_ttx	= FALSE;
-static vbi_bool			dump_8301	= FALSE;
-static vbi_bool			dump_8302	= FALSE;
-static vbi_bool			dump_idl	= FALSE;
-static vbi_bool			dump_vps	= FALSE;
-static vbi_bool			dump_vps_r	= FALSE;
-static vbi_bool			dump_wss	= FALSE;
-static vbi_bool			dump_xds	= FALSE;
+static vbi_bool			decode_ttx	= FALSE;
+static vbi_bool			decode_8301	= FALSE;
+static vbi_bool			decode_8302	= FALSE;
+static vbi_bool			decode_idl	= FALSE;
+static vbi_bool			decode_vps	= FALSE;
+static vbi_bool			decode_vps_r	= FALSE;
+static vbi_bool			decode_wss	= FALSE;
+static vbi_bool			decode_xds	= FALSE;
 static vbi_bool			dump_network	= FALSE;
 static vbi_bool			dump_hex	= FALSE;
 static vbi_bool			dump_bin	= FALSE;
@@ -101,7 +102,7 @@ static void
 caption				(const uint8_t		buffer[2],
 				 unsigned int		line)
 {
-	if (dump_xds && 284 == line) {
+	if (decode_xds && 284 == line) {
 		if (!vbi_xds_demux_feed (xds, buffer)) {
 			printf ("Parity error in XDS data\n");
 			return;
@@ -170,7 +171,7 @@ packet_8301			(const uint8_t		buffer[42],
 	int gmtoff;
 	struct tm tm;
 
-	if (!dump_8301)
+	if (!decode_8301)
 		return;
 
 	if (!vbi_decode_teletext_8301_cni (&cni, buffer)) {
@@ -203,7 +204,7 @@ packet_8302			(const uint8_t		buffer[42],
 	unsigned int cni;
 	vbi_program_id pi;
 
-	if (!dump_8302)
+	if (!decode_8302)
 		return;
 
 	if (!vbi_decode_teletext_8302_cni (&cni, buffer)) {
@@ -387,7 +388,7 @@ teletext			(const uint8_t		buffer[42],
 		}
 	}
 
-	if (!(dump_ttx | dump_8301 | dump_8302 | dump_idl))
+	if (!(decode_ttx | decode_8301 | decode_8302 | decode_idl))
 		return;
 
 	if ((pmag = vbi_unham16p (buffer)) < 0) {
@@ -431,13 +432,13 @@ teletext			(const uint8_t		buffer[42],
 	}
 
 	if (30 == packet || 31 == packet) {
-		if (dump_idl) {
+		if (decode_idl) {
 			packet_idl (buffer, pmag & 15);
 			return;
 		}
 	}
 
-	if (dump_ttx) {
+	if (decode_ttx) {
 		printf ("TTX L%3u %x/%2u ", line, magazine, packet);
 		dump_bytes (buffer, 42);
 		return;
@@ -450,7 +451,7 @@ static void
 vps				(const uint8_t		buffer[13],
 				 unsigned int		line)
 {
-	if (dump_vps) {
+	if (decode_vps) {
 		unsigned int cni;
 		vbi_program_id pi;
 
@@ -480,7 +481,7 @@ vps				(const uint8_t		buffer[13],
 			dump_cni (pi.cni_type, pi.cni);
 	}
 
-	if (dump_vps_r) {
+	if (decode_vps_r) {
 		static char pr_label[2][20];
 		static char label[2][20];
 		static int l[2] = { 0, 0 };
@@ -515,7 +516,7 @@ vps				(const uint8_t		buffer[13],
 static void
 wss_625				(const uint8_t		buffer[2])
 {
-	if (dump_wss) {  
+	if (decode_wss) {  
 		vbi_aspect_ratio ar;
 
 		if (!vbi_decode_wss_625 (&ar, buffer)) {
@@ -605,10 +606,8 @@ pes_mainloop			(void)
 			unsigned int lines;
 			int64_t pts;
 
-			lines = vbi_dvb_demux_cor (dvb,
-						   sliced, 64,
-						   &pts,
-						   &bp, &left);
+			lines = vbi_dvb_demux_cor (dvb, sliced, 64,
+						   &pts, &bp, &left);
 			if (lines > 0)
 				decode (sliced, lines, 0, pts);
 		}
@@ -620,90 +619,18 @@ pes_mainloop			(void)
 static void
 old_mainloop			(void)
 {
-	double time;
-
-	time = 0.0;
-
 	for (;;) {
-		char buf[256];
-		double dt;
-		unsigned int n_items;
 		vbi_sliced sliced[40];
-		vbi_sliced *s;
+		double timestamp;
+		int n_lines;
 
-		if (ferror (stdin) || !fgets (buf, 255, stdin))
-			goto abort;
+		n_lines = read_sliced (sliced, &timestamp, /* max_lines */ 40);
+		if (n_lines < 0)
+			break;
 
-		dt = strtod (buf, NULL);
-		n_items = fgetc (stdin);
-
-		assert (n_items < 40);
-
-		s = sliced;
-
-		while (n_items-- > 0) {
-			int index;
-
-			index = fgetc (stdin);
-
-			s->line = (fgetc (stdin)
-				   + 256 * fgetc (stdin)) & 0xFFF;
-
-			if (index < 0)
-				goto abort;
-
-			switch (index) {
-			case 0:
-				s->id = VBI_SLICED_TELETEXT_B;
-				fread (s->data, 1, 42, stdin);
-				break;
-
-			case 1:
-				s->id = VBI_SLICED_CAPTION_625; 
-				fread (s->data, 1, 2, stdin);
-				break; 
-
-			case 2:
-				s->id = VBI_SLICED_VPS;
-				fread (s->data, 1, 13, stdin);
-				break;
-
-			case 3:
-				s->id = VBI_SLICED_WSS_625; 
-				fread (s->data, 1, 2, stdin);
-				break;
-
-			case 4:
-				s->id = VBI_SLICED_WSS_CPR1204; 
-				fread (s->data, 1, 3, stdin);
-				break;
-
-			case 7:
-				s->id = VBI_SLICED_CAPTION_525; 
-				fread(s->data, 1, 2, stdin);
-				break;
-
-			default:
-				fprintf (stderr,
-					 "\nOops! Unknown data type %d "
-					 "in sample file\n", index);
-				exit (EXIT_FAILURE);
-			}
-
-			++s;
-		}
-
-		decode (sliced, s - sliced, time, 0);
-
-		if (feof (stdin) || ferror (stdin))
-			goto abort;
-
-		time += dt;
+		decode (sliced, n_lines, timestamp, 0);
 	}
 
-	return;
-
-abort:
 	fprintf (stderr, "\rEnd of stream\n");
 }
 
@@ -744,52 +671,51 @@ usage				(FILE *			fp,
 				 char **		argv)
 {
 	fprintf (fp,
-		 "Libzvbi decoder test version " VERSION "\n"
-		 "Copyright (C) 2004-2005 Michael H. Schimek\n"
-		 "This program is licensed under GPL 2. NO WARRANTIES.\n\n"
-		 "Usage: %s [options] < sliced vbi data\n\n"
-		 "Input options:\n"
-		 "-P | --pes     Source is a DVB PES\n"
-		 "Decoding options:\n"
+ "Libzvbi test/decode version " VERSION "\n"
+ "Copyright (C) 2004-2005 Michael H. Schimek\n"
+ "This program is licensed under GPL 2. NO WARRANTIES.\n\n"
+ "Usage: %s [options] < sliced vbi data\n\n"
+ "Input options:\n"
+ "-P | --pes     Source is a DVB PES (autodetected when it starts with a PES\n"
+ "               packet header), otherwise test/capture --sliced output\n"
+ "\nDecoding options:\n"
 #if 0
-		 "-1 | --8301    Teletext packet 8/30 format 1 (local time)\n"
-		 "-2 | --8302    Teletext packet 8/30 format 2 (PDC)\n"
+ "-1 | --8301    Teletext packet 8/30 format 1 (local time)\n"
+ "-2 | --8302    Teletext packet 8/30 format 2 (PDC)\n"
 #endif
-		 "-c | --idl-ch N\n"
-		 "-d | --idl-addr NNN\n"
-		 "               Decode Teletext IDL format A data from\n"
-		 "               channel N (for example 8), service packet\n"
-		 "               address NNN (default is 0)\n"
-		 "-e | --xds     Decode eXtended Data Service data\n"
-		 "-i | --idl     Any Teletext IDL packets (M/30, M/31)\n"
-		 "-t | --ttx     Decode any Teletext packet\n"
+ "-c | --idl-ch N\n"
+ "-d | --idl-addr NNN\n"
+ "               Decode Teletext IDL format A data from channel N (e. g. 8),\n"
+ "               service packet address NNN (optional, default is 0)\n"
+ "-e | --xds     Decode eXtended Data Service data (NTSC line 284)\n"
+ "-i | --idl     Any Teletext IDL packets (M/30, M/31)\n"
+ "-t | --ttx     Decode any Teletext packet\n"
 #if 0
-		 "-v | --vps     VPS (PDC)\n"
-		 "-w | --wss     WSS\n"
+ "-v | --vps     VPS (PDC data)\n"
+ "-w | --wss     WSS\n"
 #endif
-		 "-a | --all     Everything above, e. g.\n"
-		 "               -i     decode IDL packets\n"
-		 "               -a     decode everything\n"
-		 "               -a -i  everything except IDL\n"
+ "-a | --all     Everything above, e. g.\n"
+ "               -i        decode IDL packets\n"
+ "               -a        decode everything\n"
+ "               -a -i     everything except IDL\n"
 #if 0
-		 "-r | --vps-r   VPS data unrelated to PDC\n"
+ "-r | --vps-r   VPS data unrelated to PDC\n"
 #endif
-		 "-p | --pfc-pgno NNN\n"
-		 "-s | --pfc-stream NN\n"
-		 "               Decode Teletext Page Function Clear data\n"
-		 "               from page NNN (for example 1DF), stream NN\n"
-		 "               (optional, default is 0)\n"
-		 "\n"
-		 "Modifying options:\n"
-		 "-x | --hex     With -t dump packets in hex and ASCII,\n"
-		 "               otherwise only ASCII.\n"
+ "-p | --pfc-pgno NNN\n"
+ "-s | --pfc-stream NN\n"
+ "               Decode Teletext Page Function Clear data from page NNN\n"
+ "               (e. g. 1DF), stream NN (optional, default is 0)\n"
+ "\nModifying options:\n"
+ "-x | --hex     With -t dump packets in hex and ASCII,\n"
+ "               otherwise only ASCII\n"
 #if 0
-		 "-n | --network With -1, -2, -v decode CNI and print\n"
-		 "               available information about the network.\n"
+ "-n | --network With -1, -2, -v decode CNI and print available information\n"
+ "               about the network\n"
 #endif
-		 "-b | --bin     With -t, -p, -v dump data in binary format,\n"
-		 "               otherwise only ASCII.\n"
-		 "-T | --time    Dump frame timestamps.\n",
+ "-b | --bin     With -t, -p, -v dump data in binary format, otherwise ASCII\n"
+ "-T | --time    Dump frame timestamps\n"
+ "\nMiscellaneous options:\n"
+ "-h | --help    Print this message\n",
 		 argv[0]);
 }
 
@@ -807,11 +733,11 @@ main				(int			argc,
 			break;
 
 		case '1':
-			dump_8301 ^= TRUE;
+			decode_8301 ^= TRUE;
 			break;
 
 		case '2':
-			dump_8302 ^= TRUE;
+			decode_8302 ^= TRUE;
 			break;
 
 		case 'b':
@@ -819,13 +745,19 @@ main				(int			argc,
 			break;
 
 		case 'a':
-			dump_ttx = TRUE;
-			dump_8301 = TRUE;
-			dump_8302 = TRUE;
-			dump_idl = TRUE;
-			dump_vps = TRUE;
-			dump_wss = TRUE;
-			pfc_pgno = 0x1DF;
+			decode_8301 ^= TRUE;
+			decode_8302 ^= TRUE;
+			decode_xds ^= TRUE;
+			decode_idl ^= TRUE;
+			decode_ttx ^= TRUE;
+			decode_vps ^= TRUE;
+			decode_wss ^= TRUE;
+
+			if (pfc_pgno)
+				pfc_pgno = 0;
+			else
+				pfc_pgno = 0x1DF;
+
 			break;
 
 		case 'c':
@@ -837,7 +769,7 @@ main				(int			argc,
 			break;
 
 		case 'e':
-			dump_xds ^= TRUE;
+			decode_xds ^= TRUE;
 			break;
 
 		case 'h':
@@ -845,7 +777,7 @@ main				(int			argc,
 			exit (EXIT_SUCCESS);
 
 		case 'i':
-			dump_idl ^= TRUE;
+			decode_idl ^= TRUE;
 			break;
 
 		case 'n':
@@ -857,7 +789,7 @@ main				(int			argc,
 			break;
 
 		case 'r':
-			dump_vps_r ^= TRUE;
+			decode_vps_r ^= TRUE;
 			break;
 
 		case 's':
@@ -865,15 +797,15 @@ main				(int			argc,
 			break;
 
 		case 't':
-			dump_ttx ^= TRUE;
+			decode_ttx ^= TRUE;
 			break;
 
 		case 'v':
-			dump_vps ^= TRUE;
+			decode_vps ^= TRUE;
 			break;
 
 		case 'w':
-			dump_wss ^= TRUE;
+			decode_wss ^= TRUE;
 			break;
 
 		case 'x':
@@ -919,7 +851,7 @@ main				(int			argc,
 		assert (NULL != idl);
 	}
 
-	if (dump_xds) {
+	if (decode_xds) {
 		xds = vbi_xds_demux_new (xds_cb,
 					 /* used_data */ NULL);
 		assert (NULL != xds);
@@ -934,6 +866,8 @@ main				(int			argc,
 
 		pes_mainloop ();
 	} else {
+		open_sliced (stdin);
+
 		old_mainloop ();
 	}
 
