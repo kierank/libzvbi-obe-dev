@@ -25,13 +25,15 @@
 #  Perl and C gurus cover your eyes. This is one of my first
 #  attempts in this funny tongue and far from a proper C parser.
 
-# $Id: structpr.pl,v 1.3 2004/12/30 02:25:16 mschimek Exp $
+# $Id: structpr.pl,v 1.4 2005/06/30 22:15:41 mschimek Exp $
 
 $number		= '[0-9]+';
 $ident		= '\~?_*[a-zA-Z][a-zA-Z0-9_]*';
-$signed		= '((signed)?(char|short|int|long))|__s8|__s16|__s32|signed';
-$unsigned	= '(((unsigned\s*)|u|u_)(char|short|int|long))|__u8|__u16|__u32|unsigned';
+$signed		= '((signed)?(char|short|int|long))|__s8|__s16|__s32|__s64|signed';
+$unsigned	= '(((unsigned\s*)|u|u_)(char|short|int|long))|__u8|__u16|__u32|__u64|unsigned';
 $define		= '^\s*\#\s*define\s+';
+
+$printfn	= 'fprint_ioctl_arg';
 
 #
 # Syntax of arguments, in brief:
@@ -68,7 +70,9 @@ while (@ARGV) {
 	$arg .= shift (@ARGV);
     }
 
-    if ($arg =~ m/(($ident)(\.$ident)?)\={(.*)}/) {
+    if ($arg =~ m/printfn\=($ident)/) {
+	$printfn = $1;
+    } elsif ($arg =~ m/(($ident)(\.$ident)?)\={(.*)}/) {
 	$print_func{$1} = $4;
     } elsif ($arg =~ m/(($ident)(\.($ident))?)\=(.*)/) {
 	$item = $1;
@@ -131,12 +135,12 @@ sub add_ioctl_check {
 }
 
 sub add_ioctl {
-    my ($name, $dir, $type) = @_;
+    my ($name, $dir, $i_type, $real_type) = @_;
 
-    $ioctl_cases{$type} .= "case $name:\n"
+    $ioctl_cases{$i_type} .= "case $name:\n"
 	. "if (!arg) { fputs (\"$name\", fp); return; }\n";
 
-    &add_ioctl_check ($name, $dir, $type);
+    &add_ioctl_check ($name, $dir, $real_type);
 }
 
 # Find macro definitions, create ioctl & symbol table.
@@ -156,9 +160,16 @@ foreach ($contents =~ /^(.*)/gm) {
 	$skip = 1;
     # Ioctls
     } elsif (/$define($ident)\s+_IO(WR|R|W).*\(.*,\s*$number\s*,\s*(struct|union)\s*($ident)\s*\)\s*$/) {
-	&add_ioctl ($1, $2, "$3 $4");
+	&add_ioctl ($1, $2, "$3 $4", "$3 $4");
     } elsif (/$define($ident)\s+_IO(WR|R|W).*\(.*,\s*$number\s*,\s*(($signed)|($unsigned))\s*\)\s*$/) {
-	&add_ioctl ($1, $2, "$3");
+	if ($symbolic{$1}) {
+	    $int_ioctls{$1} = $3;
+	    &add_ioctl ($1, $2, $1, $3);
+	} else {
+	    &add_ioctl ($1, $2, $3, $3);
+	}
+    } elsif (/$define($ident)\s+_IO(WR|R|W).*\(.*,\s*$number\s*,\s*($ident)\s*\)\s*$/) {
+	&add_ioctl ($1, $2, $3, $3);
     } elsif (/$define($ident)\s+_IO(WR|R|W).*\(.*,\s*$number\s*,\s*([^*]+)\s*\)\s*$/) {
 	&add_ioctl_check ($1, $2, $3);
     # Define 
@@ -521,7 +532,8 @@ sub aggregate_body {
 	    } elsif ($hint eq "hex") {
 		&add_arg ($text, "unsigned long", $item, "0x%lx");
 	    } elsif ($hint eq "fourcc") {
-		&add_ref_arg ($text, "const char *", $item, "\\\"%.4s\\\"=0x%lx");
+		&add_ref_arg ($text, "const char *", $item,
+			      "\\\"%.4s\\\"=0x%lx");
 		$args .= "(unsigned long) t->$field, ";
 	    # Field contains symbols, could be flags or enum or both
 	    } elsif ($hint ne "") {
@@ -619,7 +631,7 @@ sub enumeration {
 
 while (@contents) {
     $_ = shift(@contents);
-#   print ">>$_<<\n";
+    # print ">>$_<<\n";
 
     if (/^\s*(struct|union)\s*($ident)\s*\{/) {
 	&aggregate ($1, $2);
@@ -646,6 +658,32 @@ print "/* Generated file, do not edit! */
 
 ";
 
+while (($name, $type) = each %int_ioctls) {
+    my $prefix;
+    my $sbody;
+
+    $prefix = $symbolic{$name};
+
+    foreach (@global_symbols) {
+	if (/^$prefix/) {
+	    $str = $_;
+	    $str =~ s/^$prefix//;
+	    $sbody .= "\"$str\", (unsigned long) $_,\n";
+	}
+    }
+
+    # No switch() such that fprint_symbolic() can determine if
+    # these are flags or enum.
+    $funcs{$name} = {
+	text => "static void\n"
+	    . "fprint_$name (FILE *fp, "
+	    . "int rw __attribute__ ((unused)), $type *arg)\n"
+	    . "{\nfprint_symbolic (fp, 0, (unsigned long) *arg,\n"
+	    . $sbody . "0);\n}\n\n",
+	deps => []
+    };
+}
+
 sub print_type {
     my ($type) = @_;
 
@@ -660,10 +698,23 @@ sub print_type {
     }
 }
 
-$text = "static void\nfprint_ioctl_arg (FILE *fp, unsigned int cmd, int rw, void *arg)\n"
+$text = "static void\n$printfn (FILE *fp, unsigned int cmd, int rw, void *arg)\n"
     . "{\nswitch (cmd) {\n";
 
 while (($type, $case) = each %ioctl_cases) {
+    if ($typedefs{$type}) {
+	if ($symbolic{$type}) {
+	    &print_type ($type);
+	    $prefix = lc $symbolic{$type};
+	    $type = $typedefs{$type};
+	    $text .= "$case fprint_symbol_$prefix ";
+	    $text .= "(fp, rw, * ($type *) arg);\nbreak;\n";
+	    next;
+	}
+
+	$type = $typedefs{$type};
+    }
+
     if ($funcs{$type}) {
 	&print_type ($type);
 	$type =~ s/ /_/;
