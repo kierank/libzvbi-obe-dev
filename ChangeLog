@@ -1,3 +1,7 @@
+2005-06-30    <mschimek@users.sf.net>
+
+	* src/structpr.pl: Didn't log VIDIOC_G|S_STD.
+
 2005-06-10    <mschimek@users.sf.net>
 
 	* src/dvb_mux.c (_vbi_dvb_multiplex_sliced): Didn't write the
