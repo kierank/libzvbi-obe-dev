@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.17 2005/01/24 00:11:43 mschimek Exp $ */
+/* $Id: io.h,v 1.18 2005/09/11 23:08:10 mschimek Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -116,6 +116,7 @@ vbi_capture_proxy_new( struct vbi_proxy_client * vpc,
                         unsigned int *p_services, int strict,
                         char **pp_errorstr );
 
+/* XXX need to somehow report raw VBI capability. */
 extern int		vbi_capture_read_raw(vbi_capture *capture, void *data,
 					     double *timestamp, struct timeval *timeout);
 extern int		vbi_capture_read_sliced(vbi_capture *capture, vbi_sliced *data, int *lines,

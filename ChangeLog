@@ -1,3 +1,14 @@
+2005-09-12    <mschimek@users.sf.net>
+
+	* src/io-v4l2k.c: Added preliminary support for the V4L2 sliced VBI
+	  API (untested). 
+	* src/videodev2k.h: Updated (sliced VBI API).
+
+2005-07-10    <mschimek@users.sf.net>
+
+	* src/xds_demux.h, src/xds_demux.c (_vbi_xds_packet_dump):
+	  Added missing XDS packet subclasses.
+
 2005-06-30    <mschimek@users.sf.net>
 
 	* src/structpr.pl: Didn't log VIDIOC_G|S_STD.
