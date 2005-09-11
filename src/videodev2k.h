@@ -16,6 +16,7 @@
 #ifdef __KERNEL__
 #include <linux/time.h> /* need struct timeval */
 #endif
+#include <linux/compiler.h> /* need __user */
 
 /*
  *	M I S C E L L A N E O U S
@@ -59,12 +60,14 @@ enum v4l2_field {
 	 (field) == V4L2_FIELD_SEQ_BT)
 
 enum v4l2_buf_type {
-	V4L2_BUF_TYPE_VIDEO_CAPTURE  = 1,
-	V4L2_BUF_TYPE_VIDEO_OUTPUT   = 2,
-	V4L2_BUF_TYPE_VIDEO_OVERLAY  = 3,
-	V4L2_BUF_TYPE_VBI_CAPTURE    = 4,
-	V4L2_BUF_TYPE_VBI_OUTPUT     = 5,
-	V4L2_BUF_TYPE_PRIVATE        = 0x80,
+	V4L2_BUF_TYPE_VIDEO_CAPTURE      = 1,
+	V4L2_BUF_TYPE_VIDEO_OUTPUT       = 2,
+	V4L2_BUF_TYPE_VIDEO_OVERLAY      = 3,
+	V4L2_BUF_TYPE_VBI_CAPTURE        = 4,
+	V4L2_BUF_TYPE_VBI_OUTPUT         = 5,
+	V4L2_BUF_TYPE_SLICED_VBI_CAPTURE = 6,
+	V4L2_BUF_TYPE_SLICED_VBI_OUTPUT  = 7,
+	V4L2_BUF_TYPE_PRIVATE            = 0x80,
 };
 
 enum v4l2_ctrl_type {
@@ -77,6 +80,7 @@ enum v4l2_ctrl_type {
 enum v4l2_tuner_type {
 	V4L2_TUNER_RADIO	     = 1,
 	V4L2_TUNER_ANALOG_TV	     = 2,
+	V4L2_TUNER_DIGITAL_TV	     = 3,
 };
 
 enum v4l2_memory {
@@ -95,20 +99,20 @@ enum v4l2_colorspace {
 
 	/* HD and modern captures. */
 	V4L2_COLORSPACE_REC709        = 3,
-	
+
 	/* broken BT878 extents (601, luma range 16-253 instead of 16-235) */
 	V4L2_COLORSPACE_BT878         = 4,
-	
+
 	/* These should be useful.  Assume 601 extents. */
 	V4L2_COLORSPACE_470_SYSTEM_M  = 5,
 	V4L2_COLORSPACE_470_SYSTEM_BG = 6,
-	
+
 	/* I know there will be cameras that send this.  So, this is
 	 * unspecified chromaticities and full 0-255 on each of the
 	 * Y'CbCr components
 	 */
 	V4L2_COLORSPACE_JPEG          = 7,
-	
+
 	/* For RGB colourspaces, this is probably a good start. */
 	V4L2_COLORSPACE_SRGB          = 8,
 };
@@ -147,20 +151,22 @@ struct v4l2_capability
 };
 
 /* Values for 'capabilities' field */
-#define V4L2_CAP_VIDEO_CAPTURE	0x00000001  /* Is a video capture device */
-#define V4L2_CAP_VIDEO_OUTPUT	0x00000002  /* Is a video output device */
-#define V4L2_CAP_VIDEO_OVERLAY	0x00000004  /* Can do video overlay */
-#define V4L2_CAP_VBI_CAPTURE	0x00000010  /* Is a VBI capture device */
-#define V4L2_CAP_VBI_OUTPUT	0x00000020  /* Is a VBI output device */
-#define V4L2_CAP_RDS_CAPTURE	0x00000100  /* RDS data capture */
+#define V4L2_CAP_VIDEO_CAPTURE	        0x00000001  /* Is a video capture device */
+#define V4L2_CAP_VIDEO_OUTPUT	        0x00000002  /* Is a video output device */
+#define V4L2_CAP_VIDEO_OVERLAY	        0x00000004  /* Can do video overlay */
+#define V4L2_CAP_VBI_CAPTURE	        0x00000010  /* Is a raw VBI capture device */
+#define V4L2_CAP_VBI_OUTPUT	        0x00000020  /* Is a raw VBI output device */
+#define V4L2_CAP_SLICED_VBI_CAPTURE	0x00000040  /* Is a sliced VBI capture device */
+#define V4L2_CAP_SLICED_VBI_OUTPUT	0x00000080  /* Is a sliced VBI output device */
+#define V4L2_CAP_RDS_CAPTURE	        0x00000100  /* RDS data capture */
 
-#define V4L2_CAP_TUNER		0x00010000  /* has a tuner */
-#define V4L2_CAP_AUDIO		0x00020000  /* has audio support */
-#define V4L2_CAP_RADIO		0x00040000  /* is a radio device */
+#define V4L2_CAP_TUNER		        0x00010000  /* has a tuner */
+#define V4L2_CAP_AUDIO		        0x00020000  /* has audio support */
+#define V4L2_CAP_RADIO		        0x00040000  /* is a radio device */
 
-#define V4L2_CAP_READWRITE      0x01000000  /* read/write systemcalls */
-#define V4L2_CAP_ASYNCIO        0x02000000  /* async I/O */
-#define V4L2_CAP_STREAMING      0x04000000  /* streaming I/O ioctls */
+#define V4L2_CAP_READWRITE              0x01000000  /* read/write systemcalls */
+#define V4L2_CAP_ASYNCIO                0x02000000  /* async I/O */
+#define V4L2_CAP_STREAMING              0x04000000  /* streaming I/O ioctls */
 
 /*
  *	V I D E O   I M A G E   F O R M A T
@@ -207,6 +213,9 @@ struct v4l2_pix_format
 #define V4L2_PIX_FMT_YYUV    v4l2_fourcc('Y','Y','U','V') /* 16  YUV 4:2:2     */
 #define V4L2_PIX_FMT_HI240   v4l2_fourcc('H','I','2','4') /*  8  8-bit color   */
 
+/* see http://www.siliconimaging.com/RGB%20Bayer.htm */
+#define V4L2_PIX_FMT_SBGGR8  v4l2_fourcc('B','A','8','1') /*  8  BGBG.. GRGR.. */
+
 /* compressed formats */
 #define V4L2_PIX_FMT_MJPEG    v4l2_fourcc('M','J','P','G') /* Motion-JPEG   */
 #define V4L2_PIX_FMT_JPEG     v4l2_fourcc('J','P','E','G') /* JFIF JPEG     */
@@ -215,6 +224,9 @@ struct v4l2_pix_format
 
 /*  Vendor-specific formats   */
 #define V4L2_PIX_FMT_WNVA     v4l2_fourcc('W','N','V','A') /* Winnov hw compress */
+#define V4L2_PIX_FMT_SN9C10X  v4l2_fourcc('S','9','1','0') /* SN9C10x compression */
+#define V4L2_PIX_FMT_PWC1     v4l2_fourcc('P','W','C','1') /* pwc older webcam */
+#define V4L2_PIX_FMT_PWC2     v4l2_fourcc('P','W','C','2') /* pwc newer webcam */
 
 /*
  *	F O R M A T   E N U M E R A T I O N
@@ -262,64 +274,92 @@ struct v4l2_timecode
 /* The above is based on SMPTE timecodes */
 
 
+#if 1
 /*
- *	C O M P R E S S I O N   P A R A M E T E R S
+ *	M P E G   C O M P R E S S I O N   P A R A M E T E R S
+ *
+ *  ### WARNING: this is still work-in-progress right now, most likely
+ *  ###          there will be some incompatible changes.
+ *
  */
-#if 0
-/* ### generic compression settings don't work, there is too much
- * ### codec-specific stuff.  Maybe reuse that for MPEG codec settings
- * ### later ... */
-struct v4l2_compression
-{
-	__u32	quality;
-	__u32	keyframerate;
-	__u32	pframerate;
-	__u32	reserved[5];
 
-/*  what we'll need for MPEG, extracted from some postings on
-    the v4l list (Gert Vervoort, PlasmaJohn).
 
-system stream:
-  - type: elementary stream(ES), packatised elementary stream(s) (PES)
-    program stream(PS), transport stream(TS)
-  - system bitrate
-  - PS packet size (DVD: 2048 bytes, VCD: 2324 bytes)
-  - TS video PID
-  - TS audio PID
-  - TS PCR PID
-  - TS system information tables (PAT, PMT, CAT, NIT and SIT)
-  - (MPEG-1 systems stream vs. MPEG-2 program stream (TS not supported
-    by MPEG-1 systems)
+enum v4l2_bitrate_mode {
+	V4L2_BITRATE_NONE = 0,	/* not specified */
+	V4L2_BITRATE_CBR,	/* constant bitrate */
+	V4L2_BITRATE_VBR,	/* variable bitrate */
+};
+struct v4l2_bitrate {
+	/* rates are specified in kbit/sec */
+	enum v4l2_bitrate_mode	mode;
+	__u32			min;
+	__u32			target;  /* use this one for CBR */
+	__u32			max;
+};
 
-audio:
-  - type: MPEG (+Layer I,II,III), AC-3, LPCM
-  - bitrate
-  - sampling frequency (DVD: 48 Khz, VCD: 44.1 KHz, 32 kHz)
-  - Trick Modes? (ff, rew)
-  - Copyright
-  - Inverse Telecine
+enum v4l2_mpeg_streamtype {
+	V4L2_MPEG_SS_1,		/* MPEG-1 system stream */
+	V4L2_MPEG_PS_2,		/* MPEG-2 program stream */
+	V4L2_MPEG_TS_2,		/* MPEG-2 transport stream */
+	V4L2_MPEG_PS_DVD,      	/* MPEG-2 program stream with DVD header fixups */
+};
+enum v4l2_mpeg_audiotype {
+	V4L2_MPEG_AU_2_I,	/* MPEG-2 layer 1 */
+	V4L2_MPEG_AU_2_II,	/* MPEG-2 layer 2 */
+	V4L2_MPEG_AU_2_III,	/* MPEG-2 layer 3 */
+	V4L2_MPEG_AC3,		/* AC3 */
+	V4L2_MPEG_LPCM,		/* LPCM */
+};
+enum v4l2_mpeg_videotype {
+	V4L2_MPEG_VI_1,		/* MPEG-1 */
+	V4L2_MPEG_VI_2,		/* MPEG-2 */
+};
+enum v4l2_mpeg_aspectratio {
+	V4L2_MPEG_ASPECT_SQUARE = 1,   /* square pixel */
+	V4L2_MPEG_ASPECT_4_3    = 2,   /*  4 : 3       */
+	V4L2_MPEG_ASPECT_16_9   = 3,   /* 16 : 9       */
+	V4L2_MPEG_ASPECT_1_221  = 4,   /*  1 : 2,21    */
+};
 
-video:
-  - picturesize (SIF, 1/2 D1, 2/3 D1, D1) and PAL/NTSC norm can be set
-    through excisting V4L2 controls
-  - noise reduction, parameters encoder specific?
-  - MPEG video version: MPEG-1, MPEG-2
-  - GOP (Group Of Pictures) definition:
-    - N: number of frames per GOP
-    - M: distance between reference (I,P) frames
-    - open/closed GOP
-  - quantiser matrix: inter Q matrix (64 bytes) and intra Q matrix (64 bytes)
-  - quantiser scale: linear or logarithmic
-  - scanning: alternate or zigzag
-  - bitrate mode: CBR (constant bitrate) or VBR (variable bitrate).
-  - target video bitrate for CBR
-  - target video bitrate for VBR
-  - maximum video bitrate for VBR - min. quantiser value for VBR
-  - max. quantiser value for VBR
-  - adaptive quantisation value
-  - return the number of bytes per GOP or bitrate for bitrate monitoring
+struct v4l2_mpeg_compression {
+	/* general */
+	enum v4l2_mpeg_streamtype	st_type;
+	struct v4l2_bitrate		st_bitrate;
 
-*/
+	/* transport streams */
+	__u16				ts_pid_pmt;
+	__u16				ts_pid_audio;
+	__u16				ts_pid_video;
+	__u16				ts_pid_pcr;
+
+	/* program stream */
+	__u16				ps_size;
+	__u16				reserved_1;    /* align */
+
+	/* audio */
+	enum v4l2_mpeg_audiotype	au_type;
+	struct v4l2_bitrate		au_bitrate;
+	__u32				au_sample_rate;
+	__u8                            au_pesid;
+	__u8                            reserved_2[3]; /* align */
+
+	/* video */
+	enum v4l2_mpeg_videotype	vi_type;
+	enum v4l2_mpeg_aspectratio	vi_aspect_ratio;
+	struct v4l2_bitrate		vi_bitrate;
+	__u32				vi_frame_rate;
+	__u16				vi_frames_per_gop;
+	__u16				vi_bframes_count;
+	__u8                            vi_pesid;
+	__u8                            reserved_3[3]; /* align */
+
+	/* misc flags */
+	__u32                           closed_gops:1;
+	__u32                           pulldown:1;
+	__u32                           reserved_4:30; /* align */
+
+	/* I don't expect the above being perfect yet ;) */
+	__u32				reserved_5[8];
 };
 #endif
 
@@ -331,10 +371,10 @@ struct v4l2_jpegcompression
 				 * must be 0..15 */
 	int  APP_len;           /* Length of data in JPEG APPn segment */
 	char APP_data[60];      /* Data in the JPEG APPn segment. */
-	
+
 	int  COM_len;           /* Length of data in JPEG COM segment */
 	char COM_data[60];      /* Data in JPEG COM segment */
-	
+
 	__u32 jpeg_markers;     /* Which markers should go into the JPEG
 				 * output. Unless you exactly know what
 				 * you do, leave them untouched.
@@ -344,7 +384,7 @@ struct v4l2_jpegcompression
 				 * The presence of the APP and COM marker
 				 * is influenced by APP_len and COM_len
 				 * ONLY, not by this property! */
-	
+
 #define V4L2_JPEG_MARKER_DHT (1<<3)    /* Define Huffman Tables */
 #define V4L2_JPEG_MARKER_DQT (1<<4)    /* Define Quantization Tables */
 #define V4L2_JPEG_MARKER_DRI (1<<5)    /* Define Restart Interval */
@@ -467,7 +507,7 @@ struct v4l2_outputparm
  */
 
 struct v4l2_cropcap {
-	enum v4l2_buf_type      type;	
+	enum v4l2_buf_type      type;
         struct v4l2_rect        bounds;
         struct v4l2_rect        defrect;
         struct v4l2_fract       pixelaspect;
@@ -527,12 +567,13 @@ typedef __u64 v4l2_std_id;
 				 V4L2_STD_PAL_I)
 #define V4L2_STD_NTSC           (V4L2_STD_NTSC_M	|\
 				 V4L2_STD_NTSC_M_JP)
+#define V4L2_STD_SECAM_DK      	(V4L2_STD_SECAM_D	|\
+				 V4L2_STD_SECAM_K	|\
+				 V4L2_STD_SECAM_K1)
 #define V4L2_STD_SECAM		(V4L2_STD_SECAM_B	|\
-				 V4L2_STD_SECAM_D	|\
 				 V4L2_STD_SECAM_G	|\
 				 V4L2_STD_SECAM_H	|\
-				 V4L2_STD_SECAM_K	|\
-				 V4L2_STD_SECAM_K1	|\
+				 V4L2_STD_SECAM_DK	|\
 				 V4L2_STD_SECAM_L)
 
 #define V4L2_STD_525_60		(V4L2_STD_PAL_M		|\
@@ -542,6 +583,8 @@ typedef __u64 v4l2_std_id;
 				 V4L2_STD_PAL_N		|\
 				 V4L2_STD_PAL_Nc	|\
 				 V4L2_STD_SECAM)
+#define V4L2_STD_ATSC           (V4L2_STD_ATSC_8_VSB    |\
+		                 V4L2_STD_ATSC_16_VSB)
 
 #define V4L2_STD_UNKNOWN        0
 #define V4L2_STD_ALL            (V4L2_STD_525_60	|\
@@ -772,6 +815,8 @@ struct v4l2_audioout
  *	Data services API by Michael Schimek
  */
 
+/* Raw VBI */
+
 struct v4l2_vbi_format
 {
 	__u32	sampling_rate;		/* in 1 Hz */
@@ -789,6 +834,48 @@ struct v4l2_vbi_format
 #define V4L2_VBI_INTERLACED	(1<< 1)
 
 
+/* Sliced VBI */
+
+struct v4l2_sliced_vbi_format
+{
+        __u16   service_set;
+        /* service_lines[0][...] specifies lines 0-23 (1-23 used) of the first field
+           service_lines[1][...] specifies lines 0-23 (1-23 used) of the second field
+                                 (equals frame lines 313-336 for 625 line video
+                                  standards, 263-286 for 525 line standards) */
+        __u16   service_lines[2][24]; 
+        __u32   io_size;
+        __u32   reserved[2];            /* must be zero */
+};
+
+#define V4L2_SLICED_TELETEXT_B          (0x0001)
+#define V4L2_SLICED_VPS                 (0x0400)
+#define V4L2_SLICED_CAPTION_525         (0x1000)
+#define V4L2_SLICED_WSS_625             (0x4000)
+
+#define V4L2_SLICED_VBI_525             (V4L2_SLICED_CAPTION_525)
+#define V4L2_SLICED_VBI_625             (V4L2_SLICED_TELETEXT_B | V4L2_SLICED_VPS | V4L2_SLICED_WSS_625)
+
+struct v4l2_sliced_vbi_cap
+{
+        __u16   service_set;
+        /* service_lines[0][...] specifies lines 0-23 (1-23 used) of the first field
+           service_lines[1][...] specifies lines 0-23 (1-23 used) of the second field
+                                 (equals frame lines 313-336 for 625 line video
+                                  standards, 263-286 for 525 line standards) */
+        __u16   service_lines[2][24];
+        __u32   reserved[4];    /* must be 0 */
+};
+
+struct v4l2_sliced_vbi_data
+{
+        __u32   id;
+        __u32   field;          /* 0: first field, 1: second field */
+        __u32   line;           /* 1-23 */
+        __u32   reserved;       /* must be 0 */
+        __u8    data[48];
+};
+
 /*
  *	A G G R E G A T E   S T R U C T U R E S
  */
@@ -800,10 +887,11 @@ struct v4l2_format
 	enum v4l2_buf_type type;
 	union
 	{
-		struct v4l2_pix_format	pix;  // V4L2_BUF_TYPE_VIDEO_CAPTURE
-		struct v4l2_window	win;  // V4L2_BUF_TYPE_VIDEO_OVERLAY
-		struct v4l2_vbi_format	vbi;  // V4L2_BUF_TYPE_VBI_CAPTURE
-		__u8	raw_data[200];        // user-defined
+		struct v4l2_pix_format	        pix;     // V4L2_BUF_TYPE_VIDEO_CAPTURE
+		struct v4l2_window	        win;     // V4L2_BUF_TYPE_VIDEO_OVERLAY
+		struct v4l2_vbi_format	        vbi;     // V4L2_BUF_TYPE_VBI_CAPTURE
+		struct v4l2_sliced_vbi_format	sliced;  // V4L2_BUF_TYPE_SLICED_VBI_CAPTURE
+		__u8	raw_data[200];                   // user-defined
 	} fmt;
 };
 
@@ -832,9 +920,9 @@ struct v4l2_streamparm
 #define VIDIOC_ENUM_FMT         _IOWR ('V',  2, struct v4l2_fmtdesc)
 #define VIDIOC_G_FMT		_IOWR ('V',  4, struct v4l2_format)
 #define VIDIOC_S_FMT		_IOWR ('V',  5, struct v4l2_format)
-#if 0
-#define VIDIOC_G_COMP		_IOR  ('V',  6, struct v4l2_compression)
-#define VIDIOC_S_COMP		_IOW  ('V',  7, struct v4l2_compression)
+#if 1 /* experimental */
+#define VIDIOC_G_MPEGCOMP       _IOR  ('V',  6, struct v4l2_mpeg_compression)
+#define VIDIOC_S_MPEGCOMP     	_IOW  ('V',  7, struct v4l2_mpeg_compression)
 #endif
 #define VIDIOC_REQBUFS		_IOWR ('V',  8, struct v4l2_requestbuffers)
 #define VIDIOC_QUERYBUF		_IOWR ('V',  9, struct v4l2_buffer)
@@ -881,6 +969,7 @@ struct v4l2_streamparm
 #define VIDIOC_ENUMAUDOUT	_IOWR ('V', 66, struct v4l2_audioout)
 #define VIDIOC_G_PRIORITY       _IOR  ('V', 67, enum v4l2_priority)
 #define VIDIOC_S_PRIORITY       _IOW  ('V', 68, enum v4l2_priority)
+#define VIDIOC_G_SLICED_VBI_CAP _IOR  ('V', 69, struct v4l2_sliced_vbi_cap)
 
 /* for compatibility, will go away some day */
 #define VIDIOC_OVERLAY_OLD     	_IOWR ('V', 14, int)
