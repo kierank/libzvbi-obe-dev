@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: xds_demux.c,v 1.3 2005/05/26 04:08:00 mschimek Exp $ */
+/* $Id: xds_demux.c,v 1.4 2005/09/11 23:07:44 mschimek Exp $ */
 
 #include "../site_def.h"
 #include "../config.h"
@@ -358,6 +358,116 @@ _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 			break;
 		}
 
+		case VBI_XDS_PROGRAM_DATA:
+		{
+			unsigned int rating;
+			unsigned int lhour, lmin;
+			unsigned int ehour, emin;
+
+			fputs ("data)", fp);
+			xdump (xp, fp);
+
+			/* XXX ok? */
+			if (xp->buffer_size < 10)
+				goto invalid;
+
+			rating	= xp->buffer[5] & 7;
+
+			lhour	= xp->buffer[7] & 63;
+			lmin	= xp->buffer[6] & 63;
+
+			if (lmin > 59)
+				goto invalid;
+
+			ehour	= xp->buffer[9] & 63;
+			emin	= xp->buffer[8] & 63;
+
+			if (emin > 59)
+				goto invalid;
+
+			fputs (" (type: ", fp);
+
+			for (i = 0; i < 5; ++i) {
+				fprintf (fp, (i > 0) ? ", %s" : "%s",
+					 vbi_prog_type_string
+						(VBI_PROG_CLASSF_EIA_608,
+						 xp->buffer[i]));
+			}
+
+			fprintf (fp, "; rating: %s; "
+				 "length: %02d:%02d; "
+				 "elapsed: %02d:%02d)",
+				 vbi_rating_string (VBI_RATING_AUTH_MPAA,
+						    rating),
+				 lhour, lmin, ehour, emin);
+
+			/* program name: buffer[10 ... 31] (xdump'ed) */
+
+			break;
+		}
+
+		case VBI_XDS_PROGRAM_MISC_DATA:
+		{
+			unsigned int month, day, hour, min;
+
+			fputs ("misc data)", fp);
+			xdump (xp, fp);
+
+			/* XXX ok? */
+			if (14 != xp->buffer_size)
+				goto invalid;
+
+			month	= xp->buffer[3] & 15;
+			day	= xp->buffer[2] & 31;
+			hour	= xp->buffer[1] & 31;
+			min	= xp->buffer[0] & 63;
+
+			if (month == 0 || month > 12
+			    || day == 0 || day > 31
+			    || hour > 23 || min > 59)
+				goto invalid;
+
+			fprintf (fp, " (%d %s %02d:%02d UTC, ",
+				 day, month_names[month], hour, min);
+
+			fprintf (fp, " D=%d L=%d Z=%d T=%d",
+				 !!(xp->buffer[1] & 0x20),
+				 !!(xp->buffer[2] & 0x20),
+				 !!(xp->buffer[3] & 0x20),
+				 !!(xp->buffer[3] & 0x10));
+
+			fprintf (fp, ", main audio: %s, %s; second: %s, %s;",
+				 map_type[xp->buffer[4] & 7],
+				 language[(xp->buffer[4] >> 3) & 7],
+				 sap_type[xp->buffer[5] & 7],
+				 language[(xp->buffer[5] >> 3) & 7]);
+
+			for (i = 6; i < 8; ++i) {
+				fprintf (fp, "%sline=%u channel=%u %s %s",
+					 (6 == i) ? " caption: " : ", ",
+					 (xp->buffer[i] & 4) ? 284 : 21,
+					 (xp->buffer[i] & 2) ? 2 : 1,
+					 (xp->buffer[i] & 1) ?
+					 "text" : "captioning",
+					 language[(xp->buffer[i] >> 3) & 7]);
+			}
+
+			fprintf (fp, ", call letters: ");
+			for (i = 8; i < 12; ++i) {
+				fputc (vbi_printable (xp->buffer[i]), fp);
+			}
+
+			/* 02 to 69 or 0x20 0x20 */
+			fprintf (fp, ", channel: ");
+			for (i = 12; i < 14; ++i) {
+				fputc (vbi_printable (xp->buffer[i]), fp);
+			}
+
+			fputc (')', fp);
+
+			break;
+		}
+
 		case VBI_XDS_PROGRAM_DESCRIPTION_BEGIN ...
 		     VBI_XDS_PROGRAM_DESCRIPTION_END - 1:
 			fprintf (fp, "description %u)",
@@ -410,6 +520,29 @@ _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 			break;
 		}
 
+		case VBI_XDS_CHANNEL_TSID:
+		{
+			unsigned int tsid;
+
+			fputs ("transmission signal identifier)", fp);
+			xdump (xp, fp);
+
+			if (4 != xp->buffer_size)
+				goto invalid;
+
+			tsid  = (xp->buffer[3] & 15) << 0;
+			tsid += (xp->buffer[2] & 15) << 4;
+			tsid += (xp->buffer[1] & 15) << 8;
+			tsid += (xp->buffer[0] & 15) << 12;
+
+			if (0 == tsid)
+				goto invalid;
+
+			fprintf (fp, " (0x%04x)", tsid);
+
+			break;
+		}
+
 		default:
 			fputs ("?)", fp);
 			xdump (xp, fp);
@@ -422,7 +555,7 @@ _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 		fputs ("(misc: ", fp);
 
 		switch (xp->xds_subclass) {
-		case VBI_XDS_MISC_TIME_OF_DAY:
+		case VBI_XDS_TIME_OF_DAY:
 			fputs ("time of day)", fp);
 			xdump (xp, fp);
 
@@ -447,7 +580,7 @@ _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 
 			break;
 
-		case VBI_XDS_MISC_IMPULSE_CAPTURE_ID:
+		case VBI_XDS_IMPULSE_CAPTURE_ID:
 			fputs ("capture id)", fp);
 			xdump (xp, fp);
 			
@@ -474,7 +607,7 @@ _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 
 			break;
 
-		case VBI_XDS_MISC_SUPPLEMENTAL_DATA_LOCATION:
+		case VBI_XDS_SUPPLEMENTAL_DATA_LOCATION:
 		{
 			unsigned int i;
 
@@ -498,7 +631,7 @@ _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 			break;
 		}
 
-		case VBI_XDS_MISC_LOCAL_TIME_ZONE:
+		case VBI_XDS_LOCAL_TIME_ZONE:
 			fputs ("time zone)", fp);
 			xdump (xp, fp);
 			
@@ -511,18 +644,95 @@ _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 
 			break;
 
-		case 0x40:	/* out-of-band channel number */
+		case VBI_XDS_OUT_OF_BAND_CHANNEL:
+		{
+			unsigned int channel;
+
 			fputs ("out of band channel number)", fp);
 			xdump (xp, fp);
 
 			if (2 != xp->buffer_size)
 				goto invalid;
 
-			fprintf (fp, " (%u)",
-				 (xp->buffer[0] & 63) |
-				 ((xp->buffer[1] & 63) << 6));
+			channel = (xp->buffer[0] & 63)
+				+ ((xp->buffer[1] & 63) << 6);
+
+			fprintf (fp, " (%u)", channel);
 
 			break;
+		}
+
+		case VBI_XDS_CHANNEL_MAP_POINTER:
+		{
+			unsigned int channel;
+
+			fputs ("channel map pointer)", fp);
+			xdump (xp, fp);
+
+			if (2 != xp->buffer_size)
+				goto invalid;
+
+			channel = (xp->buffer[0] & 63)
+				+ ((xp->buffer[1] & 63) << 6);
+
+			fprintf (fp, " (%u)", channel);
+
+			break;
+		}
+
+		case VBI_XDS_CHANNEL_MAP_HEADER:
+		{
+			unsigned int n_channels;
+			unsigned int version;
+
+			fputs ("channel map header)", fp);
+			xdump (xp, fp);
+
+			if (4 != xp->buffer_size)
+				goto invalid;
+
+			n_channels = (xp->buffer[0] & 63)
+				+ ((xp->buffer[1] & 63) << 6);
+
+			version = xp->buffer[2] & 63;
+
+			fprintf (fp, " (n_channels: %u, version: %u)",
+				 n_channels, version);
+
+			break;
+		}
+
+		case VBI_XDS_CHANNEL_MAP:
+		{
+			unsigned int channel;
+			vbi_bool remapped;
+
+			fputs ("channel map)", fp);
+			xdump (xp, fp);
+
+			channel = (xp->buffer[0] & 63)
+				+ ((xp->buffer[1] & 31) << 6);
+
+			fprintf (fp, " (channel: %u)", channel);
+
+			remapped = !!(xp->buffer[1] & 0x20);
+
+			if (remapped) {
+				unsigned int tune_channel;
+
+				tune_channel = (xp->buffer[2] & 63)
+					+ ((xp->buffer[3] & 63) << 6);
+
+				fprintf (fp, ", remapped to: %u)",
+					 tune_channel);
+			}
+
+			/* channel id: buffer[2 or 4 ... 31] (xdump'ed) */
+
+			fputc (')', fp);
+
+			break;
+		}
 
 		default:
 			fputs ("?)", fp);
@@ -533,8 +743,49 @@ _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 		break;
 
 	case VBI_XDS_CLASS_PUBLIC_SERVICE:
-		fputs ("(pub.service)", fp);
-		xdump (xp, fp);
+		fputs ("(pub. service ", fp);
+
+		switch (xp->xds_subclass) {
+		case VBI_XDS_WEATHER_BULLETIN:
+		{
+			unsigned int duration;
+
+			fputs ("weather bulletin)", fp);
+			xdump (xp, fp);
+
+			fprintf (fp, " (event category: ");
+			for (i = 0; i < 3; ++i) {
+				fputc (vbi_printable (xp->buffer[i]), fp);
+			}
+
+			/* 3 digit FIPS number. */
+			fprintf (fp, ", state: ");
+			for (i = 3; i < 6; ++i) {
+				fputc (vbi_printable (xp->buffer[i]), fp);
+			}
+
+			/* 3 digit FIPS number. */
+			fprintf (fp, ", county: ");
+			for (i = 6; i < 9; ++i) {
+				fputc (vbi_printable (xp->buffer[i]), fp);
+			}
+
+			/* 2 digit number of quarter hours */
+			duration = (xp->buffer[9] & 15) * 150
+				+ (xp->buffer[10] & 15) * 15;
+
+			fprintf (fp, ", duration: %02d:%02d)",
+				 duration / 60, duration % 60);
+
+			break;
+		}
+
+		case VBI_XDS_WEATHER_MESSAGE:
+			fputs ("weather message)", fp);
+			xdump (xp, fp);
+			break;
+		}
+
 		break;
 
 	case VBI_XDS_CLASS_RESERVED:
@@ -637,21 +888,28 @@ vbi_xds_demux_feed		(vbi_xds_demux *	xd,
 	{
 		vbi_xds_class xds_class;
 		vbi_xds_subclass xds_subclass;
+		unsigned int i;
 
 		/* Packet header. */
 
 		xds_class = (c1 - 1) >> 1;
 		xds_subclass = c2;
 
+		i = xds_subclass;
+
+		/* MISC subclass 0x4n */
+		if (i >= 0x40)
+			i += 0x10 - 0x40;
+
 		if (xds_class > VBI_XDS_CLASS_MISC
-		    || xds_subclass > N_ELEMENTS (xd->subpacket[0])) {
+		    || i > N_ELEMENTS (xd->subpacket[0])) {
 			log ("XDS ignore packet 0x%x/0x%02x, "
 			     "unknown class or subclass\n",
 			     xds_class, xds_subclass);
 			goto discard;
 		}
 
-		sp = &xd->subpacket[xds_class][xds_subclass];
+		sp = &xd->subpacket[xds_class][i];
 
 		xd->curr_sp = sp;
 		xd->curr.xds_class = xds_class;
