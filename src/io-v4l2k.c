@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.28 2005/05/25 02:26:41 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.29 2005/09/11 23:07:17 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -54,6 +54,8 @@ static const char rcsid [] =
 
 #include "videodev2k.h"
 #include "_videodev2k.h"
+
+#include "raw_decoder.h"
 
 /* This macro checks at compile time if the arg type is correct,
    device_ioctl() repeats the ioctl if interrupted (EINTR) and logs
@@ -98,12 +100,14 @@ typedef struct vbi_capture_v4l2 {
 	char		      * p_dev_name;
 
 	vbi_raw_decoder		dec;
+	struct v4l2_sliced_vbi_cap svcap;
+	struct v4l2_format	svfmt;
         unsigned int            services;    /* all services, including raw */
 
 	double			time_per_frame;
 
-	vbi_capture_buffer	*raw_buffer;
-	unsigned int		num_raw_buffers;
+	vbi_capture_buffer *	capture_buffer;
+	unsigned int		n_capture_buffers;
 	int			buf_req_count;
 
 	vbi_capture_buffer	sliced_buffer;
@@ -113,46 +117,106 @@ typedef struct vbi_capture_v4l2 {
 	vbi_bool		saa7134_ntsc_fix;
 } vbi_capture_v4l2;
 
+#define VBI_SLICED_SUPPORTED_BY_V4L2					\
+	(VBI_SLICED_TELETEXT_B |					\
+	 VBI_SLICED_VPS |						\
+	 VBI_SLICED_CAPTION_525 |					\
+	 VBI_SLICED_WSS_625)
+
+#define SLICED_END							\
+	N_ELEMENTS (((struct v4l2_sliced_vbi_format *) 0)->service_lines[0])
+
+static vbi_service_set
+vbi_sliced_from_v4l2_sliced	(unsigned int		id)
+{
+	switch (id) {
+	case V4L2_SLICED_TELETEXT_B:	return VBI_SLICED_TELETEXT_B;
+	case V4L2_SLICED_VPS:		return VBI_SLICED_VPS;
+	case V4L2_SLICED_CAPTION_525:	return VBI_SLICED_CAPTION_525;
+	case V4L2_SLICED_WSS_625:	return VBI_SLICED_WSS_625;
+		/* No default. */
+	}
+
+	return 0;
+}
+
+#if 0
+
+static vbi_service_set
+vbi_service_set_from_v4l2_sliced (unsigned int		set)
+{
+	vbi_service_set services = 0;
+
+	if (set & V4L2_SLICED_TELETEXT_B)
+		services |= VBI_SLICED_TELETEXT_B;
+	if (set & V4L2_SLICED_VPS)
+		services |= VBI_SLICED_VPS;
+	if (set & V4L2_SLICED_CAPTION_525)
+		services |= VBI_SLICED_CAPTION_525;
+	if (set & V4L2_SLICED_WSS_625)
+		services |= VBI_SLICED_WSS_625;
+
+	return services;
+}
+
+#endif
+
+static unsigned int
+vbi_service_set_to_v4l2_sliced	(vbi_service_set	services)
+{
+	unsigned int set = 0;
+
+	if (services & VBI_SLICED_TELETEXT_B)
+		set |= V4L2_SLICED_TELETEXT_B;
+	if (services & VBI_SLICED_VPS)
+		set |= V4L2_SLICED_VPS;
+	if (services & VBI_SLICED_CAPTION_525)
+		set |= V4L2_SLICED_CAPTION_525;
+	if (services & VBI_SLICED_WSS_625)
+		set |= V4L2_SLICED_WSS_625;
+
+	return set;
+}
 
 static void
-v4l2_stream_stop(vbi_capture_v4l2 *v)
+v4l2_stream_stop		(vbi_capture_v4l2 *	v)
 {
 	if (v->enqueue >= ENQUEUE_BUFS_QUEUED) {
-		printv("Suspending stream...\n");
+		printv ("Suspending stream...\n");
 
-		if (-1 == xioctl (v, VIDIOC_STREAMOFF, &v->btype)) {
-			/* Error ignored. */
-		}
+		/* Error ignored. */
+		xioctl (v, VIDIOC_STREAMOFF, &v->btype);
 	}
 
-	for (; v->num_raw_buffers > 0; v->num_raw_buffers--) {
+	while (v->n_capture_buffers > 0) {
+		--v->n_capture_buffers;
 		device_munmap (v->capture.sys_log_fp,
-			       v->raw_buffer[v->num_raw_buffers - 1].data,
-			       v->raw_buffer[v->num_raw_buffers - 1].size);
+			       v->capture_buffer[v->n_capture_buffers].data,
+			       v->capture_buffer[v->n_capture_buffers].size);
 	}
 
-	if (v->raw_buffer != NULL) {
-		free(v->raw_buffer);
-		v->raw_buffer = NULL;
+	if (NULL != v->capture_buffer) {
+		free (v->capture_buffer);
+		v->capture_buffer = NULL;
 	}
 
 	v->enqueue = ENQUEUE_SUSPENDED;
 }
 
-
 static int
-v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errstr)
+v4l2_stream_alloc		(vbi_capture_v4l2 *	v,
+				 char **		errstr)
 {
 	struct v4l2_requestbuffers vrbuf;
-	struct v4l2_buffer vbuf;
-	char * guess = NULL;
-        int errno_copy;
+	char *guess = NULL;
 
-	assert(v->enqueue == ENQUEUE_SUSPENDED);
-	assert(v->raw_buffer == NULL);
-	printv("Requesting %d streaming i/o buffers\n", v->buf_req_count);
+	assert (v->enqueue == ENQUEUE_SUSPENDED);
+	assert (v->capture_buffer == NULL);
 
-	memset(&vrbuf, 0, sizeof(vrbuf));
+	printv ("Requesting %d streaming i/o buffers\n",
+		v->buf_req_count);
+
+	CLEAR (vrbuf);
 	vrbuf.type = v->btype;
 	vrbuf.count = v->buf_req_count;
 	vrbuf.memory = V4L2_MEMORY_MMAP;
@@ -162,47 +226,52 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errstr)
 			      _("Cannot request streaming i/o buffers "
 				"from %s (%s): %s."),
 			      v->p_dev_name, v->vcap.card,
-			      strerror(errno));
+			      strerror (errno));
 		guess = _("Possibly a driver bug.");
 		goto failure;
 	}
 
-	if (vrbuf.count == 0) {
-		vbi_asprintf(errstr, _("%s (%s) granted no streaming i/o buffers, "
-				       "perhaps the physical memory is exhausted."),
-			     v->p_dev_name, v->vcap.card);
+	if (0 == vrbuf.count) {
+		vbi_asprintf (errstr, _("%s (%s) granted no streaming "
+					"i/o buffers, perhaps the physical "
+					"memory is exhausted."),
+			      v->p_dev_name, v->vcap.card);
 		goto failure;
 	}
 
-	printv("Mapping %d streaming i/o buffers\n", vrbuf.count);
+	printv ("Mapping %d streaming i/o buffers\n",
+		vrbuf.count);
 
-	v->raw_buffer = calloc(vrbuf.count, sizeof(v->raw_buffer[0]));
-
-	if (v->raw_buffer == NULL) {
-		vbi_asprintf(errstr, _("Virtual memory exhausted."));
+	v->capture_buffer = calloc (vrbuf.count,
+				    sizeof (v->capture_buffer[0]));
+	if (NULL == v->capture_buffer) {
+		vbi_asprintf (errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
 		goto failure;
 	}
 
-	v->num_raw_buffers = 0;
+	v->n_capture_buffers = 0;
 
-	while (v->num_raw_buffers < vrbuf.count) {
+	while (v->n_capture_buffers < vrbuf.count) {
+		struct v4l2_buffer vbuf;
+		unsigned int i, s;
 		uint8_t *p;
 
+		CLEAR (vbuf);
 		vbuf.type = v->btype;
-		vbuf.index = v->num_raw_buffers;
+		vbuf.index = v->n_capture_buffers;
 
 		if (-1 == xioctl (v, VIDIOC_QUERYBUF, &vbuf)) {
 			vbi_asprintf (errstr,
 				      _("Querying streaming i/o buffer #%d "
 					"from %s (%s) failed: %s."),
-				      v->num_raw_buffers, v->p_dev_name,
+				      v->n_capture_buffers, v->p_dev_name,
 				      v->vcap.card, strerror(errno));
 			goto mmap_failure;
 		}
 
 		p = device_mmap (v->capture.sys_log_fp,
-				 /* start any */ NULL,
+				 /* start: any */ NULL,
 				 vbuf.length,
 				 PROT_READ | PROT_WRITE,
 				 MAP_SHARED, /* MAP_PRIVATE ? */
@@ -213,7 +282,7 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errstr)
 		   buffers, but broken drivers might reject it. */
 		if (MAP_FAILED == p)
 			p = device_mmap (v->capture.sys_log_fp,
-					 /* start any */ NULL,
+					 /* start: any */ NULL,
 					 vbuf.length,
 					 PROT_READ,
 					 MAP_SHARED,
@@ -221,46 +290,49 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errstr)
 					 vbuf.m.offset);
 
 		if (MAP_FAILED == p) {
-			if (errno == ENOMEM && v->num_raw_buffers >= 2) {
-				printv("Memory mapping buffer #%d failed: %d, %s (ignored).",
-				       v->num_raw_buffers, errno, strerror(errno));
+			if (ENOMEM == errno
+			    && v->n_capture_buffers >= 2) {
+				printv ("Memory mapping buffer #%d failed: "
+					"%d, %s (ignored).",
+					v->n_capture_buffers,
+					errno, strerror(errno));
 				break;
 			}
 
-			vbi_asprintf(errstr, _("Memory mapping streaming i/o buffer #%d "
-					       "from %s (%s) failed: %s."),
-				     v->num_raw_buffers, v->p_dev_name, v->vcap.card,
-				     strerror(errno));
+			vbi_asprintf (errstr, _("Memory mapping streaming "
+						"i/o buffer #%d "
+						"from %s (%s) failed: %s."),
+				      v->n_capture_buffers, v->p_dev_name,
+				      v->vcap.card, strerror(errno));
 			goto mmap_failure;
-		} else {
-			unsigned int i, s;
+		}
 
-			v->raw_buffer[v->num_raw_buffers].data = p;
-			v->raw_buffer[v->num_raw_buffers].size = vbuf.length;
+		v->capture_buffer[v->n_capture_buffers].data = p;
+		v->capture_buffer[v->n_capture_buffers].size = vbuf.length;
 
-			for (i = s = 0; i < vbuf.length; i++)
-				s += p[i];
+		for (i = s = 0; i < vbuf.length; i++)
+			s += p[i];
 
-			if (s % vbuf.length) {
-				fprintf(stderr,
-				       "Security warning: driver %s (%s) seems to mmap "
-				       "physical memory uncleared. Please contact the "
-				       "driver author.\n", v->p_dev_name, v->vcap.card);
-				exit(EXIT_FAILURE);
-			}
+		if (s % vbuf.length) {
+			fprintf (stderr,
+				 "Security warning: driver %s (%s) seems "
+				 "to mmap physical memory uncleared. Please "
+				 "contact the driver author.\n",
+				 v->p_dev_name, v->vcap.card);
+			exit(EXIT_FAILURE);
 		}
 
 		if (-1 == xioctl (v, VIDIOC_QBUF, &vbuf)) {
 			vbi_asprintf (errstr,
 				      _("Cannot enqueue streaming i/o buffer "
 					"#%d to %s (%s): %s."),
-				      v->num_raw_buffers, v->p_dev_name,
+				      v->n_capture_buffers, v->p_dev_name,
 				      v->vcap.card, strerror(errno));
 			guess = _("Probably a driver bug.");
 			goto mmap_failure;
 		}
 
-		v->num_raw_buffers++;
+		++v->n_capture_buffers;
 	}
 
 	v->enqueue = ENQUEUE_STREAM_OFF;
@@ -268,9 +340,13 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errstr)
 	return 0;
 
 mmap_failure:
-        errno_copy = errno;
-	v4l2_stream_stop(v);
-        errno = errno_copy;
+	{
+		int saved_errno = errno;
+
+		v4l2_stream_stop(v);
+
+		errno = saved_errno;
+	}
 
 failure:
         printv("v4l2-stream_alloc: "
@@ -288,7 +364,7 @@ restart_stream			(vbi_capture_v4l2 *	v)
 	if (-1 == xioctl (v, VIDIOC_STREAMOFF, &v->btype))
 		return FALSE;
 
-	for (i = 0; i < v->num_raw_buffers; ++i) {
+	for (i = 0; i < v->n_capture_buffers; ++i) {
 		struct v4l2_buffer vbuf;
 
 		CLEAR (vbuf);
@@ -306,9 +382,95 @@ restart_stream			(vbi_capture_v4l2 *	v)
 	return TRUE;
 }
 
+static void
+store_sliced			(vbi_capture_v4l2 *	v,
+				 vbi_capture_buffer **	sliced,
+				 unsigned int		index,
+				 double			time)
+{
+	vbi_sliced *d;
+	const struct v4l2_sliced_vbi_data *s;
+	unsigned int n_lines;
+
+	if (NULL == *sliced)
+		*sliced = &v->sliced_buffer;
+
+	d = (vbi_sliced *)(*sliced)->data;
+	s = (const struct v4l2_sliced_vbi_data *)
+		v->capture_buffer[index].data;
+
+	n_lines = MIN (v->capture_buffer[index].size / sizeof (*s),
+		       SLICED_END * 2);
+
+	while (n_lines > 0) {
+		d->id = vbi_sliced_from_v4l2_sliced (s->id);
+		if (0 != d->id) {
+			d->line = s->line;
+			if (0 != s->field) {
+				if (s->id & V4L2_SLICED_VBI_525)
+					d->line += 263;
+				else
+					d->line += 313;
+			}
+
+			memcpy (d->data, s->data,
+				MIN (sizeof (d->data),
+				     sizeof (s->data)));
+
+			++d;
+		}
+
+		++s;
+		--n_lines;
+	}
+
+	(*sliced)->size = (char *) d - (char *)(*sliced)->data;
+	(*sliced)->timestamp = time;
+}
+
+static void
+store_sliced_from_raw		(vbi_capture_v4l2 *	v,
+				 vbi_capture_buffer **	sliced,
+				 double			time)
+{
+	int lines;
+
+	if (NULL == *sliced)
+		*sliced = &v->sliced_buffer;
+
+	lines = vbi_raw_decode (&v->dec,
+				v->capture_buffer[v->vbuf.index].data,
+				(vbi_sliced *)(*sliced)->data);
+
+	(*sliced)->size = lines * sizeof (vbi_sliced);
+	(*sliced)->timestamp = time;
+}
+
+static void
+store_raw			(vbi_capture_v4l2 *	v,
+				 vbi_capture_buffer **	raw,
+				 double			time)
+{
+	if (*raw) {
+		vbi_capture_buffer *b = *raw;
+
+		b->size = v->capture_buffer[v->vbuf.index].size;
+		memcpy (b->data, v->capture_buffer[v->vbuf.index].data,
+			b->size);
+	} else {
+		*raw = v->capture_buffer + v->vbuf.index;
+		/* keep this buffer out of the queue */
+		v->enqueue = v->vbuf.index;
+	}
+
+	(*raw)->timestamp = time;
+}
+
 static int
-v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
-	    vbi_capture_buffer **sliced, const struct timeval *timeout_orig)
+v4l2_stream			(vbi_capture *		vc,
+				 vbi_capture_buffer **	raw,
+				 vbi_capture_buffer **	sliced,
+				 const struct timeval *	timeout_orig)
 {
 	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
 	struct timeval timeout = *timeout_orig;
@@ -347,7 +509,8 @@ v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
 		r = vbi_capture_io_select(v->fd, &timeout);
 		if (r <= 0) {
 			if (r < 0)
-				printv("stream-read: select: %d (%s)\n", errno, strerror(errno));
+				printv("stream-read: select: %d (%s)\n",
+				       errno, strerror(errno));
 			return r;
 		}
 
@@ -393,38 +556,23 @@ v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
 	time = v->vbuf.timestamp.tv_sec
 		+ v->vbuf.timestamp.tv_usec * (1 / 1e6);
 
-	if (raw) {
-		if (*raw) {
-			(*raw)->size = v->raw_buffer[v->vbuf.index].size;
-			memcpy((*raw)->data, v->raw_buffer[v->vbuf.index].data,
-			       (*raw)->size);
-		} else {
-			*raw = v->raw_buffer + v->vbuf.index;
-                        /* keep this buffer out of the queue */
-			v->enqueue = v->vbuf.index;
-		}
+	if (v->vcap.capabilities & V4L2_CAP_SLICED_VBI_CAPTURE) {
+		if (raw && *raw)
+			(*raw)->size = 0;
 
-		(*raw)->timestamp = time;
+		if (NULL != sliced)
+			store_sliced (v, sliced, v->vbuf.index, time);
+	} else {
+		if (NULL != raw)
+			store_raw (v, raw, time);
+
+		if (NULL != sliced)
+			store_sliced_from_raw (v, sliced, time);
 	}
 
-	if (sliced) {
-		int lines;
-
-		if (*sliced) {
-			lines = vbi_raw_decode(&v->dec, v->raw_buffer[v->vbuf.index].data,
-					       (vbi_sliced *)(*sliced)->data);
-		} else {
-			*sliced = &v->sliced_buffer;
-			lines = vbi_raw_decode(&v->dec, v->raw_buffer[v->vbuf.index].data,
-					       (vbi_sliced *)(v->sliced_buffer.data));
-		}
-
-		(*sliced)->size = lines * sizeof(vbi_sliced);
-		(*sliced)->timestamp = time;
-	}
-
-	/* if no raw pointer returned to the caller, re-queue buffer immediately
-	** else the buffer is re-queued upon the next call to read() */
+	/* if no raw pointer returned to the caller, re-queue
+	   buffer immediately else the buffer is re-queued upon
+	   the next call to read() */
 	if (v->enqueue == ENQUEUE_BUFS_QUEUED) {
 		if (-1 == xioctl (v, VIDIOC_QBUF, &v->vbuf)) {
 			printv ("stream-read: ioctl QBUF: "
@@ -437,7 +585,7 @@ v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
 }
 
 static void
-v4l2_stream_flush(vbi_capture *vc)
+v4l2_stream_flush		(vbi_capture *		vc)
 {
 	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
 	struct timeval tv;
@@ -458,13 +606,15 @@ v4l2_stream_flush(vbi_capture *vc)
 			return;
 		}
 	}
+
 	v->enqueue = ENQUEUE_BUFS_QUEUED;
 
-	for (max_loop = 0; max_loop < v->num_raw_buffers; max_loop++) {
-
+	for (max_loop = 0; max_loop < v->n_capture_buffers; max_loop++) {
 		/* check if there are any buffers pending for de-queueing */
 		/* use zero timeout to prevent select() from blocking */
-		memset(&tv, 0, sizeof(tv));
+
+		CLEAR (tv);
+
 		if (vbi_capture_io_select(v->fd, &tv) <= 0)
 			return;
 
@@ -472,99 +622,108 @@ v4l2_stream_flush(vbi_capture *vc)
 		    && (errno != EIO))
 			return;
 
-		/* immediately queue the buffer again, thereby discarding it's content */
+		/* immediately queue the buffer again,
+		   thereby discarding it's content */
 		if (-1 == xioctl (v, VIDIOC_QBUF, &v->vbuf))
 			return;
 	}
 }
 
-
 static void
-v4l2_read_stop(vbi_capture_v4l2 *v)
+v4l2_read_stop			(vbi_capture_v4l2 *	v)
 {
-	for (; v->num_raw_buffers > 0; v->num_raw_buffers--) {
-		free(v->raw_buffer[v->num_raw_buffers - 1].data);
-		v->raw_buffer[v->num_raw_buffers - 1].data = NULL;
+	while (v->n_capture_buffers > 0) {
+		--v->n_capture_buffers;
+		free (v->capture_buffer[v->n_capture_buffers].data);
+		v->capture_buffer[v->n_capture_buffers].data = NULL;
 	}
 
-	free(v->raw_buffer);
-	v->raw_buffer = NULL;
+	free (v->capture_buffer);
+	v->capture_buffer = NULL;
 }
 
-
 static int
-v4l2_suspend(vbi_capture_v4l2 *v)
+v4l2_suspend			(vbi_capture_v4l2 *	v)
 {
-	int    fd;
+	int fd;
 
 	if (v->streaming) {
-		v4l2_stream_stop(v);
-	}
-	else {
-		v4l2_read_stop(v);
+		v4l2_stream_stop (v);
+	} else {
+		v4l2_read_stop (v);
 
 		if (v->read_active) {
-			printv("Suspending read: re-open device...\n");
+			printv ("Suspending read: re-open device...\n");
 
-			/* hack: cannot suspend read to allow S_FMT, need to close device */
+			/* hack: cannot suspend read to allow
+			   S_FMT, need to close device */
 			fd = device_open (v->capture.sys_log_fp,
 					  v->p_dev_name, O_RDWR, 0);
-			if (fd == -1) {
-				printv("v4l2-suspend: failed to re-open VBI device: %d: %s\n", errno, strerror(errno));
+			if (-1 == fd) {
+				printv ("v4l2-suspend: failed to re-open "
+					"VBI device: %d: %s\n",
+					errno, strerror(errno));
 				return -1;
 			}
 
-			/* use dup2() to keep the same fd, which may be used by our client */
+			/* use dup2() to keep the same fd,
+			   which may be used by our client */
 			device_close (v->capture.sys_log_fp, v->fd);
-			dup2(fd, v->fd);
+			dup2 (fd, v->fd);
 			device_close (v->capture.sys_log_fp, fd);
 
 			v->read_active = FALSE;
 		}
 	}
+
 	return 0;
 }
 
-
 static int
-v4l2_read_alloc(vbi_capture_v4l2 *v, char ** errstr)
+v4l2_read_alloc			(vbi_capture_v4l2 *	v,
+				 char **		errstr)
 {
-	assert(v->raw_buffer == NULL);
+	assert (NULL == v->capture_buffer);
 
-	v->raw_buffer = calloc(1, sizeof(v->raw_buffer[0]));
-
-	if (!v->raw_buffer) {
-		vbi_asprintf(errstr, _("Virtual memory exhausted."));
+	v->capture_buffer = calloc (1, sizeof (v->capture_buffer[0]));
+	if (!v->capture_buffer) {
+		vbi_asprintf (errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
 		goto failure;
 	}
 
-	v->raw_buffer[0].size = (v->dec.count[0] + v->dec.count[1])
-		* v->dec.bytes_per_line;
+	if (v->vcap.capabilities & V4L2_CAP_SLICED_VBI_CAPTURE) {
+		v->capture_buffer[0].size = v->svfmt.fmt.sliced.io_size;
+	} else {
+		v->capture_buffer[0].size = (v->dec.count[0] + v->dec.count[1])
+			* v->dec.bytes_per_line;
+	}
 
-	v->raw_buffer[0].data = malloc(v->raw_buffer[0].size);
-
-	if (!v->raw_buffer[0].data) {
+	v->capture_buffer[0].data = malloc(v->capture_buffer[0].size);
+	if (NULL != v->capture_buffer[0].data) {
 		vbi_asprintf(errstr, _("Not enough memory to allocate "
-				       "vbi capture buffer (%d KB)."),
-			     (v->raw_buffer[0].size + 1023) >> 10);
+				       "vbi capture buffer (%d KiB)."),
+			     (v->capture_buffer[0].size + 1023) >> 10);
 		goto failure;
 	}
 
-	v->num_raw_buffers = 1;
+	v->n_capture_buffers = 1;
 
-	printv("Capture buffer allocated\n");
+	printv ("Capture buffer allocated\n");
+
 	return 0;
 
 failure:
-        printv("v4l2-read_alloc: failed with errno=%d, msg='%s'\n",
-	       errno, *errstr);
+        printv ("v4l2-read_alloc: failed with errno=%d, msg='%s'\n",
+		errno, *errstr);
 
 	return -1;
 }
 
 static int
-v4l2_read_frame(vbi_capture_v4l2 *v, vbi_capture_buffer *raw, struct timeval *timeout)
+v4l2_read_frame			(vbi_capture_v4l2 *	v,
+				 vbi_capture_buffer *	raw,
+				 struct timeval *	timeout)
 {
 	int r;
 
@@ -572,7 +731,8 @@ v4l2_read_frame(vbi_capture_v4l2 *v, vbi_capture_buffer *raw, struct timeval *ti
 	r = vbi_capture_io_select(v->fd, timeout);
 	if (r <= 0) {
 		if (r < 0)
-			printv("read-frame: select: %d (%s)\n", errno, strerror(errno));
+			printv("read-frame: select: %d (%s)\n",
+			       errno, strerror(errno));
 		return r;
 	}
 
@@ -599,11 +759,13 @@ v4l2_read_frame(vbi_capture_v4l2 *v, vbi_capture_buffer *raw, struct timeval *ti
 }
 
 static int
-v4l2_read(vbi_capture *vc, vbi_capture_buffer **raw,
-	  vbi_capture_buffer **sliced, const struct timeval *timeout)
+v4l2_read			(vbi_capture *		vc,
+				 vbi_capture_buffer **	raw,
+				 vbi_capture_buffer **	sliced,
+				 const struct timeval *	timeout)
 {
 	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
-	vbi_capture_buffer *my_raw = v->raw_buffer;
+	vbi_capture_buffer *my_raw = v->capture_buffer;
 	struct timeval tv;
 	int r;
 
@@ -613,71 +775,103 @@ v4l2_read(vbi_capture *vc, vbi_capture_buffer **raw,
 		return -1;
 	}
 
-	if (raw == NULL)
-		raw = &my_raw;
-	if (*raw == NULL)
-		*raw = v->raw_buffer;
-	else
-		(*raw)->size = v->raw_buffer[0].size;
+	if (v->vcap.capabilities & V4L2_CAP_SLICED_VBI_CAPTURE) {
+		if (raw && *raw)
+			(*raw)->size = 0;
 
-	tv = *timeout;
-	while (1)
-	{
-		r = v4l2_read_frame(v, *raw, &tv);
-		if (r <= 0)
-			return r;
+		tv = *timeout;
+		while (1) {
+			r = v4l2_read_frame(v, my_raw, &tv);
+			if (r <= 0)
+				return r;
 
-		if (v->flush_frame_count > 0) {
-			v->flush_frame_count -= 1;
-			printv("Skipping frame (%d remaining)\n", v->flush_frame_count);
+			if (v->flush_frame_count > 0) {
+				v->flush_frame_count -= 1;
+				printv("Skipping frame (%d remaining)\n",
+				       v->flush_frame_count);
+			} else {
+				break;
+			}
 		}
+
+		if (sliced) {
+			double time;
+
+			gettimeofday(&tv, NULL);
+			time = tv.tv_sec + tv.tv_usec * (1 / 1e6);
+
+			store_sliced (v, sliced, /* buffer index */ 0, time);
+		}
+	} else {
+		if (raw == NULL)
+			raw = &my_raw;
+		if (*raw == NULL)
+			*raw = v->capture_buffer;
 		else
-			break;
-	}
+			(*raw)->size = v->capture_buffer[0].size;
 
-	gettimeofday(&tv, NULL);
+		tv = *timeout;
+		while (1) {
+			r = v4l2_read_frame(v, *raw, &tv);
+			if (r <= 0)
+				return r;
 
-	(*raw)->timestamp = tv.tv_sec + tv.tv_usec * (1 / 1e6);
-
-	if (sliced) {
-		int lines;
-
-		if (*sliced) {
-			lines = vbi_raw_decode(&v->dec, (*raw)->data,
-					       (vbi_sliced *)(*sliced)->data);
-		} else {
-			*sliced = &v->sliced_buffer;
-			lines = vbi_raw_decode(&v->dec, (*raw)->data,
-					       (vbi_sliced *)(v->sliced_buffer.data));
+			if (v->flush_frame_count > 0) {
+				v->flush_frame_count -= 1;
+				printv("Skipping frame (%d remaining)\n",
+				       v->flush_frame_count);
+			} else {
+				break;
+			}
 		}
 
-		(*sliced)->size = lines * sizeof(vbi_sliced);
-		(*sliced)->timestamp = (*raw)->timestamp;
+		gettimeofday(&tv, NULL);
+
+		(*raw)->timestamp = tv.tv_sec + tv.tv_usec * (1 / 1e6);
+
+		if (sliced) {
+			int lines;
+
+			if (*sliced) {
+				lines = vbi_raw_decode
+					(&v->dec, (*raw)->data,
+					 (vbi_sliced *)(*sliced)->data);
+			} else {
+				*sliced = &v->sliced_buffer;
+				lines = vbi_raw_decode
+					(&v->dec, (*raw)->data,
+					 (vbi_sliced *)
+					   (v->sliced_buffer.data));
+			}
+
+			(*sliced)->size = lines * sizeof(vbi_sliced);
+			(*sliced)->timestamp = (*raw)->timestamp;
+		}
 	}
 
 	return 1;
 }
 
-static void v4l2_read_flush(vbi_capture *vc)
+static void
+v4l2_read_flush			(vbi_capture *		vc)
 {
 	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
 	struct timeval tv;
 	int r;
 
-	if ( (v->raw_buffer == NULL) || (v->read_active == FALSE) )
+	if ( (v->capture_buffer == NULL) || (v->read_active == FALSE) )
 		return;
 
-	memset(&tv, 0, sizeof(tv));
+	CLEAR (tv);
 
 	r = vbi_capture_io_select(v->fd, &tv);
 	if (r <= 0)
 		return;
 
-	do
-	{
-		r = read(v->fd, v->raw_buffer->data, v->raw_buffer->size);
-	}
-	while ((r < 0) && (errno == EINTR));
+	do {
+		r = read (v->fd, v->capture_buffer->data,
+			  v->capture_buffer->size);
+	} while ((r < 0) && (errno == EINTR));
 }
 
 static vbi_bool
@@ -746,29 +940,235 @@ v4l2_get_scanning(vbi_capture *vc)
 }
 
 static void
-print_vfmt(const char *s, struct v4l2_format *vfmt)
+print_vfmt			(const char *		s,
+				 struct v4l2_format *	vfmt)
 {
-	fprintf(stderr, "%sformat %08x [%c%c%c%c], %d Hz, %d bpl, offs %d, "
-		"F1 %d...%d, F2 %d...%d, flags %08x\n", s,
-		vfmt->fmt.vbi.sample_format,
-		(char)((vfmt->fmt.vbi.sample_format      ) & 0xff),
-		(char)((vfmt->fmt.vbi.sample_format >>  8) & 0xff),
-		(char)((vfmt->fmt.vbi.sample_format >> 16) & 0xff),
-		(char)((vfmt->fmt.vbi.sample_format >> 24) & 0xff),
-		vfmt->fmt.vbi.sampling_rate, vfmt->fmt.vbi.samples_per_line,
-		vfmt->fmt.vbi.offset,
-		vfmt->fmt.vbi.start[0],
-		vfmt->fmt.vbi.start[0] + vfmt->fmt.vbi.count[0] - 1,
-		vfmt->fmt.vbi.start[1],
-		vfmt->fmt.vbi.start[1] + vfmt->fmt.vbi.count[1] - 1,
-		vfmt->fmt.vbi.flags);
+	unsigned int i;
+
+	switch (vfmt->type) {
+	case V4L2_BUF_TYPE_VBI_CAPTURE:
+		fprintf (stderr, "%sformat %08x [%c%c%c%c], %d Hz, "
+			 "%d bpl, offs %d, F1 %d...%d, F2 %d...%d, "
+			 "flags %08x\n", s,
+			 vfmt->fmt.vbi.sample_format,
+			 (char)((vfmt->fmt.vbi.sample_format      ) & 0xff),
+			 (char)((vfmt->fmt.vbi.sample_format >>  8) & 0xff),
+			 (char)((vfmt->fmt.vbi.sample_format >> 16) & 0xff),
+			 (char)((vfmt->fmt.vbi.sample_format >> 24) & 0xff),
+			 vfmt->fmt.vbi.sampling_rate,
+			 vfmt->fmt.vbi.samples_per_line,
+			 vfmt->fmt.vbi.offset,
+			 vfmt->fmt.vbi.start[0],
+			 vfmt->fmt.vbi.start[0] + vfmt->fmt.vbi.count[0] - 1,
+			 vfmt->fmt.vbi.start[1],
+			 vfmt->fmt.vbi.start[1] + vfmt->fmt.vbi.count[1] - 1,
+			 vfmt->fmt.vbi.flags);
+		break;
+
+	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+		fprintf (stderr, "%sset=0x%x io_size=%u ",
+			 s, vfmt->fmt.sliced.service_set,
+			 vfmt->fmt.sliced.io_size);
+
+		for (i = 0; i < 2 * 24; ++i) {
+			fprintf (stderr, "0x%x ",
+				 vfmt->fmt.sliced.service_lines[0][i]);
+		}
+
+		fputc ('\n', stderr);
+
+		break;
+
+	default:
+		break;
+	}
+}
+
+static vbi_bool
+sliced_capable			(vbi_capture_v4l2 *	v,
+				 const _vbi_service_par *sp,
+				 vbi_videostd_set	videostd_set,
+				 unsigned int		f2)
+{
+	unsigned int id;
+	unsigned int i;
+
+	if (0 == (videostd_set & sp->videostd_set))
+		return FALSE;
+
+	if (sp->last[0] >= SLICED_END
+	    || sp->last[1] - f2 >= SLICED_END)
+		return FALSE;
+
+	id = vbi_service_set_to_v4l2_sliced (sp->id);
+
+	if (0 != sp->first[0]) {
+		for (i = sp->first[0]; i <= sp->last[0]; ++i)
+			id &= v->svcap.service_lines[0][i];
+	}
+
+	if (0 != sp->first[1]) {
+		for (i = sp->first[1]; i <= sp->last[1]; ++i)
+			id &= v->svcap.service_lines[1][i - f2];
+	}
+
+	return (0 != id);
+}
+
+static void
+sliced_add			(struct v4l2_sliced_vbi_format *f,
+				 const _vbi_service_par *sp,
+				 unsigned int		f2)
+{
+	unsigned int id;
+	unsigned int i;
+
+	id = vbi_service_set_to_v4l2_sliced (sp->id);
+
+	if (0 != sp->first[0]) {
+		for (i = sp->first[0]; i <= sp->last[0]; ++i)
+			f->service_lines[0][i] |= id;
+	}
+
+	if (0 != sp->first[1]) {
+		for (i = sp->first[1]; i <= sp->last[1]; ++i)
+			f->service_lines[1][i - f2] |= id;
+	}
 }
 
 static unsigned int
-v4l2_update_services(vbi_capture *vc,
-		     vbi_bool reset, vbi_bool commit,
-		     unsigned int services, int strict,
-		     char ** errstr)
+v4l2_update_services_sliced	(vbi_capture *		vc,
+				 vbi_bool		reset,
+				 vbi_bool		commit,
+				 unsigned int		services,
+				 int			strict,
+				 char **		errstr)
+{
+	vbi_capture_v4l2 *v = PARENT (vc, vbi_capture_v4l2, capture);
+	const _vbi_service_par *sp;
+	vbi_videostd_set videostd_set;
+	unsigned int field2_offset;
+
+	strict = strict; /* unused */
+
+	if (NULL == v->sliced_buffer.data) {
+		v->sliced_buffer.data =
+			malloc (SLICED_END * 2 * sizeof (vbi_sliced));
+
+		if (NULL == v->sliced_buffer.data) {
+			vbi_asprintf (errstr, _("Virtual memory exhausted."));
+			errno = ENOMEM;
+			goto io_error;
+		}
+	}
+
+	/* Suspend capturing, or driver may return EBUSY. */
+	/* XXX should try G_FMT first, maybe when can avoid an interruption. */
+	v4l2_suspend (v);
+
+	if (reset) {
+	        if (!v4l2_get_videostd (v, errstr))
+		        goto io_error;
+
+		/* Later. */
+		CLEAR (v->svcap);
+		if (-1 == xioctl (v, VIDIOC_G_SLICED_VBI_CAP, &v->svcap))
+			goto io_error;
+
+                v->services = 0;
+        }
+
+	switch (v->dec.scanning) {
+	case 525:
+		videostd_set = VBI_VIDEOSTD_SET_625_50;
+		field2_offset = 262;
+		break;
+
+	case 625:
+		videostd_set = VBI_VIDEOSTD_SET_525_60;
+		field2_offset = 313;
+		break;
+
+	default:
+		goto error;
+	}
+
+	services &= VBI_SLICED_SUPPORTED_BY_V4L2;
+
+	CLEAR (v->svfmt);
+
+	v->btype = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
+	v->svfmt.type = v->btype;
+
+	for (sp = _vbi_service_table; 0 != sp->id; ++sp) {
+		if (0 == (services & sp->id)) {
+			continue;
+		}
+
+		if (!sliced_capable (v, sp, videostd_set, field2_offset)) {
+			services &= ~sp->id;
+			continue;
+		}
+
+		sliced_add (&v->svfmt.fmt.sliced, sp, field2_offset);
+	}
+
+	/* Tell me. */
+	v->svfmt.fmt.sliced.service_set = 0;
+	v->svfmt.fmt.sliced.io_size = 0;
+
+	printv ("Requesting sliced vbi data... ");
+
+	if (-1 == xioctl (v, VIDIOC_S_FMT, &v->svfmt)) {
+		printv ("failed\n");
+
+		vbi_asprintf (errstr, _("Cannot set sliced vbi "
+					"parameters of %s (%s): %s."),
+			      v->p_dev_name, v->vcap.card, strerror(errno));
+		goto io_error;
+	}
+
+	printv ("success\n");
+
+	/* XXX something fancy is needed here to handle cases
+	   where the driver looks for only one (or a select few)
+	   services on each line. */
+
+	if (v->do_trace)
+		print_vfmt ("VBI capture parameters: ", &v->svfmt);
+
+        v->services |= services;
+	printv ("Will capture services 0x%08x, "
+		"added 0x%0x commit:%d\n",
+		v->services, services, commit);
+
+	if (commit && (v->services != 0)) {
+		if (v->streaming) {
+			if (v4l2_stream_alloc(v, errstr) != 0)
+				goto io_error;
+		} else {
+			if (v4l2_read_alloc(v, errstr) != 0)
+				goto io_error;
+		}
+	}
+
+	return services;
+
+io_error:
+        printv ("v4l2-update_services_sliced: "
+		"failed with errno=%d, msg='%s'\n",
+		errno, *errstr);
+ error:
+	return 0;
+}
+
+static unsigned int
+v4l2_update_services_raw	(vbi_capture *		vc,
+				 vbi_bool		reset,
+				 vbi_bool		commit,
+				 unsigned int		services,
+				 int			strict,
+				 char **		errstr)
 {
 	vbi_capture_v4l2 *v = PARENT(vc, vbi_capture_v4l2, capture);
 	struct v4l2_format vfmt;
@@ -1146,7 +1546,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	v->capture._delete = v4l2_delete;
 	v->capture.get_fd = v4l2_get_fd;
 	v->capture.get_fd_flags = v4l2_get_fd_flags;
-	v->capture.update_services = v4l2_update_services;
+	v->capture.update_services = v4l2_update_services_raw;
 	v->capture.get_scanning = v4l2_get_scanning;
 	v->capture.flush = v4l2_flush;
 
@@ -1176,23 +1576,32 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		goto io_error;
 	}
 
-	if (!(v->vcap.capabilities & V4L2_CAP_VBI_CAPTURE)) {
-		vbi_asprintf(errstr, _("%s (%s) is not a raw vbi device."),
+	if (v->vcap.capabilities & V4L2_CAP_SLICED_VBI_CAPTURE) {
+		printv ("%s (%s) is a v4l2 sliced vbi device,\n"
+			"  driver %s, version 0x%08x\n",
+			v->p_dev_name, v->vcap.card,
+			v->vcap.driver, v->vcap.version);
+
+		v->capture.update_services = v4l2_update_services_sliced;
+	} else if (v->vcap.capabilities & V4L2_CAP_VBI_CAPTURE) {
+		printv ("%s (%s) is a v4l2 raw vbi device,\n"
+			"  driver %s, version 0x%08x\n",
+			v->p_dev_name, v->vcap.card,
+			v->vcap.driver, v->vcap.version);
+
+		if (0 == strcmp ((char *) v->vcap.driver, "bttv")) {
+			if (v->vcap.version <= 0x00090F)
+				v->pal_start1_fix = TRUE;
+		} else if (0 == strcmp ((char *) v->vcap.driver, "saa7134")) {
+			if (v->vcap.version <= 0x00020C)
+				v->saa7134_ntsc_fix = TRUE;
+
+			v->pal_start1_fix = TRUE;
+		}
+	} else {
+		vbi_asprintf(errstr, _("%s (%s) is not a vbi device."),
 			     v->p_dev_name, v->vcap.card);
 		goto failure;
-	}
-
-	printv("%s (%s) is a v4l2 vbi device,\n", v->p_dev_name, v->vcap.card);
-	printv("driver %s, version 0x%08x\n", v->vcap.driver, v->vcap.version);
-
-	if (0 == strcmp ((char *) v->vcap.driver, "bttv")) {
-		if (v->vcap.version <= 0x00090F)
-			v->pal_start1_fix = TRUE;
-	} else if (0 == strcmp ((char *) v->vcap.driver, "saa7134")) {
-		if (v->vcap.version <= 0x00020C)
-			v->saa7134_ntsc_fix = TRUE;
-
-		v->pal_start1_fix = TRUE;
 	}
 
 	v->has_try_fmt = -1;
@@ -1219,8 +1628,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	} else {
 		vbi_asprintf(errstr,
 			     _("%s (%s) lacks a vbi read interface, "
-			       "possibly an output only device "
-			       "or a driver bug."),
+			       "possibly a driver bug."),
 			     v->p_dev_name, v->vcap.card);
 		goto failure;
 	}
@@ -1229,8 +1637,13 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 
 	if (services != NULL) {
                 assert(*services != 0);
-                v->services = v4l2_update_services(&v->capture, TRUE, TRUE,
-                                                   *services, strict, errstr);
+                v->services =
+			v->capture.update_services (&v->capture,
+						    /* reset */ TRUE,
+						    /* commit */ TRUE,
+						    *services,
+						    strict,
+						    errstr);
                 if (v->services == 0)
                         goto failure;
 
