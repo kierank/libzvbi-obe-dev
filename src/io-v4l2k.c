@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.31 2005/09/12 23:51:16 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.32 2005/09/12 23:54:58 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -1084,9 +1084,6 @@ v4l2_update_services_sliced	(vbi_capture *		vc,
 		        goto io_error;
 
 		CLEAR (v->svcap);
-#warning test
-memset (v->svcap.service_lines, 0xFF, sizeof (v->svcap.service_lines));
-if (0)
 		if (-1 == xioctl (v, VIDIOC_G_SLICED_VBI_CAP, &v->svcap)) {
 			goto io_error;
 		}
@@ -1615,9 +1612,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		goto io_error;
 	}
 
-#warning test
-	if (1) {
-//	if (v->vcap.capabilities & V4L2_CAP_SLICED_VBI_CAPTURE) {
+	if (v->vcap.capabilities & V4L2_CAP_SLICED_VBI_CAPTURE) {
 		printv ("%s (%s) is a v4l2 sliced vbi device,\n"
 			"  driver %s, version 0x%08x\n",
 			v->p_dev_name, v->vcap.card,
