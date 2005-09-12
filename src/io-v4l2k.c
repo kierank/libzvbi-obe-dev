@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.29 2005/09/11 23:07:17 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.30 2005/09/12 19:42:02 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -117,14 +117,13 @@ typedef struct vbi_capture_v4l2 {
 	vbi_bool		saa7134_ntsc_fix;
 } vbi_capture_v4l2;
 
-#define VBI_SLICED_SUPPORTED_BY_V4L2					\
-	(VBI_SLICED_TELETEXT_B |					\
-	 VBI_SLICED_VPS |						\
-	 VBI_SLICED_CAPTION_525 |					\
-	 VBI_SLICED_WSS_625)
-
-#define SLICED_END							\
-	N_ELEMENTS (((struct v4l2_sliced_vbi_format *) 0)->service_lines[0])
+static const unsigned int	VBI_SLICED_SUPPORTED_BY_V4L2 =
+	(VBI_SLICED_TELETEXT_B |
+	 VBI_SLICED_VPS |
+	 VBI_SLICED_CAPTION_525 |
+	 VBI_SLICED_WSS_625);
+static const unsigned int	SLICED_END =
+	N_ELEMENTS (((struct v4l2_sliced_vbi_format *) 0)->service_lines[0]);
 
 static vbi_service_set
 vbi_sliced_from_v4l2_sliced	(unsigned int		id)
@@ -139,8 +138,6 @@ vbi_sliced_from_v4l2_sliced	(unsigned int		id)
 
 	return 0;
 }
-
-#if 0
 
 static vbi_service_set
 vbi_service_set_from_v4l2_sliced (unsigned int		set)
@@ -158,8 +155,6 @@ vbi_service_set_from_v4l2_sliced (unsigned int		set)
 
 	return services;
 }
-
-#endif
 
 static unsigned int
 vbi_service_set_to_v4l2_sliced	(vbi_service_set	services)
@@ -970,7 +965,7 @@ print_vfmt			(const char *		s,
 			 s, vfmt->fmt.sliced.service_set,
 			 vfmt->fmt.sliced.io_size);
 
-		for (i = 0; i < 2 * 24; ++i) {
+		for (i = 0; i < 2 * SLICED_END; ++i) {
 			fprintf (stderr, "0x%x ",
 				 vfmt->fmt.sliced.service_lines[0][i]);
 		}
@@ -997,7 +992,7 @@ sliced_capable			(vbi_capture_v4l2 *	v,
 		return FALSE;
 
 	if (sp->last[0] >= SLICED_END
-	    || sp->last[1] - f2 >= SLICED_END)
+	    || (0 != sp->last[1] && (sp->last[1] - f2) >= SLICED_END))
 		return FALSE;
 
 	id = vbi_service_set_to_v4l2_sliced (sp->id);
@@ -1025,6 +1020,8 @@ sliced_add			(struct v4l2_sliced_vbi_format *f,
 
 	id = vbi_service_set_to_v4l2_sliced (sp->id);
 
+	f->service_set |= id;
+
 	if (0 != sp->first[0]) {
 		for (i = sp->first[0]; i <= sp->last[0]; ++i)
 			f->service_lines[0][i] |= id;
@@ -1034,6 +1031,21 @@ sliced_add			(struct v4l2_sliced_vbi_format *f,
 		for (i = sp->first[1]; i <= sp->last[1]; ++i)
 			f->service_lines[1][i - f2] |= id;
 	}
+}
+
+static unsigned int
+sliced_min_io_size		(const struct v4l2_sliced_vbi_format *f)
+{
+	unsigned int n_lines;
+	unsigned int i;
+
+	n_lines = 0;
+
+	for (i = 0; i < 2 * SLICED_END; ++i) {
+		n_lines += (0 != f->service_lines[0][i]);
+	}
+
+	return n_lines * sizeof (struct v4l2_sliced_vbi_data);
 }
 
 static unsigned int
@@ -1048,6 +1060,7 @@ v4l2_update_services_sliced	(vbi_capture *		vc,
 	const _vbi_service_par *sp;
 	vbi_videostd_set videostd_set;
 	unsigned int field2_offset;
+	unsigned int min_io_size;
 
 	strict = strict; /* unused */
 
@@ -1070,22 +1083,22 @@ v4l2_update_services_sliced	(vbi_capture *		vc,
 	        if (!v4l2_get_videostd (v, errstr))
 		        goto io_error;
 
-		/* Later. */
 		CLEAR (v->svcap);
-		if (-1 == xioctl (v, VIDIOC_G_SLICED_VBI_CAP, &v->svcap))
+		if (-1 == xioctl (v, VIDIOC_G_SLICED_VBI_CAP, &v->svcap)) {
 			goto io_error;
+		}
 
                 v->services = 0;
         }
 
 	switch (v->dec.scanning) {
 	case 525:
-		videostd_set = VBI_VIDEOSTD_SET_625_50;
+		videostd_set = VBI_VIDEOSTD_SET_525_60;
 		field2_offset = 262;
 		break;
 
 	case 625:
-		videostd_set = VBI_VIDEOSTD_SET_525_60;
+		videostd_set = VBI_VIDEOSTD_SET_625_50;
 		field2_offset = 313;
 		break;
 
@@ -1113,9 +1126,14 @@ v4l2_update_services_sliced	(vbi_capture *		vc,
 		sliced_add (&v->svfmt.fmt.sliced, sp, field2_offset);
 	}
 
-	/* Tell me. */
-	v->svfmt.fmt.sliced.service_set = 0;
-	v->svfmt.fmt.sliced.io_size = 0;
+	if (0 == services) {
+		goto no_services;
+	}
+
+	v->svfmt.fmt.sliced.io_size = sliced_min_io_size (&v->svfmt.fmt.sliced);
+
+	if (v->do_trace)
+		print_vfmt ("VBI capture parameters: ", &v->svfmt);
 
 	printv ("Requesting sliced vbi data... ");
 
@@ -1130,12 +1148,25 @@ v4l2_update_services_sliced	(vbi_capture *		vc,
 
 	printv ("success\n");
 
+	min_io_size = sliced_min_io_size (&v->svfmt.fmt.sliced);
+
+	if (0 == v->svfmt.fmt.sliced.service_set
+	    || 0 == v->svfmt.fmt.sliced.io_size
+	    || 0 == min_io_size) {
+		goto no_services;
+	}
+
+	if (v->svfmt.fmt.sliced.io_size < min_io_size) {
+		printv ("Driver returns incorrect i/o size %u, expected %u.",
+			v->svfmt.fmt.sliced.io_size, min_io_size);
+	}
+
+	services = vbi_service_set_from_v4l2_sliced
+		(v->svfmt.fmt.sliced.service_set);
+
 	/* XXX something fancy is needed here to handle cases
 	   where the driver looks for only one (or a select few)
 	   services on each line. */
-
-	if (v->do_trace)
-		print_vfmt ("VBI capture parameters: ", &v->svfmt);
 
         v->services |= services;
 	printv ("Will capture services 0x%08x, "
@@ -1154,7 +1185,12 @@ v4l2_update_services_sliced	(vbi_capture *		vc,
 
 	return services;
 
-io_error:
+ no_services:
+	vbi_asprintf (errstr, _("Sorry, %s (%s) cannot capture any "
+				"of the requested data services "
+				"with scanning %d."),
+		      v->p_dev_name, v->vcap.card, v->dec.scanning);
+ io_error:
         printv ("v4l2-update_services_sliced: "
 		"failed with errno=%d, msg='%s'\n",
 		errno, *errstr);
