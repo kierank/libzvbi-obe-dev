@@ -19,14 +19,14 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.32 2005/09/12 23:54:58 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.33 2005/09/13 00:06:24 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
  *  Linux 2.5/2.6. There are a few subtle differences, in order to
  *  keep the source clean this interface has been forked off from the
  *  old V4L2 interface. "v4l2k" is no official designation, there is
- *  none, take it as v4l2-kernel or v4l-2000.
+ *  none, take it as v4l2-kernel or v4l-2000. 
  */
 
 #ifdef HAVE_CONFIG_H
