@@ -1,7 +1,7 @@
 /*
  *  libzvbi - Extended Data Service demultiplexer
  *
- *  Copyright (C) 2000-2004 Michael H. Schimek
+ *  Copyright (C) 2000-2005 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: xds_demux.h,v 1.4 2005/09/11 23:07:36 mschimek Exp $ */
+/* $Id: xds_demux.h,v 1.5 2005/10/04 10:05:50 mschimek Exp $ */
 
 #ifndef __ZVBI_XDS_DEMUX_H__
 #define __ZVBI_XDS_DEMUX_H__
@@ -66,7 +66,9 @@ typedef enum {
 	VBI_XDS_PROGRAM_CAPTION_SERVICES,
 	VBI_XDS_PROGRAM_CGMS,
 	VBI_XDS_PROGRAM_ASPECT_RATIO,
+	/** @since 0.2.17 */
 	VBI_XDS_PROGRAM_DATA = 0x0C,
+	/** @since 0.2.17 */
 	VBI_XDS_PROGRAM_MISC_DATA,
 	VBI_XDS_PROGRAM_DESCRIPTION_BEGIN = 0x10,
 	VBI_XDS_PROGRAM_DESCRIPTION_END = 0x18,
@@ -77,6 +79,7 @@ typedef enum {
 	VBI_XDS_CHANNEL_NAME = 0x01,
 	VBI_XDS_CHANNEL_CALL_LETTERS,
 	VBI_XDS_CHANNEL_TAPE_DELAY,
+	/** @since 0.2.17 */
 	VBI_XDS_CHANNEL_TSID,
 } vbi_xds_subclass_channel;
 
@@ -86,13 +89,31 @@ typedef enum {
 	VBI_XDS_IMPULSE_CAPTURE_ID,
 	VBI_XDS_SUPPLEMENTAL_DATA_LOCATION,
 	VBI_XDS_LOCAL_TIME_ZONE,
+	/** @since 0.2.17 */
 	VBI_XDS_OUT_OF_BAND_CHANNEL = 0x40,
+	/** @since 0.2.17 */
 	VBI_XDS_CHANNEL_MAP_POINTER,
+	/** @since 0.2.17 */
 	VBI_XDS_CHANNEL_MAP_HEADER,
+	/** @since 0.2.17 */
 	VBI_XDS_CHANNEL_MAP,
 } vbi_xds_subclass_misc;
 
-/** @brief @c VBI_XDS_CLASS_PUBLIC_SERVICE subclass. */
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+/* Compatibility. */
+#define VBI_XDS_MISC_TIME_OF_DAY VBI_XDS_TIME_OF_DAY
+#define VBI_XDS_MISC_IMPULSE_CAPTURE_ID VBI_XDS_IMPULSE_CAPTURE_ID
+#define VBI_XDS_MISC_SUPPLEMENTAL_DATA_LOCATION \
+	VBI_XDS_SUPPLEMENTAL_DATA_LOCATION
+#define VBI_XDS_MISC_LOCAL_TIME_ZONE VBI_XDS_LOCAL_TIME_ZONE
+
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+
+/**
+ * @brief @c VBI_XDS_CLASS_PUBLIC_SERVICE subclass.
+ * @since 0.2.17
+ */
 typedef enum {
 	VBI_XDS_WEATHER_BULLETIN = 0x01,
 	VBI_XDS_WEATHER_MESSAGE,
