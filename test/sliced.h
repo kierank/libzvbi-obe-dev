@@ -18,17 +18,24 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.h,v 1.2 2005/06/11 22:12:29 mschimek Exp $ */
+/* $Id: sliced.h,v 1.3 2005/10/04 10:05:43 mschimek Exp $ */
 
 #include <stdio.h>
 #include "src/libzvbi.h"
 
-/* Reader for old test/capture --sliced output.
-   ATTN this code is not reentrant. */
+/* Reader and write for old test/capture --sliced output.
+   Attn: this code is not reentrant. */
 
+extern vbi_bool
+write_sliced			(vbi_sliced *		sliced,
+				 unsigned int		n_lines,
+				 double			timestamp);
+extern vbi_bool
+open_sliced_write		(FILE *			fp,
+				 double			timestamp);
 extern int
 read_sliced			(vbi_sliced *		sliced,
 				 double *		timestamp,
 				 unsigned int		max_lines);
 extern vbi_bool
-open_sliced			(FILE *			fp);
+open_sliced_read		(FILE *			fp);
