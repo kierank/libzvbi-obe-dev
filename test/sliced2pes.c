@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced2pes.c,v 1.2 2005/06/11 22:09:57 mschimek Exp $ */
+/* $Id: sliced2pes.c,v 1.3 2005/10/04 10:06:11 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -142,7 +142,7 @@ main				(int			argc,
 				   /* user_data */ NULL);
 	assert (NULL != mx);
 
-	open_sliced (stdin);
+	open_sliced_read (stdin);
 
 	mainloop ();
 

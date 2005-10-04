@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.6 2005/06/11 22:10:10 mschimek Exp $ */
+/* $Id: decode.c,v 1.7 2005/10/04 10:06:11 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -866,7 +866,7 @@ main				(int			argc,
 
 		pes_mainloop ();
 	} else {
-		open_sliced (stdin);
+		open_sliced_read (stdin);
 
 		old_mainloop ();
 	}

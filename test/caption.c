@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.10 2005/06/11 22:09:40 mschimek Exp $ */
+/* $Id: caption.c,v 1.11 2005/10/04 10:06:11 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -719,7 +719,7 @@ main				 (int			argc,
 
 			vbi_dvb_demux_delete (dx);
 		} else {
-			open_sliced (stdin);
+			open_sliced_read (stdin);
 
 			old_mainloop ();
 		}

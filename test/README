@@ -130,5 +130,11 @@ sliced2pes
 	"./capture --sliced | ./sliced2pes >file" is equivalent to
 	"./capture --pes >file".  No options.
 
+ttxfilter
+	Filters Teletext pages out of a VBI stream.  Useful mostly
+	to extract subtitles, for example
+	"./capture --sliced | ./ttxfilter 150 777 >file".
+	Type ./ttxfilter -h for options.
+
 The ultimate test is http://zapping.sourceforge.net, the TV viewer this
 library was written for.

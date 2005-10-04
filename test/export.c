@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.12 2005/06/11 22:11:51 mschimek Exp $ */
+/* $Id: export.c,v 1.13 2005/10/04 10:06:11 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -200,7 +200,7 @@ main(int argc, char **argv)
 
 		pes_mainloop ();
 	} else {
-		open_sliced (stdin);
+		open_sliced_read (stdin);
 
 		old_mainloop ();
 	}
