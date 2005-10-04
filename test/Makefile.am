@@ -39,6 +39,7 @@ noinst_PROGRAMS = \
 	export \
 	glyph \
 	sliced2pes \
+	ttxfilter \
 	unicode \
 	wss \
 	$(proxy_programs) \
@@ -58,6 +59,10 @@ export_SOURCES = \
 
 sliced2pes_SOURCES = \
 	sliced2pes.c \
+	sliced.c sliced.h
+
+ttxfilter_SOURCES = \
+	ttxfilter.c \
 	sliced.c sliced.h
 
 noinst_SCRIPTS = \
