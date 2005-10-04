@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vt.h,v 1.7 2005/02/17 10:21:17 mschimek Exp $ */
+/* $Id: vt.h,v 1.8 2005/10/04 10:06:33 mschimek Exp $ */
 
 #ifndef VT_H
 #define VT_H
@@ -134,7 +134,7 @@ typedef struct vt_triplet {
 	unsigned	address : 8;
 	unsigned	mode : 8;
 	unsigned	data : 8;
-} __attribute__ ((packed)) vt_triplet;
+} /* __attribute__ ((packed)) */ vt_triplet;
 
 typedef struct vt_pagenum {
 	unsigned	type : 8;

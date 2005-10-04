@@ -1,7 +1,7 @@
 /*
  *  libzvbi - Extended Data Service demultiplexer
  *
- *  Copyright (C) 2000-2004 Michael H. Schimek
+ *  Copyright (C) 2000-2005 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: xds_demux.c,v 1.4 2005/09/11 23:07:44 mschimek Exp $ */
+/* $Id: xds_demux.c,v 1.5 2005/10/04 10:06:33 mschimek Exp $ */
 
 #include "../site_def.h"
 #include "../config.h"
@@ -32,7 +32,7 @@
 #include "xds_demux.h"
 
 /**
- * @addtogroup XDSDemux Extended Data Service demultiplexer
+ * @addtogroup XDSDemux Extended Data Service (XDS) demultiplexer
  * @ingroup LowDec
  * @brief Separating XDS data from a Closed Caption stream
  *   (EIA 608).

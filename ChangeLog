@@ -1,8 +1,22 @@
-2005-09-12    <mschimek@users.sf.net>
+2005-10-03    <mschimek@users.sf.net>
 
-	* src/io-v4l2k.c: Added preliminary support for the V4L2 sliced VBI
-	  API (untested). 
-	* src/videodev2k.h: Updated (sliced VBI API).
+	* Release 0.2.17.
+
+2005-10-03    <mschimek@users.sf.net>
+
+	* configure.in: Bumped version number to 0.2.17, .so revision to 8.
+	* contrib/README: Added info about ntsc-cc.
+	* contrib/Makefile.am (bin_PROGRAMS): Added zvbi-ntsc-cc.
+	  (AM_CPPFLAGS): Added X_CFLAGS for ntsc-cc.
+	  (LDADD): Added X_LIBS for ntsc-cc.
+	  (man_MANS): Added zvbi-ntsc-cc.1.
+	* contrib: Imported ntsc-cc.c and ntsc-cc.1 from Xawtv CVS.
+	* test/Makefile.am (noinst_PROGRAMS): Added ttxfilter.
+	(ttxfilter_SOURCES): Added.
+	* test/sliced.c, test/sliced.h: New write interface for
+	  ttxfilter.
+	* test: Added ttxfilter.c.
+	* src/xds_demux.h: Doxumentation update.
 
 2005-07-10    <mschimek@users.sf.net>
 
