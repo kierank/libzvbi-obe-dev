@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l.c,v 1.28 2004/12/30 02:23:59 mschimek Exp $";
+"$Id: io-v4l.c,v 1.29 2005/10/05 12:06:56 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -483,6 +483,46 @@ probe_video_device(vbi_capture_v4l *v, const char *name, struct stat *vbi_stat )
 	return video_fd;
 }
 
+static vbi_bool
+xopendir			(const char *		name,
+				 DIR *			dir,
+				 struct dirent *	dirent)
+{
+	int saved_errno;
+	long int size;
+	int fd;
+
+	*dir = opendir ("/dev");
+	if (NULL == *dir)
+		return FALSE;
+
+	fd = dirfd (*dir);
+	if (-1 == fd)
+		goto failure;
+
+	size = fpathconf (fd, _PC_NAME_MAX);
+	if (size <= 0)
+		goto failure;
+
+	size = MAX (size, sizeof (dirent->d_name));
+	size += sizeof (*dirent) - sizeof (dirent->d_name) + 1;
+	*dirent = calloc (1, size);
+	if (NULL == *dirent)
+		goto failure;
+
+	return TRUE;
+
+ failure:
+	saved_errno = errno;
+
+	closedir (*dir);
+	*dir = NULL;
+
+	errno = saved_errno;
+
+	return FALSE;
+}
+
 static int
 open_video_dev(vbi_capture_v4l *v, struct stat *p_vbi_stat, vbi_bool do_dev_scan)
 {
@@ -498,7 +538,8 @@ open_video_dev(vbi_capture_v4l *v, struct stat *p_vbi_stat, vbi_bool do_dev_scan
 		"/dev/v4l/video2",
 		"/dev/v4l/video3",
 	};
-	struct dirent dirent, *pdirent = &dirent;
+	struct dirent *dirent;
+	struct dirent *pdirent;
 	DIR *dir;
 	int video_fd;
 	unsigned int i;
@@ -520,13 +561,15 @@ open_video_dev(vbi_capture_v4l *v, struct stat *p_vbi_stat, vbi_bool do_dev_scan
 
 		printv("Traversing /dev\n");
 
-		if (!(dir = opendir("/dev"))) {
-			printv("Cannot open /dev: %d, %s\n", errno, strerror(errno));
-			perm_check(v, "/dev");
-			goto done;
+		if (!xopendir ("/dev", &dir, &dirent)) {
+			printv ("Cannot open /dev: %d, %s\n",
+				errno, strerror (errno));
+			perm_check ("/dev", trace);
+			goto finish;
 		}
 
-		while (readdir_r(dir, &dirent, &pdirent) == 0 && pdirent) {
+		while (0 == readdir_r (dir, dirent, &pdirent)
+		       && pdirent == dirent) {
 			char name[256];
 
 			snprintf(name, sizeof(name), "/dev/%s", dirent.d_name);
@@ -536,13 +579,15 @@ open_video_dev(vbi_capture_v4l *v, struct stat *p_vbi_stat, vbi_bool do_dev_scan
 			video_fd = probe_video_device(v, name, p_vbi_stat);
 			if (video_fd != -1) {
 				v->p_video_name = strdup(name);
-				closedir(dir);
+				free (dirent);
+				closedir (dir);
 				goto done;
 			}
 		}
 		printv("Traversing finished\n");
 
-		closedir(dir);
+		free (dirent);
+		closedir (dir);
 	}
 	errno = ENOENT;
 
