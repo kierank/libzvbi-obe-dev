@@ -1,10 +1,10 @@
-2005-10-04    <mschimek@users.sf.net>
-
-	* src/io-v4l.c (open_video_dev): 
-
-2005-10-03    <mschimek@users.sf.net>
+2005-10-05    <mschimek@users.sf.net>
 
 	* Release 0.2.17.
+
+2005-10-04    <mschimek@users.sf.net>
+
+	* src/io-v4l.c (open_video_dev): readdir_r() fix.
 
 2005-10-03    <mschimek@users.sf.net>
 

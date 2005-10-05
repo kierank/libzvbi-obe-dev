@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l.c,v 1.29 2005/10/05 12:06:56 mschimek Exp $";
+"$Id: io-v4l.c,v 1.30 2005/10/05 12:41:03 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -36,13 +36,11 @@ static const char rcsid [] =
 #include <string.h>
 #include <math.h>
 #include <errno.h>
-//#include <fcntl.h>
 #include <unistd.h>		/* read(), dup2(), getuid() */
 #include <assert.h>
 #include <sys/time.h>		/* timeval */
 #include <sys/types.h>		/* fd_set, uid_t */
 #include <sys/ioctl.h>		/* for (_)videodev.h */
-//#include <sys/mman.h>
 #include <pthread.h>
 
 #include "videodev.h"
@@ -485,14 +483,14 @@ probe_video_device(vbi_capture_v4l *v, const char *name, struct stat *vbi_stat )
 
 static vbi_bool
 xopendir			(const char *		name,
-				 DIR *			dir,
-				 struct dirent *	dirent)
+				 DIR **			dir,
+				 struct dirent **	dirent)
 {
 	int saved_errno;
 	long int size;
 	int fd;
 
-	*dir = opendir ("/dev");
+	*dir = opendir (name);
 	if (NULL == *dir)
 		return FALSE;
 
@@ -504,8 +502,8 @@ xopendir			(const char *		name,
 	if (size <= 0)
 		goto failure;
 
-	size = MAX (size, sizeof (dirent->d_name));
-	size += sizeof (*dirent) - sizeof (dirent->d_name) + 1;
+	size = MAX (size, (long int) sizeof ((*dirent)->d_name));
+	size += sizeof (**dirent) - sizeof ((*dirent)->d_name) + 1;
 	*dirent = calloc (1, size);
 	if (NULL == *dirent)
 		goto failure;
@@ -564,15 +562,16 @@ open_video_dev(vbi_capture_v4l *v, struct stat *p_vbi_stat, vbi_bool do_dev_scan
 		if (!xopendir ("/dev", &dir, &dirent)) {
 			printv ("Cannot open /dev: %d, %s\n",
 				errno, strerror (errno));
-			perm_check ("/dev", trace);
-			goto finish;
+			perm_check (v, "/dev");
+			goto done;
 		}
 
 		while (0 == readdir_r (dir, dirent, &pdirent)
 		       && pdirent == dirent) {
 			char name[256];
 
-			snprintf(name, sizeof(name), "/dev/%s", dirent.d_name);
+			snprintf (name, sizeof(name),
+				  "/dev/%s", dirent->d_name);
 
 			printv("Try %s: ", name);
 
