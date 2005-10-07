@@ -6,6 +6,7 @@ structpr = structpr.pl
 
 BUILT_SOURCES = \
 	libzvbi.h \
+	network-table.h \
 	version.h \
 	_videodev.h \
 	_videodev2.h \
@@ -13,6 +14,7 @@ BUILT_SOURCES = \
 
 EXTRA_DIST = \
 	$(structpr) \
+	network-table.pl \
 	$(BUILT_SOURCES) \
 	wstfont2.xbm \
 	ccfont2.xbm
@@ -74,7 +76,7 @@ libzvbi_la_SOURCES = \
 	proxy-client.c proxy-client.h \
 	raw_decoder.c raw_decoder.h \
 	search.c search.h ure.c ure.h \
-	tables.c tables.h \
+	tables.c tables.h network-table.h \
 	trigger.c trigger.h \
 	vbi.c vbi.h event.h \
 	wss.c wss.h \
@@ -141,6 +143,10 @@ libzvbi_chains_la_SOURCES = \
 	misc.c \
 	proxy-client.c \
 	proxy-msg.c
+
+network-table.h: network-table.pl Makefile.am
+	wget -q -O- http://zapping.sourceforge.net/zvbi-0.3/networks.xml | \
+	  $(srcdir)/network-table.pl > $@
 
 _videodev.h: Makefile.am $(structpr) videodev.h
 	$(srcdir)/$(structpr) <$(srcdir)/videodev.h \
