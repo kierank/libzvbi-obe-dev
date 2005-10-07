@@ -8,7 +8,9 @@ man_MANS = \
 
 noinst_PROGRAMS = x11font
 
-EXTRA_DIST = README
+EXTRA_DIST = \
+	$(man_MANS) \
+	README
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir) \

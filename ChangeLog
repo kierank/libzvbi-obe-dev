@@ -1,6 +1,11 @@
-2005-10-05    <mschimek@users.sf.net>
+2005-10-07    <mschimek@users.sf.net>
 
 	* Release 0.2.17.
+
+2005-10-07    <mschimek@users.sf.net>
+
+	* src/Makefile.am: Build network-table.h from online networks.xml.
+	* src/tables.c: vbi_cni_table[] now in network-table.h (generated).
 
 2005-10-04    <mschimek@users.sf.net>
 

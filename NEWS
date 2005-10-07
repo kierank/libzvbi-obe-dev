@@ -1,10 +1,11 @@
 libzvbi 0.2.17, 2005-10-03
 --------------------------
-This version adds a few missing XDS packet subclasses to the XDS
+This version adds missing XDS packet subclasses to the XDS
 demultiplexer. The contrib directory now contains a version of the
 ntsc-cc Closed Caption decoder from the Xawtv package using libzvbi
 for driver access and bit slicing. It installs as zvbi-ntsc-cc. The
-test tools were cleaned up and a teletext filter was added.
+CNI (networks) table was updated. The test tools were cleaned up
+and a teletext filter was added.
 
 Fixes:
 - The DVB multiplexer didn't work right (used by test tools only,
