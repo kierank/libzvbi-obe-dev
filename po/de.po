@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-05-26 06:26+0200\n"
+"POT-Creation-Date: 2005-10-07 16:55+0200\n"
 "PO-Revision-Date: 2004-10-25 12:12+0200\n"
 "Last-Translator: Michael H. Schimek <mschimek@users.sf.net>\n"
 "Language-Team: German <de@li.org>\n"
@@ -313,8 +313,8 @@ msgstr "Unbekannter Fehler."
 msgid "BKTR driver"
 msgstr "BKTR Treiber"
 
-#: src/io-bktr.c:202 src/io-bktr.c:283 src/io-bktr.c:301 src/io-v4l.c:164
-#: src/io-v4l.c:1086 src/io-v4l.c:1124 src/io-v4l.c:1152 src/io-v4l2.c:105
+#: src/io-bktr.c:202 src/io-bktr.c:283 src/io-bktr.c:301 src/io-v4l.c:162
+#: src/io-v4l.c:1130 src/io-v4l.c:1168 src/io-v4l.c:1196 src/io-v4l2.c:105
 #: src/io-v4l2k.c:182 src/io-v4l2k.c:537 src/io-v4l2k.c:998
 #: src/io-v4l2k.c:1122 src/io-v4l2k.c:1140 src/proxy-client.c:198
 #: src/proxy-client.c:1558
@@ -326,12 +326,12 @@ msgstr "Virtueller Speicher erschöpft."
 msgid "Cannot open '%s': %s."
 msgstr "Kann Gerät '%s' nicht öffnen: %s."
 
-#: src/io-bktr.c:271 src/io-v4l.c:712 src/io-v4l.c:1071 src/io-v4l2k.c:985
+#: src/io-bktr.c:271 src/io-v4l.c:756 src/io-v4l.c:1115 src/io-v4l2k.c:985
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "%s (%s) kann die gewünschten Datendienste leider nicht empfangen."
 
-#: src/io-bktr.c:312 src/io-v4l.c:175 src/io-v4l2k.c:548
+#: src/io-bktr.c:312 src/io-v4l.c:173 src/io-v4l2k.c:548
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Nicht genug Speicher um VBI Capturepuffer (%d KB) anzulegen."
@@ -340,18 +340,18 @@ msgstr "Nicht genug Speicher um VBI Capturepuffer (%d KB) anzulegen."
 msgid "BKTR driver interface not compiled."
 msgstr "BKTR Treiberschnittstelle nicht kompiliert."
 
-#: src/io-v4l.c:763 src/io-v4l2k.c:891
+#: src/io-v4l.c:807 src/io-v4l2k.c:891
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr ""
 "Initialisierung von %s (%s) fehlgeschlagen, das Gerät wird bereits benutzt."
 
-#: src/io-v4l.c:777
+#: src/io-v4l.c:821
 #, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %s."
 msgstr "Kann die VBI Parameter für %s (%s) nicht einstellen: %s."
 
-#: src/io-v4l.c:915 src/io-v4l2k.c:947
+#: src/io-v4l.c:959 src/io-v4l2k.c:947
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -360,28 +360,28 @@ msgstr ""
 "%s (%s) verwendet ein unbekanntes VBI Samplingformat %d. Könnte ein Fehler "
 "im Treiber sein, oder libzvbi ist veraltet."
 
-#: src/io-v4l.c:967
+#: src/io-v4l.c:1011
 #, c-format
 msgid "Cannot capture with %s (%s), has no standard vbi interface."
 msgstr ""
 "Kann keine VBI Daten von %s (%s) lesen, der Treiber verwendet keine bekannte "
 "VBI Schnittstelle."
 
-#: src/io-v4l.c:987
+#: src/io-v4l.c:1031
 #, c-format
 msgid ""
 "Cannot identify %s (%s), reported vbi frame size suggests this is not a bttv "
 "driver."
 msgstr "Kann %s (%s) nicht identifizieren, vermutlich kein BTTV Treiber."
 
-#: src/io-v4l.c:1004 src/io-v4l.c:1242
+#: src/io-v4l.c:1048 src/io-v4l.c:1286
 #, c-format
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr ""
 "Kann den gegenwärtigen Videostandard von %s (%s) nicht feststellen oder "
 "ändern."
 
-#: src/io-v4l.c:1043 src/io-v4l2k.c:957
+#: src/io-v4l.c:1087 src/io-v4l2k.c:957
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -390,26 +390,26 @@ msgstr ""
 "Kann die gewünschten Datendienste mit %s (%s) nicht empfangen, die "
 "Samplingfrequenz %.2f MHz ist zu niedrig."
 
-#: src/io-v4l.c:1160 src/io-v4l2.c:120 src/io-v4l2k.c:1157
+#: src/io-v4l.c:1204 src/io-v4l2.c:120 src/io-v4l2k.c:1157
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Kann Gerät '%s' nicht öffnen: %d, %s."
 
-#: src/io-v4l.c:1177 src/io-v4l.c:1186
+#: src/io-v4l.c:1221 src/io-v4l.c:1230
 msgid "driver unknown"
 msgstr "Treiber unbekannt"
 
-#: src/io-v4l.c:1192 src/io-v4l2k.c:1180
+#: src/io-v4l.c:1236 src/io-v4l2k.c:1180
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) ist kein VBI-Gerät."
 
-#: src/io-v4l.c:1212
+#: src/io-v4l.c:1256
 #, c-format
 msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) unterstützt nicht die select() Funktion."
 
-#: src/io-v4l.c:1346 src/io-v4l.c:1386
+#: src/io-v4l.c:1390 src/io-v4l.c:1430
 msgid "V4L driver interface not compiled."
 msgstr "V4L Treiberschnittstelle nicht kompiliert."
 
