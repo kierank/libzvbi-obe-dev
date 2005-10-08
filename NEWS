@@ -1,4 +1,4 @@
-libzvbi 0.2.17, 2005-10-03
+libzvbi 0.2.17, 2005-10-07
 --------------------------
 This version adds missing XDS packet subclasses to the XDS
 demultiplexer. The contrib directory now contains a version of the
