@@ -19,9 +19,6 @@ EXTRA_DIST = \
 	wstfont2.xbm \
 	ccfont2.xbm
 
-CLEANFILES = \
-	$(BUILT_SOURCES)
-
 # -D_GNU_SOURCE to declare pthread_rwlocks,
 #   and asprintf if available.
 AM_CPPFLAGS = \
@@ -89,6 +86,15 @@ libzvbiinclude_HEADERS = libzvbi.h
 libzvbi_la_LIBADD = $(LIBS) $(UNICODE_LIBS)
 libzvbi_la_LDFLAGS = -version-info $(LIBZVBI_SO_VERSION)
 
+libzvbi_chains_la_SOURCES = \
+	chains.c \
+	io.c \
+	misc.c \
+	proxy-client.c \
+	proxy-msg.c
+
+if MAINTAINER_MODE
+
 version.h:
 	echo -e "\n#define VBI_VERSION_MAJOR" `echo @VERSION@ \
 	 | sed "s/\./\\\\\n#define VBI_VERSION_MINOR /" \
@@ -136,13 +142,6 @@ libzvbi.h: version.h $(LIBZVBI_HDRS)
 	done
 	echo -e "\n#ifdef __cplusplus\n}\n#endif" >> $@
 	echo -e "\n#endif /* __LIBZVBI_H__ */" >> $@
-
-libzvbi_chains_la_SOURCES = \
-	chains.c \
-	io.c \
-	misc.c \
-	proxy-client.c \
-	proxy-msg.c
 
 network-table.h: network-table.pl Makefile.am
 	wget -q -O- http://zapping.sourceforge.net/zvbi-0.3/networks.xml | \
@@ -269,3 +268,5 @@ _bktr.h: Makefile.am $(structpr) ioctl_bt848.h ioctl_meteor.h
 	cat $(srcdir)/ioctl_bt848.h $(srcdir)/ioctl_meteor.h | \
 	$(srcdir)/$(structpr) \
 	> $@
+
+endif
