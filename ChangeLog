@@ -1,3 +1,10 @@
+2005-10-24    <mschimek@users.sf.net>
+
+	* configure.in: Added AM_MAINTAINER_MODE.
+	* m4/autogen.sh (conf_flags): Don't default to maintainer mode.
+	* src/Makefile.am: BUILT_SOURCES do not belong into CLEANFILES.
+	  Rebuild BUILT_SOURCES only in maintainer mode, just in case.
+
 2005-10-07    <mschimek@users.sf.net>
 
 	* Release 0.2.17.

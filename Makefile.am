@@ -29,3 +29,6 @@ ACLOCAL_AMFLAGS = -I m4
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = zvbi-0.2.pc
+
+dist-hook:
+	chown -R 500:100 $(distdir)
