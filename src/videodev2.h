@@ -12,11 +12,6 @@
 #ifndef __LINUX_VIDEODEV_H
 #define __LINUX_VIDEODEV_H
 
-#if (LINUX_VERSION_CODE >= 0x020300) && (LINUX_VERSION_CODE < 0x020400)
-#warning Due to the changes in the 2.3.x kernel series, this version of videodev.h \
-         may not work correctly for your kernel.
-#endif
-
 #include <linux/types.h>
 #include <linux/version.h>
 

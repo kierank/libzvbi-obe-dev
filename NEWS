@@ -1,3 +1,22 @@
+libzvbi 0.2.18, 2006-02-10
+--------------------------
+This is a bugfix release.
+
+- The configure script has been modernized. Building from CVS now requires
+  automake 1.9, autoconf 2.59 and gettext 0.14.
+- Diego Pettenò added a configure option to disable documentation
+  building.
+- After make clean src/Makefile tried to rebuild network-table.h from
+  http://zapping.sourceforge.net/zvbi-0.3/networks.xml and other
+  source files.
+- A pointer aliasing bug in the linked list implementation of the
+  Teletext cache, which may crash applications, has been fixed.
+- In previous versions GCC may not have inlined some bit slicer and
+  page rendering functions, making them much slower.
+- The teletext filter did not work with parallel page transmission
+  (e.g. BBC).
+- The code has been cleaned to avoid some compiler warnings (Diego).
+
 libzvbi 0.2.17, 2005-10-07
 --------------------------
 This version adds missing XDS packet subclasses to the XDS
@@ -177,3 +196,7 @@ Bug fixes.
 ---
 Former module of the Zapping TV viewer, this is the first release
 of the Zapping/Zapzilla vbi decoder as a standalone library.
+
+Local Variables:
+coding: utf-8
+End:

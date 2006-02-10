@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.7 2005/10/04 10:06:11 mschimek Exp $ */
+/* $Id: decode.c,v 1.8 2006/02/10 06:25:38 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -38,6 +38,10 @@
 
 #include "src/libzvbi.h"
 #include "sliced.h"
+
+#ifndef PRId64
+#  define PRId64 "lld"
+#endif
 
 static vbi_bool			source_pes	= FALSE;
 
@@ -542,7 +546,7 @@ decode				(const vbi_sliced *	s,
 	static int64_t last_stream_time = 0;
 
 	if (dump_time) {
-		printf ("ST %f (%+f) PTS %lld (%+lld)\n",
+		printf ("ST %f (%+f) PTS %" PRId64 " (%+" PRId64 ")\n",
 			sample_time, sample_time - last_sample_time,
 			stream_time, stream_time - last_stream_time);
 
@@ -831,7 +835,9 @@ main				(int			argc,
 	}
 
 	if (isatty (STDIN_FILENO)) {
-		fprintf (stderr, "No vbi data on stdin\n");
+		fprintf (stderr,
+			 "No vbi data on stdin. Try %s -h\n",
+			 argv[0]);
 		exit (EXIT_FAILURE);
 	}
 

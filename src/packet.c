@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.21 2005/02/25 18:32:35 mschimek Exp $ */
+/* $Id: packet.c,v 1.22 2006/02/10 06:25:37 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1043,6 +1043,8 @@ station_lookup(vbi_cni_type type, int cni, const char **country, const char **na
 static void
 unknown_cni(vbi_decoder *vbi, const char *dl, int cni)
 {
+	vbi = vbi;
+
 	/* if (cni == 0) */
 		return;
 
@@ -1435,6 +1437,8 @@ same_header(int cur_pgno, uint8_t *cur,
 	uint8_t buf[3];
 	int i, j = 32 - 3, err = 0, neq = 0;
 
+	ref_pgno = ref_pgno;
+
 	/* Assumes vbi_is_bcd(cur_pgno) */
 	buf[2] = (cur_pgno & 15) + '0';
 	buf[1] = ((cur_pgno >> 4) & 15) + '0';
@@ -1656,6 +1660,8 @@ parse_27(vbi_decoder *vbi, uint8_t *p,
 	int designation, control;
 	int i;
 
+	vbi = vbi;
+
 	if (cvtp->function == PAGE_FUNCTION_DISCARD)
 		return TRUE;
 
@@ -1691,8 +1697,9 @@ parse_27(vbi_decoder *vbi, uint8_t *p,
 	case 3:
 		for (p++, i = 0; i <= 5; p += 6, i++) {
 			if (!hamm8_page_number(cvtp->data.unknown.link
-					       + designation * 6 + i, p, mag0))
-				; /* return TRUE; */
+					       + designation * 6 + i, p, mag0)) {
+				/* return TRUE; */
+			}
 
 // printf("X/27/%d link[%d] page %03x/%03x\n", designation, i,
 //	cvtp->data.unknown.link[designation * 6 + i].pgno, cvtp->data.unknown.link[designation * 6 + i].subno);
@@ -1733,7 +1740,7 @@ if(0)
 /*
  *  Teletext packets 28 and 29, Level 2.5/3.5 enhancement
  */
-static inline vbi_bool
+static vbi_bool
 parse_28_29(vbi_decoder *vbi, uint8_t *p,
 	    vt_page *cvtp, int mag8, int packet)
 {
@@ -1742,6 +1749,7 @@ parse_28_29(vbi_decoder *vbi, uint8_t *p,
 	vt_extension *ext;
 	int i, j, err = 0;
 
+	/* XXX nested function not portable, to be removed */
 	int
 	bits(int count)
 	{
@@ -2641,6 +2649,7 @@ vbi_teletext_channel_switched(vbi_decoder *vbi)
 void
 vbi_teletext_destroy(vbi_decoder *vbi)
 {
+	vbi = vbi;
 }
 
 /**

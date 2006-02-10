@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.14 2004/12/13 07:13:32 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.15 2006/02/10 06:25:37 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,6 +140,8 @@ text_options[] = {
 static vbi_option_info *
 option_enum(vbi_export *e, int index)
 {
+	e = e;
+
 	if (index < 0 || index >= (int) elements(text_options))
 		return NULL;
 
@@ -285,7 +287,8 @@ print_unicode(iconv_t cd, int endian, int unicode, char **p, int n)
 
 	r = iconv(cd, &ip, &li, &op, &lo);
 
-	if (r == -1 || (**p == 0x40 && unicode != 0x0040)) {
+	if ((size_t) -1 == r
+	    || (**p == 0x40 && unicode != 0x0040)) {
 		in[0 + endian] = 0x20;
 		in[1 - endian] = 0;
 		ip = in; op = *p;
@@ -293,7 +296,8 @@ print_unicode(iconv_t cd, int endian, int unicode, char **p, int n)
 
 		r = iconv(cd, &ip, &li, &op, &lo);
 
-		if (r == -1 || (r == 1 && **p == 0x40))
+		if ((size_t) -1 == r
+		    || (r == 1 && **p == 0x40))
 			goto error;
 	}
 
@@ -348,6 +352,8 @@ vbi_print_page_region(vbi_page *pg, char *buf, int size,
 	int x, y, spaces, doubleh, doubleh0;
 	iconv_t cd;
 	char *p;
+
+	rtl = rtl;
 
 	if (1)
 		fprintf (stderr, "vbi_print_page_region '%s' "

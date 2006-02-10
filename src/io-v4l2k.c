@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.34 2005/10/04 10:06:33 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.35 2006/02/10 06:25:37 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -1295,10 +1295,17 @@ vbi_capture_v4l2k_new(const char *dev_name, int fd, int buffers,
 		      unsigned int *services, int strict,
 		      char **errstr, vbi_bool trace)
 {
-	if (0) /* unused, no warning please */
-		fputs (rcsid, stderr);
+	dev_name = dev_name;
+	fd = fd;
+	buffers = buffers;
+	services = services;
+	strict = strict;
 
 	pthread_once (&vbi_init_once, vbi_init);
+
+	if (trace)
+		fprintf (stderr, "Libzvbi V4L2 2.6 interface rev.\n  %s\n",
+			 rcsid);
 
 	if (errstr)
 		vbi_asprintf (errstr,

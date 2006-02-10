@@ -37,6 +37,9 @@
  *
  *
  *  $Log: proxyd.c,v $
+ *  Revision 1.15  2006/02/10 06:25:36  mschimek
+ *  *** empty log message ***
+ *
  *  Revision 1.14  2005/01/20 01:39:15  mschimek
  *  gcc 4.0 char pointer signedness warnings.
  *
@@ -56,7 +59,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxyd.c,v 1.14 2005/01/20 01:39:15 mschimek Exp $";
+static const char rcsid[] = "$Id: proxyd.c,v 1.15 2006/02/10 06:25:36 mschimek Exp $";
 
 #include "config.h"
 
@@ -536,7 +539,8 @@ static vbi_bool vbi_proxy_queue_allocate( int dev_idx )
 
    pthread_mutex_unlock(&p_proxy_dev->queue_mutex);
 
-   return (buffer_free + buffer_used >= opt_buffer_count + client_count);
+   return ((unsigned int)(buffer_free + buffer_used)
+	   >= opt_buffer_count + client_count);
 }
 
 /* ----------------------------------------------------------------------------
@@ -660,7 +664,7 @@ static void vbi_proxyd_update_scanning( int dev_idx, PROXY_CLNT * req, int scann
 {
    PROXY_DEV    * p_proxy_dev;
    PROXY_CLNT   * p_walk;
-   int new_scanning;
+   unsigned int new_scanning;
 
    p_proxy_dev = proxy.dev + dev_idx;
 
@@ -1579,6 +1583,8 @@ static void vbi_proxyd_channel_flush( int dev_idx, PROXY_CLNT * req )
    PROXY_CLNT  * p_walk;
    PROXY_DEV   * p_proxy_dev;
 
+   req = req;
+
    p_proxy_dev = proxy.dev + dev_idx;
 
    if (p_proxy_dev->p_capture != NULL)
@@ -1673,7 +1679,7 @@ vbi_proxyd_take_ioctl_req( PROXY_CLNT * req, int request, void * p_arg_data,
    if (vbi_fd != -1)
    {
       size = vbi_proxy_msg_check_ioctl(p_proxy_dev->vbi_api, request, p_arg_data, &req_perm);
-      if ((size >= 0) && (size == arg_size))
+      if ((size >= 0) && (size == (int) arg_size))
       {
          /* FIXME */
          if ( (req_perm == FALSE) ||
@@ -1709,6 +1715,8 @@ vbi_proxyd_take_ioctl_req( PROXY_CLNT * req, int request, void * p_arg_data,
 */
 static void vbi_proxyd_close( PROXY_CLNT * req, vbi_bool close_all )
 {
+   close_all = close_all;
+
    if (req->state != REQ_STATE_CLOSED)
    {
       dprintf(DBG_MSG, "close: fd %d\n", req->io.sock_fd);
@@ -1737,6 +1745,8 @@ static void vbi_proxyd_add_connection( int listen_fd, int dev_idx, vbi_bool isLo
    PROXY_CLNT * req;
    PROXY_CLNT * p_walk;
    int sock_fd;
+
+   isLocal = isLocal;
 
    sock_fd = vbi_proxy_msg_accept_connection(listen_fd);
    if (sock_fd != -1)
@@ -2640,6 +2650,8 @@ static void vbi_proxyd_destroy( void )
 */
 static void vbi_proxyd_alarm_handler( int sigval )
 {
+   sigval = sigval;
+
    proxy.chn_sched_alarm = TRUE;
 }
 
@@ -2838,6 +2850,8 @@ static void vbi_proxyd_main_loop( void )
 */
 static void vbi_proxyd_kill_timeout( int sigval )
 {
+   sigval = sigval;
+
    /* note: cannot use printf in signal handler without risking deadlock */
    exit(2);
 }

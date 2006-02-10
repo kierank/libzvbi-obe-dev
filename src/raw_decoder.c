@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.5 2005/03/30 21:36:31 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.6 2006/02/10 06:25:37 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -37,6 +37,13 @@
 
 #ifndef RAW_DECODER_LOG
 #  define RAW_DECODER_LOG 0
+#endif
+
+#ifndef PRIx64
+#  define PRIx64 "llx"
+#endif
+#ifndef PRId64
+#  define PRId64 "lld"
 #endif
 
 #define log(templ, args...)						\
@@ -675,7 +682,8 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 
 	if (0 == (par->videostd_set & videostd_set)) {
 		log ("Service 0x%08x (%s) requires "
-		     "videostd_set 0x%08llx, have 0x%08llx",
+		     "videostd_set 0x%08" PRIx64 ", "
+		     "have 0x%08" PRIx64,
 		     par->id, par->label,
 		     par->videostd_set, videostd_set);
 		return FALSE;
@@ -851,7 +859,7 @@ vbi_sampling_par_from_services	(vbi_sampling_par *	sp,
 		if (0 == (VBI_VIDEOSTD_SET_ALL & videostd_set)
 		    || ((VBI_VIDEOSTD_SET_525_60 & videostd_set)
 			&& (VBI_VIDEOSTD_SET_625_50 & videostd_set))) {
-			log ("Ambiguous videostd_set 0x%08llx",
+			log ("Ambiguous videostd_set 0x%08" PRIx64,
 			     videostd_set);
 			/* CLEAR (*sp); */
 			return 0;
@@ -899,7 +907,8 @@ vbi_sampling_par_from_services	(vbi_sampling_par *	sp,
 
 		if (0 == (par->videostd_set & videostd_set)) {
 			log ("Service 0x%08x (%s) requires "
-			     "videostd_set 0x%08llx, have 0x%08llx",
+			     "videostd_set 0x%08" PRIx64 ", "
+			     "have 0x%08" PRIx64,
 			     par->id, par->label,
 			     par->videostd_set, videostd_set);
 			continue;

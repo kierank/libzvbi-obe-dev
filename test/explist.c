@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: explist.c,v 1.9 2004/12/31 06:05:20 mschimek Exp $ */
+/* $Id: explist.c,v 1.10 2006/02/10 06:25:38 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -97,6 +97,19 @@ do {									\
 	}								\
 } while (0)
 
+#define STRING_CHECK(type)						\
+do {									\
+	if (oi->menu.type) {						\
+		assert(oi->def.num >= 0);				\
+		assert(oi->def.num <= oi->max.num);			\
+		assert(oi->min.num == 0);				\
+		assert(oi->max.num > 0);				\
+		assert(oi->step.num == 1);				\
+	} else {							\
+		assert(oi->def.str != NULL);				\
+	}								\
+} while (0)
+
 static void
 keyword_check(char *keyword)
 {
@@ -136,6 +149,7 @@ static void
 test_modified(vbi_option_info *oi, vbi_option_value old, vbi_option_value new)
 {
 	if (REAL_TYPE(oi)) {
+		/* XXX unsafe */
 		if (old.dbl != new.dbl) {
 			printf("but modified current value to %f\n", new.dbl);
 			exit(EXIT_FAILURE);
@@ -200,6 +214,7 @@ test_set_real(vbi_export *ex, vbi_option_info *oi,
 	if (!vbi_export_option_get(ex, oi->keyword, &new_current)) {
 		printf("vbi_export_option_get failed, errstr==\"%s\"\n",
 		       vbi_export_errstr(ex));
+		/* XXX unsafe */
 		if (new_current.dbl != 8192.0)
 			printf("but modified destination to %f\n",
 			       new_current.dbl);
@@ -284,10 +299,12 @@ test_set_entry(vbi_export *ex, vbi_option_info *oi,
 		break;
 
 	case VBI_OPTION_REAL:
-		if (oi->menu.dbl)
+		if (oi->menu.dbl) {
+			/* XXX unsafe */
 			assert(new_current.dbl == oi->menu.dbl[new_entry]);
-		else
+		} else {
 			test_modified(oi, *current, new_current);
+		}
 		print_current(oi, *current = new_current);
 		break;
 
@@ -396,7 +413,7 @@ dump_option_info(vbi_export *ex, vbi_option_info *oi)
 
 	case VBI_OPTION_STRING:
 		if (oi->menu.str) {
-			BOUNDS_CHECK(str);
+			STRING_CHECK(str);
 			printf("    %d menu entries, default=%d: ",
 			       oi->max.num - oi->min.num + 1, oi->def.num);
 			for (i = oi->min.num; i <= oi->max.num; i++)

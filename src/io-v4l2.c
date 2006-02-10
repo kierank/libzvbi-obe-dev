@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2.c,v 1.31 2004/12/30 02:24:11 mschimek Exp $";
+"$Id: io-v4l2.c,v 1.32 2006/02/10 06:25:37 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -197,10 +197,15 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 				 char **		errstr,
 				 vbi_bool		trace)
 {
-	if (0) /* unused, no warning please */
-		fputs (rcsid, stderr);
+	dev_name = dev_name;
+	buffers = buffers;
+	services = services;
+	strict = strict;
 
 	pthread_once (&vbi_init_once, vbi_init);
+
+	if (trace)
+		fprintf (stderr, "Libzvbi V4L2 interface rev.\n  %s\n", rcsid);
 
 	if (errstr)
 		vbi_asprintf (errstr,

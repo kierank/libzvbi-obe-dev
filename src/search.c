@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: search.c,v 1.10 2005/01/19 04:23:53 mschimek Exp $ */
+/* $Id: search.c,v 1.11 2006/02/10 06:25:37 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -388,7 +388,7 @@ vbi_search_delete(vbi_search *search)
 static size_t
 ucs2_strlen(const void *string)
 {
-	ucs2_t *p = (ucs2_t *) string;
+	const ucs2_t *p = (ucs2_t *) string;
 	size_t i = 0;
 
 	if (!string)

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.20 2005/05/11 20:16:02 mschimek Exp $ */
+/* $Id: osc.c,v 1.21 2006/02/10 06:25:38 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -218,7 +218,7 @@ static void
 draw(unsigned char *raw)
 {
 	int rem = src_w - draw_offset;
-	unsigned char buf[256];
+	char buf[256];
 	unsigned char *data = raw;
 	int i, v, h0, field, end, line;
         XTextItem xti;
@@ -276,7 +276,7 @@ draw(unsigned char *raw)
 	}
 
 	for (i = 0; i < slines; i++)
-		if (sliced[i].line == line)
+		if (sliced[i].line == (unsigned int) line)
 			break;
 	if (i < slines) {
 	   int svc_idx=0;
@@ -442,12 +442,15 @@ redraw:
 }
 
 static void
-init_window(int ac, char **av, char *dev_name)
+init_window(int ac, char **av, const char *dev_name)
 {
 	char buf[256];
 	Atom delete_window_atom;
 	XWindowAttributes wa;
 	int i;
+
+	ac = ac;
+	av = av;
 
 	if (!(display = XOpenDisplay(NULL))) {
 		fprintf(stderr, "No display\n");
@@ -622,7 +625,7 @@ long_options[] = {
 int
 main(int argc, char **argv)
 {
-	char *dev_name = "/dev/vbi";
+	const char *dev_name = "/dev/vbi";
 	char *errstr;
 	unsigned int services;
 	int scanning = 625;

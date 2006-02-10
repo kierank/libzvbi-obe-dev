@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.16 2005/02/17 10:21:17 mschimek Exp $ */
+/* $Id: vbi.c,v 1.17 2006/02/10 06:25:38 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -531,6 +531,8 @@ void
 vbi_channel_switched(vbi_decoder *vbi, vbi_nuid nuid)
 {
 	/* XXX nuid */
+
+	nuid = nuid;
 
 	pthread_mutex_lock(&vbi->chswcd_mutex);
 

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.19 2005/05/25 02:25:49 mschimek Exp $ */
+/* $Id: caption.c,v 1.20 2006/02/10 06:25:37 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -392,12 +392,16 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 			for (i = 0; i < length; i++) {
 				int ch = buffer[i] & 7;
 				int l = (buffer[i] >> 3) & 7;
-				const char *s;
+				/* should be const char *, but I got that
+				   wrong and cannot change the public
+				   pi->audio[].language type now. */
+				unsigned char *s;
 
 				ch = (ch & 1) * 4 + (ch >> 1);
 
 				services |= 1 << ch;
-				s = ((1 << l) & 0xC1) ? NULL : language[l];
+				s = ((1 << l) & 0xC1) ? NULL :
+					(unsigned char *) language[l];
 
 				if (pi->caption_language[ch] != (unsigned char *) s) {
 					neq = 1; pi->caption_language[ch] = (unsigned char *) s;
@@ -783,6 +787,8 @@ update(cc_channel *ch)
 static void
 word_break(struct caption *cc, cc_channel *ch, int upd)
 {
+	cc = cc;
+
 	/*
 	 *  Add a leading and trailing space.
 	 */
@@ -1574,6 +1580,8 @@ vbi_fetch_cc_page(vbi_decoder *vbi, vbi_page *pg, vbi_pgno pgno, vbi_bool reset)
 {
 	cc_channel *ch = vbi->cc.channel + ((pgno - 1) & 7);
 	vbi_page *spg;
+
+	reset = reset;
 
 	if (pgno < 1 || pgno > 8)
 		return FALSE;

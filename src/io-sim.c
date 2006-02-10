@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.c,v 1.2 2004/12/14 17:57:09 mschimek Exp $ */
+/* $Id: io-sim.c,v 1.3 2006/02/10 06:25:37 mschimek Exp $ */
 
 #include <assert.h>
 #include <stdlib.h>
@@ -266,8 +266,7 @@ signal_u8			(const vbi_sampling_par *sp,
 				 unsigned int		white_level,
 				 uint8_t *		raw,
 				 const vbi_sliced *	sliced,
-				 unsigned int		sliced_lines,
-				 const char *		caller)
+				 unsigned int		sliced_lines)
 {
 	unsigned int scan_lines;
 
@@ -284,12 +283,12 @@ signal_u8			(const vbi_sampling_par *sp,
 		     sp->bytes_per_line);
 
 	for (; sliced_lines-- > 0; ++sliced) {
-		unsigned int row;
+		int row;
 		uint8_t *raw1;
 
 		if (0 == sliced->line) {
 			goto bounds;
-		} else if (sliced->line >= sp->start[1]) {
+		} else if ((int) sliced->line >= sp->start[1]) {
 			row = sliced->line - sp->start[1];
 
 			if (row >= sp->count[1])
@@ -299,7 +298,7 @@ signal_u8			(const vbi_sampling_par *sp,
 				row = row * 2 + 1;
 			else
 				row += sp->count[0];
-		} else if (sliced->line >= sp->start[0]) {
+		} else if ((int) sliced->line >= sp->start[0]) {
 			row = sliced->line - sp->start[0];
 
 			if (row >= sp->count[0])
@@ -452,7 +451,7 @@ _vbi_test_image_vbi		(uint8_t *		raw,
 	}
 
 	return signal_u8 (sp, blank_level, black_level, white_level,
-			  raw, sliced, sliced_lines, __FUNCTION__);
+			  raw, sliced, sliced_lines);
 }
 
 #define RGBA_TO_RGB16(value)						\
@@ -748,7 +747,7 @@ _vbi_test_image_video		(uint8_t *		raw,
 	}
 
 	if (!signal_u8 (&sp8, blank_level, black_level, white_level,
-			buf, sliced, sliced_lines, __FUNCTION__)) {
+			buf, sliced, sliced_lines)) {
 		free (buf);
 		return FALSE;
 	}

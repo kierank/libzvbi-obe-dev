@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.5 2005/06/11 22:13:11 mschimek Exp $ */
+/* $Id: wss.c,v 1.6 2006/02/10 06:25:38 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -140,7 +140,7 @@ process_image			(const void *		p)
 	vbi_sliced sliced[1];
 	unsigned int n_lines;
 
-	n_lines = vbi_raw_decode (&rd, (uint8_t *) p, sliced);
+	n_lines = vbi_raw_decode (&rd, (const uint8_t *) p, sliced);
 	if (n_lines > 0) {
 		assert (VBI_SLICED_WSS_625 == sliced[0].id);
 		decode_wss_625 (sliced[0].data);

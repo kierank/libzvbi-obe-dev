@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-bktr.c,v 1.12 2005/01/24 00:11:53 mschimek Exp $";
+"$Id: io-bktr.c,v 1.13 2006/02/10 06:25:37 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -26,6 +26,14 @@ static const char rcsid [] =
 
 #include "vbi.h"
 #include "io.h"
+
+#define printv(format, args...)						\
+do {									\
+	if (trace) {							\
+		fprintf(stderr, format ,##args);			\
+		fflush(stderr);						\
+	}								\
+} while (0)
 
 #ifdef ENABLE_BKTR
 
@@ -39,14 +47,6 @@ static const char rcsid [] =
 #include <sys/time.h>		/* timeval */
 #include <sys/select.h>		/* fd_set */
 #include <pthread.h>
-
-#define printv(format, args...)						\
-do {									\
-	if (trace) {							\
-		fprintf(stderr, format ,##args);			\
-		fflush(stderr);						\
-	}								\
-} while (0)
 
 typedef struct vbi_capture_bktr {
 	vbi_capture		capture;
@@ -196,7 +196,7 @@ vbi_capture_bktr_new		(const char *		dev_name,
 	*errstr = NULL;
 
 	printv ("Try to open bktr vbi device, "
-		"libzvbi interface rev.\n%s\n", rcsid);
+		"libzvbi interface rev.\n  %s\n", rcsid);
 
 	if (!(v = (vbi_capture_bktr *) calloc(1, sizeof(*v)))) {
 		vbi_asprintf(errstr, _("Virtual memory exhausted."));
@@ -374,10 +374,15 @@ vbi_capture_bktr_new		(const char *		dev_name,
 				 char **		errstr,
 				 vbi_bool		trace)
 {
-	if (0) /* unused, no warning please */
-		fputs (rcsid, stderr);
+	dev_name = dev_name;
+	scanning = scanning;
+	services = services;
+	strict = strict;
+	trace = trace;
 
 	pthread_once (&vbi_init_once, vbi_init);
+
+	printv ("Libzvbi bktr interface rev.\n  %s\n", rcsid);
 
 	if (errstr)
 		vbi_asprintf (errstr,

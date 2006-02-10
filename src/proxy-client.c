@@ -17,10 +17,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-client.c,v 1.9 2005/01/20 20:56:11 mschimek Exp $
+ *  $Id: proxy-client.c,v 1.10 2006/02/10 06:25:37 mschimek Exp $
  */
 
-static const char rcsid[] = "$Id: proxy-client.c,v 1.9 2005/01/20 20:56:11 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-client.c,v 1.10 2006/02/10 06:25:37 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -163,7 +163,7 @@ static vbi_bool proxy_client_connect_server( vbi_proxy_client * vpc )
 static vbi_bool proxy_client_alloc_msg_buf( vbi_proxy_client * vpc )
 {
    vbi_bool result;
-   int  msg_size;
+   size_t msg_size;
 
    msg_size = sizeof(VBIPROXY_MSG_BODY);
 
@@ -184,12 +184,13 @@ static vbi_bool proxy_client_alloc_msg_buf( vbi_proxy_client * vpc )
 
    msg_size += VBIPROXY_MSG_BODY_OFFSET;
 
-   if ((msg_size != vpc->max_client_msg_size) || (vpc->p_client_msg == NULL))
+   if (((int) msg_size != vpc->max_client_msg_size)
+       || (vpc->p_client_msg == NULL))
    {
       if (vpc->p_client_msg != NULL)
          free(vpc->p_client_msg);
 
-      dprintf2("alloc_msg_buf: allocate buffer for max. %d bytes\n", msg_size);
+      dprintf2("alloc_msg_buf: allocate buffer for max. %zd bytes\n", msg_size);
       vpc->max_client_msg_size = msg_size;
       vpc->p_client_msg = malloc(msg_size);
 
@@ -339,7 +340,7 @@ static vbi_bool proxy_client_take_message( vbi_proxy_client * vpc )
          if (vpc->state == CLNT_STATE_CAPTURING)
          {
             /* XXX TODO check raw */
-            if (pMsg->sliced_ind.sliced_lines > vpc->dec.count[0] + vpc->dec.count[1])
+            if ((int) pMsg->sliced_ind.sliced_lines > vpc->dec.count[0] + vpc->dec.count[1])
             {  /* more lines than req. for service -> would overflow the allocated slicer buffer
                ** -> discard extra lines (should never happen; proxy checks for line counts) */
                dprintf1("take_message: SLICED_IND: too many lines: %d > %d\n", pMsg->sliced_ind.sliced_lines, vpc->dec.count[0] + vpc->dec.count[1]);
@@ -979,6 +980,10 @@ vbi_proxy_client_channel_suspend( vbi_proxy_client * vpc,
                                   VBI_PROXY_SUSPEND cmd )
 {
    /* XXX TODO */
+
+   vpc = vpc;
+   cmd = cmd;
+
    return -1;
 }
 
@@ -1401,6 +1406,8 @@ vbi_proxy_client_flush( vbi_capture * vc )
 static VBI_CAPTURE_FD_FLAGS
 vbi_proxy_client_get_fd_flags(vbi_capture *vc)
 {
+	vc = vc;
+
         return VBI_FD_HAS_SELECT;
 }
 

@@ -207,7 +207,7 @@ int open(const char *pathname, int flags, ...)
       unsigned int services = VBI_SLICED_VBI_625 | VBI_SLICED_VBI_525;
       vbi_raw_decoder *p_dec;
       vbi_capture *p_capt;
-      char *p_client;
+      const char *p_client;
       char *p_errmsg = NULL;
 
       dprintf1("hijacking open on %s...\n", pathname);
@@ -551,7 +551,7 @@ ssize_t read(int fd, void *buf, size_t count)
       timeout.tv_sec = (vbi_fd_nonblocking ? 0 : 60 * 60 * 24);
       timeout.tv_usec = 0;
 
-      if (count >= vbi_buf_size)
+      if (count >= (size_t) vbi_buf_size)
       {
          /* buffer is large enough -> capture directly into the user buffer */
          result = vbi_capture_read_raw(p_capt, buf, &timestamp, &timeout);
@@ -575,7 +575,7 @@ ssize_t read(int fd, void *buf, size_t count)
          if (result > 0)
          {
             /* copy requested portion into user buffer (rest of frame's data is discarded) */
-            if (count > p_capt_buf->size)
+            if (count > (size_t) p_capt_buf->size)
                count = p_capt_buf->size;
             memcpy(buf, p_capt_buf->data, count);
 

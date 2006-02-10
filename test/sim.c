@@ -143,7 +143,7 @@ wss525_sim(double t, double F, unsigned int bits)
  *  Teletext Signal Simulator
  */
 
-static inline double
+static double
 ttx_sim(double t, double F, const uint8_t *text)
 {
 	double t1 = 10.3e-6 - .5 / F;

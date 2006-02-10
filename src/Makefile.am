@@ -38,6 +38,21 @@ proxy_sources =
 proxy_libs =
 endif
 
+noinst_LTLIBRARIES = \
+	libzvbiinline.la
+
+libzvbiinline_la_SOURCES = \
+	decoder.c decoder.h sliced.h \
+	exp-gfx.c exp-gfx.h
+
+if HAVE_GCC_LIMITS
+libzvbiinline_la_CFLAGS = \
+	--param max-inline-insns-single=50000 \
+	--param large-function-insns=150000 \
+	--param inline-unit-growth=30000 \
+	--param large-function-growth=30000
+endif
+
 lib_LTLIBRARIES = \
 	libzvbi.la \
 	$(proxy_libs)
@@ -47,11 +62,9 @@ libzvbi_la_SOURCES = \
 	bit_slicer.c bit_slicer.h \
 	cache.c cache.h \
 	caption.c cc.h \
-	decoder.c decoder.h sliced.h \
 	dvb.h \
 	dvb_mux.c dvb_mux.h \
 	dvb_demux.c dvb_demux.h \
-	exp-gfx.c exp-gfx.h \
 	exp-html.c \
 	exp-templ.c \
 	exp-txt.c exp-txt.h \
@@ -83,7 +96,11 @@ libzvbi_la_SOURCES = \
 libzvbiincludedir = $(includedir)
 libzvbiinclude_HEADERS = libzvbi.h
 
-libzvbi_la_LIBADD = $(LIBS) $(UNICODE_LIBS)
+libzvbi_la_LIBADD = \
+	libzvbiinline.la \
+	$(LIBS) \
+	$(UNICODE_LIBS)
+
 libzvbi_la_LDFLAGS = -version-info $(LIBZVBI_SO_VERSION)
 
 libzvbi_chains_la_SOURCES = \

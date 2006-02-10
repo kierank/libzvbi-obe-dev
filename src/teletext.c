@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.20 2005/01/20 01:40:15 mschimek Exp $ */
+/* $Id: teletext.c,v 1.21 2006/02/10 06:25:37 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -140,7 +140,7 @@ flof_links(vbi_page *pg, vt_page *vtp)
 	for (i = 0; i < COLUMNS + 1; i++) {
 		if (i == COLUMNS || (acp[i].foreground & 7) != col) {
 			for (k = 0; k < 4; k++)
-				if (flof_link_col[k] == col)
+				if ((int) flof_link_col[k] == col)
 					break;
 
 			if (k < 4 && !NO_PAGE(vtp->data.lop.link[k].pgno)) {
@@ -1023,6 +1023,8 @@ vbi_page_title(vbi_decoder *vbi, int pgno, int subno, char *buf)
 	ait_entry *ait;
 	int i, j;
 
+	subno = subno;
+
 	if (vbi->vt.top) {
 		for (i = 0; i < 8; i++)
 			if (vbi->vt.btt_link[i].type == 2) {
@@ -1196,6 +1198,7 @@ enhance(vbi_decoder *vbi, vt_magazine *mag, vt_extension *ext,
 	struct pex26 *pt, ptmp;
 	int pdc_hr;
 
+	/* XXX nested function not portable, to be removed */
 	void
 	flush(int column)
 	{
@@ -1356,6 +1359,7 @@ enhance(vbi_decoder *vbi, vt_magazine *mag, vt_extension *ext,
 		active_column = column;
 	}
 
+	/* XXX nested function not portable, to be removed */
 	void
 	flush_row(void)
 	{

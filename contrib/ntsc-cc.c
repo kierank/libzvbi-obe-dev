@@ -63,10 +63,10 @@ int	mode,type;
 char	infochecksum;
 
 //ccdecode
-char    *ratings[] = {"(NOT RATED)","TV-Y","TV-Y7","TV-G","TV-PG","TV-14","TV-MA","(NOT RATED)"};
+const char    *ratings[] = {"(NOT RATED)","TV-Y","TV-Y7","TV-G","TV-PG","TV-14","TV-MA","(NOT RATED)"};
 int     rowdata[] = {11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10};
-char	*specialchar[] = {"®","°","½","¿","(TM)","¢","£","o/~ ","à"," ","è","â","ê","î","ô","û"};
-char	*modes[]={"current","future","channel","miscellaneous","public service","reserved","invalid","invalid","invalid","invalid"};
+const char	*specialchar[] = {"®","°","½","¿","(TM)","¢","£","o/~ ","à"," ","è","â","ê","î","ô","û"};
+const char	*modes[]={"current","future","channel","miscellaneous","public service","reserved","invalid","invalid","invalid","invalid"};
 int	lastcode;
 int	ccmode=1;		//cc1 or cc2
 char	ccbuf[3][256];		//cc is 32 columns per row, this allows for extra characters
@@ -430,6 +430,8 @@ static int CCdecode(int data)
 //					printf("ccmode %d cmd %02x\n",ccmode,b2);
 					switch (b2)
 					{
+						size_t n;
+
 						case 0x21: //backspace
 							ccbuf[ccmode][len--]=0;
 							break;
@@ -450,9 +452,9 @@ static int CCdecode(int data)
 						case 0x20: //resume caption (new caption)
 							if (!strlen(ccbuf[ccmode]))
 									break;
-							for (x=0;x<strlen(ccbuf[ccmode]);x++)
+							for (n=0;n<strlen(ccbuf[ccmode]);n++)
 								for (y=0;y<keywords;y++)
-									if (!strncasecmp(keyword[y], ccbuf[ccmode]+x, strlen(keyword[y])))
+									if (!strncasecmp(keyword[y], ccbuf[ccmode]+n, strlen(keyword[y])))
 										printf("\a");
 							if (!plain)
 								printf("%s\33[m\n",ccbuf[ccmode]);
@@ -572,7 +574,7 @@ static int sentence(int data)
 }
 
 #ifndef X_DISPLAY_MISSING
-static unsigned long getColor(char *colorName, float dim)
+static unsigned long getColor(const char *colorName, float dim)
 {
 	XColor Color;
 	XWindowAttributes Attributes;
@@ -593,7 +595,7 @@ static unsigned long getColor(char *colorName, float dim)
 
 int main(int argc,char **argv)
 {
-   char *vbifile = "/dev/vbi";
+   const char *vbifile = "/dev/vbi";
    unsigned char buf[65536];
    int arg;
    int args=0;

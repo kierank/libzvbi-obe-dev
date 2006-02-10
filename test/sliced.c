@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.c,v 1.3 2005/10/04 10:05:36 mschimek Exp $ */
+/* $Id: sliced.c,v 1.4 2006/02/10 06:25:38 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -135,6 +135,9 @@ read_sliced			(vbi_sliced *		sliced,
 
 	/* Time in seconds since last frame. */
 	dt = strtod (buf, NULL);
+	if (dt < 0.0) {
+		dt = -dt;
+	}
 
 	*timestamp = read_elapsed;
 	read_elapsed += dt;

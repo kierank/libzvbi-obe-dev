@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.8 2005/06/11 22:08:20 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.9 2006/02/10 06:25:37 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>
@@ -37,6 +37,13 @@
 
 #ifndef DVB_DEMUX_LOG
 #  define DVB_DEMUX_LOG 0
+#endif
+
+#ifndef PRIx64
+#  define PRIx64 "llx"
+#endif
+#ifndef PRId64
+#  define PRId64 "lld"
 #endif
 
 #define log(level, templ, args...)					\
@@ -732,7 +739,7 @@ timestamp			(int64_t *		pts,
 		old_pts = *pts;
 		new_pts = t | (((int64_t) p[0] & 0x0E) << 29);
 
-		fprintf (stderr, "TS%x 0x%llx (%+lld)\n",
+		fprintf (stderr, "TS%x 0x%" PRIx64 " (%+" PRId64 ")\n",
 			 mark, new_pts, new_pts - old_pts);
 	}
 

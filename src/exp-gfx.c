@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.c,v 1.10 2005/01/20 01:40:14 mschimek Exp $ */
+/* $Id: exp-gfx.c,v 1.11 2006/02/10 06:25:37 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -753,6 +753,8 @@ gfx_options[] = {
 static vbi_option_info *
 option_enum(vbi_export *e, int index)
 {
+	e = e;
+
 	if (index < 0 || index >= (int) elements(gfx_options))
 		return NULL;
 	else
@@ -1132,6 +1134,7 @@ png_export(vbi_export *e, FILE *fp, vbi_page *pg)
 	}
 
 	/* avoid possible longjmp breakage due to libpng ugliness */
+	/* XXX not portable, to be removed */
 	{ int do_write() {
 	if (setjmp(png_ptr->jmpbuf))
 		return 1;

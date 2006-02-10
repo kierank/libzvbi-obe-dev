@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: idl_demux.c,v 1.2 2005/02/25 18:33:36 mschimek Exp $ */
+/* $Id: idl_demux.c,v 1.3 2006/02/10 06:25:37 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -219,6 +219,10 @@ idl_b_demux_feed		(vbi_idl_demux *	dx,
 {
 	/* TODO */
 
+	dx = dx;
+	buffer = buffer;
+	ft = ft;
+
 	return FALSE;
 }
 
@@ -230,6 +234,9 @@ datavideo_demux_feed		(vbi_idl_demux *	dx,
 				 const uint8_t		buffer[42])
 {
 	/* TODO */
+
+	dx = dx;
+	buffer = buffer;
 
 	return FALSE;
 }
@@ -243,6 +250,9 @@ audetel_demux_feed		(vbi_idl_demux *	dx,
 {
 	/* TODO */
 
+	dx = dx;
+	buffer = buffer;
+
 	return FALSE;
 }
 
@@ -251,6 +261,9 @@ lbra_demux_feed			(vbi_idl_demux *	dx,
 				 const uint8_t		buffer[42])
 {
 	/* TODO */
+
+	dx = dx;
+	buffer = buffer;
 
 	return FALSE;
 }

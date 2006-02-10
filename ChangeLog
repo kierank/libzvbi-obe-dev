@@ -1,3 +1,14 @@
+2006-02-07    <mschimek@users.sf.net>
+
+	* test/ttxfilter.c: Didn't work with parallel page transmission.
+	* src/cache.c, src/cache.h: Replaced list type to prevent a
+	  pointer aliasing bug.
+	* src, contrib, daemon, test: Cleaned up to avoid unused parameter,
+	  signedness and constness warnings, replaced printf format modifier
+	  ll? by PRI?64. Patch #1425503 by Diego Pettenò.
+	* configure.in: Modernized and made documentation building optional
+	  (patch #1425497 by Diego Pettenò).
+
 2005-10-24    <mschimek@users.sf.net>
 
 	* configure.in: Added AM_MAINTAINER_MODE.

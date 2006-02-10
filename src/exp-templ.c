@@ -2,7 +2,7 @@
  *  Template for export modules
  */
 
-/* $Id: exp-templ.c,v 1.7 2004/12/13 07:17:08 mschimek Exp $ */
+/* $Id: exp-templ.c,v 1.8 2006/02/10 06:25:37 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -123,6 +123,8 @@ tmpl_options[] = {
 static vbi_option_info *
 option_enum(vbi_export *e, int index)
 {
+	e = e;
+
 	/* Enumeration 0 ... n */
 	if (index < 0 || index >= (int) elements(tmpl_options))
 		return NULL;
@@ -235,6 +237,8 @@ export(vbi_export *e, FILE *fp, vbi_page *pg)
 	/*
 	 *  Write pg to fp, that's all.
 	 */
+	fp = fp;
+	pg = pg;
 
 	tmpl->counter++; /* just for fun */
 

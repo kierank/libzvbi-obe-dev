@@ -1,8 +1,10 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 1.51 2005/10/30 02:50:10 mschimek Exp $
 
-AC_INIT(configure.in)
-AM_INIT_AUTOMAKE(zvbi, 0.2.17)
+AC_PREREQ(2.59)
+AC_INIT(zvbi, 0.2.18)
+AC_CONFIG_SRCDIR(src/vbi.c)
+
+AM_INIT_AUTOMAKE([1.9 check-news dist-bzip2])
 AM_CONFIG_HEADER(config.h)
 AM_ACLOCAL_INCLUDE(m4)
 AM_MAINTAINER_MODE
@@ -19,13 +21,9 @@ dnl For header tests only.
 AC_PROG_CXX
 
 dnl BSD/GNU extensions.
-AC_CHECK_FUNCS(strndup)
-AC_CHECK_FUNCS(strlcpy)
-AC_CHECK_FUNCS(asprintf)
-AC_CHECK_FUNCS(getopt_long)
-AC_CHECK_FUNCS(getaddrinfo)
+AC_CHECK_FUNCS([strndup strlcpy asprintf getopt_long getaddrinfo])
 
-AM_PROG_LIBTOOL
+AC_PROG_LIBTOOL
 
 LIBS="$LIBS -lm"
 
@@ -45,7 +43,20 @@ test -e site_def.h || cat <<EOF >site_def.h
 EOF
 
 dnl
+dnl See if we can / have to increase inlining limits.
+dnl
+AC_MSG_CHECKING([if $CC supports --param inline-unit-growth])
+SAVE_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS --param inline-unit-growth=3000"
+AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [return 0;]),
+		  [HAVE_GCC_LIMITS=yes], [HAVE_GCC_LIMITS=no])
+AC_MSG_RESULT($HAVE_GCC_LIMITS)
+AM_CONDITIONAL(HAVE_GCC_LIMITS, [test "x$HAVE_GCC_LIMITS" = "xyes"])
+CFLAGS="$SAVE_CFLAGS"
+
+dnl
 dnl Check how to link pthreads functions.
+dnl (-lpthread on Linux, -pthread on FreeBSD).
 dnl
 AC_CHECK_LIB(pthread, pthread_create,,[
   AC_TRY_LINK(, pthread_create();,,[
@@ -61,16 +72,16 @@ dnl Check for Gnome unicode library or libc 2.1.
 dnl (Teletext URE search wchar_t ctype.h functions)
 dnl
 AC_MSG_CHECKING(whether we are using the GNU C Library 2.1 or newer)
-AC_EGREP_CPP([GNU 98765876],[
+AC_EGREP_CPP([GLIBC21],[
 #include <features.h>
 #ifdef __GNU_LIBRARY__
  #if (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1) || (__GLIBC__ > 2)
-  GNU 98765876
+  GLIBC21
  #endif
 #endif
 ],[
   AC_MSG_RESULT([yes])
-  AC_DEFINE(HAVE_GLIBC21, 1, [Define if you have GNU C Lib 2.1+])
+  AC_DEFINE(HAVE_GLIBC21, 1, [Honk if you have GNU C lib 2.1+])
 ],[
   AC_MSG_RESULT([no])
   AC_MSG_CHECKING(for unicode library)
@@ -94,7 +105,7 @@ dnl
 dnl Using m4/iconv.m4 from the gettext package.
 dnl
 AM_ICONV_LINK
-if test "$am_cv_func_iconv" != yes; then
+if test "x$am_cv_func_iconv" != xyes; then
   AC_MSG_ERROR([iconv() not found])
 fi
 LIBS="$LIBS $LIBICONV"
@@ -106,7 +117,7 @@ dnl
 HAVE_PNG="yes"
 AC_CHECK_LIB(png, png_destroy_write_struct,
   LIBS="$LIBS -lpng -lz", HAVE_PNG="no", -lz -lm)
-if test "$HAVE_PNG" = yes; then
+if test "x$HAVE_PNG" = xyes; then
   AC_DEFINE(HAVE_LIBPNG, 1, [Define if you have libpng])
 fi
 
@@ -115,8 +126,8 @@ dnl X libraries.
 dnl (Test programs)
 dnl
 AC_PATH_XTRA
-test "$no_x" = yes || X_LIBS="$X_LIBS -lX11"
-AM_CONDITIONAL(HAVE_X, [test "$no_x" != yes])
+test "x$no_x" = xyes || X_LIBS="$X_LIBS -lX11"
+AM_CONDITIONAL(HAVE_X, [test "x$no_x" != xyes])
 
 dnl
 dnl Enable OS dependent device interfaces.
@@ -146,7 +157,7 @@ AC_ARG_ENABLE(v4l,
   [Include the V4L and V4L2 interface (auto)]),,
   enable_v4l=$enable_v4l_auto)
 AC_MSG_RESULT($enable_v4l)
-if test "$enable_v4l" = yes; then
+if test "x$enable_v4l" = xyes; then
   AC_DEFINE(ENABLE_V4L, 1, [Define to build V4L interface])
   AC_DEFINE(ENABLE_V4L2, 1, [Define to build V4L2 / V4L2 2.5 interface])
 fi
@@ -157,7 +168,7 @@ AC_ARG_ENABLE(dvb,
   [Include the DVB interface (auto)]),,
   enable_dvb=$enable_dvb_auto)
 AC_MSG_RESULT($enable_dvb)
-if test "$enable_dvb" = yes; then
+if test "x$enable_dvb" = xyes; then
   AC_DEFINE(ENABLE_DVB, 1, [Define to build DVB interface])
 fi
 
@@ -167,7 +178,7 @@ AC_ARG_ENABLE(bktr,
   [Include the *BSD bktr driver interface (auto)]),,
   enable_bktr=$enable_bktr_auto)
 AC_MSG_RESULT($enable_bktr)
-if test "$enable_bktr" = yes; then
+if test "x$enable_bktr" = xyes; then
   AC_DEFINE(ENABLE_BKTR, 1, [Define to build bktr driver interface])
 fi
 
@@ -180,7 +191,7 @@ AC_ARG_ENABLE(proxy,
   [Build the vbi proxy daemon and interface (auto)]),,
   enable_proxy=$enable_proxy_auto)
 AC_MSG_RESULT($enable_proxy)
-if test "$enable_proxy" = yes; then
+if test "x$enable_proxy" = xyes; then
   AC_DEFINE(ENABLE_PROXY, 1, [Define to build proxy daemon and interface])
   case "$host_os" in
     linux*)
@@ -193,14 +204,15 @@ if test "$enable_proxy" = yes; then
       ;;
   esac
 fi
-AM_CONDITIONAL(ENABLE_PROXY, [test "$enable_proxy" = yes])
+AM_CONDITIONAL(ENABLE_PROXY, [test "x$enable_proxy" = xyes])
 
 dnl
 dnl Native language support.
 dnl
+AM_GNU_GETTEXT_VERSION([0.14])
 AM_GNU_GETTEXT([external], [need-ngettext])
 LIBS="$LTLIBINTL $LIBS"
-if test "${prefix}" = NONE; then
+if test "x${prefix}" = xNONE; then
   AC_DEFINE_UNQUOTED(PACKAGE_LOCALE_DIR,
     "${ac_default_prefix}/share/locale", [ld])
 else
@@ -211,8 +223,16 @@ fi
 dnl 
 dnl Build docs from the sources if Doxygen is installed.
 dnl 
-AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, yes, no)
-AM_CONDITIONAL(HAVE_DOXYGEN, [test "$HAVE_DOXYGEN" = yes])
+AC_ARG_WITH([doxygen],
+  AS_HELP_STRING([--without-doxygen],
+		 [Disable building of API documentation]),,
+  [with_doxygen=yes])
+if test "x$with_doxygen" = "xyes"; then
+  AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, yes, no)
+else
+  HAVE_DOXYGEN=no
+fi
+AM_CONDITIONAL(HAVE_DOXYGEN, [test "x$HAVE_DOXYGEN" = xyes])
 
 AC_OUTPUT([
   Makefile

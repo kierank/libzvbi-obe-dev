@@ -62,7 +62,7 @@ hash(int pgno)
 
 /*
  * list foo_list;
- * struct foo { int baz; node bar; }, *foop;
+ * struct foo { int baz; node bar; } *foop;
  *
  * for_all_nodes(foop, &foo_list, bar)
  *   foop->baz = 0;
@@ -70,9 +70,9 @@ hash(int pgno)
  * Not useful to delete list members.
  */
 #define for_all_nodes(p, l, _node_)					\
-for ((p) = PARENT((l)->head, typeof(*(p)), _node_);			\
-     (p)->_node_.succ;							\
-     (p) = PARENT((p)->_node_.succ, typeof(*(p)), _node_))
+for ((p) = PARENT ((l)->_head._succ, __typeof__ (* (p)), _node_);	\
+     (p) != &(l)->_head;						\
+     (p) = PARENT ((p)->_node_._succ, __typeof__ (* (p)), _node_))
 
 /**
  * @internal
@@ -86,7 +86,7 @@ for ((p) = PARENT((l)->head, typeof(*(p)), _node_);			\
 static __inline__ void
 destroy_list(list *l)
 {
-	l = l;
+	CLEAR (*l);
 }
 
 /**
@@ -99,11 +99,10 @@ destroy_list(list *l)
 static inline list *
 init_list(list *l)
 {
-	l->head = (node *) &l->null;
-	l->null = (node *) 0;
-	l->tail = (node *) &l->head;
+	l->_head._succ = &l->_head;
+	l->_head._pred = &l->_head;
 
-	l->members = 0;
+	l->_n_members = 0;
 
 	return l;
 }
@@ -119,7 +118,7 @@ init_list(list *l)
 static inline unsigned int
 list_members(list *l)
 {
-	return l->members;
+	return l->_n_members;
 }
 
 /**
@@ -133,7 +132,37 @@ list_members(list *l)
 static inline int
 empty_list(list *l)
 {
-	return l->members == 0;
+	return (0 == l->_n_members);
+}
+
+static inline node *
+_remove_nodes			(node *			before,
+				 node *			after,
+				 node *			first,
+				 node *			last)
+{
+	before->_succ = after;
+	after->_pred = before;
+
+	first->_pred = NULL;
+	last->_succ = NULL;
+
+	return first;
+}
+
+static inline node *
+_insert_nodes			(node *			before,
+				 node *			after,
+				 node *			first,
+				 node *			last)
+{
+	first->_pred = before;
+        last->_succ = after;
+
+	after->_pred = last;
+	before->_succ = first;
+
+	return first;
 }
 
 /**
@@ -149,13 +178,8 @@ empty_list(list *l)
 static inline node *
 add_head(list *l, node *n)
 {
-	n->pred = (node *) &l->head;
-	n->succ = l->head;
-	l->head->pred = n;
-	l->head = n;
-	l->members++;
-
-	return n;
+	++l->_n_members;
+	return _insert_nodes (&l->_head, l->_head._succ, n, n);
 }
 
 /**
@@ -171,13 +195,8 @@ add_head(list *l, node *n)
 static inline node *
 add_tail(list *l, node *n)
 {
-	n->succ = (node *) &l->null;
-	n->pred = l->tail;
-	l->tail->succ = n;
-	l->tail = n;
-	l->members++;
-
-	return n;
+	++l->_n_members;
+	return _insert_nodes (l->_head._pred, &l->_head, n, n);
 }
 
 /**
@@ -192,16 +211,13 @@ add_tail(list *l, node *n)
 static inline node *
 rem_head(list *l)
 {
-	node *n = l->head, *s = n->succ;
+	node *n = l->_head._succ;
 
-	if (s) {
-		s->pred = (node *) &l->head;
-		l->head = s;
-		l->members--;
-		return n;
-	}
+	if (unlikely (n == &l->_head))
+		return NULL;
 
-	return NULL;
+	--l->_n_members;
+	return _remove_nodes (&l->_head, n->_succ, n, n);
 }
 
 /**
@@ -216,16 +232,13 @@ rem_head(list *l)
 static inline node *
 rem_tail(list *l)
 {
-	node *n = l->tail, *p = n->pred;
+	node *n = l->_head._pred;
 
-	if (p) {
-		p->succ = (node *) &l->null;
-		l->tail = p;
-		l->members--;
-		return n;
-	}
+	if (unlikely (n == &l->_head))
+		return NULL;
 
-	return NULL;
+	--l->_n_members;
+	return _remove_nodes (n->_pred, &l->_head, n, n);
 }
 
 /**
@@ -241,11 +254,23 @@ rem_tail(list *l)
 static inline node *
 unlink_node(list *l, node *n)
 {
-	n->pred->succ = n->succ;
-	n->succ->pred = n->pred;
-	l->members--;
+	--l->_n_members;
+	return _remove_nodes (n->_pred, n->_succ, n, n);
+}
 
-	return n;
+static inline vbi_bool
+is_member			(const list *		l,
+				 const node *		n)
+{
+	const node *q;
+
+	for (q = l->_head._succ; q != &l->_head; q = q->_succ) {
+		if (unlikely (q == n)) {
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }
 
 /**
@@ -261,15 +286,10 @@ unlink_node(list *l, node *n)
 static inline node *
 rem_node(list *l, node *n)
 {
-	node *q;
+	if (!is_member (l, n))
+		return NULL;
 
-	for (q = l->head; q->succ; q = q->succ)
-		if (n == q) {
-			unlink_node(l, n);
-			return n;
-		}
-
-	return NULL;
+	return unlink_node (l, n);
 }
 
 typedef struct {
@@ -364,19 +384,21 @@ vbi_cache_put(vbi_decoder *vbi, vt_page *vtp)
 	cache_page *cp;
 	int h = hash(vtp->pgno);
 	int size = vtp_size(vtp);
+	vbi_bool already_cached;
 
 	if (0)
 		fprintf(stderr, "cache_put %x.%x\n",
 			vtp->pgno, vtp->subno);
 
+	already_cached = FALSE;
 	for_all_nodes (cp, ca->hash + h, node)
 		if (cp->page.pgno == vtp->pgno
-		    && cp->page.subno == vtp->subno)
+		    && cp->page.subno == vtp->subno) {
+			already_cached = TRUE;
 			break;
+		}
 
-	if (cp->node.succ) {
-		/* already cached */
-
+	if (already_cached) {
 		if (vtp_size(&cp->page) == size) {
 			// move to front.
 			add_head(ca->hash + h, unlink_node(ca->hash + h, &cp->node));
@@ -397,7 +419,7 @@ vbi_cache_put(vbi_decoder *vbi, vt_page *vtp)
 		if (vtp->subno >= CACHED_MAXSUB1(vtp->pgno))
 			CACHED_MAXSUB1(vtp->pgno) = vtp->subno + 1;
 
-		ca->npages++;
+		ca->n_pages++;
 
 		add_head(ca->hash + h, &cp->node);
 	}
@@ -434,7 +456,7 @@ vbi_cache_foreach(vbi_decoder *vbi, int pgno, int subno,
 	int wrapped = 0;
 	int r;
 
-	if (ca->npages == 0)
+	if (ca->n_pages == 0)
 		return 0;
 
 	if ((vtp = cache_lookup(ca, pgno, subno)))
@@ -519,7 +541,7 @@ vbi_cache_init(vbi_decoder *vbi)
 	for (i = 0; i < HASH_SIZE; i++)
 		init_list(ca->hash + i);
 
-	ca->npages = 0;
+	ca->n_pages = 0;
 
 	memset(vbi->vt.cached, 0, sizeof(vbi->vt.cached));
 }

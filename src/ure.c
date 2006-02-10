@@ -28,7 +28,7 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $Id: ure.c,v 1.5 2004/12/13 07:17:11 mschimek Exp $ */
+/* $Id: ure.c,v 1.6 2006/02/10 06:25:37 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -750,7 +750,7 @@ static unsigned long
 _ure_posix_ccl(ucs2_t *cp, unsigned long limit, _ure_symtab_t *sym,
                _ure_buffer_t *b)
 #else
-     _ure_posix_ccl(cp, limit, sym, b)
+_ure_posix_ccl(cp, limit, sym, b)
      ucs2_t *cp;
      unsigned long limit;
      _ure_symtab_t *sym;
@@ -761,6 +761,8 @@ _ure_posix_ccl(ucs2_t *cp, unsigned long limit, _ure_symtab_t *sym,
   unsigned long n;
   _ure_trie_t *tp;
   ucs2_t *sp, *ep;
+
+  b = b;
 
   /*
    * If the number of characters left is less than 7, then this cannot be
@@ -2282,7 +2284,7 @@ ure_exec(ure_dfa_t dfa, int flags, ucs2_t *text, unsigned long textlen,
 
       if (matched) {
 	me = sp - text;
-	if (ms == ~0)
+	if (ms == (unsigned long) ~0)
 	  ms = lp - text;
 
 	stp = dfa->states + stp->trans[i].next_state;
@@ -2356,7 +2358,7 @@ ure_exec(ure_dfa_t dfa, int flags, ucs2_t *text, unsigned long textlen,
   *match_start = ms;
   *match_end = me;
 
-  return (ms != ~0) ? 1 : 0;
+  return (ms != (unsigned long) ~0) ? 1 : 0;
 }
 
 #endif /* HAVE_GLIBC21 || HAVE_LIBUNICODE */

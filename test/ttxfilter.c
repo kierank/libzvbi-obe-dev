@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.1 2005/10/04 10:06:11 mschimek Exp $ */
+/* $Id: ttxfilter.c,v 1.2 2006/02/10 06:25:38 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -47,25 +47,103 @@ static struct {
 	vbi_pgno			last;
 }				filter_pages[30];
 
-static vbi_bool			source_pes	= FALSE;
-static vbi_bool			system_pages	= FALSE;
+static vbi_bool		source_pes	= FALSE;
+static vbi_bool		system_pages	= FALSE;
 
 static vbi_dvb_demux *		dx;
+
+/* Data is all zero, ignored due to hamming and parity error. */
+static vbi_sliced		sliced_blank;
+
+static unsigned int		pass_this;
+static unsigned int		pass_next;
+
+static vbi_bool
+decode_packet_0			(const uint8_t		buffer[42],
+				 unsigned int		magazine)
+{
+	int page;
+	int flags;
+	vbi_pgno pgno;
+	vbi_bool match;
+	unsigned int mag_set;
+
+	page = vbi_unham16p (buffer + 2);
+	if (page < 0) {
+		fprintf (stderr, "Hamming error in packet 0 page number\n");
+		return FALSE;
+	}
+
+	if (0xFF == page) {
+		/* Filler, discard. */
+		pass_this = 0;
+		return TRUE;
+	}
+
+	pgno = magazine * 0x100 + page;
+
+	flags = vbi_unham16p (buffer + 4)
+		| (vbi_unham16p (buffer + 6) << 8)
+		| (vbi_unham16p (buffer + 8) << 16);
+	if (flags < 0) {
+		fprintf (stderr, "Hamming error in packet 0 flags\n");
+		return FALSE;
+	}
+
+	if (flags & 0x100000 /* VBI_SERIAL */) {
+		mag_set = -1;
+	} else {
+		mag_set = 1 << magazine;
+	}
+
+	match = FALSE;
+
+	if (!vbi_is_bcd (pgno)) {
+		/* Page inventories and TOP pages (e.g. to
+		   find subtitles), DRCS and object pages, etc. */
+		match = system_pages;
+	} else {
+		unsigned int i;
+
+		for (i = 0; i < N_ELEMENTS (filter_pages); ++i) {
+			if (pgno >= filter_pages[i].first
+			    && pgno <= filter_pages[i].last) {
+				match = TRUE;
+				break;
+			}
+		}
+	}
+
+	if (match) {
+		pass_this |= mag_set;
+		pass_next = pass_this;
+	} else {
+		if (pass_this & mag_set) {
+			/* Terminate page. */
+			pass_next = pass_this & ~mag_set;
+		} else {
+			pass_this &= ~mag_set;
+			pass_next = pass_this;
+		}
+	}
+
+	return TRUE;
+}
 
 static vbi_bool
 teletext			(const uint8_t		buffer[42],
 				 unsigned int		line)
 {
-	static vbi_bool pass_through = FALSE;
 	int pmag;
 	unsigned int magazine;
 	unsigned int packet;
-	int page;
-	vbi_pgno pgno;
 
 	line = line;
 
-	if ((pmag = vbi_unham16p (buffer)) < 0) {
+	pass_this = pass_next;
+
+	pmag = vbi_unham16p (buffer);
+	if (pmag < 0) {
 		fprintf (stderr, "Hamming error in pmag\n");
 		return FALSE;
 	}
@@ -80,34 +158,8 @@ teletext			(const uint8_t		buffer[42],
 	case 0:
 		/* Page header. */
 
-		if ((page = vbi_unham16p (buffer + 2)) < 0) {
-			fprintf (stderr, "Hamming error in "
-				 "packet 0 page number\n");
+		if (!decode_packet_0 (buffer, magazine))
 			return FALSE;
-		}
-
-		pgno = magazine * 0x100 + page;
-
-		pass_through = FALSE;
-
-		if (0xFF == page) {
-			/* Filler, discard. */
-		} else if (!vbi_is_bcd (pgno)) {
-			/* Page inventories and TOP pages (e.g. to
-			   find subtitles), DRCS and object pages, etc. */
-			pass_through = system_pages;
-		} else {
-			unsigned int i;
-
-			for (i = 0; i < N_ELEMENTS (filter_pages); ++i) {
-				if (pgno >= filter_pages[i].first
-				    && pgno <= filter_pages[i].last) {
-					pass_through = TRUE;
-					break;
-				}
-			}
-		}
-
 		break;
 
 	case 1 ... 25:
@@ -130,7 +182,7 @@ teletext			(const uint8_t		buffer[42],
 		assert (0);
 	}
 
-	return pass_through;
+	return !!(pass_this & (1 << magazine));
 }
 
 static void
@@ -203,7 +255,7 @@ pes_mainloop			(void)
 				decode (sliced, &n_lines, 0, pts);
 
 				if (n_lines > 0) {
-					fprintf (stderr, "OOPS! PES output not implemented yet.\n");
+					fprintf (stderr, "OOPS!\n");
 					/* Write n_lines here. */
 					exit (EXIT_FAILURE);
 				}
@@ -221,6 +273,7 @@ old_mainloop			(void)
 		vbi_sliced sliced[40];
 		double timestamp;
 		unsigned int n_lines;
+		vbi_bool success;
 
 		n_lines = read_sliced (sliced, &timestamp, /* max_lines */ 40);
 		if ((int) n_lines < 0)
@@ -229,12 +282,17 @@ old_mainloop			(void)
 		decode (sliced, &n_lines, timestamp, /* sample_time */ 0);
 
 		if (n_lines > 0) {
-			vbi_bool success;
-
 			success = write_sliced (sliced, n_lines, timestamp);
 			assert (success);
 
 			fflush (stdout);
+		} else if (0) {
+			/* Decoder may assume data loss without
+			   continuous timestamps. */
+			success = write_sliced (&sliced_blank,
+						/* n_lines */ 1,
+						timestamp);
+			assert (success);
 		}
 	}
 
@@ -369,6 +427,9 @@ main				(int			argc,
 			filter_pages[n_pages++].last = pgno;
 		}
 	}
+
+	sliced_blank.id = VBI_SLICED_TELETEXT_B_L10_625;
+	sliced_blank.line = 7;
 
 	if (isatty (STDIN_FILENO)) {
 		fprintf (stderr, "No vbi data on stdin\n");

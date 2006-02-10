@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-html.c,v 1.8 2005/05/25 02:26:54 mschimek Exp $ */
+/* $Id: exp-html.c,v 1.9 2006/02/10 06:25:37 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -108,6 +108,8 @@ static vbi_option_info *
 option_enum(vbi_export *e, int index)
      /* XXX unsigned index */
 {
+	e = e;
+
 	if (index < 0 || index >= (int) elements(html_options))
 		return NULL;
 	else
@@ -239,7 +241,7 @@ title(html_instance *html, vbi_page *pg)
 static vbi_bool
 header(html_instance *html, vbi_page *pg)
 {
-	char *charset, *lang = NULL, *dir = NULL;
+	const char *charset, *lang = NULL, *dir = NULL;
 
 	switch (pg->font[0] - vbi_font_descriptors) {
 	case 0:	 /* English */
@@ -659,12 +661,13 @@ export(vbi_export *e, FILE *fp, vbi_page *pgp)
 
 			if (vbi_is_print(acp[j].unicode)) {
 				char in[2], out[1], *ip = in, *op = out;
-				size_t li = sizeof(in), lo = sizeof(out);
+				size_t li = sizeof(in), lo = sizeof(out), r;
 
 				in[0 + endian] = acp[j].unicode;
 				in[1 - endian] = acp[j].unicode >> 8;
 
-				if (iconv(html->cd, (void *) &ip, &li, (void *) &op, &lo) == -1
+				r = iconv (html->cd, (void *) &ip, &li, (void *) &op, &lo);
+				if ((size_t) -1 == r
 				    || (out[0] == 0x40 && acp[j].unicode != 0x0040))
 					fprintf(html->fp, "&#%u;", acp[j].unicode);
 				else

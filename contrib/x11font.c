@@ -1,11 +1,13 @@
 /* Copyright (C) 2002 Gerd Knorr */
 
-/* $Id: x11font.c,v 1.4 2005/01/20 01:41:13 mschimek Exp $ */
+/* $Id: x11font.c,v 1.5 2006/02/10 06:25:36 mschimek Exp $ */
 
 #include "src/exp-gfx.c"
 
 static void print_head(FILE *fp,
-		       char *foundry, char *name, char *slant,
+		       const char *foundry,
+		       const char *name,
+		       const char *slant,
 		       int width, int height)
 {
     fprintf(fp,
@@ -48,7 +50,9 @@ static void print_head(FILE *fp,
 }
 
 static void
-print_font(char *filename, char *foundry, char *name, int italic,
+print_font(const char *filename,
+	   const char *foundry,
+	   const char *name, int italic,
 	   uint8_t *font, int cw, int ch, int cpl,
 	   int count, unsigned int (*map)(unsigned int,int), int invalid)
 {
@@ -105,7 +109,7 @@ print_font(char *filename, char *foundry, char *name, int italic,
 }
 
 int 
-main(int argc, char *argv[])
+main ()
 {
     print_font("teletext.bdf","ets","teletext",0,(uint8_t *) wstfont2_bits,
 	       TCW,TCH,TCPL,1448,unicode_wstfont2,357);

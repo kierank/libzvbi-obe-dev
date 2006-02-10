@@ -327,6 +327,9 @@ static vbi_raw_decoder* dvb_parameters(vbi_capture *cap)
     static vbi_raw_decoder raw = {
 	.count = { 128, 128 },
     };
+
+    cap = cap;
+
     return &raw;
 }
 
@@ -441,6 +444,10 @@ vbi_capture_dvb_new(char *dev, int scanning,
 	char *error = NULL;
 	vbi_capture *cap;
 
+	scanning = scanning;
+	services = services;
+	strict = strict;
+
 	if (!errstr)
 		errstr = &error;
 	*errstr = NULL;
@@ -484,6 +491,8 @@ vbi_capture_dvb_new(char *dev, int scanning,
 int64_t
 vbi_capture_dvb_last_pts	(const vbi_capture *	cap)
 {
+	cap = cap;
+
 	return 0;
 }
 
@@ -501,6 +510,9 @@ int
 vbi_capture_dvb_filter		(vbi_capture *		cap,
 				 int			pid)
 {
+	cap = cap;
+	pid = pid;
+
 	return -1;
 }
 
@@ -525,6 +537,10 @@ vbi_capture_dvb_new2		(const char *		device_name,
 				 char **		errstr,
 				 vbi_bool		trace)
 {
+	device_name = device_name;
+	pid = pid;
+	trace = trace;
+
 	if (errstr)
 		vbi_asprintf (errstr, _("DVB interface not compiled."));
 
@@ -566,6 +582,12 @@ vbi_capture_dvb_new(char *dev, int scanning,
 		    unsigned int *services, int strict,
 		    char **errstr, vbi_bool trace)
 {
+	dev = dev;
+	scanning = scanning;
+	services = services;
+	strict = strict;
+	trace = trace;
+
 	if (errstr)
 		vbi_asprintf (errstr, _("DVB interface not compiled."));
 

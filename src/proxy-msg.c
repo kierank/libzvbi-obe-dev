@@ -29,9 +29,12 @@
  *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
  *    the latter ones are currently not officially supported.
  *
- *  $Id: proxy-msg.c,v 1.13 2004/12/30 02:25:29 mschimek Exp $
+ *  $Id: proxy-msg.c,v 1.14 2006/02/10 06:25:37 mschimek Exp $
  *
  *  $Log: proxy-msg.c,v $
+ *  Revision 1.14  2006/02/10 06:25:37  mschimek
+ *  *** empty log message ***
+ *
  *  Revision 1.13  2004/12/30 02:25:29  mschimek
  *  printf ptrdiff_t fixes.
  *
@@ -485,7 +488,7 @@ vbi_bool vbi_proxy_msg_handle_read( VBIPROXY_MSG_STATE * pIO,
                pReadBuf->head.len  = pIO->readLen;
                pReadBuf->head.type = ntohl(pReadBuf->head.type);
                /* dprintf1("handle_io: fd %d: new block: size %d\n", pIO->sock_fd, pIO->readLen); */
-               if ((pIO->readLen > max_read_len) ||
+               if ((pIO->readLen > (size_t) max_read_len) ||
                    (pIO->readLen < sizeof(VBIPROXY_MSG_HEADER)))
                {
                   /* illegal message size -> protocol error */
@@ -506,7 +509,7 @@ vbi_bool vbi_proxy_msg_handle_read( VBIPROXY_MSG_STATE * pIO,
 
       if ((err == FALSE) && (pIO->readOff >= sizeof(VBIPROXY_MSG_HEADER)))
       {  /* in read phase two: read the complete message into the allocated buffer */
-         assert (pIO->readLen <= max_read_len);
+         assert (pIO->readLen <= (size_t) max_read_len);
 
          len = recv(pIO->sock_fd, (char*)pReadBuf + pIO->readOff,
                                   pIO->readLen - pIO->readOff, 0);
@@ -924,7 +927,12 @@ int vbi_proxy_msg_accept_connection( int listen_fd )
                   hname_buf[sizeof(hname_buf) - 1] = 0;
                }
                else
-                  sprintf(hname_buf, "%s, port %d", inet_ntoa(((struct sockaddr_in *) &peerAddr.sa)->sin_addr), ((struct sockaddr_in *) &peerAddr.sa)->sin_port);
+	       {
+		  struct sockaddr_in *sa;
+
+		  sa = (struct sockaddr_in *) &peerAddr.sa;
+                  sprintf(hname_buf, "%s, port %d", inet_ntoa(sa->sin_addr), sa->sin_port);
+	       }
 
                vbi_proxy_msg_logger(LOG_INFO, sock_fd, 0, "new connection from ", hname_buf, NULL);
                result = TRUE;
@@ -1012,7 +1020,7 @@ static char * vbi_proxy_msg_resolve_symlinks( const char * p_dev_name )
       if ((res == 0) && S_ISLNK(stbuf.st_mode))
       {
          name_len = readlink(p_path, link_name, sizeof(link_name));
-         if ((name_len > 0) && (name_len < sizeof(link_name)))
+         if ((name_len > 0) && (name_len < (int) sizeof(link_name)))
          {
             link_name[name_len] = 0;
             dprintf2("resolve_symlinks: following symlink %s to: %s\n", p_path, link_name);
@@ -1255,7 +1263,8 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
 vbi_bool vbi_proxy_msg_finish_connect( int sock_fd, char ** ppErrorText )
 {
    vbi_bool result = FALSE;
-   int  sockerr, sockerrlen;
+   int sockerr;
+   socklen_t sockerrlen;
 
    sockerrlen = sizeof(sockerr);
    if (getsockopt(sock_fd, SOL_SOCKET, SO_ERROR, (void *)&sockerr, &sockerrlen) == 0)
@@ -1288,6 +1297,8 @@ vbi_bool vbi_proxy_msg_finish_connect( int sock_fd, char ** ppErrorText )
 static int
 vbi_proxy_msg_v4l_ioctl( int request, void * p_arg, vbi_bool * req_perm )
 {
+   p_arg = p_arg;
+
    switch (request)
    {
 #ifdef ENABLE_V4L
