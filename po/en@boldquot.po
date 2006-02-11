@@ -1,6 +1,6 @@
 # English translations for zvbi package.
 # This file is put in the public domain.
-# Automatically generated, 2005.
+# Automatically generated, 2006.
 #
 # All this catalog "translates" are quotation characters.
 # The msgids must be ASCII and therefore cannot contain real quotation
@@ -29,10 +29,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: zvbi 0.2.17\n"
+"Project-Id-Version: zvbi 0.2.18\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-10-07 16:55+0200\n"
-"PO-Revision-Date: 2005-10-07 16:55+0200\n"
+"POT-Creation-Date: 2006-02-11 06:39+0100\n"
+"PO-Revision-Date: 2006-02-11 06:39+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -52,39 +52,39 @@ msgstr ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
 
-#: src/exp-gfx.c:820 src/exp-gfx.c:1118
+#: src/exp-gfx.c:822 src/exp-gfx.c:1120
 #, c-format
 msgid "Unable to allocate %d KB image buffer."
 msgstr "Unable to allocate %d KB image buffer."
 
-#: src/exp-gfx.c:909
+#: src/exp-gfx.c:911
 msgid "PPM"
 msgstr "PPM"
 
-#: src/exp-gfx.c:910
+#: src/exp-gfx.c:912
 msgid "Export this page as raw PPM image"
 msgstr "Export this page as raw PPM image"
 
-#: src/exp-gfx.c:1001
+#: src/exp-gfx.c:1003
 #, c-format
 msgid "Unable to allocate %d byte buffer."
 msgstr "Unable to allocate %d byte buffer."
 
-#: src/exp-gfx.c:1188 src/exp-html.c:231
+#: src/exp-gfx.c:1191 src/exp-html.c:233
 #, c-format
 msgid "Teletext Page %3x.%x"
 msgstr "Teletext Page %3x.%x"
 
-#: src/exp-gfx.c:1192 src/exp-html.c:233
+#: src/exp-gfx.c:1195 src/exp-html.c:235
 #, c-format
 msgid "Teletext Page %3x"
 msgstr "Teletext Page %3x"
 
-#: src/exp-gfx.c:1261
+#: src/exp-gfx.c:1264
 msgid "PNG"
 msgstr "PNG"
 
-#: src/exp-gfx.c:1262
+#: src/exp-gfx.c:1265
 msgid "Export this page as PNG image"
 msgstr "Export this page as PNG image"
 
@@ -118,25 +118,25 @@ msgstr "Include HTML page header"
 
 #. TRANSLATORS: "lang=\"en\" refers to the page title
 #. "Teletext Page ...". Please specify "de", "fr", "es" etc.
-#: src/exp-html.c:220
+#: src/exp-html.c:222
 #, c-format
 msgid "<title lang=\"en\">"
 msgstr "<title lang=“[1men[0m”>"
 
-#: src/exp-html.c:351 src/exp-txt.c:604
+#: src/exp-html.c:353 src/exp-txt.c:610
 #, c-format
 msgid "Character conversion Unicode (UCS-2) to %s not supported."
 msgstr "Character conversion Unicode (UCS-2) to %s not supported."
 
-#: src/exp-html.c:430
+#: src/exp-html.c:432
 msgid "Character conversion failed."
 msgstr "Character conversion failed."
 
-#: src/exp-html.c:723
+#: src/exp-html.c:726
 msgid "HTML"
 msgstr "HTML"
 
-#: src/exp-html.c:724
+#: src/exp-html.c:727
 msgid "Export this page as HTML page"
 msgstr "Export this page as HTML page"
 
@@ -258,11 +258,11 @@ msgstr "Background"
 msgid "Assumed terminal background color"
 msgstr "Assumed terminal background color"
 
-#: src/exp-txt.c:653
+#: src/exp-txt.c:659
 msgid "Text"
 msgstr "Text"
 
-#: src/exp-txt.c:654
+#: src/exp-txt.c:660
 msgid "Export this page as text file"
 msgstr "Export this page as text file"
 
@@ -300,36 +300,36 @@ msgstr "Unknown export module '%s'."
 msgid "Cannot initialize export module '%s', probably lack of memory."
 msgstr "Cannot initialize export module '%s', probably lack of memory."
 
-#: src/export.c:992
+#: src/export.c:993
 #, c-format
 msgid "Cannot create file '%s': %s."
 msgstr "Cannot create file '%s': %s."
 
-#: src/export.c:1064
+#: src/export.c:1065
 #, c-format
 msgid "Error while writing file '%s'"
 msgstr "Error while writing file ‘[1m%s[0m’"
 
-#: src/export.c:1066
+#: src/export.c:1067
 msgid "Error while writing file"
 msgstr "Error while writing file"
 
-#: src/export.c:1096
+#: src/export.c:1097
 #, c-format
 msgid "Export module '%s' has no option '%s'."
 msgstr "Export module ‘[1m%s[0m’ has no option '%s'."
 
-#: src/export.c:1146
+#: src/export.c:1147
 #, c-format
 msgid "Invalid argument %s for option %s of export module %s."
 msgstr "Invalid argument %s for option %s of export module %s."
 
-#: src/export.c:1170
+#: src/export.c:1171
 #, c-format
 msgid "Out of memory in export module '%s'."
 msgstr "Out of memory in export module '%s'."
 
-#: src/export.c:1197
+#: src/export.c:1198
 msgid "Unknown error."
 msgstr "Unknown error."
 
@@ -340,8 +340,8 @@ msgstr "BKTR driver"
 #: src/io-bktr.c:202 src/io-bktr.c:283 src/io-bktr.c:301 src/io-v4l.c:162
 #: src/io-v4l.c:1130 src/io-v4l.c:1168 src/io-v4l.c:1196 src/io-v4l2.c:105
 #: src/io-v4l2k.c:182 src/io-v4l2k.c:537 src/io-v4l2k.c:998
-#: src/io-v4l2k.c:1122 src/io-v4l2k.c:1140 src/proxy-client.c:198
-#: src/proxy-client.c:1558
+#: src/io-v4l2k.c:1122 src/io-v4l2k.c:1140 src/proxy-client.c:199
+#: src/proxy-client.c:1565
 msgid "Virtual memory exhausted."
 msgstr "Virtual memory exhausted."
 
@@ -360,7 +360,7 @@ msgstr "Sorry, %s (%s) cannot capture any of the requested data services."
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Not enough memory to allocate vbi capture buffer (%d KB)."
 
-#: src/io-bktr.c:384
+#: src/io-bktr.c:389
 msgid "BKTR driver interface not compiled."
 msgstr "BKTR driver interface not compiled."
 
@@ -430,11 +430,11 @@ msgstr "%s (%s) is not a raw vbi device."
 msgid "%s (%s) does not support the select() function."
 msgstr "%s (%s) does not support the select() function."
 
-#: src/io-v4l.c:1390 src/io-v4l.c:1430
+#: src/io-v4l.c:1390 src/io-v4l.c:1435
 msgid "V4L driver interface not compiled."
 msgstr "V4L driver interface not compiled."
 
-#: src/io-v4l2.c:207 src/io-v4l2k.c:1305
+#: src/io-v4l2.c:212 src/io-v4l2k.c:1312
 msgid "V4L2 driver interface not compiled."
 msgstr "V4L2 driver interface not compiled."
 
@@ -525,51 +525,51 @@ msgstr "Server hostname not configured."
 msgid "Server port not configured."
 msgstr "Server port not configured."
 
-#: src/proxy-client.c:421
+#: src/proxy-client.c:422
 msgid "Protocol error (unexpected message)."
 msgstr "Protocol error (unexpected message)."
 
-#: src/proxy-client.c:582 src/proxy-client.c:634
+#: src/proxy-client.c:583 src/proxy-client.c:635
 msgid "Connection lost due to I/O error."
 msgstr "Connection lost due to I/O error."
 
-#: src/proxy-client.c:755
+#: src/proxy-client.c:756
 #, c-format
 msgid "Incompatible server version %u.%u.%u."
 msgstr "Incompatible server version %u.%u.%u."
 
-#: src/proxy-client.c:763
+#: src/proxy-client.c:764
 msgid "Incompatible server architecture (endianess mismatch)."
 msgstr "Incompatible server architecture (endianess mismatch)."
 
-#: src/proxy-client.c:1861 src/proxy-client.c:1909
+#: src/proxy-client.c:1868 src/proxy-client.c:1916
 msgid "Proxy client interface not compiled."
 msgstr "Proxy client interface not compiled."
 
-#: src/proxy-msg.c:1197
+#: src/proxy-msg.c:1205
 #, c-format
 msgid "Cannot create socket: %s."
 msgstr "Cannot create socket: %s."
 
-#: src/proxy-msg.c:1205
+#: src/proxy-msg.c:1213
 #, c-format
 msgid "Invalid hostname or port: %s."
 msgstr "Invalid hostname or port: %s."
 
-#: src/proxy-msg.c:1225
+#: src/proxy-msg.c:1233
 msgid "Connection via TCP/IP failed, server not running or unreachable."
 msgstr "Connection via TCP/IP failed, server not running or unreachable."
 
-#: src/proxy-msg.c:1227
+#: src/proxy-msg.c:1235
 msgid "Connection via socket failed, server not running."
 msgstr "Connection via socket failed, server not running."
 
-#: src/proxy-msg.c:1236 src/proxy-msg.c:1278
+#: src/proxy-msg.c:1244 src/proxy-msg.c:1287
 #, c-format
 msgid "Socket I/O error: %s."
 msgstr "Socket I/O error: %s."
 
-#: src/proxy-msg.c:1271
+#: src/proxy-msg.c:1280
 #, c-format
 msgid "Cannot connect to server: %s."
 msgstr "Cannot connect to server: %s."
