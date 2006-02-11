@@ -1,4 +1,4 @@
-libzvbi 0.2.18, 2006-02-10
+libzvbi 0.2.18, 2006-02-11
 --------------------------
 This is a bugfix release.
 
@@ -13,8 +13,8 @@ This is a bugfix release.
   Teletext cache, which may crash applications, has been fixed.
 - In previous versions GCC may not have inlined some bit slicer and
   page rendering functions, making them much slower.
-- The teletext filter did not work with parallel page transmission
-  (e.g. BBC).
+- The teletext filter added in 0.2.17 did not work with parallel page
+  transmission (e.g. BBC).
 - The code has been cleaned to avoid some compiler warnings (Diego).
 
 libzvbi 0.2.17, 2005-10-07

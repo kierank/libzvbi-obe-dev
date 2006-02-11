@@ -1,3 +1,7 @@
+2005-02-11    <mschimek@users.sf.net>
+
+	* Release 0.2.18.
+
 2006-02-07    <mschimek@users.sf.net>
 
 	* test/ttxfilter.c: Didn't work with parallel page transmission.
