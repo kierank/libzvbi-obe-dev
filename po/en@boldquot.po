@@ -29,7 +29,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: zvbi 0.2.18\n"
+"Project-Id-Version: zvbi 0.2.19\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-11 06:39+0100\n"
 "PO-Revision-Date: 2006-02-11 06:39+0100\n"
