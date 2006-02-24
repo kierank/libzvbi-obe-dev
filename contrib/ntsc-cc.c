@@ -36,9 +36,10 @@
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif
+
+#define HAVE_ZVBI 1
 #include <assert.h>
 #include "src/libzvbi.h"
-
 
 #ifndef X_DISPLAY_MISSING
 # include <X11/X.h>
