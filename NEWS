@@ -1,3 +1,9 @@
+libzvbi 0.2.19, 2006-02-23
+--------------------------
+This is a bugfix release.
+
+- zvbi-ntsc-cc did not use libzvbi but its own VBI decoder.
+
 libzvbi 0.2.18, 2006-02-11
 --------------------------
 This is a bugfix release.

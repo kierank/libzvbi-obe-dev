@@ -1,3 +1,14 @@
+2006-02-23    <mschimek@users.sf.net>
+
+	* Release 0.2.19.
+
+2006-02-23    <mschimek@users.sf.net>
+
+	* contrib/ntsc-cc.c: Did not use libzvbi but its own decoder,
+	  fixes Debian bug #354035.
+	* contrib/Makefile.am (zvbi_ntsc_cc_LDADD): Link libzvbi
+	  dynamically.
+
 2005-02-11    <mschimek@users.sf.net>
 
 	* Release 0.2.18.

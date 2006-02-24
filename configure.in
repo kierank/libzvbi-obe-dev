@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(zvbi, 0.2.18)
+AC_INIT(zvbi, 0.2.19)
 AC_CONFIG_SRCDIR(src/vbi.c)
 
 AM_INIT_AUTOMAKE([1.9 check-news dist-bzip2])
