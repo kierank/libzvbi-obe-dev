@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.19 2005/06/11 22:13:11 mschimek Exp $ */
+/* $Id: capture.c,v 1.20 2006/03/17 13:37:55 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -75,6 +75,7 @@ int			bin_ts;
 int			do_read = TRUE;
 int			do_sim;
 int			ignore_error;
+int			desync;
 
 #include "sim.c"
 
@@ -488,11 +489,12 @@ mainloop(void)
 	}
 }
 
-static const char short_options[] = "123d:elnpstvPT";
+static const char short_options[] = "123cd:elnpstvPT";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options[] = {
+	{ "desync",	no_argument,		NULL,		'c' },
 	{ "device",	required_argument,	NULL,		'd' },
 	{ "ignore-error", no_argument,		NULL,		'e' },
 	{ "pid",	required_argument,	NULL,		'i' },
@@ -549,6 +551,9 @@ main(int argc, char **argv)
 		case '3':
 			interface = c - '0';
 			break;
+		case 'c':
+			desync ^= TRUE;
+			break;
 		case 'd':
 			free (dev_name);
 			dev_name = strdup (optarg);
@@ -600,7 +605,7 @@ main(int argc, char **argv)
 	strict = 0;
 
 	if (do_sim) {
-		par = init_sim (scanning, services);
+		par = init_sim (scanning, services, !desync);
 	} else {
 		do {
 			if (-1 != pid) {

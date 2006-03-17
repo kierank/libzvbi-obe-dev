@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.21 2006/02/10 06:25:38 mschimek Exp $ */
+/* $Id: osc.c,v 1.22 2006/03/17 13:37:39 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -57,6 +57,7 @@ vbi_bool		quit;
 
 int			do_sim;
 int			ignore_error;
+int			desync;
 
 Display *		display;
 int			screen;
@@ -602,11 +603,12 @@ mainloop(void)
 	}
 }
 
-static const char short_options[] = "123d:enpsv";
+static const char short_options[] = "123cd:enpsv";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options[] = {
+	{ "desync",	no_argument,		NULL,		'c' },
 	{ "device",	required_argument,	NULL,		'd' },
 	{ "ignore-error", no_argument,		NULL,		'e' },
 	{ "ntsc",	no_argument,		NULL,		'n' },
@@ -647,6 +649,9 @@ main(int argc, char **argv)
 		case '3':
 			interface = c - '0';
 			break;
+		case 'c':
+			desync ^= TRUE;
+			break;
 		case 'd':
 			dev_name = strdup (optarg);
 			break;
@@ -678,7 +683,7 @@ main(int argc, char **argv)
 	strict = 0;
 
 	if (do_sim) {
-		par = init_sim (scanning, services);
+		par = init_sim (scanning, services, !desync);
 	} else {
 		do {
 			if (1 != interface) {

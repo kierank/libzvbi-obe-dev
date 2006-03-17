@@ -5,6 +5,8 @@
 
 static vbi_raw_decoder sim;
 static double sim_time;
+static uint8_t *desync_buffer[2];
+static unsigned int desync_i;
 
 static inline double
 shape(double ph)
@@ -438,12 +440,30 @@ read_sim(uint8_t *raw_data, vbi_sliced *sliced_data,
 		}
 	}
 
+	if (!sim.synchronous) {
+		/* Delay the VBI data by one field. */
+
+		memcpy (desync_buffer[desync_i ^ 1],
+			raw_data + sim.count[0] * sim.bytes_per_line,
+			sim.count[1] * sim.bytes_per_line);
+
+		memcpy (raw_data + sim.count[1] * sim.bytes_per_line,
+			raw_data, sim.count[0] * sim.bytes_per_line);
+
+		memcpy (raw_data, desync_buffer[desync_i],
+			sim.count[1] * sim.bytes_per_line);
+
+		desync_i ^= 1;
+	}
+
 	*lines = vbi_raw_decode(&sim, raw_data, sliced_data);
 }
 
 static vbi_raw_decoder *
-init_sim(int scanning, unsigned int services)
+init_sim(int scanning, unsigned int services, vbi_bool synchronous)
 {
+	unsigned int size;
+
 	vbi_raw_decoder_init(&sim);
 
 	sim.scanning = scanning;
@@ -452,7 +472,7 @@ init_sim(int scanning, unsigned int services)
 	sim.bytes_per_line = 1440;
 	sim.offset = 9.7e-6 * sim.sampling_rate;
 	sim.interlaced = FALSE;
-	sim.synchronous = TRUE;
+	sim.synchronous = synchronous;
 
 	if (scanning == 525) {
 		sim.start[0] = 10;
@@ -470,6 +490,14 @@ init_sim(int scanning, unsigned int services)
 	sim_time = 0.0;
 
 	vbi_raw_decoder_add_services(&sim, services, 0);
+
+	if (!sim.synchronous) {
+		size = sim.bytes_per_line * sim.count[1];
+		desync_buffer[0] = calloc (size, 1);
+		assert (NULL != desync_buffer[0]);
+		desync_buffer[1] = calloc (size, 1);
+		assert (NULL != desync_buffer[0]);
+	}
 
 	return &sim;
 }
