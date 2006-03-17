@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.6 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.7 2006/03/17 13:38:08 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -73,7 +73,8 @@ _vbi_service_table [] = {
 		{ 6, 318 },
 		{ 22, 335 },
 		10500, 6203125, 6203125, /* 397 x FH */
-		0x00AAAAE7, 0xFFFF, 18, 6, 37 * 8, VBI_MODULATION_NRZ_LSB
+		0x00AAAAE7, 0xFFFF, 18, 6, 37 * 8, VBI_MODULATION_NRZ_LSB,
+		0, /* probably */
 	}, {
 		VBI_SLICED_TELETEXT_B_L10_625,
 		"Teletext System B 625 Level 1.5",
@@ -81,7 +82,8 @@ _vbi_service_table [] = {
 		{ 7, 320 },
 		{ 22, 335 },
 		10300, 6937500, 6937500, /* 444 x FH */
-		0x00AAAAE4, 0xFFFF, 18, 6, 42 * 8, VBI_MODULATION_NRZ_LSB
+		0x00AAAAE4, 0xFFFF, 18, 6, 42 * 8, VBI_MODULATION_NRZ_LSB,
+		0,
 	}, {
 		VBI_SLICED_TELETEXT_B,
 		"Teletext System B, 625",
@@ -89,7 +91,8 @@ _vbi_service_table [] = {
 		{ 6, 318 },
 		{ 22, 335 },
 		10300, 6937500, 6937500, /* 444 x FH */
-		0x00AAAAE4, 0xFFFF, 18, 6, 42 * 8, VBI_MODULATION_NRZ_LSB
+		0x00AAAAE4, 0xFFFF, 18, 6, 42 * 8, VBI_MODULATION_NRZ_LSB,
+		0,
 	}, {
 		VBI_SLICED_TELETEXT_C_625, /* UNTESTED */
 		"Teletext System C 625",
@@ -97,7 +100,8 @@ _vbi_service_table [] = {
 		{ 6, 318 },
 		{ 22, 335 },
 		10480, 5734375, 5734375, /* 367 x FH */
-		0x00AAAAE7, 0xFFFF, 18, 6, 33 * 8, VBI_MODULATION_NRZ_LSB
+		0x00AAAAE7, 0xFFFF, 18, 6, 33 * 8, VBI_MODULATION_NRZ_LSB,
+		0,
 	}, {
 		VBI_SLICED_TELETEXT_D_625, /* UNTESTED */
 		"Teletext System D 625",
@@ -106,21 +110,24 @@ _vbi_service_table [] = {
 		{ 22, 335 },
 		10500, /* or 10970 depending on field order */
 		5642787, 5642787, /* 14/11 x FSC (color subcarrier) */
-		0x00AAAAE5, 0xFFFF, 18, 6, 34 * 8, VBI_MODULATION_NRZ_LSB
+		0x00AAAAE5, 0xFFFF, 18, 6, 34 * 8, VBI_MODULATION_NRZ_LSB,
+		0,
 	}, {
 		VBI_SLICED_VPS, "Video Program System",
 		VBI_VIDEOSTD_SET_PAL_BG,
 		{ 16, 0 },
 		{ 16, 0 },
 		12500, 5000000, 2500000, /* 160 x FH */
-		0xAAAA8A99, 0xFFFFFF, 32, 0, 13 * 8, VBI_MODULATION_BIPHASE_MSB
+		0xAAAA8A99, 0xFFFFFF, 32, 0, 13 * 8, VBI_MODULATION_BIPHASE_MSB,
+		_VBI_SP_FIELD_NUM,
 	}, {
 		VBI_SLICED_VPS_F2, "Pseudo-VPS on field 2",
 		VBI_VIDEOSTD_SET_PAL_BG,
 		{ 0, 329 },
 		{ 0, 329 },
 		12500, 5000000, 2500000, /* 160 x FH */
-		0xAAAA8A99, 0xFFFFFF, 32, 0, 13 * 8, VBI_MODULATION_BIPHASE_MSB
+		0xAAAA8A99, 0xFFFFFF, 32, 0, 13 * 8, VBI_MODULATION_BIPHASE_MSB,
+		_VBI_SP_FIELD_NUM,
 	}, {
 		VBI_SLICED_WSS_625, "Wide Screen Signalling 625",
 		VBI_VIDEOSTD_SET_625_50,
@@ -128,28 +135,33 @@ _vbi_service_table [] = {
 		{ 23, 0 },
 		11000, 5000000, 833333, /* 160/3 x FH */
 		0xC71E3C1F, 0x924C99CE, 32, 0, 14 * 1,
-		VBI_MODULATION_BIPHASE_LSB
+		VBI_MODULATION_BIPHASE_LSB,
+		/* Hm. Easily confused with caption?? */
+		_VBI_SP_FIELD_NUM | _VBI_SP_LINE_NUM,
 	}, {
 		VBI_SLICED_CAPTION_625_F1, "Closed Caption 625, field 1",
 		VBI_VIDEOSTD_SET_625_50,
 		{ 22, 0 },
 		{ 22, 0 },
 		10500, 1000000, 500000, /* 32 x FH */
-		0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB
+		0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB,
+		_VBI_SP_FIELD_NUM,
 	}, {
 		VBI_SLICED_CAPTION_625_F2, "Closed Caption 625, field 2",
 		VBI_VIDEOSTD_SET_625_50,
 		{ 0, 335 },
 		{ 0, 335 },
 		10500, 1000000, 500000, /* 32 x FH */
-		0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB
+		0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB,
+		_VBI_SP_FIELD_NUM,
 	}, {
 		VBI_SLICED_VBI_625, "VBI 625", /* Blank VBI */
 		VBI_VIDEOSTD_SET_625_50,
 		{ 6, 318 },
 		{ 22, 335 },
 		10000, 1510000, 1510000,
-		0, 0, 0, 0, 10 * 8, 0 /* 10.0-2 ... 62.9+1 us */
+		0, 0, 0, 0, 10 * 8, 0, /* 10.0-2 ... 62.9+1 us */
+		0,
 	}, {
 		VBI_SLICED_TELETEXT_B_525, /* UNTESTED */
 		"Teletext System B 525",
@@ -157,7 +169,8 @@ _vbi_service_table [] = {
 		{ 10, 272 },
 		{ 21, 284 },
 		10500, 5727272, 5727272, /* 364 x FH */
-		0x00AAAAE4, 0xFFFF, 18, 6, 34 * 8, VBI_MODULATION_NRZ_LSB
+		0x00AAAAE4, 0xFFFF, 18, 6, 34 * 8, VBI_MODULATION_NRZ_LSB,
+		0,
 	}, {
 		VBI_SLICED_TELETEXT_C_525, /* UNTESTED */
 		"Teletext System C 525",
@@ -165,7 +178,8 @@ _vbi_service_table [] = {
 		{ 10, 272 },
 		{ 21, 284 },
 		10480, 5727272, 5727272, /* 364 x FH */
-		0x00AAAAE7, 0xFFFF, 18, 6, 33 * 8, VBI_MODULATION_NRZ_LSB
+		0x00AAAAE7, 0xFFFF, 18, 6, 33 * 8, VBI_MODULATION_NRZ_LSB,
+		0,
 	}, {
 		VBI_SLICED_TELETEXT_D_525, /* UNTESTED */
 		"Teletext System D 525",
@@ -173,7 +187,8 @@ _vbi_service_table [] = {
 		{ 10, 272 },
 		{ 21, 284 },
 		9780, 5727272, 5727272, /* 364 x FH */
-		0x00AAAAE5, 0xFFFF, 18, 6, 34 * 8, VBI_MODULATION_NRZ_LSB
+		0x00AAAAE5, 0xFFFF, 18, 6, 34 * 8, VBI_MODULATION_NRZ_LSB,
+		0,
 	}, {
 #if 0 /* FIXME probably wrong */
 		VBI_SLICED_WSS_CPR1204,	/* NOT CONFIRMED (EIA-J CPR-1204) */
@@ -182,8 +197,9 @@ _vbi_service_table [] = {
 		{ 20, 283 },
 		{ 20, 283 },
 		11200, 1789773, 447443, /* 1/8 x FSC */
-		0x000000F0, 0xFF, 8, 0, 20 * 1, VBI_MODULATION_NRZ_MSB
+		0x000000F0, 0xFF, 8, 0, 20 * 1, VBI_MODULATION_NRZ_MSB,
 		/* No useful FRC, but a six bit CRC */
+		0,
 	}, {
 #endif
 		VBI_SLICED_CAPTION_525_F1,
@@ -192,7 +208,10 @@ _vbi_service_table [] = {
 		{ 21, 0 },
 		{ 21, 0 },
 		10500, 1006976, 503488, /* 32 x FH */
-		0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB
+		0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB,
+		/* I've seen CC signals on other lines and there's no
+		   way to distinguish from the transmitted data. */
+		_VBI_SP_FIELD_NUM | _VBI_SP_LINE_NUM,
 	}, {
 		VBI_SLICED_CAPTION_525_F2,
 		"Closed Caption 525, field 2",
@@ -200,7 +219,8 @@ _vbi_service_table [] = {
 		{ 0, 284 },
 		{ 0, 284 },
 		10500, 1006976, 503488, /* 32 x FH */
-		0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB
+		0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB,
+		_VBI_SP_FIELD_NUM | _VBI_SP_LINE_NUM,
 	}, {
 		VBI_SLICED_2xCAPTION_525, /* NOT CONFIRMED */
 		"2xCaption 525",
@@ -209,21 +229,24 @@ _vbi_service_table [] = {
 		{ 21, 0 },
 		10500, 1006976, 1006976, /* 64 x FH */
 		0x000554ED, 0xFFFF, 12, 8, 4 * 8,
-		VBI_MODULATION_NRZ_LSB /* Tb. */
+		VBI_MODULATION_NRZ_LSB, /* Tb. */
+		_VBI_SP_FIELD_NUM,
 	}, {
 		VBI_SLICED_VBI_525, "VBI 525", /* Blank VBI */
 		VBI_VIDEOSTD_SET_525_60,
 		{ 10, 272 },
 		{ 21, 284 },
 		9500, 1510000, 1510000,
-		0, 0, 0, 0, 10 * 8, 0 /* 9.5-1 ... 62.4+1 us */
+		0, 0, 0, 0, 10 * 8, 0, /* 9.5-1 ... 62.4+1 us */
+		0,
 	}, {
 		0, NULL,
 		VBI_VIDEOSTD_SET_EMPTY,
 		{ 0, 0 },
 		{ 0, 0 },
 		0, 0, 0,
-		0, 0, 0, 0, 0, 0
+		0, 0, 0, 0, 0, 0,
+		0,
 	}
 };
 
@@ -449,17 +472,16 @@ decode_pattern			(vbi3_raw_decoder *	rd,
 			/* Positive match, output decoded line. */
 
 			sliced->id = job->id;
+			sliced->line = 0;
 
 			if (i >= (unsigned int) sp->count[0]) {
-				if (0 == sp->start[1])
-					sliced->line = 0;
-				else
+				if (sp->synchronous
+				    && 0 != sp->start[1])
 					sliced->line = sp->start[1]
 						+ i - sp->count[0];
 			} else {
-				if (0 == sp->start[0])
-					sliced->line = 0;
-				else
+				if (sp->synchronous
+				    && 0 != sp->start[0])
 					sliced->line = sp->start[0] + i;
 			}
 
@@ -689,9 +711,7 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 		return FALSE;
 	}
 
-	/* I've seen CC signals on other lines and there's no
-	   way to distinguish from the transmitted data. */
-	if ((VBI_SLICED_CAPTION_525 & par->id)
+	if ((par->flags & _VBI_SP_LINE_NUM)
 	    && (0 == sp->start[0] /* unknown */
 		|| 0 == sp->start[1])) {
 		log ("Service 0x%08x (%s) requires exact line numbers",
@@ -772,8 +792,8 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 		}
 	}
 
-	if (!sp->synchronous) {
-		/* Not always, but it's too difficult now to bother. */
+	if ((par->flags & _VBI_SP_FIELD_NUM)
+	    && !sp->synchronous) {
 		log ("Service 0x%08x (%s) requires "
 		     "synchronous field order",
 		     par->id, par->label);
@@ -1168,6 +1188,47 @@ add_job_to_pattern		(vbi3_raw_decoder *	rd,
 	return TRUE;
 }
 
+static void
+lines_containing_data		(unsigned int		start[2],
+				 unsigned int		count[2],
+				 const vbi_sampling_par *sp,
+				 const _vbi_service_par *par)
+{
+	unsigned int field;
+
+	start[0] = 0;
+	start[1] = sp->count[0];
+	count[0] = sp->count[0];
+	count[1] = sp->count[1];
+
+	if (!sp->synchronous) {
+		/* XXX Scanning all lines isn't always necessary. */
+		return;
+	}
+
+	for (field = 0; field < 2; ++field) {
+		unsigned int first;
+		unsigned int last;
+
+		if (0 == par->first[field]
+		    || 0 == par->last[field]) {
+			/* No data on this field. */
+			count[field] = 0;
+			continue;
+		}
+
+		first = sp->start[field];
+		last = first + sp->count[field] - 1;
+
+		if (first > 0) {
+			first = MAX (first, (unsigned int) par->first[field]);
+			start[field] += first - sp->start[field];
+			last = MIN (last, (unsigned int) par->last[field]);
+			count[field] = last - first + 1;
+		}
+	}
+}
+
 /**
  * $param rd Pointer to vbi_raw_decoder object allocated with
  *   vbi3_raw_decoder_new().
@@ -1227,21 +1288,21 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 		memset (rd->pattern, 0, scan_ways * sizeof (rd->pattern[0]));
 	}
 
-	if (525 == rd->sampling.scanning)
+	if (525 == rd->sampling.scanning) {
 		min_offset = 7.9e-6;
-	else
+	} else {
 		min_offset = 8.0e-6;
+	}
 
 	for (par = _vbi_service_table; par->id; ++par) {
 		vbi_sampling_par *sp;
 		_vbi3_raw_decoder_job *job;
-		unsigned int j;
-		unsigned int field;
 		unsigned int start[2];
 		unsigned int count[2];
 		unsigned int sample_offset;
 		unsigned int samples_per_line;
 		unsigned int cri_end;
+		unsigned int j;
 
 		if (0 == (par->id & services))
 			continue;
@@ -1323,35 +1384,7 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 		}
 
 
-		for (field = 0; field < 2; ++field) {
-			unsigned int first;
-			unsigned int last;
-
-			if (0 == par->first[field]
-			    || 0 == par->last[field]) {
-				/* No data on this field. */
-				start[field] = 0;
-				count[field] = 0;
-				continue;
-			}
-
-			first = sp->start[field];
-			last = first + sp->count[field] - 1;
-
-			if (first > 0 && strict > 0) {
-				first = MAX (first,
-					     (unsigned int) par->first[field]);
-				start[field] = first - sp->start[field];
-				last = MIN (last,
-					    (unsigned int) par->last[field]);
-				count[field] = last - first + 1;
-			} else {
-				start[field] = 0;
-				count[field] = sp->count[field];
-			}
-		}
-
-		start[1] += sp->count[0]; /* rel. raw image, not scan lines */
+		lines_containing_data (start, count, sp, par);
 
 		if (!add_job_to_pattern (rd, job - rd->jobs, start, count)) {
 			log ("Out of pattern space "
