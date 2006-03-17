@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.c,v 1.3 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: io-sim.c,v 1.4 2006/03/17 13:38:21 mschimek Exp $ */
 
 #include <assert.h>
 #include <stdlib.h>
@@ -270,11 +270,6 @@ signal_u8			(const vbi_sampling_par *sp,
 {
 	unsigned int scan_lines;
 
-	if (!sp->synchronous) {
-		log ("Requires synchronous sampling");
-		return FALSE;
-	}
-
 	scan_lines = sp->count[0] + sp->count[1];
 
 	clear_image (raw, blank_level,
@@ -308,7 +303,7 @@ signal_u8			(const vbi_sampling_par *sp,
 				row *= 2;
 		} else {
 		bounds:
-			log ("Sliced line %u out of bounds",
+			log ("Sliced line %u out of bounds\n",
 			     sliced->line);
 			return FALSE;
 		}
@@ -387,7 +382,7 @@ signal_u8			(const vbi_sampling_par *sp,
 			break;
 
 		default:
-			log ("Service 0x%08x (%s) not supported",
+			log ("Service 0x%08x (%s) not supported\n",
 			     sliced->id, vbi_sliced_name (sliced->id));
 			return FALSE;
 		}
