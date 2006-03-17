@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: hamm.c,v 1.1 2005/01/19 04:22:10 mschimek Exp $ */
+/* $Id: hamm.c,v 1.2 2006/03/17 13:37:05 mschimek Exp $ */
 
 /* Automated test of the odd parity and Hamming test/set routines. */
 
@@ -64,8 +64,11 @@ main				(int			argc,
 {
 	unsigned int i;
 
+	argc = argc;
+	argv = argv;
+
 	for (i = 0; i < 10000; ++i) {
-		unsigned int n = (i < 256) ? i : mrand48 ();
+		unsigned int n = (i < 256) ? i : (unsigned int) mrand48 ();
 		uint8_t buf[4] = { n, n >> 8, n >> 16 };
 		unsigned int r;
 		unsigned int j;
@@ -95,7 +98,7 @@ main				(int			argc,
 	}
 
 	for (i = 0; i < 10000; ++i) {
-		unsigned int n = (i < 256) ? i : mrand48 ();
+		unsigned int n = (i < 256) ? i : (unsigned int) mrand48 ();
 		unsigned int A, B, C, D;
 		int d;
 
