@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.3 2005/01/19 04:45:42 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.4 2006/03/17 13:37:19 mschimek Exp $ */
 
 /* Automated test of the vbi_raw_decoder. */
 
@@ -51,6 +51,19 @@ memset_rand			(void *			d1,
 		*d++ = rand ();
 
 	return d1;
+}
+
+static void *
+xmemdup				(const void *		s,
+				 size_t			n)
+{
+	void *d;
+
+	d = malloc (n);
+	assert (NULL != d);
+	memcpy (d, s, n);
+
+	return d;
 }
 
 static void
@@ -161,25 +174,57 @@ create_decoder			(const vbi_sampling_par *sp,
 				 unsigned int		strict)
 {
 	vbi3_raw_decoder *rd;
-	unsigned int services;
+	unsigned int in_services;
+	unsigned int out_services;
 
-	services = 0;
+	in_services = 0;
 
 	while (b->service) {
-		services |= b->service;
+		in_services |= b->service;
 		++b;
 	}
 
 	assert (NULL != (rd = vbi3_raw_decoder_new (sp)));
 
-	assert (services == vbi3_raw_decoder_add_services
-		(rd, services, strict));
+	out_services = vbi3_raw_decoder_add_services (rd, in_services, strict);
+
+	if (!sp->synchronous) {
+		/* Ambiguous. */
+		in_services &= ~(VBI_SLICED_VPS |
+				 VBI_SLICED_VPS_F2 |
+				 VBI_SLICED_WSS_625 |
+				 VBI_SLICED_CAPTION_625 |
+				 VBI_SLICED_CAPTION_525);
+	}
+
+	assert (in_services == out_services);
 
 	return rd;
 }
 
 static void
-compare_sliced			(const vbi_sliced *	in,
+compare_payload			(const vbi_sliced *	in,
+				 const vbi_sliced *	out)
+{
+	unsigned int payload;
+
+	payload = vbi_sliced_payload_bits (out->id);
+	assert (0 == memcmp (in->data, out->data, payload >> 3));
+
+	if (payload & 7) {
+		unsigned int mask = (1 << (payload & 7)) - 1;
+
+		payload = (payload >> 3);
+
+		/* MSBs zero, rest as sent */
+		assert (0 == ((in->data[payload] & mask)
+			      ^ out->data[payload]));
+	}
+}
+
+static void
+compare_sliced			(const vbi_sampling_par *sp,
+				 const vbi_sliced *	in,
 				 const vbi_sliced *	out,
 				 const vbi_sliced *	old,
 				 unsigned int		in_lines,
@@ -188,66 +233,95 @@ compare_sliced			(const vbi_sliced *	in,
 {
 	unsigned int i;
 	unsigned int min;
-	const vbi_sliced *s;
+	unsigned int id;
+	vbi_sliced *in1;
+	vbi_sliced *s;
 
 	min = 0;
 
 	for (i = 0; i < out_lines; ++i) {
 		unsigned int payload;
 
-		/* Ascending line numbers */
-		assert (out[i].line > min);
-		min = out[i].line;
+		if (sp->synchronous) {
+			/* Ascending line numbers. */
+			assert (out[i].line > min);
+			min = out[i].line;
+		} else {
+			/* Could be first or second field,
+			   we don't know. */
+			assert (0 == out[i].line);
+		}
 
-		/* Valid service id */
+		/* Valid service id. */
 		assert (0 != out[i].id);
 		payload = (vbi_sliced_payload_bits (out[i].id) + 7) >> 3;
 		assert (payload > 0);
 
-		/* vbi_sliced big enough */
+		/* vbi_sliced big enough. */
 		assert (payload <= sizeof (out[i].data));
 
-		/* Writes more than payload */
+		/* Writes more than payload. */
 		assert (0 == memcmp (out[i].data + payload,
 				     old[i].data + payload,
 				     sizeof (out[i].data) - payload));
 	}
 
-	/* Respects limits */
+	/* Respects limits. */
 	assert (0 == memcmp (out + out_lines,
 			     old + out_lines,
 			     sizeof (*old) * (old_lines - out_lines)));
 
-	while (out_lines-- > 0) {
-		unsigned int payload;
+	in1 = xmemdup (in, sizeof (*in) * in_lines);
 
-		for (s = in; s < in + in_lines; ++s)
-			if (s->line == out->line)
-				break;
+	for (i = 0; i < out_lines; ++i) {
+		if (sp->synchronous) {
+			for (s = in1; s < in1 + in_lines; ++s)
+				if (s->line == out[i].line)
+					break;
 
-		/* Found something we didn't send */
-		assert (s < in + in_lines);
+			/* Found something we didn't send. */
+			assert (s < in1 + in_lines);
 
-		/* Identified as something else */
-		/* fprintf (stderr, "%3u id %08x %08x\n", s->line, s->id, out->id); */
-		assert (s->id == out->id);
+			/* Identified as something else. */
+			/* fprintf (stderr, "%3u id %08x %08x\n", s->line, s->id, out[i].id); */
+			assert (s->id == out[i].id);
+		} else {
+			/* fprintf (stderr, "%08x ", out[i].id); */
 
-		/* Same data as sent */
-		payload = vbi_sliced_payload_bits (out->id);
-		assert (0 == memcmp (s->data, out->data, payload >> 3));
+			/* No line numbers, but data must be in
+			   same order. */
+			for (s = in1; s < in1 + in_lines; ++s)
+				if (s->id == out[i].id)
+					break;
+			
+			assert (s < in1 + in_lines);
 
-		if (payload & 7) {
-			unsigned int mask = (1 << (payload & 7)) - 1;
-
-			payload = (payload >> 3);
-
-			/* MSBs zero, rest as sent */
-			assert (0 == ((s->data[payload] & mask)
-				      ^ out->data[payload]));
+			/* fprintf (stderr, "from line %3u\n", s->line); */
 		}
 
-		++out;
+		compare_payload (s, &out[i]);
+
+		s->id = 0;
 	}
+
+	id = 0;
+	for (s = in1; s < in1 + in_lines; ++s)
+		id |= s->id;
+
+	if (!sp->synchronous) {
+		/* Ok these are ambiguous. */
+		id &= ~(VBI_SLICED_VPS |
+			VBI_SLICED_VPS_F2 |
+			VBI_SLICED_WSS_625 |
+			VBI_SLICED_CAPTION_625 |
+			VBI_SLICED_CAPTION_525);
+	}
+
+	/* Anything missed? */
+	assert (0 == id);
+
+	free (in1);
+	in1 = NULL;
 }
 
 static void
@@ -266,7 +340,7 @@ test_cycle			(const vbi_sampling_par *sp,
 
 	in_lines = create_raw (&raw, &in, sp, b, pixel_mask);
 
-	if (verbose)
+	if (0 && verbose)
 		dump_hex (raw + 120, 12);
 
 	rd = create_decoder (sp, b, strict);
@@ -282,9 +356,10 @@ test_cycle			(const vbi_sampling_par *sp,
 			 (sp->sampling_format),
 			 in_lines, out_lines);
 
-	assert (in_lines == out_lines);
+	if (sp->synchronous)
+		assert (in_lines == out_lines);
 
-	compare_sliced (in, out, old, in_lines, out_lines, 50);
+	compare_sliced (sp, in, out, old, in_lines, out_lines, 50);
 
 	free (in);
 	free (raw);
@@ -351,10 +426,10 @@ static const block ttx_d_625 [] = {
 
 static const block hi_625 [] = {
 	{ VBI_SLICED_TELETEXT_B_625,	6, 21 },
-	{ VBI_SLICED_TELETEXT_B_625,	318, 334 },
 	{ VBI_SLICED_CAPTION_625,	22, 22 },
-	{ VBI_SLICED_CAPTION_625,	335, 335 },
 	{ VBI_SLICED_WSS_625,		23, 23 },
+	{ VBI_SLICED_TELETEXT_B_625,	318, 334 },
+	{ VBI_SLICED_CAPTION_625,	335, 335 },
 	BLOCK_END,
 };
 
@@ -363,8 +438,8 @@ static const block low_625 [] = {
 	{ VBI_SLICED_VPS,		16, 16 },
 */
 	{ VBI_SLICED_CAPTION_625,	22, 22 },
-	{ VBI_SLICED_CAPTION_625,	335, 335 },
 	{ VBI_SLICED_WSS_625,		23, 23 },
+	{ VBI_SLICED_CAPTION_625,	335, 335 },
 	BLOCK_END,
 };
 
@@ -388,8 +463,8 @@ static const block ttx_d_525 [] = {
 
 static const block hi_525 [] = {
 	{ VBI_SLICED_TELETEXT_B_525,	10, 20 },
-	{ VBI_SLICED_TELETEXT_B_525,	272, 283 },
 	{ VBI_SLICED_CAPTION_525,	21, 21 },
+	{ VBI_SLICED_TELETEXT_B_525,	272, 283 },
 	{ VBI_SLICED_CAPTION_525,	284, 284 },
 	BLOCK_END,
 };
@@ -477,14 +552,11 @@ test1				(const vbi_sampling_par *sp)
 	}
 }
 
-int
-main				(int			argc,
-				 char **		argv)
+static void
+test_services			(void)
 {
 	vbi_sampling_par sp;
 	vbi_service_set set;
-
-	verbose = (argc > 1);
 
 	memset (&sp, 0x55, sizeof (sp));
 
@@ -512,6 +584,12 @@ main				(int			argc,
 			/* Needs fix */
 			/* | VBI_SLICED_WSS_CPR1204 */ ));
 	test2 (&sp);
+}
+
+static void
+test_line_order			(vbi_bool		synchronous)
+{
+	vbi_sampling_par sp;
 
 	memset (&sp, 0x55, sizeof (sp));
 
@@ -522,7 +600,7 @@ main				(int			argc,
 	sp.start[1]		= 318;
 	sp.count[1]		= 335 - 318 + 1;
 	sp.interlaced		= FALSE;
-	sp.synchronous		= TRUE;
+	sp.synchronous		= synchronous;
 
 	test1 (&sp);
 
@@ -537,9 +615,23 @@ main				(int			argc,
 	sp.start[1]		= 272;
 	sp.count[1]		= 284 - 272 + 1;
 	sp.interlaced		= FALSE;
-	sp.synchronous		= TRUE;
+	sp.synchronous		= synchronous;
 
 	test1 (&sp);
+}
+
+int
+main				(int			argc,
+				 char **		argv)
+{
+	argc = argc;
+	argv = argv;
+
+	verbose = (argc > 1);
+
+	test_services ();
+	test_line_order (/* synchronous */ TRUE);
+	test_line_order (/* synchronous */ FALSE);
 
 	/* More... */
 
