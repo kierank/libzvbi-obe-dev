@@ -1,3 +1,21 @@
+2006-03-17    <mschimek@users.sf.net>
+
+	* test/hamm.c (main): Signedness fix.
+	* test/raw_decoder.c: Added vbi_sampling_par.synchronous tests.
+	* test/sim.c, test/osc.c, test/capture.c: Added --sim --desync
+	  option to test vbi_sampling_par.synchronous with a one field delay.
+	* src/raw_decoder.h (_vbi_service_par_flag, _vbi_service_par),
+	* src/raw_decoder.c (_vbi_service_table): Added
+	  _VBI_SP_FIELD_NUM, _VBI_SP_LINE_NUM flags to eliminate services
+	  which need raw VBI with known field or line numbers.
+	* src/raw_decoder.c (decode_pattern, _vbi_sampling_par_check_service)
+	(vbi3_raw_decoder_add_services): Handle raw VBI with unknown field
+	  order (V4L VBI_UNSYNC, V4L2_VBI_UNSYNC flag).
+	* src/io-sim.c (signal_u8): Removed vbi_sampling_par.synchronous
+	  check so we can test with this flag cleared.
+
+	* configure.in: Bumped version number to 0.2.20.
+
 2006-02-23    <mschimek@users.sf.net>
 
 	* Release 0.2.19.

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.h,v 1.3 2005/01/15 10:24:47 mschimek Exp $ */
+/* $Id: raw_decoder.h,v 1.4 2006/03/17 13:39:09 mschimek Exp $ */
 
 #ifndef RAW_DECODER_H
 #define RAW_DECODER_H
@@ -119,6 +119,14 @@ struct _vbi3_raw_decoder {
 	_vbi3_raw_decoder_job	jobs[_VBI3_RAW_DECODER_MAX_JOBS];
 };
 
+/* $internal */
+typedef enum {
+	/** Requires field line numbers. */
+	_VBI_SP_LINE_NUM	= (1 << 0),
+	/** Requires field numbers. */
+	_VBI_SP_FIELD_NUM	= (1 << 1),
+} _vbi_service_par_flag;
+
 typedef struct _vbi_service_par _vbi_service_par;
 
 /* $internal */
@@ -165,6 +173,8 @@ struct _vbi_service_par {
 
 	unsigned int		payload;	/**< bits */
 	vbi_modulation		modulation;
+
+	_vbi_service_par_flag	flags;
 };
 
 extern const _vbi_service_par _vbi_service_table [];
