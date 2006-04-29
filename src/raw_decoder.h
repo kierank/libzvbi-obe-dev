@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.h,v 1.4 2006/03/17 13:39:09 mschimek Exp $ */
+/* $Id: raw_decoder.h,v 1.5 2006/04/29 05:55:35 mschimek Exp $ */
 
 #ifndef RAW_DECODER_H
 #define RAW_DECODER_H
@@ -32,6 +32,8 @@
 /* XXX sampling_par.h */
 typedef vbi_raw_decoder vbi_sampling_par;
 
+/* This is a private interface,
+   for now these shall suffice. */
 #define VBI_VIDEOSTD_SET_EMPTY 0
 #define VBI_VIDEOSTD_SET_PAL_BG 1
 #define VBI_VIDEOSTD_SET_625_50 1
@@ -57,6 +59,11 @@ vbi3_raw_decoder_new		(const vbi_sampling_par *sp);
 extern void
 vbi3_raw_decoder_delete		(vbi3_raw_decoder *	rd);
 extern void
+vbi3_raw_decoder_set_log_fn	(vbi3_raw_decoder *	rd,
+				 vbi_log_fn *		log_fn,
+				 void *			user_data,
+				 vbi_log_level		max_level);
+extern void
 vbi3_raw_decoder_get_sampling_par
 				(const vbi3_raw_decoder *rd,
 				 vbi_sampling_par *	sp);
@@ -73,6 +80,8 @@ extern vbi_service_set
 vbi3_raw_decoder_remove_services
 				(vbi3_raw_decoder *	rd,
 				 vbi_service_set	services);
+extern vbi_service_set
+vbi3_raw_decoder_services	(vbi3_raw_decoder *	rd);
 extern void
 vbi3_raw_decoder_reset		(vbi3_raw_decoder *	rd);
 extern unsigned int
@@ -86,17 +95,25 @@ vbi3_raw_decoder_decode		(vbi3_raw_decoder *	rd,
 
 unsigned int
 vbi_sliced_payload_bits		(vbi_service_set	service);
+/* XXX should probably add log_fn to *sp,
+   but I can't change the struct in libzvbi 0.2. */
 vbi_bool
-_vbi_sampling_par_verify	(const vbi_sampling_par *sp);
+_vbi_sampling_par_valid		(const vbi_sampling_par *sp,
+				 vbi_log_fn *		log_fn,
+				 void *			log_user_data);
 vbi_service_set
 vbi_sampling_par_check_services	(const vbi_sampling_par *sp,
 				 vbi_service_set	services,
-				 int			strict);
+				 int			strict,
+				 vbi_log_fn *		log_fn,
+				 void *			log_user_data);
 vbi_service_set
 vbi_sampling_par_from_services	(vbi_sampling_par *	sp,
 				 unsigned int *		max_rate,
 				 vbi_videostd_set	videostd_set,
-				 vbi_service_set	services);
+				 vbi_service_set	services,
+				 vbi_log_fn *		log_fn,
+				 void *			log_user_data);
 
 /* $internal */
 #define _VBI3_RAW_DECODER_MAX_JOBS 8
@@ -109,10 +126,20 @@ typedef struct {
 	vbi3_bit_slicer		slicer;
 } _vbi3_raw_decoder_job;
 
-/* $internal */
+/**
+ * $internal
+ * Don't dereference pointers to this structure.
+ * I guarantee it will change.
+ */
 struct _vbi3_raw_decoder {
 	vbi_sampling_par	sampling;
+
 	vbi_service_set		services;
+
+	vbi_log_fn *		log_fn;
+	void *			log_user_data;
+	vbi_log_level		log_max_level;
+
 	unsigned int		n_jobs;
 	int			readjust;
 	int8_t *		pattern;	/* n scan lines * MAX_WAYS */

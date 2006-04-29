@@ -1,7 +1,7 @@
 /*
  *  libzvbi test
  *
- *  Copyright (C) 2000, 2001, 2002 Michael H. Schimek
+ *  Copyright (C) 2000-2006 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.20 2006/03/17 13:37:55 mschimek Exp $ */
+/* $Id: capture.c,v 1.21 2006/04/29 05:55:35 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -76,6 +76,7 @@ int			do_read = TRUE;
 int			do_sim;
 int			ignore_error;
 int			desync;
+int			strict;
 
 #include "sim.c"
 
@@ -161,81 +162,6 @@ decode_vps(uint8_t *buf)
 	printf(" CNI: %04x PCS: %d PTY: %d ", cni, pcs, pty);
 
 	dump_pil(pil);
-}
-
-static void
-decode_ttx(uint8_t *buf, int line)
-{
-	int packet_address;
-	int magazine, packet;
-	int j;
-
-	packet_address = vbi_unham16p (buf + 0);
-
-	if (packet_address < 0)
-		return; /* hamming error */
-
-	magazine = packet_address & 7;
-	packet = packet_address >> 3;
-
-	if (dump_ttx) {
-		printf("WST %x %02d %03d >", magazine, packet, line);
-
-		for (j = 0; j < 42; j++) {
-			char c = vbi_printable (buf[j]);
-
-			putchar(c);
-		}
-
-		putchar('<');
-		putchar('\n');
-	}
-}
-
-static void
-decode_xds(uint8_t *buf)
-{
-	if (dump_xds) {
-		char c;
-
-		c = vbi_unpar8 (buf[0]);
-		c = vbi_printable (c);
-		putchar(c);
-		c = vbi_unpar8 (buf[1]);
-		c = vbi_printable (c);
-		putchar(c);
-		fflush(stdout);
-	}
-}
-
-static void
-decode_caption(uint8_t *buf, int line)
-{
-	static vbi_bool xds_transport = FALSE;
-	char c = buf[0] & 0x7F;
-
-	if (line >= 280) { /* field 2 */
-		/* 0x01xx..0x0Exx ASCII_or_NUL[0..32] 0x0Fchks */
-		if (vbi_unpar8 (buf[0]) >= 0
-		    && (c >= 0x01 && c <= 0x0F)) {
-			decode_xds(buf);
-			xds_transport = (c != 0x0F);
-		} else if (xds_transport) {
-			decode_xds(buf);
-		}
-
-		return;
-	}
-
-	if (dump_cc) {
-		c = vbi_unpar8 (buf[0]);
-		c = vbi_printable (c);
-		putchar(c);
-		c = vbi_unpar8 (buf[1]);
-		c = vbi_printable (c);
-		putchar(c);
-		fflush(stdout);
-	}
 }
 
 static void
@@ -339,11 +265,11 @@ decode_sliced(vbi_sliced *s, double time, int lines)
 		} else if (s->id & VBI_SLICED_VPS) {
 			decode_vps(s->data);
 		} else if (s->id & VBI_SLICED_TELETEXT_B) {
-			decode_ttx(s->data, s->line);
+			/* Use ./decode instead. */
 		} else if (s->id & VBI_SLICED_CAPTION_525) {
-			decode_caption(s->data, s->line);
+			/* Use ./decode instead. */
 		} else if (s->id & VBI_SLICED_CAPTION_625) {
-			decode_caption(s->data, s->line);
+			/* Use ./decode instead. */
 		} else if (s->id & VBI_SLICED_WSS_625) {
 			decode_wss_625(s->data);
 		} else if (s->id & VBI_SLICED_WSS_CPR1204) {
@@ -489,7 +415,7 @@ mainloop(void)
 	}
 }
 
-static const char short_options[] = "123cd:elnpstvPT";
+static const char short_options[] = "123cd:elnpr:stvPT";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -509,6 +435,7 @@ long_options[] = {
 	{ "ts",		no_argument,		NULL,		'T' },
 	{ "read",	no_argument,		&do_read,	TRUE },
 	{ "pull",	no_argument,		&do_read,	FALSE },
+	{ "strict",	required_argument,	NULL,		'r' },
 	{ "sim",	no_argument,		NULL,		's' },
 	{ "ntsc",	no_argument,		NULL,		'n' },
 	{ "pal",	no_argument,		NULL,		'p' },
@@ -577,6 +504,13 @@ main(int argc, char **argv)
 		case 'P':
 			bin_pes ^= TRUE;
 			break;
+		case 'r':
+			strict = strtol (optarg, NULL, 0);
+			if (strict < -1)
+				strict = -1;
+			else if (strict > 2)
+				strict = 2;
+			break;
 		case 's':
 			do_sim ^= TRUE;
 			break;
@@ -594,15 +528,19 @@ main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 
-	dump = dump_ttx | dump_xds | dump_cc
-		| dump_wss | dump_vps | dump_sliced;
+	if (dump_ttx | dump_cc | dump_xds) {
+		fprintf (stderr, "\
+Teletext, CC and XDS decoding are no longer supported by this tool.\n\
+Run  ./capture --sliced | ./decode --ttx --cc --xds  instead.\n");
+		exit (EXIT_FAILURE);
+	}
+
+	dump = dump_wss | dump_vps | dump_sliced;
 
 	services = VBI_SLICED_VBI_525 | VBI_SLICED_VBI_625
 		| VBI_SLICED_TELETEXT_B | VBI_SLICED_CAPTION_525
 		| VBI_SLICED_CAPTION_625 | VBI_SLICED_VPS
 		| VBI_SLICED_WSS_625 | VBI_SLICED_WSS_CPR1204;
-
-	strict = 0;
 
 	if (do_sim) {
 		par = init_sim (scanning, services, !desync);

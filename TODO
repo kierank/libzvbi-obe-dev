@@ -1,9 +1,12 @@
-$Id: TODO,v 1.18 2005/05/07 03:41:14 mschimek Exp $
+$Id: TODO,v 1.19 2006/04/29 05:55:34 mschimek Exp $
 
 Version 0.3
 
 * Add --strict option to test utilities.
 * Improve i/o API.
+* Sometimes the bit slicers seems to interpret noise on a blank line
+  as a valid CC signal. Try to reproduce this. Try a minimum amplitude
+  check.
 
 -------------------------------------------------------------------------------
 Ideas? Drop us a note at http://zapping.sourceforge.net.

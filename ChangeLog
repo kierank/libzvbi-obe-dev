@@ -1,3 +1,36 @@
+2006-04-28    <mschimek@users.sf.net>
+
+	* src/io-v4l.c (reverse_lookup): Signedness fix.
+
+	* test/README: Updated.
+	* test/capture.c: Removed Teletext, CC and XDS decoders. That's
+	  now implemented in test/decode.c.
+	* test/decode.c: Resynced with 0.3 version, adding CC and
+	  XDS decoder.
+	* configure.in: Use -D_GNU_SOURCE when checking for GNU
+	  extensions. Added check for program_invocation_name, for
+	  test/decode.c.
+
+	* test/capture.c: Added --strict option.
+	* test/osc.c: Include misc.h, now required by raw_decoder.h
+	* src/misc.h, src/misc.c: Added logging helper functions.
+	* src/bit_slicer.h,
+	  src/bit_slicer.c (vbi3_bit_slicer_slice, _vbi3_bit_slicer_init) 
+	(vbi3_bit_slicer_new): Replaced the stderr log macros by a
+	  vbi3_bit_slicer.log_fn.
+	* src/raw_decoder.c, src/raw_decoder.h:
+	  s/_vbi_sampling_par_verify/_vbi_sampling_par_valid for clarity.
+	* src/raw_decoder.h, src/raw_decoder.c: 
+	  Replaced the stderr log macros by a vbi3_raw_decoder.log_fn
+	  for src/io-v4l2k.c.
+	* src/io-v4l2k.c: Use the new raw_decoder directly, so I can
+	  enable its logging functions and won't miss interesting messages.
+	  Replaced the stderr log macros by a vbi_capture_v4l2.log_fn.
+
+2006-04-12    <mschimek@users.sf.net>
+
+	* src/io-v4l2k.c: Added a bttv offset bug work-around.
+
 2006-03-17    <mschimek@users.sf.net>
 
 	* test/hamm.c (main): Signedness fix.

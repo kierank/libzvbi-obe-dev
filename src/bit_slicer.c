@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.c,v 1.5 2005/06/11 22:08:47 mschimek Exp $ */
+/* $Id: bit_slicer.c,v 1.6 2006/04/29 05:55:35 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,13 +34,6 @@
 #ifndef BIT_SLICER_LOG
 #  define BIT_SLICER_LOG 0
 #endif
-
-#define log(templ, args...)						\
-do {									\
-	if (BIT_SLICER_LOG)						\
-		fprintf (stderr, "%s: " templ ".\n",			\
-			 __FUNCTION__ , ##args);			\
-} while (0)
 
 /*
  * $addtogroup BitSlicer Bit slicer
@@ -275,8 +268,10 @@ vbi3_bit_slicer_slice		(vbi3_bit_slicer *	bs,
 	assert (NULL != raw);
 
 	if (bs->payload > buffer_size * 8) {
-		log ("buffer_size %u < %u bits of payload",
-		     buffer_size * 8, bs->payload);
+		vbi_log_printf (bs->log_fn, bs->log_user_data,
+				VBI_LOG_ERR, __FUNCTION__,
+				"buffer_size %u < %u bits of payload",
+				buffer_size * 8, bs->payload);
 		return FALSE;
 	}
 
@@ -336,15 +331,24 @@ _vbi3_bit_slicer_init		(vbi3_bit_slicer *	bs,
 	assert (payload_bits <= 32767);
 	assert (samples_per_line <= 32767);
 
+	if (BIT_SLICER_LOG) {
+		bs->log_fn = vbi_log_on_stderr;
+		bs->log_user_data = NULL;
+	}
+
 	if (cri_rate > sampling_rate) {
-		log ("cri_rate %u > sampling_rate %u\n",
-		     cri_rate, sampling_rate);
+		vbi_log_printf (bs->log_fn, bs->log_user_data,
+				VBI_LOG_ERR, __FUNCTION__,
+				"cri_rate %u > sampling_rate %u.",
+				cri_rate, sampling_rate);
 		goto failure;
 	}
 
 	if (payload_rate > sampling_rate) {
-		log ("payload_rate %u > sampling_rate %u\n",
-		     payload_rate, sampling_rate);
+		vbi_log_printf (bs->log_fn, bs->log_user_data,
+				VBI_LOG_ERR, __FUNCTION__,
+				"payload_rate %u > sampling_rate %u.",
+				payload_rate, sampling_rate);
 		goto failure;
 	}
 
@@ -583,13 +587,15 @@ _vbi3_bit_slicer_init		(vbi3_bit_slicer *	bs,
 	if ((sample_offset > samples_per_line)
 	    || ((cri_samples + data_samples)
 		> (samples_per_line - sample_offset))) {
-		log ("%u samples_per_line too small for "
-		     "sample_offset %u + %u cri_bits (%u samples) "
-		     "+ %u frc_bits and %u payload_bits "
-		     "(%u samples)\n",
-		     samples_per_line, sample_offset,
-		     cri_bits, cri_samples,
-		     frc_bits, payload_bits, data_samples);
+		vbi_log_printf (bs->log_fn, bs->log_user_data,
+				VBI_LOG_ERR, __FUNCTION__,
+				"%u samples_per_line too small for "
+				"sample_offset %u + %u cri_bits (%u samples) "
+				"+ %u frc_bits and %u payload_bits "
+				"(%u samples).",
+				samples_per_line, sample_offset,
+				cri_bits, cri_samples,
+				frc_bits, payload_bits, data_samples);
 		goto failure;
 	}
 
@@ -732,10 +738,9 @@ vbi3_bit_slicer_new		(vbi_pixfmt		sample_format,
 {
 	vbi3_bit_slicer *bs;
 
-	if (!(bs = malloc (sizeof (*bs)))) {
-		log ("Out of memory");
+	bs = malloc (sizeof (*bs));
+	if (NULL == bs)
 		return NULL;
-	}
 
         if (!_vbi3_bit_slicer_init (bs,
 				   sample_format, sampling_rate,

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.h,v 1.10 2005/06/11 22:08:35 mschimek Exp $ */
+/* $Id: misc.h,v 1.11 2006/04/29 05:55:35 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -31,6 +31,8 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
+
+#ifndef TEST
 
 /* Public */
 
@@ -313,5 +315,33 @@ extern const char _zvbi_intl_domainname[];
 
 #define VBI_BEGIN_DECLS
 #define VBI_END_DECLS
+
+#endif /* !TEST */
+
+typedef enum {
+	VBI_LOG_ERR = 3, 
+	VBI_LOG_WARNING,
+	VBI_LOG_NOTICE,
+	VBI_LOG_INFO,
+	VBI_LOG_DEBUG,
+} vbi_log_level;
+
+typedef void
+vbi_log_fn			(vbi_log_level		level,
+				 const char *		function,
+				 const char *		message,
+				 void *			user_data);
+extern void
+vbi_log_on_stderr		(vbi_log_level		level,
+				 const char *		function,
+				 const char *		message,
+				 void *			user_data);
+extern void
+vbi_log_printf			(vbi_log_fn		log_fn,
+				 void *			user_data,
+				 vbi_log_level		level,
+				 const char *		function,
+				 const char *		template,
+				 ...);
 
 #endif /* MISC_H */

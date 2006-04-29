@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.7 2006/03/17 13:38:08 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.8 2006/04/29 05:55:35 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -46,11 +46,17 @@
 #  define PRId64 "lld"
 #endif
 
-#define log(templ, args...)						\
+#define sp_log(level, templ, args...)					\
 do {									\
-	if (RAW_DECODER_LOG)						\
-		fprintf (stderr, "%s: " templ ".\n",			\
-			 __FUNCTION__ , ##args);			\
+	vbi_log_printf (log_fn, log_user_data,				\
+			level, __FUNCTION__, templ , ##args);		\
+} while (0)
+
+#define rd_log(level, templ, args...)					\
+do {									\
+	if (level <= rd->log_max_level)					\
+		vbi_log_printf (rd->log_fn, rd->log_user_data,		\
+				level, __FUNCTION__, templ , ##args);	\
 } while (0)
 
 /**
@@ -607,7 +613,9 @@ vbi3_raw_decoder_decode		(vbi3_raw_decoder *	rd,
 }
 
 vbi_bool
-_vbi_sampling_par_verify	(const vbi_sampling_par *sp)
+_vbi_sampling_par_valid		(const vbi_sampling_par *sp,
+				 vbi_log_fn *		log_fn,
+				 void *			log_user_data)
 {
 	switch (sp->sampling_format) {
 	case VBI_PIXFMT_YUV420:
@@ -648,31 +656,40 @@ _vbi_sampling_par_verify	(const vbi_sampling_par *sp)
 			    || (sp->start[1] + sp->count[0]) > 626)
 				goto range;
 	} else {
-		log ("Ambiguous scanning %d",
-		     sp->scanning);
+		sp_log (VBI_LOG_ERR,
+			"Ambiguous scanning %d.",
+			sp->scanning);
 		return FALSE;
 	}
 
 	if (sp->interlaced
-	    && sp->count[0] != sp->count[1]) {
-		log ("Line count %u, %u must be equal and non-zero "
-		     "when interlaced",
-		     sp->count[0], sp->count[1]);
+	    && (sp->count[0] != sp->count[1]
+		|| 0 == sp->count[0])) {
+		sp_log (VBI_LOG_ERR,
+			"Line counts %u, %u must be equal and "
+			"non-zero when raw VBI data is interlaced.",
+			sp->count[0], sp->count[1]);
 		return FALSE;
 	}
 
 	return TRUE;
 
  samples:
-	log ("Misaligned bytes_per_line %u",
-	     sp->bytes_per_line);
-
+	sp_log (VBI_LOG_ERR,
+		"bytes_per_line value %u is no multiple of "
+		"the sample size %u.",
+		sp->bytes_per_line,
+		VBI_PIXFMT_BPP (sp->sampling_format));
 	return FALSE;
 
  range:
-	log ("Invalid scan range %u-%u (%u lines), %u-%u (%u lines)",
-	     sp->start[0], sp->start[0] + sp->count[0] - 1, sp->count[0],
-	     sp->start[1], sp->start[1] + sp->count[1] - 1, sp->count[1]);
+	sp_log (VBI_LOG_ERR,
+		"Invalid VBI scan range %u-%u (%u lines), "
+		"%u-%u (%u lines).",
+		sp->start[0], sp->start[0] + sp->count[0] - 1,
+		sp->count[0],
+		sp->start[1], sp->start[1] + sp->count[1] - 1,
+		sp->count[1]);
 
 	return FALSE;
 }
@@ -681,7 +698,9 @@ _vbi_sampling_par_verify	(const vbi_sampling_par *sp)
 static vbi_bool
 _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 				 const _vbi_service_par *par,
-				 int			strict)
+				 int			strict,
+				 vbi_log_fn *		log_fn,
+				 void *			log_user_data)
 {
 	double signal;
 	unsigned int field;
@@ -703,19 +722,24 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 	}
 
 	if (0 == (par->videostd_set & videostd_set)) {
-		log ("Service 0x%08x (%s) requires "
-		     "videostd_set 0x%08" PRIx64 ", "
-		     "have 0x%08" PRIx64,
-		     par->id, par->label,
-		     par->videostd_set, videostd_set);
+		vbi_log_printf (log_fn, log_user_data,
+				VBI_LOG_NOTICE, __FUNCTION__,
+				"Service 0x%08x (%s) requires "
+				"videostd_set 0x%" PRIx64 ", "
+				"have 0x%" PRIx64,
+				par->id, par->label,
+				par->videostd_set, videostd_set);
 		return FALSE;
 	}
 
 	if ((par->flags & _VBI_SP_LINE_NUM)
 	    && (0 == sp->start[0] /* unknown */
 		|| 0 == sp->start[1])) {
-		log ("Service 0x%08x (%s) requires exact line numbers",
-		     par->id, par->label);
+		vbi_log_printf (log_fn, log_user_data,
+				VBI_LOG_NOTICE, __FUNCTION__,
+				"Service 0x%08x (%s) requires known "
+				"line numbers.",
+				par->id, par->label);
 		return FALSE;
 	}
 
@@ -736,10 +760,12 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 		}
 
 		if (rate > (unsigned int) sp->sampling_rate) {
-			log ("Sampling rate %f MHz too low "
-			     "for service 0x%08x (%s)",
-			     sp->sampling_rate / 1e6,
-			     par->id, par->label);
+			vbi_log_printf (log_fn, log_user_data,
+					VBI_LOG_NOTICE, __FUNCTION__,
+					"Sampling rate %f MHz too low "
+					"for service 0x%08x (%s).",
+					sp->sampling_rate / 1e6,
+					par->id, par->label);
 			return FALSE;
 		}
 	}
@@ -761,21 +787,27 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 		end = (sp->offset + samples_per_line) / sampling_rate;
 
 		if (offset > (par->offset / 1e3 - 0.5e-6)) {
-			log ("Sampling offset %f us too late "
-			     "for service 0x%08x (%s) at %f us",
-			     offset * 1e6,
-			     par->id, par->label,
-			     par->offset / 1e3);
+			vbi_log_printf (log_fn, log_user_data,
+					VBI_LOG_NOTICE, __FUNCTION__,
+					"Sampling starts at 0H + %f us, too "
+					"late for service 0x%08x (%s) at "
+					"%f us.",
+					offset * 1e6,
+					par->id, par->label,
+					par->offset / 1e3);
 			return FALSE;
 		}
 
 		if (end < (par->offset / 1e9 + signal + 0.5e-6)) {
-			log ("Sampling ends too early at %f us "
-			     "for service 0x%08x (%s) up to %f us",
-			     end * 1e6,
-			     par->id, par->label,
-			     par->offset / 1e3
-			     + signal * 1e6 + 0.5);
+			vbi_log_printf (log_fn, log_user_data,
+					VBI_LOG_NOTICE, __FUNCTION__,
+					"Sampling ends too early at 0H + "
+					"%f us for service 0x%08x (%s) "
+					"which ends at %f us",
+					end * 1e6,
+					par->id, par->label,
+					par->offset / 1e3
+					+ signal * 1e6 + 0.5);
 			return FALSE;
 		}
 	} else {
@@ -784,19 +816,23 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 		samples = samples_per_line / (double) sp->sampling_rate;
 
 		if (samples < (signal + 1.0e-6)) {
-			log ("Service 0x%08x (%s) signal %f us "
-			     "exceeds %f us sampling period",
-			     par->id, par->label,
-			     signal * 1e6, samples * 1e6);
+			vbi_log_printf (log_fn, log_user_data,
+					VBI_LOG_NOTICE, __FUNCTION__,
+					"Service 0x%08x (%s) signal length "
+					"%f us exceeds %f us sampling length.",
+					par->id, par->label,
+					signal * 1e6, samples * 1e6);
 			return FALSE;
 		}
 	}
 
 	if ((par->flags & _VBI_SP_FIELD_NUM)
 	    && !sp->synchronous) {
-		log ("Service 0x%08x (%s) requires "
-		     "synchronous field order",
-		     par->id, par->label);
+		vbi_log_printf (log_fn, log_user_data,
+				VBI_LOG_NOTICE, __FUNCTION__,
+				"Service 0x%08x (%s) requires "
+				"synchronous field order.",
+				par->id, par->label);
 		return FALSE;
 	}
 
@@ -814,27 +850,34 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 		}
 
 		if (0 == sp->count[field]) {
-			log ("Service 0x%08x (%s) requires "
-			     "data from field %u",
-			     par->id, par->label, field);
+			vbi_log_printf (log_fn, log_user_data,
+					VBI_LOG_NOTICE, __FUNCTION__,
+					"Service 0x%08x (%s) requires "
+					"data from field %u",
+					par->id, par->label, field + 1);
 			return FALSE;
 		}
 
-		if (sp->start[field] > 0 && strict > 0) {
+		if (strict <= 0 || 0 == sp->start[field])
+			continue;
+
+		if (1 == strict && par->first[field] > par->last[field]) {
 			/* May succeed if not all scanning lines
 			   available for the service are actually used. */
-			if (strict > 1
-			    || (par->first[field] == par->last[field]))
-				if (start > par->first[field]
-				    || end < par->last[field]) {
-					log ("Service 0x%08x (%s) requires "
-					     "lines %u-%u, have %u-%u",
-					     par->id, par->label,
-					     par->first[field],
-					     par->last[field],
-					     start, end);
-					return FALSE;
-				}
+			continue;
+		}
+		
+		if (start > par->first[field]
+		    || end < par->last[field]) {
+			vbi_log_printf (log_fn, log_user_data,
+					VBI_LOG_NOTICE, __FUNCTION__,
+					"Service 0x%08x (%s) requires "
+					"lines %u-%u, have %u-%u.",
+					par->id, par->label,
+					par->first[field],
+					par->last[field],
+					start, end);
+			return FALSE;
 		}
 	}
 
@@ -845,7 +888,9 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 vbi_service_set
 vbi_sampling_par_check_services	(const vbi_sampling_par *sp,
 				 vbi_service_set	services,
-				 int			strict)
+				 int			strict,
+				 vbi_log_fn *		log_fn,
+				 void *			log_user_data)
 {
 	const _vbi_service_par *par;
 	vbi_service_set rservices;
@@ -855,9 +900,12 @@ vbi_sampling_par_check_services	(const vbi_sampling_par *sp,
 	rservices = 0;
 
 	for (par = _vbi_service_table; par->id; ++par) {
-		if (par->id & services)
-			if (_vbi_sampling_par_check_service (sp, par, strict))
-				rservices |= par->id;
+		if (0 == (par->id & services))
+			continue;
+
+		if (_vbi_sampling_par_check_service (sp, par, strict,
+						     log_fn, log_user_data))
+			rservices |= par->id;
 	}
 
 	return rservices;
@@ -867,7 +915,9 @@ vbi_service_set
 vbi_sampling_par_from_services	(vbi_sampling_par *	sp,
 				 unsigned int *		max_rate,
 				 vbi_videostd_set	videostd_set,
-				 vbi_service_set	services)
+				 vbi_service_set	services,
+				 vbi_log_fn *		log_fn,
+				 void *			log_user_data)
 {
 	const _vbi_service_par *par;
 	vbi_service_set rservices;
@@ -879,8 +929,9 @@ vbi_sampling_par_from_services	(vbi_sampling_par *	sp,
 		if (0 == (VBI_VIDEOSTD_SET_ALL & videostd_set)
 		    || ((VBI_VIDEOSTD_SET_525_60 & videostd_set)
 			&& (VBI_VIDEOSTD_SET_625_50 & videostd_set))) {
-			log ("Ambiguous videostd_set 0x%08" PRIx64,
-			     videostd_set);
+			sp_log (VBI_LOG_WARNING,
+				"Ambiguous videostd_set 0x%08" PRIx64,
+				videostd_set);
 			/* CLEAR (*sp); */
 			return 0;
 		}
@@ -926,11 +977,12 @@ vbi_sampling_par_from_services	(vbi_sampling_par *	sp,
 			margin = 2.0e-6;
 
 		if (0 == (par->videostd_set & videostd_set)) {
-			log ("Service 0x%08x (%s) requires "
-			     "videostd_set 0x%08" PRIx64 ", "
-			     "have 0x%08" PRIx64,
-			     par->id, par->label,
-			     par->videostd_set, videostd_set);
+			sp_log (VBI_LOG_NOTICE,
+				"Service 0x%08x (%s) requires "
+				"videostd_set 0x%" PRIx64 ", "
+				"have 0x%" PRIx64,
+				par->id, par->label,
+				par->videostd_set, videostd_set);
 			continue;
 		}
 
@@ -1258,16 +1310,19 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 	const _vbi_service_par *par;
 	double min_offset;
 
+	assert (NULL != rd);
+
 	services &= ~(VBI_SLICED_VBI_525 | VBI_SLICED_VBI_625);
 
 	if (rd->services & services) {
-		log ("Already decoding services 0x%08x",
-		     rd->services & services);
+		rd_log (VBI_LOG_INFO,
+			"Already decoding services 0x%08x.",
+			rd->services & services);
 		services &= ~rd->services;
 	}
 
 	if (0 == services) {
-		log ("No services to add");
+		rd_log (VBI_LOG_INFO, "No services to add.");
 		return rd->services;
 	}
 
@@ -1281,7 +1336,7 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 		rd->pattern = (int8_t *)
 			malloc (scan_ways * sizeof (rd->pattern[0]));
 		if (!rd->pattern) {
-			log ("Out of memory");
+			rd_log (VBI_LOG_ERR, "Out of memory.");
 			return rd->services;
 		}
 
@@ -1326,8 +1381,11 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 		}
 
 		if (j >= _VBI3_RAW_DECODER_MAX_JOBS) {
-			log ("Set 0x%08x exceeds %u service limit",
-			     services, _VBI3_RAW_DECODER_MAX_WAYS);
+			rd_log (VBI_LOG_ERR,
+				"Set 0x%08x exceeds number of "
+				"simultaneously decodable "
+				"services (%u).",
+				services, _VBI3_RAW_DECODER_MAX_WAYS);
 			break;
 		} else if (j >= rd->n_jobs) {
 			job->id = 0;
@@ -1336,7 +1394,8 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 
 		sp = &rd->sampling;
 
-		if (!_vbi_sampling_par_check_service (sp, par, strict))
+		if (!_vbi_sampling_par_check_service
+		    (sp, par, strict, rd->log_fn, rd->log_user_data))
 			continue;
 
 
@@ -1387,9 +1446,10 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 		lines_containing_data (start, count, sp, par);
 
 		if (!add_job_to_pattern (rd, job - rd->jobs, start, count)) {
-			log ("Out of pattern space "
-			     "for service 0x%08x (%s)",
-			     par->id, par->label);
+			rd_log (VBI_LOG_ERR,
+				"Out of decoder pattern space for "
+				"service 0x%08x (%s).",
+				par->id, par->label);
 			continue;
 		}
 
@@ -1400,6 +1460,14 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 
 		rd->services |= par->id;
 	}
+
+	return rd->services;
+}
+
+vbi_service_set
+vbi3_raw_decoder_services	(vbi3_raw_decoder *	rd)
+{
+	assert (NULL != rd);
 
 	return rd->services;
 }
@@ -1436,7 +1504,7 @@ vbi3_raw_decoder_set_sampling_par
 
 	vbi3_raw_decoder_reset (rd);
 
-	if (!_vbi_sampling_par_verify (sp)) {
+	if (!_vbi_sampling_par_valid (sp, rd->log_fn, rd->log_user_data)) {
 		CLEAR (rd->sampling);
 		return 0;
 	}
@@ -1462,6 +1530,22 @@ vbi3_raw_decoder_get_sampling_par
 	assert (NULL != sp);
 
 	*sp = rd->sampling;
+}
+
+void
+vbi3_raw_decoder_set_log_fn	(vbi3_raw_decoder *	rd,
+				 vbi_log_fn *		log_fn,
+				 void *			user_data,
+				 vbi_log_level		max_level)
+{
+	assert (NULL != rd);
+
+	if (NULL == log_fn)
+		max_level = 0;
+
+	rd->log_fn = log_fn;
+	rd->log_user_data = user_data;
+	rd->log_max_level = max_level;
 }
 
 /**
@@ -1491,8 +1575,16 @@ _vbi3_raw_decoder_init		(vbi3_raw_decoder *	rd,
 
 	vbi3_raw_decoder_reset (rd);
 
+	if (RAW_DECODER_LOG) {
+		vbi3_raw_decoder_set_log_fn (rd,
+					     vbi_log_on_stderr,
+					     /* user_data */ NULL,
+					     /* max_level */ VBI_LOG_INFO);
+	}
+
 	if (NULL != sp) {
-		if (!_vbi_sampling_par_verify (sp))
+		if (!_vbi_sampling_par_valid (sp, rd->log_fn,
+					      rd->log_user_data))
 			return FALSE;
 
 		rd->sampling = *sp;
@@ -1538,10 +1630,9 @@ vbi3_raw_decoder_new		(const vbi_sampling_par *sp)
 {
 	vbi3_raw_decoder *rd;
 
-	if (!(rd = malloc (sizeof (*rd)))) {
-		log ("Out of memory");
+	rd = malloc (sizeof (*rd));
+	if (NULL == rd)
 		return NULL;
-	}
 
 	if (!_vbi3_raw_decoder_init (rd, sp)) {
 		free (rd);

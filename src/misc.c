@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.c,v 1.2 2004/12/13 07:17:09 mschimek Exp $ */
+/* $Id: misc.c,v 1.3 2006/04/29 05:55:35 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -155,3 +155,79 @@ vbi_asprintf			(char **		dstp,
 }
 
 #endif /* !HAVE_ASPRINTF */
+
+void
+vbi_log_on_stderr		(vbi_log_level		level,
+				 const char *		function,
+				 const char *		message,
+				 void *			user_data)
+{
+	vbi_log_level max_level;
+
+	function = function; /* unused */
+
+	if (NULL != user_data) {
+		max_level = * (vbi_log_level *) user_data;
+		if (level > max_level)
+			return;
+	}
+
+	fprintf (stderr, "libzvbi: %s\n", message);
+}
+
+/** @internal */
+void
+vbi_log_printf			(vbi_log_fn		log_fn,
+				 void *			user_data,
+				 vbi_log_level		level,
+				 const char *		function,
+				 const char *		template,
+				 ...)
+{
+	char *buffer;
+	size_t buffer_size;
+	int saved_errno;
+
+	if (NULL == log_fn)
+		return;
+
+	assert (NULL != function);
+	assert (NULL != template);
+
+	saved_errno = errno;
+
+	buffer = NULL;
+	buffer_size = 256;
+
+	for (;;) {
+		char *new_buffer;
+		va_list ap;
+		int len;
+
+		new_buffer = realloc (buffer, buffer_size);
+		if (unlikely (NULL == new_buffer)) {
+			break;
+		}
+
+		buffer = new_buffer;
+
+		va_start (ap, template);
+		len = vsnprintf (buffer, buffer_size, template, ap);
+		va_end (ap);
+
+		if (len < 0) {
+			/* Not enough space. */
+			buffer_size *= 2;
+		} else if (len < buffer_size) {
+			log_fn (level, function, buffer, user_data);
+			break;
+		} else {
+			/* Size needed. */
+			buffer_size = len + 1;
+		}
+	}
+
+	free (buffer);
+
+	errno = saved_errno;
+}

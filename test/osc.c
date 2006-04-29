@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.22 2006/03/17 13:37:39 mschimek Exp $ */
+/* $Id: osc.c,v 1.23 2006/04/29 05:55:35 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -40,6 +40,7 @@
 #include "src/libzvbi.h"
 
 #define TEST 1
+#include "src/misc.h"
 #include "src/raw_decoder.h"	/* _vbi_service_table[] */
 
 #ifndef X_DISPLAY_MISSING

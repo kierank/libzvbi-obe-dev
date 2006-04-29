@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.h,v 1.3 2005/01/19 04:23:52 mschimek Exp $ */
+/* $Id: bit_slicer.h,v 1.4 2006/04/29 05:55:35 mschimek Exp $ */
 
 #ifndef __ZVBI_BIT_SLICER_H__
 #define __ZVBI_BIT_SLICER_H__
@@ -26,6 +26,7 @@
 #include <inttypes.h>		/* uint8_t, uint16_t */
 #include "decoder.h"
 #endif
+
 
 #if 0 /* in decoder.h */
 
@@ -112,6 +113,8 @@ struct _vbi3_bit_slicer {
 	unsigned int		endian;
 	unsigned int		skip;
 	unsigned int		green_mask;
+	vbi_log_fn *		log_fn;
+	void *			log_user_data;
 };
 
 extern void

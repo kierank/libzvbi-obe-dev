@@ -23,6 +23,15 @@ AC_PROG_CXX
 dnl BSD/GNU extensions.
 AC_CHECK_FUNCS([strndup strlcpy asprintf getopt_long getaddrinfo])
 
+dnl Check for BSD/GNU extensions (on GNU systems these are only
+dnl enabled if _GNU_SOURCE is defined). If not present we use
+dnl replacements.
+SAVE_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -D_GNU_SOURCE"
+AC_CHECK_FUNCS([strndup strlcpy asprintf getopt_long clock_settime])
+AC_CHECK_FUNCS([program_invocation_name])
+CFLAGS="$SAVE_CFLAGS"
+
 AC_PROG_LIBTOOL
 
 LIBS="$LIBS -lm"
