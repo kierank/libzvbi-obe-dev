@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.9 2006/04/29 05:55:35 mschimek Exp $ */
+/* $Id: decode.c,v 1.10 2006/05/03 03:27:36 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1057,7 +1057,7 @@ old_mainloop			(void)
 static void
 usage				(FILE *			fp)
 {
-	fprintf (fp, _("\
+	fprintf (fp, "\
 %s %s -- low-level VBI decoder\n\n\
 Copyright (C) 2004, 2006 Michael H. Schimek\n\
 This program is licensed under GPL 2 or later. NO WARRANTIES.\n\n\
@@ -1101,7 +1101,7 @@ Modifying options:\n\
 -b | --bin             With -t, -p, -v dump data in binary format\n\
                          instead of ASCII\n\
 -T | --time            Dump capture timestamps\n\
-"),
+",
 		 PROGRAM_NAME, VERSION, program_invocation_name);
 }
 

@@ -2,7 +2,8 @@ libzvbi 0.2.20, 2006-04-28
 --------------------------
 This version supports raw VBI capturing with unknown field order, adds
 a work-around for a VBI offset bug in the bttv driver, enables
-additional debugging messages and improves some test tools.
+additional debugging messages and improves some test tools. The
+CNI (networks) table was updated.
 
 libzvbi 0.2.19, 2006-02-23
 --------------------------

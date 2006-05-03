@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.c,v 1.3 2006/04/29 05:55:35 mschimek Exp $ */
+/* $Id: misc.c,v 1.4 2006/05/03 03:27:36 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -218,7 +218,7 @@ vbi_log_printf			(vbi_log_fn		log_fn,
 		if (len < 0) {
 			/* Not enough space. */
 			buffer_size *= 2;
-		} else if (len < buffer_size) {
+		} else if (len < (int) buffer_size) {
 			log_fn (level, function, buffer, user_data);
 			break;
 		} else {
