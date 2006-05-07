@@ -1,5 +1,26 @@
 2006-05-07    <mschimek@users.sf.net>
 
+	* test/decode.c: Enabled some VPS decoding.
+	* test/test-vps.c: New test for VPS decoding functions.
+	* test/Makefile.am (TESTS): Added test-vps.
+	(noinst_PROGRAMS): Added test-vps, wss moved into examples dir.
+	* src/vbi.c, src/packet.c, src/event.h, src/caption.c (xds_decoder): 
+	  Added VBI_EVENT_NETWORK_ID.
+	* src/Makefile.am (libzvbi_la_SOURCES): Added macros.h, pdc.h,
+	  vps.c, vps.h.
+	* src/vps.c, src/vps.h: Added new VPS decoding functions.
+
+	* src/event.h: Added a doxy link to examples/network.c.
+	(struct vbi_network): Improved documentation, renamed
+	  unused/misdefined private field cni_x26 to reserved.
+	* src/decoder.c: Added a doxy link to examples/wss.c.
+	* doc/Doxyfile.in (FILE_PATTERNS): New file vps.h.
+	(EXAMPLE_PATH): Added examples dir.
+	* configure.in, examples, Makefile.am (SUBDIRS): Added examples dir.
+
+	* src/io-v4l2k.c (v4l2_update_services): Added an error message
+	  about the NTSC VBI bug in the cx88 driver.
+
 	* src/structpr.pl: ILP64 fixes.
 
 2006-04-28    <mschimek@users.sf.net>

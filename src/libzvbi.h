@@ -137,18 +137,21 @@ typedef unsigned int vbi_nuid;
 typedef struct {
 	vbi_nuid		nuid;
 
-	signed char		name[64];		/* descriptive name */
-	signed char		call[40];		/* network call letters (XDS) */
+	signed char		name[64];
 
-	int			tape_delay;		/* tape delay, minutes (XDS) */
+	signed char		call[40];
 
-	/* Private */
+	int			tape_delay;
 
 	int			cni_vps;
-	int			cni_8301;
-	int			cni_8302;
-	int			cni_x26;
 
+	int			cni_8301;
+
+	int			cni_8302;
+
+	int			reserved;
+
+	
 	int			cycle;
 } vbi_network;
 
@@ -382,6 +385,8 @@ extern void		vbi_reset_prog_info(vbi_program_info *pi);
 #define	VBI_EVENT_TRIGGER	0x0010
 #define	VBI_EVENT_ASPECT	0x0040
 #define	VBI_EVENT_PROG_INFO	0x0080
+#define	VBI_EVENT_NETWORK_ID	0x0100
+
 
 
 #include <inttypes.h>
@@ -1460,6 +1465,15 @@ extern void		vbi_resolve_home(vbi_page *pg, vbi_link *ld);
 extern const char *	vbi_rating_string(vbi_rating_auth auth, int id);
 extern const char *	vbi_prog_type_string(vbi_prog_classf classf, int id);
 
+
+/* vps.h */
+
+extern vbi_bool
+vbi_decode_vps_cni		(unsigned int *		cni,
+				 const uint8_t		buffer[13]);
+extern vbi_bool
+vbi_encode_vps_cni		(uint8_t		buffer[13],
+				 unsigned int		cni);
 
 /* vbi.h */
 

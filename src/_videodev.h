@@ -36,7 +36,7 @@ fprintf (fp, "x=%lu "
 fprint_symbolic (fp, 2, t->flags,
 "ODD", (unsigned long) VIDEO_CAPTURE_ODD,
 "EVEN", (unsigned long) VIDEO_CAPTURE_EVEN,
-0);
+(void *) 0);
 fputs (" ", fp);
 }
 
@@ -83,7 +83,7 @@ fprintf (fp, "x=%lu "
 fprint_symbolic (fp, 2, t->flags,
 "INTERLACE", (unsigned long) VIDEO_WINDOW_INTERLACE,
 "CHROMAKEY", (unsigned long) VIDEO_WINDOW_CHROMAKEY,
-0);
+(void *) 0);
 fprintf (fp, " clips=%p "
 "clipcount=%ld ",
 (const void *) t->clips, 
@@ -112,7 +112,7 @@ fprint_symbolic (fp, 0, value,
 "YUV410P", (unsigned long) VIDEO_PALETTE_YUV410P,
 "PLANAR", (unsigned long) VIDEO_PALETTE_PLANAR,
 "COMPONENT", (unsigned long) VIDEO_PALETTE_COMPONENT,
-0);
+(void *) 0);
 }
 
 static void
@@ -182,7 +182,7 @@ fprint_symbolic (fp, 2, value,
 "VOLUME", (unsigned long) VIDEO_AUDIO_VOLUME,
 "BASS", (unsigned long) VIDEO_AUDIO_BASS,
 "TREBLE", (unsigned long) VIDEO_AUDIO_TREBLE,
-0);
+(void *) 0);
 }
 
 static void
@@ -193,7 +193,7 @@ fprint_symbolic (fp, 0, value,
 "STEREO", (unsigned long) VIDEO_SOUND_STEREO,
 "LANG1", (unsigned long) VIDEO_SOUND_LANG1,
 "LANG2", (unsigned long) VIDEO_SOUND_LANG2,
-0);
+(void *) 0);
 }
 
 static void
@@ -234,7 +234,7 @@ fprintf (fp, "sampling_rate=%lu "
 fprint_symbolic (fp, 2, t->flags,
 "UNSYNC", (unsigned long) VBI_UNSYNC,
 "INTERLACED", (unsigned long) VBI_INTERLACED,
-0);
+(void *) 0);
 fputs (" ", fp);
 }
 
@@ -269,12 +269,12 @@ fprintf (fp, "channel=%ld "
 fprint_symbolic (fp, 2, t->flags,
 "TUNER", (unsigned long) VIDEO_VC_TUNER,
 "AUDIO", (unsigned long) VIDEO_VC_AUDIO,
-0);
+(void *) 0);
 fputs (" type=", fp);
 fprint_symbolic (fp, 0, t->type,
 "TV", (unsigned long) VIDEO_TYPE_TV,
 "CAMERA", (unsigned long) VIDEO_TYPE_CAMERA,
-0);
+(void *) 0);
 fprintf (fp, " norm=%lu ",
 (unsigned long) t->norm);
 }
@@ -291,7 +291,7 @@ fprint_symbolic (fp, 2, value,
 "STEREO_ON", (unsigned long) VIDEO_TUNER_STEREO_ON,
 "RDS_ON", (unsigned long) VIDEO_TUNER_RDS_ON,
 "MBS_ON", (unsigned long) VIDEO_TUNER_MBS_ON,
-0);
+(void *) 0);
 }
 
 static void
@@ -302,7 +302,7 @@ fprint_symbolic (fp, 0, value,
 "NTSC", (unsigned long) VIDEO_MODE_NTSC,
 "SECAM", (unsigned long) VIDEO_MODE_SECAM,
 "AUTO", (unsigned long) VIDEO_MODE_AUTO,
-0);
+(void *) 0);
 }
 
 static void
@@ -350,7 +350,7 @@ fprint_symbolic (fp, 0, value,
 "MPEG_ENCODER", (unsigned long) VID_TYPE_MPEG_ENCODER,
 "MJPEG_DECODER", (unsigned long) VID_TYPE_MJPEG_DECODER,
 "MJPEG_ENCODER", (unsigned long) VID_TYPE_MJPEG_ENCODER,
-0);
+(void *) 0);
 }
 
 static void

@@ -60,7 +60,7 @@ fprint_symbolic (fp, 0, value,
 "YYUV", (unsigned long) V4L2_PIX_FMT_YYUV,
 "HI240", (unsigned long) V4L2_PIX_FMT_HI240,
 "WNVA", (unsigned long) V4L2_PIX_FMT_WNVA,
-0);
+(void *) 0);
 }
 
 static void
@@ -93,7 +93,7 @@ fprint_symbolic (fp, 0, value,
 "L", (unsigned long) V4L2_TRANSM_STD_L,
 "M", (unsigned long) V4L2_TRANSM_STD_M,
 "N", (unsigned long) V4L2_TRANSM_STD_N,
-0);
+(void *) 0);
 }
 
 static void
@@ -113,7 +113,7 @@ fprint_symbolic (fp, 0, t->colorstandard,
 "PAL", (unsigned long) V4L2_COLOR_STD_PAL,
 "NTSC", (unsigned long) V4L2_COLOR_STD_NTSC,
 "SECAM", (unsigned long) V4L2_COLOR_STD_SECAM,
-0);
+(void *) 0);
 fputs (" ", fp);
 fputs ("colorstandard_data={", fp);
 if (V4L2_COLOR_STD_PAL == t->colorstandard) {
@@ -158,7 +158,7 @@ fprint_symbolic (fp, 0, value,
 "LANG2", (unsigned long) V4L2_TUNER_CAP_LANG2,
 "SAP", (unsigned long) V4L2_TUNER_CAP_SAP,
 "LANG1", (unsigned long) V4L2_TUNER_CAP_LANG1,
-0);
+(void *) 0);
 }
 
 static void
@@ -170,7 +170,7 @@ fprint_symbolic (fp, 0, value,
 "LANG2", (unsigned long) V4L2_TUNER_SUB_LANG2,
 "SAP", (unsigned long) V4L2_TUNER_SUB_SAP,
 "LANG1", (unsigned long) V4L2_TUNER_SUB_LANG1,
-0);
+(void *) 0);
 }
 
 static void
@@ -182,7 +182,7 @@ fprint_symbolic (fp, 0, value,
 "LANG2", (unsigned long) V4L2_TUNER_MODE_LANG2,
 "SAP", (unsigned long) V4L2_TUNER_MODE_SAP,
 "LANG1", (unsigned long) V4L2_TUNER_MODE_LANG1,
-0);
+(void *) 0);
 }
 
 static void
@@ -226,7 +226,7 @@ fprint_symbolic (fp, 0, value,
 "VBI_INPUT", (unsigned long) V4L2_TYPE_VBI_INPUT,
 "VBI_OUTPUT", (unsigned long) V4L2_TYPE_VBI_OUTPUT,
 "PRIVATE", (unsigned long) V4L2_TYPE_PRIVATE,
-0);
+(void *) 0);
 }
 
 static void
@@ -241,7 +241,7 @@ fprint_symbolic (fp, 2, value,
 "TUNER", (unsigned long) V4L2_FLAG_TUNER,
 "MONOCHROME", (unsigned long) V4L2_FLAG_MONOCHROME,
 "DATA_SERVICE", (unsigned long) V4L2_FLAG_DATA_SERVICE,
-0);
+(void *) 0);
 }
 
 static void
@@ -318,7 +318,7 @@ fprint_symbolic (fp, 0, value,
 "HCENTER", (unsigned long) V4L2_CID_HCENTER,
 "VCENTER", (unsigned long) V4L2_CID_VCENTER,
 "LASTP1", (unsigned long) V4L2_CID_LASTP1,
-0);
+(void *) 0);
 }
 
 static void
@@ -329,7 +329,7 @@ fprint_symbolic (fp, 0, value,
 "BOOLEAN", (unsigned long) V4L2_CTRL_TYPE_BOOLEAN,
 "MENU", (unsigned long) V4L2_CTRL_TYPE_MENU,
 "BUTTON", (unsigned long) V4L2_CTRL_TYPE_BUTTON,
-0);
+(void *) 0);
 }
 
 static void
@@ -353,13 +353,13 @@ fputs (" flags=", fp);
 fprint_symbolic (fp, 2, t->flags,
 "DISABLED", (unsigned long) V4L2_CTRL_FLAG_DISABLED,
 "GRABBED", (unsigned long) V4L2_CTRL_FLAG_GRABBED,
-0);
+(void *) 0);
 fputs (" category=", fp);
 fprint_symbolic (fp, 0, t->category,
 "VIDEO", (unsigned long) V4L2_CTRL_CAT_VIDEO,
 "AUDIO", (unsigned long) V4L2_CTRL_CAT_AUDIO,
 "EFFECT", (unsigned long) V4L2_CTRL_CAT_EFFECT,
-0);
+(void *) 0);
 fprintf (fp, " group=\"%.*s\" "
 "reserved[] ",
 32, (const char *) t->group);
@@ -396,11 +396,11 @@ fprintf (fp, "index=%ld "
 fprint_symbolic (fp, 0, t->type,
 "TUNER", (unsigned long) V4L2_INPUT_TYPE_TUNER,
 "CAMERA", (unsigned long) V4L2_INPUT_TYPE_CAMERA,
-0);
+(void *) 0);
 fputs (" capability=", fp);
 fprint_symbolic (fp, 0, t->capability,
 "AUDIO", (unsigned long) V4L2_INPUT_CAP_AUDIO,
-0);
+(void *) 0);
 fprintf (fp, " assoc_audio=%ld "
 "reserved[] ",
 (long) t->assoc_audio);
@@ -421,7 +421,7 @@ fprint_symbolic (fp, 0, value,
 "FXCONTROL", (unsigned long) V4L2_BUF_TYPE_FXCONTROL,
 "VBI", (unsigned long) V4L2_BUF_TYPE_VBI,
 "PRIVATE", (unsigned long) V4L2_BUF_TYPE_PRIVATE,
-0);
+(void *) 0);
 }
 
 static void
@@ -439,7 +439,7 @@ fprint_symbolic (fp, 2, value,
 "COMBINED", (unsigned long) V4L2_FMT_FLAG_COMBINED,
 "FIELD_field", (unsigned long) V4L2_FMT_FLAG_FIELD_field,
 "SWCONVERSION", (unsigned long) V4L2_FMT_FLAG_SWCONVERSION,
-0);
+(void *) 0);
 }
 
 static void
@@ -475,7 +475,7 @@ fprintf (fp, "sampling_rate=%lu "
 (unsigned long) t->samples_per_line);
 fprint_symbolic (fp, 0, t->sample_format,
 "UBYTE", (unsigned long) V4L2_VBI_SF_UBYTE,
-0);
+(void *) 0);
 fputs (" start[]=? "
 "count[]=? "
 "flags=", fp);
@@ -483,7 +483,7 @@ fprint_symbolic (fp, 2, t->flags,
 "SF_UBYTE", (unsigned long) V4L2_VBI_SF_UBYTE,
 "UNSYNC", (unsigned long) V4L2_VBI_UNSYNC,
 "INTERLACED", (unsigned long) V4L2_VBI_INTERLACED,
-0);
+(void *) 0);
 fputs (" reserved2 ", fp);
 }
 
@@ -523,7 +523,7 @@ fprint_symbolic (fp, 2, value,
 "ODDFIELD", (unsigned long) V4L2_BUF_FLAG_ODDFIELD,
 "EVENFIELD", (unsigned long) V4L2_BUF_FLAG_EVENFIELD,
 "TIMECODE", (unsigned long) V4L2_BUF_FLAG_TIMECODE,
-0);
+(void *) 0);
 }
 
 static void
@@ -535,7 +535,7 @@ fprint_symbolic (fp, 0, value,
 "30FPS", (unsigned long) V4L2_TC_TYPE_30FPS,
 "50FPS", (unsigned long) V4L2_TC_TYPE_50FPS,
 "60FPS", (unsigned long) V4L2_TC_TYPE_60FPS,
-0);
+(void *) 0);
 }
 
 static void
@@ -554,7 +554,7 @@ fprintf (fp, "frames=%lu "
 fprint_symbolic (fp, 2, t->flags,
 "DROPFRAME", (unsigned long) V4L2_TC_FLAG_DROPFRAME,
 "COLORFRAME", (unsigned long) V4L2_TC_FLAG_COLORFRAME,
-0);
+(void *) 0);
 fputs (" type=", fp);
 fprint_symbol_v4l2_tc_type_ (fp, rw, t->type);
 fputs (" ", fp);
@@ -622,11 +622,11 @@ fprint_struct_v4l2_captureparm (FILE *fp, int rw __attribute__ ((unused)), const
 fputs ("capability=", fp);
 fprint_symbolic (fp, 0, t->capability,
 "TIMEPERFRAME", (unsigned long) V4L2_CAP_TIMEPERFRAME,
-0);
+(void *) 0);
 fputs (" capturemode=", fp);
 fprint_symbolic (fp, 0, t->capturemode,
 "HIGHQUALITY", (unsigned long) V4L2_MODE_HIGHQUALITY,
-0);
+(void *) 0);
 fprintf (fp, " timeperframe=%lu "
 "extendedmode=%lu "
 "reserved[] ",
@@ -732,7 +732,7 @@ fprint_symbolic (fp, 0, value,
 "STEREO_PSEUDO", (unsigned long) V4L2_AUDMODE_STEREO_PSEUDO,
 "STEREO_SPATIAL30", (unsigned long) V4L2_AUDMODE_STEREO_SPATIAL30,
 "STEREO_SPATIAL50", (unsigned long) V4L2_AUDMODE_STEREO_SPATIAL50,
-0);
+(void *) 0);
 }
 
 static void
@@ -747,7 +747,7 @@ fprint_symbolic (fp, 0, t->capability,
 "EFFECTS", (unsigned long) V4L2_AUDCAP_EFFECTS,
 "LOUDNESS", (unsigned long) V4L2_AUDCAP_LOUDNESS,
 "AVL", (unsigned long) V4L2_AUDCAP_AVL,
-0);
+(void *) 0);
 fputs (" mode=", fp);
 fprint_symbol_v4l2_audmode_ (fp, rw, t->mode);
 fputs (" reserved[] ", fp);
@@ -765,11 +765,11 @@ fprint_symbolic (fp, 0, t->type,
 "MODULATOR", (unsigned long) V4L2_OUTPUT_TYPE_MODULATOR,
 "ANALOG", (unsigned long) V4L2_OUTPUT_TYPE_ANALOG,
 "ANALOGVGAOVERLAY", (unsigned long) V4L2_OUTPUT_TYPE_ANALOGVGAOVERLAY,
-0);
+(void *) 0);
 fputs (" capability=", fp);
 fprint_symbolic (fp, 0, t->capability,
 "AUDIO", (unsigned long) V4L2_OUTPUT_CAP_AUDIO,
-0);
+(void *) 0);
 fprintf (fp, " assoc_audio=%ld "
 "reserved[] ",
 (long) t->assoc_audio);
@@ -806,7 +806,7 @@ fprint_symbolic (fp, 0, value,
 "SCALEUP", (unsigned long) V4L2_FBUF_CAP_SCALEUP,
 "SCALEDOWN", (unsigned long) V4L2_FBUF_CAP_SCALEDOWN,
 "BITMAP_CLIPPING", (unsigned long) V4L2_FBUF_CAP_BITMAP_CLIPPING,
-0);
+(void *) 0);
 }
 
 static void
@@ -819,7 +819,7 @@ fprint_symbolic (fp, 2, t->flags,
 "PRIMARY", (unsigned long) V4L2_FBUF_FLAG_PRIMARY,
 "OVERLAY", (unsigned long) V4L2_FBUF_FLAG_OVERLAY,
 "CHROMAKEY", (unsigned long) V4L2_FBUF_FLAG_CHROMAKEY,
-0);
+(void *) 0);
 fputs (" base[]=? "
 "fmt={", fp);
 fprint_struct_v4l2_pix_format (fp, rw, &t->fmt);
