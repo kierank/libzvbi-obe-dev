@@ -21,6 +21,7 @@ SUBDIRS = \
 	src \
 	$(proxy_dirs) \
 	contrib \
+	examples \
 	test \
 	po \
 	doc
