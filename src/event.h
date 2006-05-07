@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: event.h,v 1.10 2005/02/25 18:33:23 mschimek Exp $ */
+/* $Id: event.h,v 1.11 2006/05/07 20:53:33 mschimek Exp $ */
 
 #ifndef EVENT_H
 #define EVENT_H
@@ -68,24 +68,67 @@ typedef unsigned int vbi_nuid;
  * @ingroup Event
  * @brief Network description.
  *
- * All strings are ISO 8859-1, local language, and @c NUL terminated.
- * Prepare for empty strings. Read only.
+ * All strings are ISO 8859-1 encoded (yes that's stupid, sorry)
+ * and @c NUL terminated. Prepare for empty strings. Read only.
  */
 typedef struct {
 	vbi_nuid		nuid;
 
-	signed char		name[64];		/* descriptive name */
-	signed char		call[40];		/* network call letters (XDS) */
+	/**
+	 * Name of the network from XDS or from a table lookup of
+	 * CNIs in Teletext packet 8/30 or VPS. 
+	 */ 
+	signed char		name[64];
 
-	int			tape_delay;		/* tape delay, minutes (XDS) */
+	/**
+	 * Network call letters, from XDS. Empty if unknown or
+	 * not applicable.
+	 */
+	signed char		call[40];
 
-	/* Private */
+	/**
+	 * Tape delay in minutes, from XDS. Zero if unknown or
+	 * not applicable.
+	 **/
+	int			tape_delay;
 
+	/**
+	 * The European Broadcasting Union (EBU) maintains several tables
+	 * of Country and Network Identification (CNI) codes. CNIs of type
+	 * VPS, 8/30-1 and 8/30-2 can be used to identify networks during
+	 * a channel scan.
+	 *
+	 * This field contains the CNI of the network found in a VPS
+	 * packet. It can be zero if unknown or CNI's are not applicable.
+	 * Note VPS has room for only 4 lsb of the country code (0xCNN).
+	 *
+	 * For example ZDF: 0xDC2.
+	 */
 	int			cni_vps;
-	int			cni_8301;
-	int			cni_8302;
-	int			cni_x26;
 
+	/**
+	 * CNI of the network from Teletext packet 8/30 format 1,
+	 * zero if unknown or not applicable. The country code is
+	 * stored in the MSB, the network code in the LSB (0xCCNN).
+	 * Note these CNIs may use different country and network codes
+	 * than the PDC (VPS, 8/30-2) CNIs.
+	 *
+	 * For example BBC1: 0x447F, ZDF: 0x4902.
+	 */
+	int			cni_8301;
+
+	/**
+	 * CNI of the network from Teletext packet 8/30 format 2,
+	 * zero if unknown or not applicable. The country code is
+	 * stored in the MSB, the network code in the LSB (0xCCNN).
+	 *
+	 * For example BBC1: 0x2C7F, ZDF: 0x1DC2.
+	 */
+	int			cni_8302;
+
+	int			reserved;
+
+	/** Private. */
 	int			cycle;
 } vbi_network;
 
@@ -564,7 +607,6 @@ extern void		vbi_reset_prog_info(vbi_program_info *pi);
  * <table>
  * <tr><td>VPS (DE/AT/CH only):</td><td>0.08 s</td></tr>
  * <tr><td>Teletext PDC, 8/30:</td><td>2 s</td></tr>
- * <tr><td>Teletext X/26:</td><td>unknown</td></tr>
  * <tr><td>XDS (US only):</td><td>unknown, between 0.1x to 10x seconds</td></tr>
  * </table>
  *
@@ -605,7 +647,19 @@ extern void		vbi_reset_prog_info(vbi_program_info *pi);
  * XXX Change to get_prog_info. network ditto?
  */
 #define	VBI_EVENT_PROG_INFO	0x0080
+/**
+ * Like @a VBI_EVENT_NETWORK, but this event will also be sent
+ * when the decoder cannot determine a network name.
+ *
+ * @since 0.2.20
+ */
+#define	VBI_EVENT_NETWORK_ID	0x0100
 /** @} */
+
+/**
+ * @example examples/network.c
+ * Network identification example.
+ */
 
 #include <inttypes.h>
 
