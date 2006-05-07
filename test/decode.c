@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.10 2006/05/03 03:27:36 mschimek Exp $ */
+/* $Id: decode.c,v 1.11 2006/05/07 20:52:07 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -38,7 +38,8 @@
 #  include <getopt.h>
 #endif
 
-#if 1 /* libzvbi 0.2 */
+#include "src/version.h"
+#if 2 == VBI_VERSION_MINOR
 #  include "src/libzvbi.h"
 #  include "sliced.h"		/* sliced data from file */
 #  define HAVE_VBI_PFC_DEMUX 1 /* XXX port me */
@@ -756,16 +757,15 @@ teletext			(const uint8_t		buffer[42],
 	}
 }
 
-#if 3 == VBI_VERSION_MINOR /* XXX port me back */
-
 static void
 vps				(const uint8_t		buffer[13],
 				 unsigned int		line)
 {
 	if (option_decode_vps) {
 		unsigned int cni;
+#if 3 == VBI_VERSION_MINOR
 		vbi_program_id pi;
-
+#endif
 		if (option_dump_bin) {
 			printf ("VPS line=%3u ", line);
 			fwrite (buffer, 1, 13, stdout);
@@ -776,7 +776,8 @@ vps				(const uint8_t		buffer[13],
 			printf (_("Error in VPS packet CNI.\n"));
 			return;
 		}
-		
+
+#if 3 == VBI_VERSION_MINOR
 		if (!vbi_decode_vps_pdc (&pi, buffer)) {
 			printf (_("Error in VPS packet PDC data.\n"));
 			return;
@@ -790,6 +791,9 @@ vps				(const uint8_t		buffer[13],
 
 		if (0 != pi.cni)
 			dump_cni (pi.cni_type, pi.cni);
+#else
+		printf ("VPS line=%3u CNI=%x", line, cni);
+#endif
 	}
 
 	if (option_decode_vps_other) {
@@ -824,6 +828,8 @@ vps				(const uint8_t		buffer[13],
 			pr_label[i]);
 	}
 }
+
+#if 3 == VBI_VERSION_MINOR /* XXX port me back */
 
 static void
 wss_625				(const uint8_t		buffer[2])
@@ -879,9 +885,7 @@ decode				(const vbi_sliced *	s,
 
 		case VBI_SLICED_VPS:
 		case VBI_SLICED_VPS_F2:
-#if 3 == VBI_VERSION_MINOR /* XXX port me back */
 			vps (s->data, s->line);
-#endif
 			break;
 
 		case VBI_SLICED_CAPTION_625_F1:
@@ -1071,12 +1075,12 @@ Decoding options:\n"
 "-1 | --8301            Teletext packet 8/30 format 1 (local time)\n\
 -2 | --8302            Teletext packet 8/30 format 2 (PDC)\n"
 #endif
-"-c | --cc              Closed Caption\n"
-"-i | --idl             Any Teletext IDL packets (M/30, M/31)\n\
--t | --ttx             Decode any Teletext packet\n"
+"-c | --cc              Closed Caption\n\
+-i | --idl             Any Teletext IDL packets (M/30, M/31)\n\
+-t | --ttx             Decode any Teletext packet\n\
+-v | --vps             Video Programming System (PDC)\n"
 #if 3 == VBI_VERSION_MINOR /* XXX port me back */
-"-v | --vps             Video Programming System (PDC)\n\
--w | --wss             Wide Screen Signalling\n"
+"-w | --wss             Wide Screen Signalling\n"
 #endif
 "-x | --xds             Decode eXtended Data Service (NTSC line 284)\n\
 -a | --all             Everything above, e.g.\n\
@@ -1086,11 +1090,9 @@ Decoding options:\n"
 -c | --idl-ch N\n\
 -d | --idl-addr NNN\n\
                        Decode Teletext IDL format A data from channel N,\n\
-                       service packet address NNN [0]\n"
-#if 3 == VBI_VERSION_MINOR /* XXX port me back */
-"-r | --vps-other       Decode VPS data unrelated to PDC\n"
-#endif
-"-p | --pfc-pgno NNN\n\
+                       service packet address NNN [0]\n\
+-r | --vps-other       Decode VPS data unrelated to PDC\n\
+-p | --pfc-pgno NNN\n\
 -s | --pfc-stream NN   Decode Teletext Page Function Clear data\n\
                          from page NNN (for example 1DF), stream NN [0]\n\
 Modifying options:\n\
