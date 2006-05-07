@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.19 2006/04/29 05:55:35 mschimek Exp $ */
+/* $Id: decoder.c,v 1.20 2006/05/07 20:54:16 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -469,6 +469,10 @@ vbi_bit_slicer_init(vbi_bit_slicer *slicer,
 	}
 }
 
+/**
+ * @example examples/wss.c
+ * WSS capture example.
+ */
 
 /**
  * @param rd Initialized vbi_raw_decoder structure.
