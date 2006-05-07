@@ -1,3 +1,7 @@
+2006-05-07    <mschimek@users.sf.net>
+
+	* src/structpr.pl: ILP64 fixes.
+
 2006-04-28    <mschimek@users.sf.net>
 
 	* src/io-v4l.c (reverse_lookup): Signedness fix.
