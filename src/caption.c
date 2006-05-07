@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.20 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: caption.c,v 1.21 2006/05/07 20:53:44 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -513,6 +513,9 @@ xds_decoder(vbi_decoder *vbi, int _class, int type,
 				n->nuid = sum;
 
 				vbi->network.type = VBI_EVENT_NETWORK;
+				caption_send_event(vbi, &vbi->network);
+
+				vbi->network.type = VBI_EVENT_NETWORK_ID;
 				caption_send_event(vbi, &vbi->network);
 
 				n->cycle = 3;
