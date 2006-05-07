@@ -80,6 +80,7 @@ libzvbi_la_SOURCES = \
 	io-v4l2.c videodev2.h \
 	io-v4l2k.c videodev2k.h \
 	lang.c lang.h \
+	macros.h \
 	misc.c misc.h \
 	packet.c teletext.c vt.h \
 	pfc_demux.c pfc_demux.h \
@@ -89,6 +90,7 @@ libzvbi_la_SOURCES = \
 	tables.c tables.h network-table.h \
 	trigger.c trigger.h \
 	vbi.c vbi.h event.h \
+	vps.c vps.h pdc.h \
 	wss.c wss.h \
 	xds_demux.c xds_demux.h \
 	$(proxy_sources)
@@ -142,6 +144,7 @@ LIBZVBI_HDRS = \
 	cc.h \
 	vt.h \
 	tables.h \
+	vps.h \
 	vbi.h
 
 # Concat the header files in this order and filter out all lines
