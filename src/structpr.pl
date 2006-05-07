@@ -25,7 +25,7 @@
 #  Perl and C gurus cover your eyes. This is one of my first
 #  attempts in this funny tongue and far from a proper C parser.
 
-# $Id: structpr.pl,v 1.4 2005/06/30 22:15:41 mschimek Exp $
+# $Id: structpr.pl,v 1.5 2006/05/07 06:07:33 mschimek Exp $
 
 $number		= '[0-9]+';
 $ident		= '\~?_*[a-zA-Z][a-zA-Z0-9_]*';
@@ -353,7 +353,7 @@ sub add_symbolic {
 		. "fprint_symbol_$prefix (FILE *fp, "
 		. "int rw __attribute__ ((unused)), unsigned long value)\n"
 		. "{\nfprint_symbolic (fp, $enum_mode, value,\n"
-		. $sbody . "0);\n}\n\n",
+		. $sbody . "(void *) 0);\n}\n\n",
 	    deps => []
 	};
 
@@ -368,7 +368,7 @@ sub add_symbolic {
 
 	$templ .= " ";
 	$$text .= "fprint_symbolic (fp, $enum_mode, t->" . &trail ($item)
-	    . ",\n" . $sbody . "0);\n";
+	    . ",\n" . $sbody . "(void *) 0);\n";
     }
 }
 
@@ -621,10 +621,11 @@ sub enumeration {
 
     foreach $symbol (@symbols) {
 	$funcs{$type}->{text} .=
-	    "\"" . substr ($symbol, length ($prefix)) . "\", $symbol,\n";
+	    "\"" . substr ($symbol, length ($prefix))
+	    . "\", (unsigned long) $symbol,\n";
     }
 
-    $funcs{$type}->{text} .= "0);\n}\n\n";
+    $funcs{$type}->{text} .= "(void *) 0);\n}\n\n";
 }
 
 # Let's parse
@@ -679,7 +680,7 @@ while (($name, $type) = each %int_ioctls) {
 	    . "fprint_$name (FILE *fp, "
 	    . "int rw __attribute__ ((unused)), $type *arg)\n"
 	    . "{\nfprint_symbolic (fp, 0, (unsigned long) *arg,\n"
-	    . $sbody . "0);\n}\n\n",
+	    . $sbody . "(void *) 0);\n}\n\n",
 	deps => []
     };
 }
