@@ -78,6 +78,7 @@ FILE_PATTERNS          = *.c \
                          trigger.h \
                          ure.h \
                          vbi.h \
+			 vps.h \
                          vt.h \
                          wss.h \
 			 xds_demux.h
@@ -85,7 +86,8 @@ RECURSIVE              = NO
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 
-EXAMPLE_PATH           = @top_srcdir@/src
+EXAMPLE_PATH           = @top_srcdir@/examples \
+		         @top_srcdir@/src
 EXAMPLE_PATTERNS       = 
 EXAMPLE_RECURSIVE      = NO
 IMAGE_PATH             = @top_srcdir@/doc
