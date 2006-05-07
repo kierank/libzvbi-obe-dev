@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.36 2006/04/29 05:55:35 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.37 2006/05/07 20:54:50 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -106,6 +106,7 @@ typedef struct vbi_capture_v4l2 {
 	vbi_bool		pal_start1_fix;
 	vbi_bool		saa7134_ntsc_fix;
 	vbi_bool		bttv_offset_fix;
+	vbi_bool		cx88_ntsc_fix;
 
 	vbi_log_fn *		log_fn;
 	void *			log_user_data;
@@ -1050,6 +1051,23 @@ v4l2_update_services(vbi_capture *vc,
 	{
 		vbi_bool fixed = FALSE;
 
+		if (v->cx88_ntsc_fix
+		    && 9 == vfmt.fmt.vbi.start[0]
+		    && 272 == vfmt.fmt.vbi.start[1]) {
+			/* Captures only 288 * 4 samples/line,
+			   work-around not possible. */
+			vbi_asprintf (errstr,
+				      _("A known bug in driver %s %u.%u.%u "
+					"impedes VBI capturing in NTSC mode. "
+					"Please upgrade."),
+				      v->vcap.driver,
+				      (v->vcap.version >> 16) & 0xFF,
+				      (v->vcap.version >> 8) & 0xFF,
+				      (v->vcap.version >> 0) & 0xFF);
+			errno = 0;
+			goto io_error;
+		}
+
 		if (v->pal_start1_fix
 		    && 625 == v->sp.scanning
 		    && 319 == vfmt.fmt.vbi.start[1]) {
@@ -1377,16 +1395,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 			v->saa7134_ntsc_fix = TRUE;
 		v->pal_start1_fix = TRUE;
 	} else if (0 == strcmp ((char *) v->vcap.driver, "cx8800")) {
-		if (v->vcap.version <= 0x000005) {
-			/* NTSC mode is broken in these drivers. They
-			   apparently return wrong start[] = { 9, 272 }
-			   (should be 10, 273) and capture only 288 * 4
-			   bytes per line (should be 400 * 4). Raw VBI
-			   images are padded to count[] = { 2048, 2048 }.
-			   There's no work-around and no patch in the pipe
-			   as of 2006-04-29. */
-		}
-		/* v->bttv_offset_fix = TRUE; likely but unconfirmed */
+		v->cx88_ntsc_fix = TRUE;
 	}
 
 	v->has_try_fmt = -1;
