@@ -17,7 +17,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.22 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: packet.c,v 1.23 2006/05/07 20:53:08 mschimek Exp $ */
+
+#include "site_def.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +36,7 @@
 #include "lang.h"
 #include "export.h"
 #include "tables.h"
+#include "vps.h"
 #include "vbi.h"
 
 #ifndef FPC
@@ -1056,70 +1059,6 @@ unknown_cni(vbi_decoder *vbi, const char *dl, int cni)
 		cni, dl);
 }
 
-#define BSDATA_TEST 0 /* Broadcaster Service Data */
-
-#if BSDATA_TEST
-
-static const char *month_names[] = {
-	"0?", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug",
-	"Sep", "Oct", "Nov", "Dec", "13?", "14?", "15?"
-};
-
-static const char *pcs_names[] = {
-	"unknown", "mono", "stereo", "bilingual"
-};
-
-#define PIL(day, mon, hour, min) \
-	(((day) << 15) + ((mon) << 11) + ((hour) << 6) + ((min) << 0))
-
-static void
-dump_pil(int pil)
-{
-	int day, mon, hour, min;
-
-	day = pil >> 15;
-	mon = (pil >> 11) & 0xF;
-	hour = (pil >> 6) & 0x1F;
-	min = pil & 0x3F;
-
-	if (pil == PIL(0, 15, 31, 63))
-		printf("... PDC: Timer-control (no PDC)\n");
-	else if (pil == PIL(0, 15, 30, 63))
-		printf("... PDC: Recording inhibit/terminate\n");
-	else if (pil == PIL(0, 15, 29, 63))
-		printf("... PDC: Interruption\n");
-	else if (pil == PIL(0, 15, 28, 63))
-		printf("... PDC: Continue\n");
-	else if (pil == PIL(31, 15, 31, 63))
-		printf("... PDC: No time\n");
-	else
-		printf("... PDC: %05x, %2d %s %02d:%02d\n",
-			pil, day, month_names[mon], hour, min);
-}
-
-static void
-dump_pty(int pty)
-{
-	extern const char *ets_program_class[16];
-	extern const char *ets_program_type[8][16];
-
-	if (pty == 0xFF)
-		printf("... prog. type: %02x unused", pty);
-	else
-		printf("... prog. type: %02x class %s", pty, ets_program_class[pty >> 4]);
-
-	if (pty < 0x80) {
-		if (ets_program_type[pty >> 4][pty & 0xF])
-			printf(", type %s", ets_program_type[pty >> 4][pty & 0xF]);
-		else
-			printf(", type undefined");
-	}
-
-	putchar('\n');
-}
-
-#endif /* BSDATA_TEST */
-
 /**
  * @internal
  * @param vbi Initialized vbi decoding context.
@@ -1127,30 +1066,26 @@ dump_pty(int pty)
  * 
  * Decode a VPS datagram (13 bytes) according to
  * ETS 300 231 and update decoder state. This may
- * send a @a VBI_EVENT_NETWORK.
+ * send a @a VBI_EVENT_NETWORK or @a VBI_EVENT_NETWORK_ID.
  */
 void
 vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 {
 	vbi_network *n = &vbi->network.ev.network;
 	const char *country, *name;
-	int cni;
+	unsigned int cni;
 
-	cni = + ((buf[10] & 3) << 10)
-	      + ((buf[11] & 0xC0) << 2)
-	      + ((buf[8] & 0xC0) << 0)
-	      + (buf[11] & 0x3F);
+	vbi_decode_vps_cni (&cni, buf);
 
-	if (cni == 0x0DC3)
-		cni = (buf[2] & 0x10) ? 0x0DC2 : 0x0DC1;
-
-	if (cni != n->cni_vps) {
+	if (cni != (unsigned int) n->cni_vps) {
 		n->cni_vps = cni;
 		n->cycle = 1;
 	} else if (n->cycle == 1) {
-		unsigned int id = station_lookup(CNI_VPS, cni, &country, &name);
+		unsigned int id;
 
-		if (!id) {
+		id = station_lookup(CNI_VPS, cni, &country, &name);
+
+		if (0 == id) {
 			n->name[0] = 0;
 			unknown_cni(vbi, "VPS", cni);
 		} else {
@@ -1168,62 +1103,10 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 			vbi_send_event(vbi, &vbi->network);
 		}
 
+		vbi->network.type = VBI_EVENT_NETWORK_ID;
+		vbi_send_event(vbi, &vbi->network);
+
 		n->cycle = 2;
-	}
-
-	if (BSDATA_TEST && 0) {
-		static char pr_label[20];
-		static char label[20];
-		static int l = 0;
-		int cni, pcs, pty, pil;
-		int c, j;
-
-		printf("\nVPS:\n");
-
-		c = vbi_rev8 (buf[1]);
-
-		if ((int8_t) c < 0) {
-			label[l] = 0;
-			memcpy(pr_label, label, sizeof(pr_label));
-			l = 0;
-		}
-
-		c &= 0x7F;
-
-		label[l] = vbi_printable (c);
-
-		l = (l + 1) % 16;
-
-		printf(" 3-10: %02x %02x %02x %02x %02x %02x %02x %02x (\"%s\")\n",
-			buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], pr_label);
-
-		cni = + ((buf[10] & 3) << 10)
-		      + ((buf[11] & 0xC0) << 2)
-		      + ((buf[8] & 0xC0) << 0)
-		      + (buf[11] & 0x3F);
-
-		if (cni)
-			for (j = 0; vbi_cni_table[j].name; j++)
-				if (vbi_cni_table[j].cni4 == cni) {
-					printf(" Country: %s\n Station: %s%s\n",
-						vbi_cni_table[j].country,
-						vbi_cni_table[j].name,
-						(cni == 0x0DC3) ? ((buf[2] & 0x10) ? " (ZDF)" : " (ARD)") : "");
-					break;
-				}
-
-		pcs = buf[2] >> 6;
-		pil = ((buf[8] & 0x3F) << 14) + (buf[9] << 6) + (buf[10] >> 2);
-		pty = buf[12];
-
-		/* if (!cni || !vbi_cni_table[j].name) */
-			printf(" CNI: %04x\n", cni);
-#if BSDATA_TEST
-		printf(" Analog audio: %s\n", pcs_names[pcs]);
-
-		dump_pil(pil);
-		dump_pty(pty);
-#endif
 	}
 }
 
@@ -1245,7 +1128,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 		if (designation <= 1) {
 			const char *country, *name;
 			int cni;
-#if BSDATA_TEST
+#if 0
 			printf("\nPacket 8/30/%d:\n", designation);
 #endif
 			cni = vbi_rev16p (raw + 7);
@@ -1277,9 +1160,12 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 					vbi_send_event(vbi, &vbi->network);
 				}
 
+				vbi->network.type = VBI_EVENT_NETWORK_ID;
+				vbi_send_event(vbi, &vbi->network);
+
 				n->cycle = 2;
 			}
-#if BSDATA_TEST
+#if 0
 			if (1) { /* country and network identifier */
 				if (station_lookup(CNI_8301, cni, &country, &name))
 					printf("... country: %s\n... station: %s\n", country, name);
@@ -1317,7 +1203,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 			int t, b[7];
 			const char *country, *name;
 			int cni;
-#if BSDATA_TEST
+#if 0
 			printf("\nPacket 8/30/%d:\n", designation);
 #endif
 			for (err = i = 0; i < 7; i++) {
@@ -1364,10 +1250,13 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 					vbi_send_event(vbi, &vbi->network);
 				}
 
+				vbi->network.type = VBI_EVENT_NETWORK_ID;
+				vbi_send_event(vbi, &vbi->network);
+
 				n->cycle = 2;
 			}
 
-#if BSDATA_TEST
+#if 0
 			if (1) { /* country and network identifier */
 				const char *country, *name;
 
@@ -1405,7 +1294,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 
 		}
 
-#if BSDATA_TEST
+#if 0
 		/*
 		 *  "transmission status message, e.g. the programme title",
 		 *  "default G0 set". XXX add to program_info event.
@@ -1648,7 +1537,7 @@ store_lop(vbi_decoder *vbi, vt_page *vtp)
 }
 
 #define TTX_EVENTS (VBI_EVENT_TTX_PAGE)
-#define BSDATA_EVENTS (VBI_EVENT_NETWORK)
+#define BSDATA_EVENTS (VBI_EVENT_NETWORK | VBI_EVENT_NETWORK_ID)
 
 /*
  *  Teletext packet 27, page linking

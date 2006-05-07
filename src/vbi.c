@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.17 2006/02/10 06:25:38 mschimek Exp $ */
+/* $Id: vbi.c,v 1.18 2006/05/07 20:52:42 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -114,7 +114,7 @@ vbi_event_enable(vbi_decoder *vbi, int mask)
 		vbi_teletext_channel_switched(vbi);
 	if (activate & VBI_EVENT_CAPTION)
 		vbi_caption_channel_switched(vbi);
-	if (activate & VBI_EVENT_NETWORK)
+	if (activate & (VBI_EVENT_NETWORK | VBI_EVENT_NETWORK_ID))
 		memset(&vbi->network, 0, sizeof(vbi->network));
 	if (activate & VBI_EVENT_TRIGGER)
 		vbi_trigger_flush(vbi);
@@ -404,11 +404,13 @@ vbi_decode(vbi_decoder *vbi, vbi_sliced *sliced, int lines, double time)
 		  fprintf(stderr, "vbi frame/s dropped at %f, D=%f\n",
 			  time, time - vbi->time);
 
-	  if (vbi->event_mask &
-	      (VBI_EVENT_TTX_PAGE | VBI_EVENT_NETWORK))
+	  if (vbi->event_mask & (VBI_EVENT_TTX_PAGE |
+				 VBI_EVENT_NETWORK |
+				 VBI_EVENT_NETWORK_ID))
 		  vbi_teletext_desync(vbi);
-	  if (vbi->event_mask &
-	      (VBI_EVENT_CAPTION | VBI_EVENT_NETWORK))
+	  if (vbi->event_mask & (VBI_EVENT_CAPTION |
+				 VBI_EVENT_NETWORK |
+				 VBI_EVENT_NETWORK_ID))
 		  vbi_caption_desync(vbi);
 	} else {
 		pthread_mutex_lock(&vbi->chswcd_mutex);
