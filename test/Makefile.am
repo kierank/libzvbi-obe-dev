@@ -4,7 +4,8 @@ TESTS = \
 	cpptest \
 	exoptest \
 	hamm \
-	raw_decoder
+	raw_decoder \
+	test-vps
 
 check_PROGRAMS = \
 	cpptest \
@@ -39,9 +40,9 @@ noinst_PROGRAMS = \
 	export \
 	glyph \
 	sliced2pes \
+	test-vps \
 	ttxfilter \
 	unicode \
-	wss \
 	$(proxy_programs) \
 	$(x_programs)
 
@@ -65,6 +66,8 @@ ttxfilter_SOURCES = \
 	ttxfilter.c \
 	sliced.c sliced.h
 
+test_vps_SOURCES = test-vps.c
+
 noinst_SCRIPTS = \
 	uclist
 
@@ -74,11 +77,13 @@ EXTRA_DIST = \
 	uclist \
 	sim.c
 
-AM_CPPFLAGS = \
+AM_CFLAGS = \
 	-I$(top_srcdir) \
 	$(X_CFLAGS) \
 	-D_REENTRANT \
 	-D_GNU_SOURCE
+
+AM_CPPFLAGS = $(AM_CFLAGS)
 
 LDADD = \
 	$(top_builddir)/src/.libs/libzvbi.a \
