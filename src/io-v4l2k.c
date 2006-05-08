@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.37 2006/05/07 20:54:50 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.38 2006/05/08 16:57:47 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -1076,8 +1076,8 @@ v4l2_update_services(vbi_capture *vc,
 		}
 
 		if (v->bttv_offset_fix
-		    && 256 != vfmt.fmt.vbi.offset) {
-			vfmt.fmt.vbi.offset = 256;
+		    && 128 == vfmt.fmt.vbi.offset) {
+			vfmt.fmt.vbi.offset = 244;
 			fixed = TRUE;
 		}
 
