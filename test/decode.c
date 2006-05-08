@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.11 2006/05/07 20:52:07 mschimek Exp $ */
+/* $Id: decode.c,v 1.12 2006/05/08 16:49:23 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -792,7 +792,7 @@ vps				(const uint8_t		buffer[13],
 		if (0 != pi.cni)
 			dump_cni (pi.cni_type, pi.cni);
 #else
-		printf ("VPS line=%3u CNI=%x", line, cni);
+		printf ("VPS line=%3u CNI=%x\n", line, cni);
 #endif
 	}
 
