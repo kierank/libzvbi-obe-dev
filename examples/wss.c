@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.1 2006/05/07 20:55:00 mschimek Exp $ */
+/* $Id: wss.c,v 1.2 2006/05/14 14:18:44 mschimek Exp $ */
 
 /* This example shows how to extract Wide Screen Signalling data
    (EN 300 294) from video images. Note some drivers cannot capture
@@ -46,10 +46,10 @@
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 
-#include "src/libzvbi.h"
+#include <libzvbi.h>
 
 #include <asm/types.h>		/* for videodev2.h */
-#include "src/videodev2k.h"
+#include "videodev2k.h"
 
 #define CLEAR(x) memset (&(x), 0, sizeof (x))
 
