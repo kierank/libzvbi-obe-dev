@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.5 2006/05/03 03:27:36 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.6 2006/05/14 14:24:59 mschimek Exp $ */
 
 /* Automated test of the vbi_raw_decoder. */
 
@@ -184,7 +184,18 @@ create_decoder			(const vbi_sampling_par *sp,
 		++b;
 	}
 
-	assert (NULL != (rd = vbi3_raw_decoder_new (sp)));
+	rd = vbi3_raw_decoder_new (sp);
+	assert (NULL != rd);
+
+	if (sp->synchronous) {
+		vbi3_raw_decoder_set_log_fn (rd,
+					     vbi_log_on_stderr,
+					     /* user_data */ NULL,
+					     /* max_level */ VBI_LOG_INFO);
+	} else {
+		/* Don't complain about expected failures.
+		   XXX Check for those in a different function. */
+	}
 
 	out_services = vbi3_raw_decoder_add_services (rd, in_services, strict);
 
@@ -433,6 +444,20 @@ static const block hi_625 [] = {
 	BLOCK_END,
 };
 
+static const block hi_f1_625 [] = {
+/* No simulation yet.
+	{ VBI_SLICED_VPS,		16, 16 },
+*/
+	{ VBI_SLICED_CAPTION_625_F1,	22, 22 },
+	{ VBI_SLICED_WSS_625,		23, 23 },
+	BLOCK_END,
+};
+
+static const block hi_f2_525 [] = {
+	{ VBI_SLICED_CAPTION_525_F2,	284, 284 },
+	BLOCK_END,
+};
+
 static const block low_625 [] = {
 /* No simulation yet.
 	{ VBI_SLICED_VPS,		16, 16 },
@@ -480,6 +505,8 @@ test2				(const vbi_sampling_par *sp)
 {
 	if (625 == sp->scanning) {
 		if (sp->sampling_rate >= 13500000) {
+			vbi_sampling_par sp1;
+
 			/* We cannot mix Teletext standards; bit rate and
 			   FRC are too similar to reliable distinguish. */
 			test_vbi (sp, ttx_a, 1);
@@ -492,6 +519,13 @@ test2				(const vbi_sampling_par *sp)
 
 			test_vbi (sp, hi_625, 1);
 			test_video (sp, hi_625, 1);
+
+			if (!sp->interlaced) {
+				sp1 = *sp;
+				sp1.start[1] = 0;
+				sp1.count[1] = 0;
+				test_vbi (&sp1, hi_f1_625, 2);
+			}
 		} else if (sp->sampling_rate >= 5000000) {
 			test_vbi (sp, low_625, 1);
 			test_video (sp, low_625, 1);
@@ -504,11 +538,20 @@ test2				(const vbi_sampling_par *sp)
 		}
 	} else {
 		if (sp->sampling_rate >= 13500000) {
+			vbi_sampling_par sp1;
+
 			test_vbi (sp, ttx_c_525, 1);
 			test_vbi (sp, ttx_d_525, 1);
 
 			test_vbi (sp, hi_525, 1);
 			test_video (sp, hi_525, 1);
+
+			if (!sp->interlaced) {
+				sp1 = *sp;
+				sp1.start[0] = 0;
+				sp1.count[0] = 0;
+				test_vbi (&sp1, hi_f2_525, 2);
+			}
 		} else {
 			test_vbi (sp, low_525, 1);
 			test_video (sp, low_525, 1);
