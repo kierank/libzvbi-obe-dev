@@ -1,3 +1,23 @@
+2006-05-10    <mschimek@users.sf.net>
+
+	* Release 0.2.21.
+
+2006-05-10    <mschimek@users.sf.net>
+
+	* examples/wss.c: Include libzvbi.h, not src/libzvbi.h.
+
+	* src/raw_decoder.c (_vbi_sampling_par_check_service): Line number
+	  check required both fields for services which exist only on one
+	  field.
+	* src/io-sim.c (signal_u8): Didn't handle sampling parameters
+	  with only a single field. 
+	(_vbi_test_image_vbi): Enabled warnings.
+	* test/raw_decoder.c (test2): Added regression test for line
+	  number check bug.
+	(create_decoder): Enabled warnings.
+
+	* configure.in: Bumped version number to 0.2.21.
+
 2006-05-08    <mschimek@users.sf.net>
 
 	* Release 0.2.20.

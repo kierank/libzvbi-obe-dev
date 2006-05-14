@@ -1,3 +1,9 @@
+libzvbi 0.2.21, 2006-05-10
+--------------------------
+This is a bugfix release.
+
+- Capturing WSS data from video images failed due to a broken check.
+
 libzvbi 0.2.20, 2006-05-08
 --------------------------
 This version supports raw VBI capturing with unknown field order, adds
