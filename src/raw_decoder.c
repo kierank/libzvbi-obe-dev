@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.8 2006/04/29 05:55:35 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.9 2006/05/14 14:20:50 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -702,6 +702,7 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 				 vbi_log_fn *		log_fn,
 				 void *			log_user_data)
 {
+	const unsigned int unknown = 0;
 	double signal;
 	unsigned int field;
 	unsigned int samples_per_line;
@@ -732,15 +733,16 @@ _vbi_sampling_par_check_service	(const vbi_sampling_par *sp,
 		return FALSE;
 	}
 
-	if ((par->flags & _VBI_SP_LINE_NUM)
-	    && (0 == sp->start[0] /* unknown */
-		|| 0 == sp->start[1])) {
-		vbi_log_printf (log_fn, log_user_data,
-				VBI_LOG_NOTICE, __FUNCTION__,
-				"Service 0x%08x (%s) requires known "
-				"line numbers.",
-				par->id, par->label);
-		return FALSE;
+	if (par->flags & _VBI_SP_LINE_NUM) {
+		if ((par->first[0] > 0 && unknown == sp->start[0])
+		    || (par->first[1] > 0 && unknown == sp->start[1])) {
+			vbi_log_printf (log_fn, log_user_data,
+					VBI_LOG_NOTICE, __FUNCTION__,
+					"Service 0x%08x (%s) requires known "
+					"line numbers.",
+					par->id, par->label);
+			return FALSE;
+		}
 	}
 
 	{
