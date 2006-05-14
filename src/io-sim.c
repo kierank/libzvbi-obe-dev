@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.c,v 1.5 2006/04/29 05:55:35 mschimek Exp $ */
+/* $Id: io-sim.c,v 1.6 2006/05/14 14:22:48 mschimek Exp $ */
 
 #include <assert.h>
 #include <stdlib.h>
@@ -283,7 +283,8 @@ signal_u8			(const vbi_sampling_par *sp,
 
 		if (0 == sliced->line) {
 			goto bounds;
-		} else if ((int) sliced->line >= sp->start[1]) {
+		} else if (0 != sp->start[1]
+			   && (int) sliced->line >= sp->start[1]) {
 			row = sliced->line - sp->start[1];
 
 			if (row >= sp->count[1])
@@ -293,7 +294,8 @@ signal_u8			(const vbi_sampling_par *sp,
 				row = row * 2 + 1;
 			else
 				row += sp->count[0];
-		} else if ((int) sliced->line >= sp->start[0]) {
+		} else if (0 != sp->start[0]
+			   && (int) sliced->line >= sp->start[0]) {
 			row = sliced->line - sp->start[0];
 
 			if (row >= sp->count[0])
@@ -424,7 +426,7 @@ _vbi_test_image_vbi		(uint8_t *		raw,
 	unsigned int black_level;
 	unsigned int white_level;
 
-	if (!_vbi_sampling_par_valid (sp, /* log_fn */ NULL,
+	if (!_vbi_sampling_par_valid (sp, vbi_log_on_stderr,
 				      /* log_user_data */ NULL))
 		return FALSE;
 
