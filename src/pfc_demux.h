@@ -17,14 +17,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pfc_demux.h,v 1.3 2005/05/26 04:08:44 mschimek Exp $ */
+/* $Id: pfc_demux.h,v 1.4 2006/05/18 16:53:31 mschimek Exp $ */
 
 #ifndef __ZVBI_PFC_DEMUX_H__
 #define __ZVBI_PFC_DEMUX_H__
 
 #include <inttypes.h>		/* uint8_t */
 #include <stdio.h>		/* FILE */
-/* #include "macros.h" */
+#include "macros.h"
 #include "bcd.h"		/* vbi_pgno */
 
 /* VBI_BEGIN_DECLS */
@@ -94,7 +94,8 @@ extern vbi_pfc_demux *
 vbi_pfc_demux_new		(vbi_pgno		pgno,
 				 unsigned int		stream,
 				 vbi_pfc_demux_cb *	callback,
-				 void *			user_data) vbi_alloc;
+				 void *			user_data)
+  __attribute__ ((_vbi_alloc));
 
 /* Private */
 
