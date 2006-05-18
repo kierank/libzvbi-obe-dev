@@ -1,3 +1,19 @@
+2006-05-17    <mschimek@users.sf.net>
+
+	* src/io-v4l2k.c (print_vfmt): LF redundant.
+	
+	* test/osc.c, test/decode.c, test/capture.c, test/caption.c,
+	  src/xds_demux.c, src/teletext.c, src/search.c, src/packet.c,
+	  src/misc.h, src/dvb_demux.c, src/caption.c:
+	  s/vbi_printable/vbi_to_ascii for clarity.
+
+	* src/raw_decoder.c (_vbi_sampling_par_valid): Fixed broken
+	  start/count check.
+
+	* src/pfc_demux.h, src/pfc_demux.c: Cleanups for 0.3 backport.
+
+	* configure.in: Bumped version number to 0.2.22.
+
 2006-05-10    <mschimek@users.sf.net>
 
 	* Release 0.2.21.

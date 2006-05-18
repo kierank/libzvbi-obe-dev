@@ -67,10 +67,12 @@ typedef struct vbi_decoder vbi_decoder;
 #  define vbi_const __attribute__ ((const))
    /* Function returns pointer which does not alias anything. */
 #  define vbi_alloc __attribute__ ((malloc))
+#  define _vbi_alloc malloc
 #else
 #  define vbi_pure
 #  define vbi_const
 #  define vbi_alloc
+#  define _vbi_alloc
 #endif
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
@@ -943,7 +945,8 @@ extern vbi_pfc_demux *
 vbi_pfc_demux_new		(vbi_pgno		pgno,
 				 unsigned int		stream,
 				 vbi_pfc_demux_cb *	callback,
-				 void *			user_data) vbi_alloc;
+				 void *			user_data)
+  __attribute__ ((_vbi_alloc));
 
 /* xds_demux.h */
 
