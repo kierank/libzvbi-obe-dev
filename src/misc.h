@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.h,v 1.11 2006/04/29 05:55:35 mschimek Exp $ */
+/* $Id: misc.h,v 1.12 2006/05/18 16:52:48 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -28,6 +28,7 @@
 #  include "config.h"
 #endif
 
+#include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
@@ -63,10 +64,12 @@
 #  define vbi_const __attribute__ ((const))
    /* Function returns pointer which does not alias anything. */
 #  define vbi_alloc __attribute__ ((malloc))
+#  define _vbi_alloc malloc
 #else
 #  define vbi_pure
 #  define vbi_const
 #  define vbi_alloc
+#  define _vbi_alloc
 #endif
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
@@ -269,7 +272,7 @@ vbi_asprintf			(char **		dstp,
 
 /* For debugging. */
 vbi_inline int
-vbi_printable			(int			c)
+_vbi_to_ascii			(int			c)
 {
 	if (c < 0)
 		return '?';

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.12 2006/04/29 05:55:35 mschimek Exp $ */
+/* $Id: caption.c,v 1.13 2006/05/18 16:51:52 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -40,20 +40,6 @@
 
 #include "src/libzvbi.h"
 #include "sliced.h"
-
-vbi_inline int
-vbi_printable			(int			c)
-{
-	if (c < 0)
-		return '?';
-
-	c &= 0x7F;
-
-	if (c < 0x20 || c >= 0x7F)
-		return '.';
-
-	return c;
-}
 
 vbi_decoder *		vbi;
 vbi_pgno		pgno = -1;

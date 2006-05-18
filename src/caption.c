@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.21 2006/05/07 20:53:44 mschimek Exp $ */
+/* $Id: caption.c,v 1.22 2006/05/18 16:53:08 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -650,7 +650,7 @@ xds_separator(vbi_decoder *vbi, uint8_t *buf)
 
 			XDS_SEP_DUMP(
 				for (i = 0; i < sp->count - 2; i++)
-					printf("%c", vbi_printable (sp->buffer[i]));
+					printf("%c", _vbi_to_ascii (sp->buffer[i]));
 				printf(" %d/0x%02x\n", class, type);
 			)
 		}
@@ -1256,8 +1256,8 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 
 	case 284:	/* NTSC */
 		CC_DUMP(
-			putchar(vbi_printable (buf[0]));
-			putchar(vbi_printable (buf[1]));
+			putchar(_vbi_to_ascii (buf[0]));
+			putchar(_vbi_to_ascii (buf[1]));
 			fflush(stdout);
 		)
 
@@ -1292,8 +1292,8 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 	}
 
 	CC_DUMP(
-		putchar(vbi_printable (buf[0]));
-		putchar(vbi_printable (buf[1]));
+		putchar(_vbi_to_ascii (buf[0]));
+		putchar(_vbi_to_ascii (buf[1]));
 		fflush(stdout);
 	)
 
@@ -1329,8 +1329,8 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 
 	default:
 		CC_TEXT_DUMP(
-			putchar(vbi_printable (buf[0]));
-			putchar(vbi_printable (buf[1]));
+			putchar(_vbi_to_ascii (buf[0]));
+			putchar(_vbi_to_ascii (buf[1]));
 			fflush(stdout);
 		)
 

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.21 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: teletext.c,v 1.22 2006/05/18 16:52:13 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -2090,7 +2090,7 @@ post_enhance(vbi_page *pg, int display_rows)
 	for (row = 0; row <= last_row; row++) {
 		for (column = 0; column < COLUMNS; acp++, column++) {
 			if (1)
-				printv("%c", vbi_printable (acp->unicode));
+				printv("%c", _vbi_to_ascii (acp->unicode));
 			else
 				printv("%04xF%dB%dS%dO%d ", acp->unicode,
 				       acp->foreground, acp->background,

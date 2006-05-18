@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.12 2006/05/08 16:49:23 mschimek Exp $ */
+/* $Id: decode.c,v 1.13 2006/05/18 16:51:32 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -45,7 +45,7 @@
 #  define HAVE_VBI_PFC_DEMUX 1 /* XXX port me */
 #else /* 0.3 */
 #  include "src/zvbi.h"
-#  include "src/misc.h"		/* vbi_printable() */
+#  include "src/misc.h"		/* _vbi_to_ascii() */
    /* XXX update me */
 #  define vbi_dvb_pes_demux_new _vbi_dvb_pes_demux_new
 #  define vbi_dvb_demux_cor _vbi_dvb_demux_cor
@@ -107,7 +107,7 @@ _vbi_pfc_block_dump		(const vbi_pfc_block *	pb,
 				 vbi_bool		binary);
 
 static int
-vbi_printable			(int			c)
+_vbi_to_ascii			(int			c)
 {
 	if (c < 0)
 		return '?';
@@ -384,8 +384,8 @@ caption				(const uint8_t		buffer[2],
 #else
 			printf ("CC line=%3u text 0x%02x 0x%02x '%c%c'\n",
 				line, c1, c2,
-				vbi_printable (c1),
-				vbi_printable (c2));
+				_vbi_to_ascii (c1),
+				_vbi_to_ascii (c2));
 #endif
 		} else if (0 == c1 || c1 >= 0x10) {
 			caption_command (line, c1, c2);
@@ -449,7 +449,7 @@ dump_bytes			(const uint8_t *	buffer,
 		/* For Teletext: Not all characters are representable
 		   in ASCII or even UTF-8, but at this stage we don't
 		   know the Teletext code page for a proper conversion. */
-		char c = vbi_printable (buffer[j]);
+		char c = _vbi_to_ascii (buffer[j]);
 
 		putchar (c);
 	}
@@ -813,7 +813,7 @@ vps				(const uint8_t		buffer[13],
 			l[i] = 0;
 		}
 
-		label[i][l[i]] = vbi_printable (c);
+		label[i][l[i]] = _vbi_to_ascii (c);
 
 		l[i] = (l[i] + 1) % 16;
 		
@@ -822,7 +822,7 @@ vps				(const uint8_t		buffer[13],
 			"%02x %02x %02x %02x (\"%s\")\n",
 			line,
 			buffer[0], buffer[1],
-			c, vbi_printable (c),
+			c, _vbi_to_ascii (c),
 			buffer[2], buffer[3],
 			buffer[4], buffer[5], buffer[6], buffer[7],
 			pr_label[i]);

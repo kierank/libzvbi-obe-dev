@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.9 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.10 2006/05/18 16:52:57 mschimek Exp $ */
 
 #include <stdio.h>		/* fprintf() */
 #include <stdlib.h>
@@ -526,7 +526,7 @@ demux_data_units		(struct frame *		f,
 			if (DVB_DEMUX_LOG >= 2) {
 				fprintf (stderr, "DU-TTX %u >", s->line);
 				for (i = 0; i < 42; ++i)
-					fputc (vbi_printable (s->data[i]),
+					fputc (_vbi_to_ascii (s->data[i]),
 					       stderr);
 				fprintf (stderr, "<\n");
 			}

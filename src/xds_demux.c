@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: xds_demux.c,v 1.5 2005/10/04 10:06:33 mschimek Exp $ */
+/* $Id: xds_demux.c,v 1.6 2006/05/18 16:52:01 mschimek Exp $ */
 
 #include "../site_def.h"
 #include "../config.h"
@@ -61,7 +61,7 @@ xdump				(const vbi_xds_packet *	xp,
 	fputs (" '", fp);
 
 	for (i = 0; i < xp->buffer_size; ++i)
-		fputc (vbi_printable (xp->buffer[i]), fp);
+		fputc (_vbi_to_ascii (xp->buffer[i]), fp);
 
 	fputc ('\'', fp);
 }
@@ -454,13 +454,13 @@ _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 
 			fprintf (fp, ", call letters: ");
 			for (i = 8; i < 12; ++i) {
-				fputc (vbi_printable (xp->buffer[i]), fp);
+				fputc (_vbi_to_ascii (xp->buffer[i]), fp);
 			}
 
 			/* 02 to 69 or 0x20 0x20 */
 			fprintf (fp, ", channel: ");
 			for (i = 12; i < 14; ++i) {
-				fputc (vbi_printable (xp->buffer[i]), fp);
+				fputc (_vbi_to_ascii (xp->buffer[i]), fp);
 			}
 
 			fputc (')', fp);
@@ -755,19 +755,19 @@ _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 
 			fprintf (fp, " (event category: ");
 			for (i = 0; i < 3; ++i) {
-				fputc (vbi_printable (xp->buffer[i]), fp);
+				fputc (_vbi_to_ascii (xp->buffer[i]), fp);
 			}
 
 			/* 3 digit FIPS number. */
 			fprintf (fp, ", state: ");
 			for (i = 3; i < 6; ++i) {
-				fputc (vbi_printable (xp->buffer[i]), fp);
+				fputc (_vbi_to_ascii (xp->buffer[i]), fp);
 			}
 
 			/* 3 digit FIPS number. */
 			fprintf (fp, ", county: ");
 			for (i = 6; i < 9; ++i) {
-				fputc (vbi_printable (xp->buffer[i]), fp);
+				fputc (_vbi_to_ascii (xp->buffer[i]), fp);
 			}
 
 			/* 2 digit number of quarter hours */

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.21 2006/04/29 05:55:35 mschimek Exp $ */
+/* $Id: capture.c,v 1.22 2006/05/18 16:51:43 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -40,7 +40,7 @@
 #include "src/libzvbi.h"
 
 vbi_inline int
-vbi_printable			(int			c)
+_vbi_to_ascii			(int			c)
 {
 	if (c < 0)
 		return '?';
@@ -141,7 +141,7 @@ decode_vps(uint8_t *buf)
 
 	c &= 0x7F;
 
-	label[l] = vbi_printable (c);
+	label[l] = _vbi_to_ascii (c);
 
 	l = (l + 1) % 16;
 
@@ -251,7 +251,7 @@ decode_sliced(vbi_sliced *s, double time, int lines)
 			putchar(' ');
 
 			for (j = 0; j < sizeof (q->data); ++j) {
-				char c = vbi_printable (q->data[j]);
+				char c = _vbi_to_ascii (q->data[j]);
 				putchar(c);
 			}
 

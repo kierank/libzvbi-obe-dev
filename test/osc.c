@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.23 2006/04/29 05:55:35 mschimek Exp $ */
+/* $Id: osc.c,v 1.24 2006/05/18 16:51:23 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -79,7 +79,7 @@ int                     cur_x, cur_y;
 #include "sim.c"
 
 vbi_inline int
-vbi_printable			(int			c)
+_vbi_to_ascii			(int			c)
 {
 	if (c < 0)
 		return '?';
@@ -122,7 +122,7 @@ decode_ttx(uint8_t *buf, int line)
         text += sprintf(text, "pg %x%02d ln %03d >", magazine, packet, line);
 
         for (j = 0; j < 42; j++) {
-	   char c = vbi_printable (buf[j]);
+	   char c = _vbi_to_ascii (buf[j]);
 	   
 	   *text = c;
 	   text++;
@@ -188,7 +188,7 @@ decode_vps(uint8_t *buf)
 
 	c &= 0x7F;
 
-	label[l] = vbi_printable (c);
+	label[l] = _vbi_to_ascii (c);
 
 	l = (l + 1) % 16;
 
