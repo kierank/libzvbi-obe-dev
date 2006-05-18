@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.9 2006/05/14 14:20:50 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.10 2006/05/18 16:53:21 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -644,7 +644,7 @@ _vbi_sampling_par_valid		(const vbi_sampling_par *sp,
 
 		if (0 != sp->start[1])
 			if (sp->start[1] < 263
-			    || (sp->start[1] + sp->count[0]) > 526)
+			    || (sp->start[1] + sp->count[1]) > 526)
 				goto range;
 	} else if (625 == sp->scanning) {
 		if (0 != sp->start[0])
@@ -653,7 +653,7 @@ _vbi_sampling_par_valid		(const vbi_sampling_par *sp,
 
 		if (0 != sp->start[1])
 			if (sp->start[1] < 310
-			    || (sp->start[1] + sp->count[0]) > 626)
+			    || (sp->start[1] + sp->count[1]) > 626)
 				goto range;
 	} else {
 		sp_log (VBI_LOG_ERR,
