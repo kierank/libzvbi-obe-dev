@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(zvbi, 0.2.21)
+AC_INIT(zvbi, 0.2.22)
 AC_CONFIG_SRCDIR(src/vbi.c)
 
 AM_INIT_AUTOMAKE([1.9 check-news dist-bzip2])
@@ -13,7 +13,7 @@ dnl [current:revision:age]
 dnl Any change: ++revision
 dnl Interface added: ++current, revision = 0
 dnl age = last binary compatible version - current
-AC_SUBST(LIBZVBI_SO_VERSION, [8:2:8])
+AC_SUBST(LIBZVBI_SO_VERSION, [8:3:8])
 
 AC_PROG_CC
 
