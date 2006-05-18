@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.38 2006/05/08 16:57:47 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.39 2006/05/18 16:51:12 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -851,7 +851,7 @@ print_vfmt			(vbi_capture_v4l2 *	v,
 	vbi_log_printf (v->log_fn, v->log_user_data,
 			VBI_LOG_INFO, __FUNCTION__,
 			"%sformat %08x [%c%c%c%c], %d Hz, %d bpl, offs %d, "
-			"F1 %d...%d, F2 %d...%d, flags %08x\n", s,
+			"F1 %d...%d, F2 %d...%d, flags %08x.", s,
 			vfmt->fmt.vbi.sample_format,
 			(char)((vfmt->fmt.vbi.sample_format      ) & 0xff),
 			(char)((vfmt->fmt.vbi.sample_format >>  8) & 0xff),
