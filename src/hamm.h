@@ -21,14 +21,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: hamm.h,v 1.8 2005/02/17 10:21:16 mschimek Exp $ */
+/* $Id: hamm.h,v 1.9 2006/05/22 09:04:07 mschimek Exp $ */
 
 #ifndef __ZVBI_HAMM_H__
 #define __ZVBI_HAMM_H__
 
 #include <inttypes.h>		/* uintN_t */
 #include "misc.h"
-/* #include "macros.h" */
 
 VBI_BEGIN_DECLS
 
@@ -214,7 +213,8 @@ vbi_unham16p			(const uint8_t *	p)
 }
 
 extern int
-vbi_unham24p			(const uint8_t *	p) vbi_pure;
+vbi_unham24p			(const uint8_t *	p)
+  __attribute__ ((_vbi_pure));
 
 /** @} */
 
