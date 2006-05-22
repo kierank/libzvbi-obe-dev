@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.13 2006/05/18 16:51:52 mschimek Exp $ */
+/* $Id: caption.c,v 1.14 2006/05/22 08:57:05 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -38,7 +38,10 @@
 #include <X11/keysym.h>
 #include <X11/Xutil.h>
 
-#include "src/libzvbi.h"
+#include "src/vbi.h"
+#include "src/exp-gfx.h"
+#include "src/hamm.h"
+#include "src/dvb_demux.h"
 #include "sliced.h"
 
 vbi_decoder *		vbi;

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced2pes.c,v 1.3 2005/10/04 10:06:11 mschimek Exp $ */
+/* $Id: sliced2pes.c,v 1.4 2006/05/22 08:54:48 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -34,8 +34,6 @@
 #include <getopt.h>
 #endif
 
-#include "src/libzvbi.h"
-#define TEST 1 /* public dvb_mux only */
 #include "src/dvb_mux.h"
 #include "sliced.h"
 

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.13 2005/10/04 10:06:11 mschimek Exp $ */
+/* $Id: export.c,v 1.14 2006/05/22 08:56:00 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -32,7 +32,12 @@
 #include <assert.h>
 #include <unistd.h>
 
-#include "src/libzvbi.h"
+#include "src/decoder.h"
+#include "src/export.h"
+#include "src/dvb_demux.h"
+#include "src/vt.h"
+#include "src/cache.h"
+#include "src/vbi.h"
 #include "sliced.h"
 
 vbi_decoder *		vbi;

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.2 2006/02/10 06:25:38 mschimek Exp $ */
+/* $Id: ttxfilter.c,v 1.3 2006/05/22 08:54:36 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -31,13 +31,14 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
-#include <time.h>
+#include <sys/time.h>
 #include <ctype.h>
 #ifdef HAVE_GETOPT_LONG
 #  include <getopt.h>
 #endif
 
-#include "src/libzvbi.h"
+#include "src/dvb_demux.h"
+#include "src/hamm.h"
 #include "sliced.h"
 
 #define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))

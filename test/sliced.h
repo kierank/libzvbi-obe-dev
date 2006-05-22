@@ -18,10 +18,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.h,v 1.3 2005/10/04 10:05:43 mschimek Exp $ */
+/* $Id: sliced.h,v 1.4 2006/05/22 08:55:09 mschimek Exp $ */
 
 #include <stdio.h>
-#include "src/libzvbi.h"
+#include "src/macros.h"
+#include "src/sliced.h"
 
 /* Reader and write for old test/capture --sliced output.
    Attn: this code is not reentrant. */

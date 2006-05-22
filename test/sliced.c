@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.c,v 1.4 2006/02/10 06:25:38 mschimek Exp $ */
+/* $Id: sliced.c,v 1.5 2006/05/22 08:55:22 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -31,7 +31,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "src/libzvbi.h"
 #include "sliced.h"
 
 /* Writer for old test/capture --sliced output.

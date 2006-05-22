@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.22 2006/05/18 16:51:43 mschimek Exp $ */
+/* $Id: capture.c,v 1.23 2006/05/22 08:56:47 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -37,24 +37,10 @@
 #include <getopt.h>
 #endif
 
-#include "src/libzvbi.h"
-
-vbi_inline int
-_vbi_to_ascii			(int			c)
-{
-	if (c < 0)
-		return '?';
-
-	c &= 0x7F;
-
-	if (c < 0x20 || c >= 0x7F)
-		return '.';
-
-	return c;
-}
-
-#define TEST 1
 #include "src/dvb_mux.h"
+#include "src/decoder.h"
+#include "src/io.h"
+#include "src/hamm.h"
 
 vbi_capture *		cap;
 vbi_raw_decoder *	par;
