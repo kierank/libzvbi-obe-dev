@@ -2,6 +2,7 @@
 
 noinst_PROGRAMS = \
 	network \
+	rawout \
 	wss
 
 INCLUDES = -I$(top_srcdir)/src
