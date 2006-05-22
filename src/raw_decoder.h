@@ -17,29 +17,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.h,v 1.5 2006/04/29 05:55:35 mschimek Exp $ */
+/* $Id: raw_decoder.h,v 1.6 2006/05/22 08:59:04 mschimek Exp $ */
 
 #ifndef RAW_DECODER_H
 #define RAW_DECODER_H
 
-#ifndef TEST
 #include <stdio.h>
+
 #include "decoder.h"
-#endif
-
+#include "sampling_par.h"
 #include "bit_slicer.h"
-
-/* XXX sampling_par.h */
-typedef vbi_raw_decoder vbi_sampling_par;
-
-/* This is a private interface,
-   for now these shall suffice. */
-#define VBI_VIDEOSTD_SET_EMPTY 0
-#define VBI_VIDEOSTD_SET_PAL_BG 1
-#define VBI_VIDEOSTD_SET_625_50 1
-#define VBI_VIDEOSTD_SET_525_60 2
-#define VBI_VIDEOSTD_SET_ALL 3
-typedef uint64_t vbi_videostd_set;
 
 /*
  * $ingroup RawDecoder
@@ -62,7 +49,7 @@ extern void
 vbi3_raw_decoder_set_log_fn	(vbi3_raw_decoder *	rd,
 				 vbi_log_fn *		log_fn,
 				 void *			user_data,
-				 vbi_log_level		max_level);
+				 vbi_log_mask		mask);
 extern void
 vbi3_raw_decoder_get_sampling_par
 				(const vbi3_raw_decoder *rd,
@@ -95,25 +82,6 @@ vbi3_raw_decoder_decode		(vbi3_raw_decoder *	rd,
 
 unsigned int
 vbi_sliced_payload_bits		(vbi_service_set	service);
-/* XXX should probably add log_fn to *sp,
-   but I can't change the struct in libzvbi 0.2. */
-vbi_bool
-_vbi_sampling_par_valid		(const vbi_sampling_par *sp,
-				 vbi_log_fn *		log_fn,
-				 void *			log_user_data);
-vbi_service_set
-vbi_sampling_par_check_services	(const vbi_sampling_par *sp,
-				 vbi_service_set	services,
-				 int			strict,
-				 vbi_log_fn *		log_fn,
-				 void *			log_user_data);
-vbi_service_set
-vbi_sampling_par_from_services	(vbi_sampling_par *	sp,
-				 unsigned int *		max_rate,
-				 vbi_videostd_set	videostd_set,
-				 vbi_service_set	services,
-				 vbi_log_fn *		log_fn,
-				 void *			log_user_data);
 
 /* $internal */
 #define _VBI3_RAW_DECODER_MAX_JOBS 8
@@ -136,9 +104,7 @@ struct _vbi3_raw_decoder {
 
 	vbi_service_set		services;
 
-	vbi_log_fn *		log_fn;
-	void *			log_user_data;
-	vbi_log_level		log_max_level;
+	_vbi_log_hook		log;
 
 	unsigned int		n_jobs;
 	int			readjust;
