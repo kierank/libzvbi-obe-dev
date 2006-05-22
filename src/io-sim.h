@@ -17,25 +17,62 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.h,v 1.2 2004/12/14 17:57:09 mschimek Exp $ */
+/* $Id: io-sim.h,v 1.3 2006/05/22 09:07:17 mschimek Exp $ */
 
 #ifndef __ZVBI_IO_SIM_H__
 #define __ZVBI_IO_SIM_H__
 
-#include "raw_decoder.h"
+#include "macros.h"
+#include "version.h"
+#include "sampling_par.h"
+#include "io.h"
+
+VBI_BEGIN_DECLS
+
+/* Public */
 
 extern vbi_bool
-_vbi_test_image_video		(uint8_t *		raw,
-				 unsigned int		raw_size,
+vbi_raw_video_image		(uint8_t *		raw,
+				 unsigned long		raw_size,
 				 const vbi_sampling_par *sp,
+				 int			black_level,
+				 int			white_level,
 				 unsigned int		pixel_mask,
+				 vbi_bool		swap_fields,
 				 const vbi_sliced *	sliced,
-				 unsigned int		sliced_lines);
+				 unsigned int		n_sliced_lines);
 extern vbi_bool
-_vbi_test_image_vbi		(uint8_t *		raw,
-				 unsigned int		raw_size,
+vbi_raw_vbi_image		(uint8_t *		raw,
+				 unsigned long		raw_size,
 				 const vbi_sampling_par *sp,
+				 int			blank_level,
+				 int			white_level,
+				 vbi_bool		swap_fields,
 				 const vbi_sliced *	sliced,
-				 unsigned int		sliced_lines);
+				 unsigned int		n_sliced_lines);
+#if 3 == VBI_VERSION_MINOR
+extern vbi_bool
+vbi_capture_sim_load_vps	(vbi_capture *		cap,
+				 const vbi_program_id *pid);
+extern vbi_bool
+vbi_capture_sim_load_wss_625	(vbi_capture *		cap,
+				 const vbi_aspect_ratio *ar);
+extern vbi_bool
+vbi_capture_sim_load_caption	(vbi_capture *		cap,
+				 const char *		stream,
+				 vbi_bool		append);
+#endif
+extern void
+vbi_capture_sim_decode_raw	(vbi_capture *		cap,
+				 vbi_bool		enable);
+extern vbi_capture *
+vbi_capture_sim_new		(int			scanning,
+				 unsigned int *		services,
+				 vbi_bool		interlaced,
+				 vbi_bool		synchronous);
+
+/* Private */
+
+VBI_END_DECLS
 
 #endif /* __ZVBI_IO_SIM_H__ */
