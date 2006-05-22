@@ -17,16 +17,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.h,v 1.3 2005/02/17 10:21:16 mschimek Exp $ */
+/* $Id: dvb_demux.h,v 1.4 2006/05/22 09:08:46 mschimek Exp $ */
 
 #ifndef __ZVBI_DVB_DEMUX_H__
 #define __ZVBI_DVB_DEMUX_H__
 
-#ifndef TEST
 #include <inttypes.h>		/* uintN_t */
 #include "bcd.h"		/* vbi_bool */
 #include "sliced.h"		/* vbi_sliced, vbi_service_set */
-#endif
 
 /* Public */
 

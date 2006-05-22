@@ -29,9 +29,12 @@
  *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
  *    the latter ones are currently not officially supported.
  *
- *  $Id: proxy-msg.c,v 1.14 2006/02/10 06:25:37 mschimek Exp $
+ *  $Id: proxy-msg.c,v 1.15 2006/05/22 09:08:46 mschimek Exp $
  *
  *  $Log: proxy-msg.c,v $
+ *  Revision 1.15  2006/05/22 09:08:46  mschimek
+ *  *** empty log message ***
+ *
  *  Revision 1.14  2006/02/10 06:25:37  mschimek
  *  *** empty log message ***
  *
@@ -1202,14 +1205,14 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
          if (sock_fd == -1)
          {
             dprintf1("socket (ipv4): error %d, %s\n", errno, strerror(errno));
-            vbi_asprintf(ppErrorText, _("Cannot create socket: %s."),
+            asprintf(ppErrorText, _("Cannot create socket: %s."),
 			 strerror(errno));
          }
       }
       else
       {
          dprintf1("getaddrinfo (ipv4): %s\n", gai_strerror(rc));
-         vbi_asprintf(ppErrorText,
+         asprintf(ppErrorText,
 		      _("Invalid hostname or port: %s."),
 		      gai_strerror(rc));
       }
@@ -1230,9 +1233,9 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
          {
             dprintf1("connect: error %d, %s\n", errno, strerror(errno));
             if (use_tcp_ip)
-               vbi_asprintf(ppErrorText, _("Connection via TCP/IP failed, server not running or unreachable."));
+               asprintf(ppErrorText, _("Connection via TCP/IP failed, server not running or unreachable."));
             else
-               vbi_asprintf(ppErrorText, _("Connection via socket failed, server not running."));
+               asprintf(ppErrorText, _("Connection via socket failed, server not running."));
             close(sock_fd);
             sock_fd = -1;
          }
@@ -1241,7 +1244,7 @@ int vbi_proxy_msg_connect_to_server( vbi_bool use_tcp_ip, const char * pSrvHost,
       {
          dprintf1("fcntl (F_SETFL=O_NONBLOCK): error %d, %s\n",
 		  errno, strerror(errno));
-         vbi_asprintf(ppErrorText, _("Socket I/O error: %s."),
+         asprintf(ppErrorText, _("Socket I/O error: %s."),
 		      strerror(errno));
          close(sock_fd);
          sock_fd = -1;
@@ -1277,14 +1280,14 @@ vbi_bool vbi_proxy_msg_finish_connect( int sock_fd, char ** ppErrorText )
       else
       {  /* failed to establish a connection to the server */
          dprintf1("finish_connect: socket connect failed: %s\n", strerror(sockerr));
-         vbi_asprintf(ppErrorText, _("Cannot connect to server: %s."),
+         asprintf(ppErrorText, _("Cannot connect to server: %s."),
 		      strerror(sockerr));
       }
    }
    else
    {
       dprintf1("finish_connect: getsockopt: %s\n", strerror(errno));
-      vbi_asprintf(ppErrorText, _("Socket I/O error: %s."),
+      asprintf(ppErrorText, _("Socket I/O error: %s."),
 		   strerror(errno));
    }
 

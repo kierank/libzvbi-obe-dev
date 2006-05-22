@@ -38,52 +38,86 @@ extern "C" {
 
 typedef struct vbi_decoder vbi_decoder;
 
-/* misc.h */
+/* macros.h */
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-
-#ifdef __cplusplus
-#  define VBI_BEGIN_DECLS extern "C" {
-#  define VBI_END_DECLS }
+#if __GNUC__ >= 4
+#  define _vbi_sentinel sentinel(0)
 #else
-#  define VBI_BEGIN_DECLS
-#  define VBI_END_DECLS
+#  define _vbi_sentinel
+#  define __restrict__
 #endif
 
-#if __GNUC__ >= 2
-   /* Inline this function at -O2 and higher. */
-#  define vbi_inline static __inline__
+#if (__GNUC__ == 3 && __GNUC_MINOR__ >= 3) || __GNUC__ >= 4
+#  define _vbi_nonnull(args...) nonnull(args)
 #else
-#  define vbi_inline static
+#  define _vbi_nonnull(args...)
 #endif
 
 #if __GNUC__ >= 3
-   /* Function has no side effects and return value depends
-      only on parameters and non-volatile globals or
-      memory pointed to by parameters. */
-#  define vbi_pure __attribute__ ((pure))
-   /* Function has no side effects and return value depends
-      only on parameters. */
-#  define vbi_const __attribute__ ((const))
-   /* Function returns pointer which does not alias anything. */
-#  define vbi_alloc __attribute__ ((malloc))
+#  define _vbi_pure pure
 #  define _vbi_alloc malloc
 #else
-#  define vbi_pure
-#  define vbi_const
-#  define vbi_alloc
+#  define _vbi_pure
 #  define _vbi_alloc
 #endif
 
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+#if __GNUC__ >= 2
+#  define vbi_inline static __inline__
+#else
+#  define vbi_inline static
+#  define __attribute__(args...)
+#endif
 
-#undef TRUE
-#undef FALSE
-#define TRUE 1
-#define FALSE 0
+#ifndef TRUE
+#  define TRUE 1
+#endif
+#ifndef FALSE
+#  define FALSE 0
+#endif
 
 typedef int vbi_bool;
 
+
+#ifndef NULL
+#  ifdef __cplusplus
+#    define NULL (0L)
+#  else
+#    define NULL ((void *) 0)
+#  endif
+#endif
+
+/* XXX Document me - for variadic funcs. */
+#define VBI_END ((void *) 0)
+
+#if 0
+typedef void
+vbi_lock_fn			(void *			user_data);
+typedef void
+vbi_unlock_fn			(void *			user_data);
+#endif
+
+typedef enum {
+	
+	VBI_LOG_ERROR		= 1 << 3,
+
+	VBI_LOG_WARNING	= 1 << 4,
+
+	VBI_LOG_NOTICE		= 1 << 5,
+
+	
+	VBI_LOG_INFO		= 1 << 6,
+
+	
+	VBI_LOG_DEBUG		= 1 << 7,
+} vbi_log_mask;
+
+typedef void
+vbi_log_fn			(vbi_log_mask		level,
+				 const char *		context,
+				 const char *		message,
+				 void *			user_data);
+
+extern vbi_log_fn		vbi_log_on_stderr;
 
 /* bcd.h */
 
@@ -1056,7 +1090,33 @@ extern void
 vbi_xds_demux_delete		(vbi_xds_demux *	xd);
 extern vbi_xds_demux *
 vbi_xds_demux_new		(vbi_xds_demux_cb *	callback,
-				 void *			user_data) vbi_alloc;
+				 void *			user_data)
+  __attribute__ ((_vbi_alloc));
+
+/* sampling_par.h */
+
+#define VBI_VIDEOSTD_SET_EMPTY 0
+#define VBI_VIDEOSTD_SET_PAL_BG 1
+#define VBI_VIDEOSTD_SET_625_50 1
+#define VBI_VIDEOSTD_SET_525_60 2
+#define VBI_VIDEOSTD_SET_ALL 3
+typedef uint64_t vbi_videostd_set;
+typedef vbi_raw_decoder vbi_sampling_par;
+
+extern vbi_service_set
+vbi_sampling_par_from_services (vbi_sampling_par *    sp,
+				unsigned int *         max_rate,
+				vbi_videostd_set      videostd_set,
+				vbi_service_set       services);
+extern vbi_service_set
+vbi_sampling_par_check_services
+                                (const vbi_sampling_par *sp,
+                                 vbi_service_set       services,
+                                 unsigned int           strict)
+  __attribute__ ((_vbi_pure));
+
+extern vbi_videostd_set
+_vbi_videostd_set_from_scanning	(int			scanning);
 
 /* io.h */
 
@@ -1145,6 +1205,48 @@ extern void		vbi_capture_delete(vbi_capture *capture);
 extern vbi_bool         vbi_capture_set_video_path(vbi_capture *capture, const char * p_dev_video);
 extern VBI_CAPTURE_FD_FLAGS vbi_capture_get_fd_flags(vbi_capture *capture);
 
+
+/* io-sim.h */
+
+extern vbi_bool
+vbi_raw_video_image		(uint8_t *		raw,
+				 unsigned long		raw_size,
+				 const vbi_sampling_par *sp,
+				 int			black_level,
+				 int			white_level,
+				 unsigned int		pixel_mask,
+				 vbi_bool		swap_fields,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_sliced_lines);
+extern vbi_bool
+vbi_raw_vbi_image		(uint8_t *		raw,
+				 unsigned long		raw_size,
+				 const vbi_sampling_par *sp,
+				 int			blank_level,
+				 int			white_level,
+				 vbi_bool		swap_fields,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_sliced_lines);
+#if 3 == VBI_VERSION_MINOR
+extern vbi_bool
+vbi_capture_sim_load_vps	(vbi_capture *		cap,
+				 const vbi_program_id *pid);
+extern vbi_bool
+vbi_capture_sim_load_wss_625	(vbi_capture *		cap,
+				 const vbi_aspect_ratio *ar);
+extern vbi_bool
+vbi_capture_sim_load_caption	(vbi_capture *		cap,
+				 const char *		stream,
+				 vbi_bool		append);
+#endif
+extern void
+vbi_capture_sim_decode_raw	(vbi_capture *		cap,
+				 vbi_bool		enable);
+extern vbi_capture *
+vbi_capture_sim_new		(int			scanning,
+				 unsigned int *		services,
+				 vbi_bool		interlaced,
+				 vbi_bool		synchronous);
 
 /* proxy-msg.h */
 
@@ -1429,7 +1531,8 @@ vbi_unham16p			(const uint8_t *	p)
 }
 
 extern int
-vbi_unham24p			(const uint8_t *	p) vbi_pure;
+vbi_unham24p			(const uint8_t *	p)
+  __attribute__ ((_vbi_pure));
 
 
 

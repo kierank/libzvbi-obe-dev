@@ -68,14 +68,14 @@ static vbi_capture_dvb* dvb_init(const char *dev, char **errstr, int debug)
 
     dvb = malloc(sizeof(*dvb));
     if (NULL == dvb) {
-        vbi_asprintf(errstr, _("Virtual memory exhausted."));
+	asprintf(errstr, _("Virtual memory exhausted."));
         errno = ENOMEM;
 	return NULL;
     }
     CLEAR (*dvb);
 
     if (!(dvb->demux = vbi_dvb_pes_demux_new (NULL, NULL))) {
-	vbi_asprintf(errstr, _("Virtual memory exhausted."));
+	asprintf(errstr, _("Virtual memory exhausted."));
 	errno = ENOMEM;
         free (dvb);
 	return NULL;
@@ -84,8 +84,8 @@ static vbi_capture_dvb* dvb_init(const char *dev, char **errstr, int debug)
     dvb->debug = debug;
     dvb->fd = open(dev, O_RDWR | O_NONBLOCK);
     if (-1 == dvb->fd) {
-	vbi_asprintf(errstr, _("Cannot open '%s': %d, %s."),
-		     dev, errno, strerror(errno));
+	asprintf(errstr, _("Cannot open '%s': %d, %s."),
+		 dev, errno, strerror(errno));
 	free(dvb);
 	return NULL;
     }
@@ -413,8 +413,8 @@ vbi_capture_dvb_new2		(const char *		device_name,
 
     if (0 != pid) {
 	if (-1 == vbi_capture_dvb_filter (&dvb->cap, pid)) {
-	    vbi_asprintf (errstr, "DMX_SET_PES_FILTER: %s",
-			  strerror (errno));
+	    asprintf (errstr, "DMX_SET_PES_FILTER: %s",
+		      strerror (errno));
 	    dvb_delete (&dvb->cap);
 	    goto failure;
 	}
@@ -542,7 +542,7 @@ vbi_capture_dvb_new2		(const char *		device_name,
 	trace = trace;
 
 	if (errstr)
-		vbi_asprintf (errstr, _("DVB interface not compiled."));
+		asprintf (errstr, _("DVB interface not compiled."));
 
 	return NULL;
 }
@@ -589,7 +589,7 @@ vbi_capture_dvb_new(char *dev, int scanning,
 	trace = trace;
 
 	if (errstr)
-		vbi_asprintf (errstr, _("DVB interface not compiled."));
+		asprintf (errstr, _("DVB interface not compiled."));
 
 	return NULL;
 }

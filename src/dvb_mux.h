@@ -19,16 +19,15 @@
  *  WARNING this code is experimental, the API will change.
  */
 
-/* $Id: dvb_mux.h,v 1.2 2005/06/11 22:13:11 mschimek Exp $ */
+/* $Id: dvb_mux.h,v 1.3 2006/05/22 09:08:46 mschimek Exp $ */
 
 #ifndef __ZVBI_DVB_MUX_H__
 #define __ZVBI_DVB_MUX_H__
 
 #include <inttypes.h>		/* uint8_t */
-#ifndef TEST
+
 #include "bcd.h"		/* vbi_bool */
 #include "sliced.h"		/* vbi_sliced, vbi_service_set */
-#endif
 
 typedef enum {
 	VBI_VIDEOSTD_SET_525_60 = 1,

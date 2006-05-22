@@ -1,3 +1,66 @@
+2006-05-22    <mschimek@users.sf.net>
+
+	* test/ttxfilter.c, test/sliced2pes.c, test/sliced.h,
+	  test/sliced.c, test/osc.c, test/export.c, test/decode.c,
+	  test/capture.c, test/caption.c: Include individual headers
+	  instead of libzvbi.h to pull in private stuff without conflicts.
+
+	* src/Makefile.am (libzvbi_la_SOURCES): Added sampling_par.c,
+	  sampling_par.h.
+	(LIBZVBI_HDRS): Public macros now in macros.h instead of misc.h.
+	(LIBZVBI_HDRS): Added sampling_par.h, io-sim.h.
+
+	* src/io-v4l2k.c: Use vbi_log_hook. Replaced vbi_log_printf()
+	  calls by log macros from misc.h.
+	(vbi_videostd_set_from_scanning): Moved to sampling_par.c.
+	(v4l2_update_services): Replaced vbi_sampling_par_check_services()
+	  call by _vbi_sampling_par_check_services_log().
+	* src/sampling_par.c, src/sampling_par.h: New files from
+	  branch 0.3. Sampling parameters functions are public now.
+	* src/decoder.c (vbi_raw_decoder_check_services): Use
+	  vbi_sampling_par_check_services() w/o logging.
+	(vbi_raw_decoder_parameters): Use
+	  vbi_sampling_par_from_services() w/o logging.
+	* src/raw_decoder.h, src/raw_decoder.c: Use vbi_log_hook. Replaced
+	  vbi_log_printf() calls by log macros from misc.h. Sampling
+	  parameters functions moved to sampling_par.c, sampling_par.h.
+
+	* src/proxy-client.c, src/io-v4l2.c, src/io-v4l.c, src/io-bktr.c,
+	  src/export.c, daemon/proxyd.c, daemon/chains.c:
+	  s/vbi_asprintf/asprintf.
+	* src/bit_slicer.c: s/vbi_log_printf/_vbi_log_printf.
+	* src/misc.h, src/misc.c: Resynched with 0.3 branch. Public
+	  stuff moved to macros.h. Added _vbi_keyword_lookup(),
+	  _vbi_log_hook, _vbi_log_vprintf(), logging macros,
+	  _vbi_vasprintf().
+	* src/hamm.h: Replaced vbi_pure attribute.
+	* src/xds_demux.h, src/bit_slicer.h: Replaced vbi_alloc attribute.
+	* src/xds_demux.h, src/pfc_demux.h, src/idl_demux.h: Include
+	  macros.h.
+	* src/macros.h: Resynched with 0.3 branch. vbi_log stuff now
+	  public. Replaced log level by log mask.
+
+	* test/osc.c (main, mainloop): Use simulated capture device
+	  (io-sim.c) instead of old sim code.
+	* test/raw_decoder.c (create_raw): Functions to create raw VBI
+	  images changed.
+	(test_services): vbi_sampling_par_from_services() changed.
+	* examples/rawout.c: New example.
+	* examples/Makefile.am (noinst_PROGRAMS): Added rawout.
+	* src/io-sim.h, src/io-sim.c: Resynched with 0.3 branch. Added
+	  VPS simulation and corrected CC simulation. Functions to
+	  generate raw VBI images are public now, with a more polished
+	  interface. Added a simulated capture device.
+
+	* src/exp-txt.c (match_color8): Signedness fix.
+
+	* configure.in: Changed SO_VERSION to 9:0:9 (new interfaces).
+
+2006-05-19    <mschimek@users.sf.net>
+
+	* src/raw_decoder.c: Shifted WSS_625 CRI/FRC left one bit
+	  to center sampling points over payload bits.
+
 2006-05-17    <mschimek@users.sf.net>
 
 	* src/io-v4l2k.c (print_vfmt): LF redundant.
