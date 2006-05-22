@@ -17,10 +17,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-client.c,v 1.10 2006/02/10 06:25:37 mschimek Exp $
+ *  $Id: proxy-client.c,v 1.11 2006/05/22 09:00:26 mschimek Exp $
  */
 
-static const char rcsid[] = "$Id: proxy-client.c,v 1.10 2006/02/10 06:25:37 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-client.c,v 1.11 2006/05/22 09:00:26 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -149,9 +149,9 @@ static vbi_bool proxy_client_connect_server( vbi_proxy_client * vpc )
    {
       dprintf1("connect_server: hostname or port not configured\n");
       if (use_tcp_ip && (vpc->p_srv_host == NULL))
-         vbi_asprintf(&vpc->p_errorstr, _("Server hostname not configured."));
+	 asprintf(&vpc->p_errorstr, _("Server hostname not configured."));
       else if (vpc->p_srv_port == NULL)
-         vbi_asprintf(&vpc->p_errorstr, _("Server port not configured."));
+         asprintf(&vpc->p_errorstr, _("Server port not configured."));
    }
    return result;
 }
@@ -196,7 +196,7 @@ static vbi_bool proxy_client_alloc_msg_buf( vbi_proxy_client * vpc )
 
       if (vpc->p_client_msg == NULL)
       {
-         vbi_asprintf(&vpc->p_errorstr, _("Virtual memory exhausted."));
+         asprintf(&vpc->p_errorstr, _("Virtual memory exhausted."));
          result = FALSE;
       }
       else
@@ -419,7 +419,7 @@ static vbi_bool proxy_client_take_message( vbi_proxy_client * vpc )
    if ((result == FALSE) && (vpc->p_errorstr == NULL))
    {
       dprintf1("take_message: message type %d (len %d) not expected in state %d\n", vpc->p_client_msg->head.type, vpc->p_client_msg->head.len, vpc->state);
-      vbi_asprintf(&vpc->p_errorstr, _("Protocol error (unexpected message)."));
+      asprintf(&vpc->p_errorstr, _("Protocol error (unexpected message)."));
    }
 
    return result;
@@ -580,7 +580,7 @@ static vbi_bool proxy_client_rpc( vbi_proxy_client * vpc,
    return TRUE;
 
 failure:
-   vbi_asprintf(&vpc->p_errorstr, _("Connection lost due to I/O error."));
+   asprintf(&vpc->p_errorstr, _("Connection lost due to I/O error."));
    return FALSE;
 }
 
@@ -632,7 +632,7 @@ static int proxy_client_read_message( vbi_proxy_client * vpc,
    return ret;
 
 failure:
-   vbi_asprintf(&vpc->p_errorstr, _("Connection lost due to I/O error."));
+   asprintf(&vpc->p_errorstr, _("Connection lost due to I/O error."));
    proxy_client_close(vpc);
    return -1;
 }
@@ -752,7 +752,7 @@ static vbi_bool proxy_client_start_acq( vbi_proxy_client * vpc )
       {
          dprintf1("take_message: CONNECT_CNF: reply version %x, protocol %x\n", p_cnf_msg->magics.protocol_version, p_cnf_msg->magics.protocol_compat_version);
 
-         vbi_asprintf (&vpc->p_errorstr,
+         asprintf (&vpc->p_errorstr,
 		       _("Incompatible server version %u.%u.%u."),
 		       ((p_cnf_msg->magics.protocol_compat_version >> 16) & 0xff),
 		       ((p_cnf_msg->magics.protocol_compat_version >>  8) & 0xff),
@@ -761,7 +761,7 @@ static vbi_bool proxy_client_start_acq( vbi_proxy_client * vpc )
       }
       else if (vpc->endianSwap)
       {  /* endian swapping currently unsupported */
-         vbi_asprintf(&vpc->p_errorstr, _("Incompatible server architecture (endianess mismatch)."));
+         asprintf(&vpc->p_errorstr, _("Incompatible server architecture (endianess mismatch)."));
          goto failure;
       }
       else
@@ -1562,7 +1562,7 @@ vbi_proxy_client_create( const char *p_dev_name, const char *p_client_name,
    }
    else
    {
-      vbi_asprintf(pp_errorstr, _("Virtual memory exhausted."));
+      asprintf(pp_errorstr, _("Virtual memory exhausted."));
    }
    return vpc;
 }
@@ -1865,7 +1865,7 @@ vbi_capture_proxy_new( struct vbi_proxy_client *p_proxy_client,
                        char **pp_errorstr )
 {
    pthread_once (&vbi_init_once, vbi_init);
-   vbi_asprintf(pp_errorstr, _("Proxy client interface not compiled."));
+   asprintf(pp_errorstr, _("Proxy client interface not compiled."));
    return NULL;
 }
 
@@ -1913,7 +1913,7 @@ vbi_proxy_client_create(const char *p_dev_name, const char *p_client_name,
                         VBI_PROXY_CLIENT_FLAGS client_flags,
                         char **pp_errorstr, int trace_level)
 {
-   vbi_asprintf(pp_errorstr, _("Proxy client interface not compiled."));
+   asprintf(pp_errorstr, _("Proxy client interface not compiled."));
    return NULL;
 }
 

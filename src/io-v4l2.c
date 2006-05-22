@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2.c,v 1.32 2006/02/10 06:25:37 mschimek Exp $";
+"$Id: io-v4l2.c,v 1.33 2006/05/22 09:00:47 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -102,7 +102,7 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 	*errstr = NULL;
 
 	if (!(v = calloc (1, sizeof (*v)))) {
-		vbi_asprintf (errstr, _("Virtual memory exhausted."));
+		asprintf (errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
 		goto failure;
 	}
@@ -117,8 +117,8 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 		v->fd = device_open (v->capture.sys_log_fp,
 				     dev_name, O_RDONLY, 0);
 		if (-1 == v->fd) {
-			vbi_asprintf (errstr, _("Cannot open '%s': %d, %s."),
-				      dev_name, errno, strerror (errno));
+			asprintf (errstr, _("Cannot open '%s': %d, %s."),
+				  dev_name, errno, strerror (errno));
 			goto io_error;
 		}
 	}
@@ -127,8 +127,8 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 
 	if (-1 == xioctl (v, VIDIOC_QUERYCAP, &v->vcap)) {
 		/* TRANSLATORS: Cannot identify '/dev/some'. */
-		/* vbi_asprintf (errstr, _("Cannot identify '%s': %s."),
-		   		 dev_name, strerror (errno)); */
+		/* asprintf (errstr, _("Cannot identify '%s': %s."),
+		             dev_name, strerror (errno)); */
 
 		v4l2_delete (&v->capture);
 
@@ -145,7 +145,7 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 	}
 
 	/* XXX localize. */
-	vbi_asprintf (errstr, "V4L2 0.20 API not supported.");
+	asprintf (errstr, "V4L2 0.20 API not supported.");
 
  io_error:
  failure:
@@ -208,8 +208,8 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 		fprintf (stderr, "Libzvbi V4L2 interface rev.\n  %s\n", rcsid);
 
 	if (errstr)
-		vbi_asprintf (errstr,
-			      _("V4L2 driver interface not compiled."));
+		asprintf (errstr,
+			  _("V4L2 driver interface not compiled."));
 
 	return NULL;
 }

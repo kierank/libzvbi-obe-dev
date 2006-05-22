@@ -37,6 +37,9 @@
  *
  *
  *  $Log: proxyd.c,v $
+ *  Revision 1.16  2006/05/22 09:01:53  mschimek
+ *  s/vbi_asprintf/asprintf.
+ *
  *  Revision 1.15  2006/02/10 06:25:36  mschimek
  *  *** empty log message ***
  *
@@ -59,7 +62,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxyd.c,v 1.15 2006/02/10 06:25:36 mschimek Exp $";
+static const char rcsid[] = "$Id: proxyd.c,v 1.16 2006/05/22 09:01:53 mschimek Exp $";
 
 #include "config.h"
 
@@ -2907,14 +2910,14 @@ static void vbi_proxyd_kill_daemon( void )
    if ( (vbi_proxyd_check_msg(&msg_buf, FALSE) == FALSE) ||
         (msg_buf.head.type != MSG_TYPE_DAEMON_PID_CNF) )
    {
-      vbi_asprintf(&p_errorstr, "%s", "Proxy protocol error");
+      asprintf(&p_errorstr, "%s", "Proxy protocol error");
       goto failure;
    }
 
    if (kill(msg_buf.body.daemon_pid_cnf.pid, SIGTERM) != 0)
    {
-      vbi_asprintf(&p_errorstr, "Failed to kill the daemon process (pid %d): %s",
-                                msg_buf.body.daemon_pid_cnf.pid, strerror(errno));
+      asprintf(&p_errorstr, "Failed to kill the daemon process (pid %d): %s",
+	       msg_buf.body.daemon_pid_cnf.pid, strerror(errno));
       goto failure;
    }
 
@@ -2924,7 +2927,7 @@ static void vbi_proxyd_kill_daemon( void )
 
 io_error:
    if (p_errorstr == NULL)
-      vbi_asprintf(&p_errorstr, "Lost connection to proxy (I/O error)");
+      asprintf(&p_errorstr, "Lost connection to proxy (I/O error)");
 
 failure:
    /* failed to establish a connection to the server */

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.23 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: export.c,v 1.24 2006/05/22 09:01:30 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -548,7 +548,7 @@ vbi_export_new(const char *keyword, char **errstr)
 			break;
 
 	if (!xc) {
-		vbi_asprintf(errstr, _("Unknown export module '%s'."), key);
+		asprintf(errstr, _("Unknown export module '%s'."), key);
 		return NULL;
 	}
 
@@ -558,9 +558,9 @@ vbi_export_new(const char *keyword, char **errstr)
 		e = xc->_new();
 
 	if (!e) {
-		vbi_asprintf(errstr, _("Cannot initialize export module '%s', "
-				       "probably lack of memory."),
-			     xc->_public->label ? xc->_public->label : keyword);
+		asprintf(errstr, _("Cannot initialize export module '%s', "
+				   "probably lack of memory."),
+			 xc->_public->label ? xc->_public->label : keyword);
 		return NULL;
 	}
 

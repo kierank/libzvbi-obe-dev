@@ -31,13 +31,16 @@
  *    of environment variables.
  *
  *  $Log: chains.c,v $
+ *  Revision 1.2  2006/05/22 09:02:43  mschimek
+ *  s/vbi_asprintf/asprintf.
+ *
  *  Revision 1.1  2004/10/25 16:52:43  mschimek
  *  main: Replaced sprintf by asprintf and fixed p_env3.
  *  Added from proxy-18.bak.
  *
  */
 
-static const char rcsid[] = "$Id: chains.c,v 1.1 2004/10/25 16:52:43 mschimek Exp $";
+static const char rcsid[] = "$Id: chains.c,v 1.2 2006/05/22 09:02:43 mschimek Exp $";
 
 #include "config.h"
 
@@ -55,7 +58,7 @@ static const char rcsid[] = "$Id: chains.c,v 1.1 2004/10/25 16:52:43 mschimek Ex
 #include <errno.h>
 #include <signal.h>
 #include <assert.h>
-#include "src/misc.h"		/* vbi_asprintf() */
+#include "src/misc.h"		/* asprintf() */
 
 #define dprintf1(fmt, arg...)    do {if (opt_debug_level >= 1) fprintf(stderr, "proxyd: " fmt, ## arg);} while (0)
 #define dprintf2(fmt, arg...)    do {if (opt_debug_level >= 2) fprintf(stderr, "proxyd: " fmt, ## arg);} while (0)
@@ -169,7 +172,7 @@ parse_argv( int argc, char * argv[], int * p_arg_off )
 
 #define putenv_printf(bp, tmpl, args...)				\
 do {									\
-	vbi_asprintf (&(bp), tmpl ,##args );				\
+	asprintf (&(bp), tmpl ,##args );				\
 	assert (NULL != (bp));						\
 	putenv (bp);							\
 } while (0)
