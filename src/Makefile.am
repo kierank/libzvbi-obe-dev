@@ -86,6 +86,7 @@ libzvbi_la_SOURCES = \
 	pfc_demux.c pfc_demux.h \
 	proxy-client.c proxy-client.h \
 	raw_decoder.c raw_decoder.h \
+	sampling_par.c sampling_par.h \
 	search.c search.h ure.c ure.h \
 	tables.c tables.h network-table.h \
 	trigger.c trigger.h \
@@ -114,14 +115,14 @@ libzvbi_chains_la_SOURCES = \
 
 if MAINTAINER_MODE
 
-version.h:
+version.h: ../configure.in
 	echo -e "\n#define VBI_VERSION_MAJOR" `echo @VERSION@ \
 	 | sed "s/\./\\\\\n#define VBI_VERSION_MINOR /" \
 	 | sed "s/\./\\\\\n#define VBI_VERSION_MICRO /"` >> $@
 
 # Note order matters.
 LIBZVBI_HDRS = \
-	misc.h \
+	macros.h \
 	bcd.h \
 	event.h \
 	format.h \
@@ -135,7 +136,9 @@ LIBZVBI_HDRS = \
 	idl_demux.h \
 	pfc_demux.h \
 	xds_demux.h \
+	sampling_par.h \
 	io.h \
+	io-sim.h \
 	proxy-msg.h \
 	proxy-client.h \
 	exp-gfx.h \
