@@ -1,8 +1,6 @@
 /*
- *  libzvbi - Portability helper functions
- *
- *  Copyright (C) 2004 Michael H. Schimek
- *
+ *  Copyright (C) 2001-2006 Michael H. Schimek
+ *  Copyright (C) 2000-2003 Iñaki García Etxebarria
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,21 +17,23 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.c,v 1.4 2006/05/03 03:27:36 mschimek Exp $ */
+/* $Id: misc.c,v 1.5 2006/05/22 09:03:47 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
+#include <ctype.h>
 #include <errno.h>
+
 #include "misc.h"
+#include "version.h"
 
+#if 2 == VBI_VERSION_MINOR
 const char _zvbi_intl_domainname[] = PACKAGE;
+#endif
 
-#ifndef HAVE_STRLCPY
+_vbi_log_hook		_vbi_global_log;
 
 /**
  * @internal
@@ -64,10 +64,6 @@ _vbi_strlcpy			(char *			dst,
 	return dst - dst1;
 }
 
-#endif /* !HAVE_STRLCPY */
-
-#ifndef HAVE_STRNDUP
-
 /**
  * @internal
  * strndup() is a BSD/GNU extension.
@@ -95,21 +91,17 @@ _vbi_strndup			(const char *		s,
 	return r;
 }
 
-#endif /* !HAVE_STRNDUP */
-
-#ifndef HAVE_ASPRINTF
-
 /**
  * @internal
- * asprintf() is a GNU extension.
+ * vasprintf() is a GNU extension.
  */
 int
-vbi_asprintf			(char **		dstp,
+_vbi_vasprintf			(char **		dstp,
 				 const char *		templ,
-				 ...)
+				 va_list		ap)
 {
 	char *buf;
-	int size;
+	unsigned long size;
 	int temp;
 
 	assert (NULL != dstp);
@@ -121,23 +113,21 @@ vbi_asprintf			(char **		dstp,
 	size = 64;
 
 	for (;;) {
-		va_list ap;
+
 		char *buf2;
-		int len;
+		long len;
 
 		if (!(buf2 = realloc (buf, size)))
 			break;
 
 		buf = buf2;
 
-		va_start (ap, templ);
 		len = vsnprintf (buf, size, templ, ap);
-		va_end (ap);
 
 		if (len < 0) {
 			/* Not enough. */
 			size *= 2;
-		} else if (len < size) {
+		} else if ((unsigned long) len < size) {
 			*dstp = buf;
 			errno = temp;
 			return len;
@@ -154,80 +144,145 @@ vbi_asprintf			(char **		dstp,
 	return -1;
 }
 
-#endif /* !HAVE_ASPRINTF */
+/**
+ * @internal
+ * asprintf() is a GNU extension.
+ */
+int
+_vbi_asprintf			(char **		dstp,
+				 const char *		templ,
+				 ...)
+{
+	va_list ap;
+	int len;
 
+	va_start (ap, templ);
+
+	len = vasprintf (dstp, templ, ap);
+
+	va_end (ap);
+
+	return len;
+}
+
+/** @internal */
+vbi_bool
+_vbi_keyword_lookup		(int *			value,
+				 const char **		inout_s,
+				 const _vbi_key_value_pair *table,
+				 unsigned int		n_pairs)
+{
+	const char *s;
+	unsigned int i;
+
+	assert (NULL != value);
+	assert (NULL != inout_s);
+	assert (NULL != *inout_s);
+	assert (NULL != table);
+
+	s = *inout_s;
+
+	while (isspace (*s))
+		++s;
+
+	if (isdigit (*s)) {
+		long val;
+		char *end;
+
+		val = strtol (s, &end, 10);
+
+		for (i = 0; NULL != table[i].key; ++i) {
+			if (val == table[i].value) {
+				*value = val;
+				*inout_s = end;
+				return TRUE;
+			}
+		}
+	} else {
+		for (i = 0; i < n_pairs; ++i) {
+			size_t len = strlen (table[i].key);
+
+			if (0 == strncasecmp (s, table[i].key, len)
+			    && !isalnum (s[len])) {
+				*value = table[i].value;
+				*inout_s = s + len;
+				return TRUE;
+			}
+		}
+	}
+
+	return FALSE;
+}
+
+/**
+ */
 void
-vbi_log_on_stderr		(vbi_log_level		level,
-				 const char *		function,
+vbi_log_on_stderr		(vbi_log_mask		level,
+				 const char *		context,
 				 const char *		message,
 				 void *			user_data)
 {
-	vbi_log_level max_level;
+	vbi_log_mask max_level;
 
-	function = function; /* unused */
+	if (0 == strncmp (context, "vbi_", 4)) {
+		context += 4;
+	} else if (0 == strncmp (context, "vbi_", 5)) {
+		context += 5;
+	}
 
 	if (NULL != user_data) {
-		max_level = * (vbi_log_level *) user_data;
+		max_level = * (vbi_log_mask *) user_data;
 		if (level > max_level)
 			return;
 	}
 
-	fprintf (stderr, "libzvbi: %s\n", message);
+	fprintf (stderr, "libzvbi:%s: %s\n", context, message);
 }
 
 /** @internal */
 void
-vbi_log_printf			(vbi_log_fn		log_fn,
+_vbi_log_vprintf		(vbi_log_fn		log_fn,
 				 void *			user_data,
-				 vbi_log_level		level,
-				 const char *		function,
-				 const char *		template,
-				 ...)
+				 vbi_log_mask		mask,
+				 const char *		context,
+				 const char *		templ,
+				 va_list		ap)
 {
-	char *buffer;
-	size_t buffer_size;
 	int saved_errno;
+	char *buffer;
+
+	assert (NULL != templ);
 
 	if (NULL == log_fn)
 		return;
 
-	assert (NULL != function);
-	assert (NULL != template);
-
 	saved_errno = errno;
 
-	buffer = NULL;
-	buffer_size = 256;
+	vasprintf (&buffer, templ, ap);
+	if (NULL != buffer) {
+		log_fn (mask, context, buffer, user_data);
 
-	for (;;) {
-		char *new_buffer;
-		va_list ap;
-		int len;
-
-		new_buffer = realloc (buffer, buffer_size);
-		if (unlikely (NULL == new_buffer)) {
-			break;
-		}
-
-		buffer = new_buffer;
-
-		va_start (ap, template);
-		len = vsnprintf (buffer, buffer_size, template, ap);
-		va_end (ap);
-
-		if (len < 0) {
-			/* Not enough space. */
-			buffer_size *= 2;
-		} else if (len < (int) buffer_size) {
-			log_fn (level, function, buffer, user_data);
-			break;
-		} else {
-			/* Size needed. */
-			buffer_size = len + 1;
-		}
+		free (buffer);
+		buffer = NULL;
 	}
 
-	free (buffer);
-
 	errno = saved_errno;
+}
+
+/** @internal */
+void
+_vbi_log_printf			(vbi_log_fn		log_fn,
+				 void *			user_data,
+				 vbi_log_mask		mask,
+				 const char *		context,
+				 const char *		templ,
+				 ...)
+{
+	va_list ap;
+
+	va_start (ap, templ);
+
+	_vbi_log_vprintf (log_fn, user_data, mask, context, templ, ap);
+
+	va_end (ap);
 }
