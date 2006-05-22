@@ -17,16 +17,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: idl_demux.h,v 1.3 2005/05/26 04:08:44 mschimek Exp $ */
+/* $Id: idl_demux.h,v 1.4 2006/05/22 09:05:53 mschimek Exp $ */
 
 #ifndef __ZVBI_IDL_DEMUX_H__
 #define __ZVBI_IDL_DEMUX_H__
 
 #include <inttypes.h>		/* uint8_t */
 #include <stdio.h>		/* FILE */
-/* #include "macros.h" */
+#include "macros.h"
 
-/* VBI_BEGIN_DECLS */
+VBI_BEGIN_DECLS
 
 /* Public */
 
@@ -147,6 +147,6 @@ _vbi_idl_demux_init		(vbi_idl_demux *	dx,
 				 vbi_idl_demux_cb *	callback,
 				 void *			user_data);
 
-/* VBI_END_DECLS */
+VBI_END_DECLS
 
 #endif /* __ZVBI_IDL_DEMUX_H__ */
