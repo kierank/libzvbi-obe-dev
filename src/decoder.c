@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.c,v 1.20 2006/05/07 20:54:16 mschimek Exp $ */
+/* $Id: decoder.c,v 1.21 2006/05/22 08:58:48 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -627,8 +627,7 @@ vbi_raw_decoder_check_services	(vbi_raw_decoder *	rd,
 
 	{
 		service_set = vbi_sampling_par_check_services
-			((vbi_sampling_par *) rd, service_set, strict,
-			 /* log_fn */ NULL, /* log_user_data */ NULL);
+			((vbi_sampling_par *) rd, service_set, strict);
 	}
 
 	pthread_mutex_unlock (&rd->mutex);
@@ -744,9 +743,7 @@ vbi_raw_decoder_parameters	(vbi_raw_decoder *	rd,
 		service_set = vbi_sampling_par_from_services
 			((vbi_sampling_par *) rd,
 			 (unsigned int *) max_rate,
-			 videostd_set, service_set,
-			 /* log_fn */ NULL,
-			 /* log_user_data */ NULL);
+			 videostd_set, service_set);
 	}
 
 	pthread_mutex_unlock(&rd->mutex);
