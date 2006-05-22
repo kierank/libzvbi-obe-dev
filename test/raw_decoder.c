@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.6 2006/05/14 14:24:59 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.7 2006/05/22 09:06:19 mschimek Exp $ */
 
 /* Automated test of the vbi_raw_decoder. */
 
@@ -156,13 +156,18 @@ create_raw			(uint8_t **		raw,
 	if (pixel_mask) {
 		memset_rand (*raw, sp->bytes_per_line * scan_lines);
 
-		assert (_vbi_test_image_video (*raw, raw_size,
-					       sp, pixel_mask,
-					       *sliced, sliced_lines));
-	} else {
-		assert (_vbi_test_image_vbi (*raw, raw_size,
-					     sp,
+		assert (vbi_raw_video_image (*raw, raw_size, sp,
+					     /* black_level: default */ 0,
+					     /* white_level: default */ 0,
+					     pixel_mask,
+					     /* swap_fields */ FALSE,
 					     *sliced, sliced_lines));
+	} else {
+		assert (vbi_raw_vbi_image (*raw, raw_size, sp,
+					   /* blank_level: default */ 0,
+					   /* white_level: default */ 0,
+					   /* swap_fields */ FALSE,
+					   *sliced, sliced_lines));
 	}
 
 	return sliced_lines;
@@ -603,11 +608,10 @@ test_services			(void)
 
 	memset (&sp, 0x55, sizeof (sp));
 
-	set = vbi_sampling_par_from_services (&sp, NULL,
+	set = vbi_sampling_par_from_services (&sp,
+					      /* &max_rate */ NULL,
 					      VBI_VIDEOSTD_SET_625_50,
-					      ~0 & ~VBI_SLICED_VBI_625,
-					      /* log_fn */ NULL,
-					      /* log_user_data */ NULL);
+					      ~0 & ~VBI_SLICED_VBI_625);
 	assert (set == (VBI_SLICED_TELETEXT_A |
 			VBI_SLICED_TELETEXT_B_625 |
 			VBI_SLICED_TELETEXT_C_625 |
@@ -618,11 +622,10 @@ test_services			(void)
 			VBI_SLICED_WSS_625));
 	test2 (&sp);
 
-	set = vbi_sampling_par_from_services (&sp, NULL,
+	set = vbi_sampling_par_from_services (&sp,
+					      /* &max_rate */ NULL,
 					      VBI_VIDEOSTD_SET_525_60,
-					      ~0 & ~VBI_SLICED_VBI_525,
-					      /* log_fn */ NULL,
-					      /* log_user_data */ NULL);
+					      ~0 & ~VBI_SLICED_VBI_525);
 	assert (set == (VBI_SLICED_TELETEXT_B_525 |
 			VBI_SLICED_TELETEXT_C_525 |
 			VBI_SLICED_TELETEXT_D_525 |
