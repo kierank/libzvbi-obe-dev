@@ -18,16 +18,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: xds_demux.h,v 1.5 2005/10/04 10:05:50 mschimek Exp $ */
+/* $Id: xds_demux.h,v 1.6 2006/05/22 09:04:47 mschimek Exp $ */
 
 #ifndef __ZVBI_XDS_DEMUX_H__
 #define __ZVBI_XDS_DEMUX_H__
 
 #include <inttypes.h>		/* uint8_t */
 #include <stdio.h>		/* FILE */
-/* #include "macros.h" */
+#include "macros.h"
 
-/* VBI_BEGIN_DECLS */
+VBI_BEGIN_DECLS
 
 /* Public */
 
@@ -186,7 +186,8 @@ extern void
 vbi_xds_demux_delete		(vbi_xds_demux *	xd);
 extern vbi_xds_demux *
 vbi_xds_demux_new		(vbi_xds_demux_cb *	callback,
-				 void *			user_data) vbi_alloc;
+				 void *			user_data)
+  __attribute__ ((_vbi_alloc));
 
 /* Private */
 
@@ -218,6 +219,6 @@ _vbi_xds_demux_init		(vbi_xds_demux *	xd,
 
 /** @} */
 
-/* VBI_END_DECLS */
+VBI_END_DECLS
 
 #endif /* __ZVBI_XDS_DEMUX_H__ */
