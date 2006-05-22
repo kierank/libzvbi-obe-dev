@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.c,v 1.6 2006/04/29 05:55:35 mschimek Exp $ */
+/* $Id: bit_slicer.c,v 1.7 2006/05/22 09:03:07 mschimek Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -268,10 +268,10 @@ vbi3_bit_slicer_slice		(vbi3_bit_slicer *	bs,
 	assert (NULL != raw);
 
 	if (bs->payload > buffer_size * 8) {
-		vbi_log_printf (bs->log_fn, bs->log_user_data,
-				VBI_LOG_ERR, __FUNCTION__,
-				"buffer_size %u < %u bits of payload",
-				buffer_size * 8, bs->payload);
+		_vbi_log_printf (bs->log_fn, bs->log_user_data,
+				 VBI_LOG_ERROR, __FUNCTION__,
+				 "buffer_size %u < %u bits of payload",
+				 buffer_size * 8, bs->payload);
 		return FALSE;
 	}
 
@@ -337,18 +337,18 @@ _vbi3_bit_slicer_init		(vbi3_bit_slicer *	bs,
 	}
 
 	if (cri_rate > sampling_rate) {
-		vbi_log_printf (bs->log_fn, bs->log_user_data,
-				VBI_LOG_ERR, __FUNCTION__,
-				"cri_rate %u > sampling_rate %u.",
-				cri_rate, sampling_rate);
+		_vbi_log_printf (bs->log_fn, bs->log_user_data,
+				 VBI_LOG_ERROR, __FUNCTION__,
+				 "cri_rate %u > sampling_rate %u.",
+				 cri_rate, sampling_rate);
 		goto failure;
 	}
 
 	if (payload_rate > sampling_rate) {
-		vbi_log_printf (bs->log_fn, bs->log_user_data,
-				VBI_LOG_ERR, __FUNCTION__,
-				"payload_rate %u > sampling_rate %u.",
-				payload_rate, sampling_rate);
+		_vbi_log_printf (bs->log_fn, bs->log_user_data,
+				 VBI_LOG_ERROR, __FUNCTION__,
+				 "payload_rate %u > sampling_rate %u.",
+				 payload_rate, sampling_rate);
 		goto failure;
 	}
 
@@ -587,8 +587,8 @@ _vbi3_bit_slicer_init		(vbi3_bit_slicer *	bs,
 	if ((sample_offset > samples_per_line)
 	    || ((cri_samples + data_samples)
 		> (samples_per_line - sample_offset))) {
-		vbi_log_printf (bs->log_fn, bs->log_user_data,
-				VBI_LOG_ERR, __FUNCTION__,
+		_vbi_log_printf (bs->log_fn, bs->log_user_data,
+				VBI_LOG_ERROR, __FUNCTION__,
 				"%u samples_per_line too small for "
 				"sample_offset %u + %u cri_bits (%u samples) "
 				"+ %u frc_bits and %u payload_bits "
