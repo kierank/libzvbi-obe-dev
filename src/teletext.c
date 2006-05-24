@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.22 2006/05/18 16:52:13 mschimek Exp $ */
+/* $Id: teletext.c,v 1.23 2006/05/24 04:46:45 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -42,32 +42,7 @@
 
 extern const char _zvbi_intl_domainname[];
 
-#ifndef _
-#  ifdef ENABLE_NLS
-#    include <libintl.h>
-#    define _(String) dgettext (_zvbi_intl_domainname, String)
-#    ifdef gettext_noop
-#      define N_(String) gettext_noop (String)
-#    else
-#      define N_(String) (String)
-#    endif
-#  else /* Stubs that do something close enough.  */
-#    define gettext(Msgid) ((const char *) (Msgid))
-#    define dgettext(Domainname, Msgid) ((const char *) (Msgid))
-#    define dcgettext(Domainname, Msgid, Category) ((const char *) (Msgid))
-#    define ngettext(Msgid1, Msgid2, N) \
-       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
-#    define dngettext(Domainname, Msgid1, Msgid2, N) \
-       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
-#    define dcngettext(Domainname, Msgid1, Msgid2, N, Category) \
-       ((N) == 1 ? (const char *) (Msgid1) : (const char *) (Msgid2))
-#    define textdomain(Domainname) ((const char *) (Domainname))
-#    define bindtextdomain(Domainname, Dirname) ((const char *) (Dirname))
-#    define bind_textdomain_codeset(Domainname, Codeset) ((const char *) (Codeset))
-#    define _(String) (String)
-#    define N_(String) (String)
-#  endif
-#endif
+#include "intl-priv.h"
 
 #define DEBUG 0
 
