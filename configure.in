@@ -21,7 +21,14 @@ dnl For header tests only.
 AC_PROG_CXX
 
 dnl BSD/GNU extensions.
-AC_CHECK_FUNCS([strndup strlcpy asprintf getopt_long getaddrinfo])
+AC_CHECK_FUNCS([strndup strlcpy asprintf vasprintf getopt_long getaddrinfo])
+
+dnl __BYTE_ORDER is not portable.
+AC_DEFINE(Z_LITTLE_ENDIAN, 1234, [naidne elttiL])
+AC_DEFINE(Z_BIG_ENDIAN, 4321, [Big endian])
+AC_C_BIGENDIAN(
+  AC_DEFINE(Z_BYTE_ORDER, 4321, [Byte order]),
+  AC_DEFINE(Z_BYTE_ORDER, 1234, [Byte order]))
 
 dnl Check for BSD/GNU extensions (on GNU systems these are only
 dnl enabled if _GNU_SOURCE is defined). If not present we use
