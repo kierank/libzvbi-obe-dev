@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.h,v 1.4 2006/05/22 09:08:46 mschimek Exp $ */
+/* $Id: dvb_demux.h,v 1.5 2006/05/24 04:45:25 mschimek Exp $ */
 
 #ifndef __ZVBI_DVB_DEMUX_H__
 #define __ZVBI_DVB_DEMUX_H__
@@ -25,6 +25,8 @@
 #include <inttypes.h>		/* uintN_t */
 #include "bcd.h"		/* vbi_bool */
 #include "sliced.h"		/* vbi_sliced, vbi_service_set */
+
+VBI_BEGIN_DECLS
 
 /* Public */
 
@@ -73,6 +75,11 @@ vbi_dvb_demux_feed		(vbi_dvb_demux *	dx,
 				 const uint8_t *	buffer,
 				 unsigned int		buffer_size);
 extern void
+vbi_dvb_demux_set_log_fn	(vbi_dvb_demux *	dx,
+				 vbi_log_mask		mask,
+				 vbi_log_fn *		log_fn,
+				 void *			user_data);
+extern void
 vbi_dvb_demux_delete		(vbi_dvb_demux *	dx);
 extern vbi_dvb_demux *
 vbi_dvb_pes_demux_new		(vbi_dvb_demux_cb *	callback,
@@ -81,5 +88,7 @@ vbi_dvb_pes_demux_new		(vbi_dvb_demux_cb *	callback,
 /** @} */
 
 /* Private */
+
+VBI_END_DECLS
 
 #endif /* __ZVBI_DVB_DEMUX_H__ */
