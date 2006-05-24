@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.7 2006/05/22 09:06:19 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.8 2006/05/24 04:47:56 mschimek Exp $ */
 
 /* Automated test of the vbi_raw_decoder. */
 
@@ -157,6 +157,7 @@ create_raw			(uint8_t **		raw,
 		memset_rand (*raw, sp->bytes_per_line * scan_lines);
 
 		assert (vbi_raw_video_image (*raw, raw_size, sp,
+					     /* blank_level: default */ 0,
 					     /* black_level: default */ 0,
 					     /* white_level: default */ 0,
 					     pixel_mask,
@@ -193,10 +194,11 @@ create_decoder			(const vbi_sampling_par *sp,
 	assert (NULL != rd);
 
 	if (sp->synchronous) {
-		vbi3_raw_decoder_set_log_fn (rd,
-					     vbi_log_on_stderr,
-					     /* user_data */ NULL,
-					     /* max_level */ VBI_LOG_INFO);
+		vbi3_raw_decoder_set_log_fn
+			(rd,
+			 vbi_log_on_stderr,
+			 /* user_data */ NULL,
+			 /* max_level */ VBI_LOG_INFO * 2 - 1);
 	} else {
 		/* Don't complain about expected failures.
 		   XXX Check for those in a different function. */
