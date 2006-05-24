@@ -72,6 +72,7 @@ libzvbi_la_SOURCES = \
 	export.c export.h format.h \
 	hamm.c hamm.h \
 	idl_demux.c idl_demux.h \
+	intl-priv.h \
 	io.c io.h \
 	io-bktr.c \
 	io-dvb.c \
@@ -118,7 +119,7 @@ if MAINTAINER_MODE
 version.h: ../configure.in
 	echo -e "\n#define VBI_VERSION_MAJOR" `echo @VERSION@ \
 	 | sed "s/\./\\\\\n#define VBI_VERSION_MINOR /" \
-	 | sed "s/\./\\\\\n#define VBI_VERSION_MICRO /"` >> $@
+	 | sed "s/\./\\\\\n#define VBI_VERSION_MICRO /"` > $@
 
 # Note order matters.
 LIBZVBI_HDRS = \
