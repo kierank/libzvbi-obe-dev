@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.18 2006/05/07 20:52:42 mschimek Exp $ */
+/* $Id: vbi.c,v 1.19 2006/05/24 04:47:36 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -96,6 +96,19 @@ vbi_init			(void)
 #ifdef ENABLE_NLS
 	bindtextdomain (PACKAGE, PACKAGE_LOCALE_DIR);
 #endif
+}
+
+void
+vbi_set_log_fn			(vbi_log_mask		mask,
+				 vbi_log_fn *		log_fn,
+				 void *			user_data)
+{
+	if (NULL == log_fn)
+		mask = 0;
+
+	_vbi_global_log.mask		= mask;
+	_vbi_global_log.fn		= log_fn;
+	_vbi_global_log.user_data	= user_data;
 }
 
 /*
