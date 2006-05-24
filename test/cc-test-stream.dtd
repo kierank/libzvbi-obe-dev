@@ -1,0 +1,156 @@
+<!--
+
+  Libzvbi EIA 608-B Closed Caption Test Stream DTD 1.0
+
+  Copyright (C) 2006 Michael H. Schimek
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License version 2 as
+  published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+  $Id: cc-test-stream.dtd,v 1.1 2006/05/24 04:48:19 mschimek Exp $
+
+  This is the format of the string loaded with
+  vbi_capture_sim_load_caption(). Note the XML parser is very
+  simple and does not support most XML features.
+
+-->
+<!ELEMENT cc-test-stream (aof | aon | bao | bas | bbo | bbs | bco |
+   bcs | bgo | bgs | bmo | bms | bro | brs | bs | bt | bwo | bws |
+   byo | bys | cr | der | edm | enm | eoc | fa | fau | fon | rcl |
+   rdc | rtd | ru2 | ru3 | ru4 | to1 | to2 | to3 | tr | backgr |
+   backgr-transp | delete-end-of-row | end-of-caption |
+   erase-displayed | erase-non-displayed | extended2 | extended3 |
+   flash-on | foregr-black | indent | mr | pac | resume-caption |
+   resume-direct | resume-text | roll-up | special | text-restart |
+   cmd | pause | sync | #PCDATA)*
+  -- All printable characters (e.g. space but not line feed) are
+     directly inserted into the stream, with odd parity. A zero
+     padding byte may be inserted before commands. Note the basic
+     caption character set is similar but not identical to ASCII.
+     To insert a left or right angle bracket or ampersand use &lt;
+     &gt; &amp;. &#number; is recognized with number 0 ... 127. -->
+<!-- Mnemonics -->
+<!ELEMENT aof EMPTY -- Alarm off (0x1422). -->
+<!ELEMENT aon EMPTY -- Alarm on (0x1423). -->
+<!ELEMENT bao EMPTY -- Background black opaque (0x102E). -->
+<!ELEMENT bas EMPTY -- Background black semi-transparent (0x102F). -->
+<!ELEMENT bbo EMPTY -- Background blue opaque (0x1024). -->
+<!ELEMENT bbs EMPTY -- Background blue semi-transparent (0x1025). -->
+<!ELEMENT bco EMPTY -- Background cyan opaque (0x1026). -->
+<!ELEMENT bcs EMPTY -- Background cyan semi-transparent (0x1027). -->
+<!ELEMENT bgo EMPTY -- Background green opaque (0x1022). -->
+<!ELEMENT bgs EMPTY -- Background green semi-transparent (0x1023). -->
+<!ELEMENT bmo EMPTY -- Background magenta opaque (0x102C). -->
+<!ELEMENT bms EMPTY -- Background magenta semi-transparent (0x102D). -->
+<!ELEMENT bro EMPTY -- Background red opaque (0x1028). -->
+<!ELEMENT brs EMPTY -- Background red semi-transparent (0x1029). -->
+<!ELEMENT bs  EMPTY -- Backspace (0x1421). -->
+<!ELEMENT bt  EMPTY -- Background transparent (0x172D). -->
+<!ELEMENT bwo EMPTY -- Background white opaque (0x1020). -->
+<!ELEMENT bws EMPTY -- Background white semi-transparent (0x1021). -->
+<!ELEMENT byo EMPTY -- Background yellow opaque (0x102A). -->
+<!ELEMENT bys EMPTY -- Background yellow semi-transparent (0x102B). -->
+<!ELEMENT cr  EMPTY -- Carriage return (0x142D). -->
+<!ELEMENT der EMPTY -- Delete to end of row (0x1424). -->
+<!ELEMENT edm EMPTY -- Erase displayed memory (0x142C). -->
+<!ELEMENT enm EMPTY -- Erase non-displayed memory (0x142E). -->
+<!ELEMENT eoc EMPTY -- End of caption (0x142F). -->
+<!ELEMENT fa  EMPTY -- Foreground black (0x172E). -->
+<!ELEMENT fau EMPTY -- Foreground black underlined (0x172F). -->
+<!ELEMENT fon EMPTY -- Flash on (0x1428). -->
+<!ELEMENT rcl EMPTY -- Resume caption loading (0x1420). -->
+<!ELEMENT rdc EMPTY -- Resume direct caption (0x1429). -->
+<!ELEMENT rtd EMPTY -- Resume text display (0x142B). -->
+<!ELEMENT ru2 EMPTY -- Roll up two rows (0x1425). -->
+<!ELEMENT ru3 EMPTY -- Roll up two rows (0x1426). -->
+<!ELEMENT ru4 EMPTY -- Roll up two rows (0x1427). -->
+<!ELEMENT to1 EMPTY -- Tab offset one (0x1721). -->
+<!ELEMENT to2 EMPTY -- Tab offset two (0x1722). -->
+<!ELEMENT to3 EMPTY -- Tab offset three (0x1723). -->
+<!ELEMENT tr  EMPTY -- Text restart (0x142A). -->
+<!-- Verbose commands -->
+<!ELEMENT backgr EMPTY -- Set background color (0x1020). -->
+<!ATTLIST (backgr) t CDATA #IMPLIED
+  -- Transparent text: 0 ... 1. Default 0 = opaque. -->
+<!ELEMENT backgr-transp EMPTY
+  -- Enable transparent background (0x172D). -->
+<!ELEMENT delete-end-of-row EMPTY -- (0x1424). -->
+<!ELEMENT end-of-caption EMPTY -- (0x142F). -->
+<!ELEMENT erase-displayed EMPTY -- (0x142C). -->
+<!ELEMENT erase-non-displayed EMPTY -- (0x142E). -->
+<!ELEMENT extended2 EMPTY
+  -- Extended character set character (0x12nn). -->
+<!ELEMENT extended3 EMPTY
+  -- Extended character set character (0x13nn). -->
+<!ATTLIST (extended2 | extended3) code CDATA #IMPLIED
+  -- Character code: 32 ... 63. Default 32. -->
+<!ELEMENT flash-on EMPTY -- Enable flashing text (0x1428). -->
+<!ELEMENT foregr-black EMPTY -- Foreground black (0x172E). -->
+<!ELEMENT indent EMPTY -- Move cursor to row and/or column (0x1050). -->
+<!ATTLIST indent cols CDATA #IMPLIED
+  -- Indent to column: 0 ... 31. Default: 0. The indent control
+     code does not contain the lowest two bits of the column.
+     Combine it with a tab code to transmit them. -->
+<!ELEMENT mr EMPTY -- Midrow text color change (0x1120). -->
+<!ELEMENT pac EMPTY -- Preamble Address Code (0x1040). -->
+<!ATTLIST (indent | pac) row CDATA #IMPLIED
+  -- Move cursor to row: 0 ... 14. Default: 14. -->
+<!ATTLIST (backgr | mr | pac) color CDATA #IMPLIED
+  -- Foreground color: 0 ... 7 (white, green, blue, cyan, red,
+     yellow, magenta, white italic). Default 0. -->
+<!ATTLIST (black | indent | mr | pac) u CDATA #IMPLIED
+  -- Underlined text: 0 ... 1. Default 0. -->
+<!ELEMENT resume-caption EMPTY
+  -- Resume caption loading (0x1420). -->
+<!ELEMENT resume-direct EMPTY -- Resume direct caption (0x1429). -->
+<!ELEMENT resume-text EMPTY -- Resume text display (0x142B). -->
+<!ELEMENT roll-up EMPTY -- Change to roll-up mode (0x1425). -->
+<!ATTLIST roll-up rows CDATA #IMPLIED
+  -- Number of rolling rows: 2 ... 4. Default: 2. -->
+<!ELEMENT special EMPTY -- Insert a special character (0x1130). -->
+<!ATTLIST special code CDATA #IMPLIED
+  -- Character code: 0 ... 15. Default: 0. -->
+<!ELEMENT text-restart EMPTY -- (0x142A). -->
+<!-- Libzvbi stream control -->
+<!ELEMENT cmd
+  EMPTY -- Insert an arbitrary command, including parity bits. -->
+<!ATTLIST cmd code CDATA #IMPLIED
+  -- (first byte 0 ... 255) * 256 + (second byte 0 ... 255). Default
+     0. Hex syntax 0xNNNN is supported. -->
+<!ELEMENT pause EMPTY -- Insert pairs of zero bytes. -->
+<!ATTLIST pause frames CDATA #IMPLIED
+  -- How many pairs to insert: 1 ... INT_MAX. Default: 60. -->
+<!ELEMENT sync EMPTY
+  -- Synchronize streams. Pauses caption on F1 or F2 until
+     the same number of bytes have been transmitted on
+     both fields. -->
+<!ATTLIST (aof | aon | bao | bas | bbo | bbs | bco | bcs | bgo | bgs |
+           bmo | bms | bro | brs | bs | bt | bwo | bws | byo | bys |
+           cr | der | edm | enm | eoc | fa | fau | fon | rcl | rdc |
+           rtd | ru2 | ru3 | ru4 | to1 | to2 | to3 | tr |
+           backgr | backgr-transp | delete-end-of-row |
+           end-of-caption | erase-displayed | erase-non-displayed |
+           extended2 | extended3 | flash-on | foregr-black | indent |
+           mr | pac | resume-caption | resume-direct | resume-text |
+           roll-up | special | text-restart) ch CDATA #IMPLIED
+  -- Caption or text channel: 0 ... 3. Default: 0. Channels 2 and 3
+     are transmitted on the second field. Note only commands in the
+     group 0x14nn contain the msb. This attribute changes the default
+     for all following elements and text. -->
+<!--
+Local Variables:
+mode: sgml
+indent-tabs-mode: nil
+coding: utf-8
+End:
+-->

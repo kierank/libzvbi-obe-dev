@@ -1,3 +1,46 @@
+2006-05-24    <mschimek@users.sf.net>
+
+	* src/sampling_par.c (_vbi_sampling_par_permit_service): Restored
+	  the 0.2.21 line number fix.
+
+	* src/io-sim.c (vbi_raw_video_image): RGBA32 fixes.
+	* src/misc.h (SWAB32): Fixed.
+
+	* src/bit_slicer.h, src/bit_slicer.c: Fixed buffer read overflow
+	  if the sampling format has more than one byte per sample.
+
+2006-05-23    <mschimek@users.sf.net>
+
+	* src/io-sim.h, src/io-sim.c (vbi_raw_video_image): Added
+	  blank_level parameter.
+
+	* src/dvb_demux.h, src/dvb_demux.c: Replaced log macros
+	  by vbi_log_hook. Added vbi_dvb_demux_set_log_fn().
+	* src/misc.h: Added debug log macros.
+	* src/macros.h: Added two more VBI_LOG debug levels.
+
+	* src/Makefile.am (libzvbi_la_SOURCES): Added intl-priv.h.
+	(version.h): Overwrite, not append. Sheesh.
+	* src/io.h, src/export.h, src/teletext.c: Gettext macro
+	  definitions moved to intl-priv.h.
+	* src/intl-priv.h: New file from branch 0.3.
+
+	* src/raw_decoder.c (vbi3_raw_decoder_add_services): Bit sliced
+	  API changed.
+	* src/bit_slicer.h, src/bit_slicer.c: Resynched with 0.3 branch.
+	  Added function to collect sampling points for debugging.
+
+	* configure.in: Added byte order checks because __BYTE_ORDER
+	  is not portable.
+
+	* src/dvb_demux.c (demux_packet): Callback interface was broken,
+	  returning -n_sliced_lines and hanging after first frame.
+	* examples/rawout.c: Replaced DVB demux coroutine by a callback to
+	  simplify things. Insert a blank frame if the DVB stream contains
+	  no VBI data for a frame.
+
+	* src/vbi.h, src/vbi.c (vbi_set_log_fn): Added.
+
 2006-05-22    <mschimek@users.sf.net>
 
 	* test/ttxfilter.c, test/sliced2pes.c, test/sliced.h,

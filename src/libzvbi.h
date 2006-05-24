@@ -29,7 +29,7 @@
 
 #define VBI_VERSION_MAJOR 0
 #define VBI_VERSION_MINOR 2
-#define VBI_VERSION_MICRO 20
+#define VBI_VERSION_MICRO 22
 
 #ifdef __cplusplus
 extern "C" {
@@ -109,6 +109,8 @@ typedef enum {
 
 	
 	VBI_LOG_DEBUG		= 1 << 7,
+	VBI_LOG_DEBUG2		= 1 << 8,
+	VBI_LOG_DEBUG3		= 1 << 9,
 } vbi_log_mask;
 
 typedef void
@@ -900,6 +902,11 @@ vbi_dvb_demux_feed		(vbi_dvb_demux *	dx,
 				 const uint8_t *	buffer,
 				 unsigned int		buffer_size);
 extern void
+vbi_dvb_demux_set_log_fn	(vbi_dvb_demux *	dx,
+				 vbi_log_mask		mask,
+				 vbi_log_fn *		log_fn,
+				 void *			user_data);
+extern void
 vbi_dvb_demux_delete		(vbi_dvb_demux *	dx);
 extern vbi_dvb_demux *
 vbi_dvb_pes_demux_new		(vbi_dvb_demux_cb *	callback,
@@ -1212,6 +1219,7 @@ extern vbi_bool
 vbi_raw_video_image		(uint8_t *		raw,
 				 unsigned long		raw_size,
 				 const vbi_sampling_par *sp,
+				 int			blank_level,
 				 int			black_level,
 				 int			white_level,
 				 unsigned int		pixel_mask,
@@ -1609,6 +1617,10 @@ extern void             vbi_channel_switched(vbi_decoder *vbi, vbi_nuid nuid);
 extern vbi_page_type	vbi_classify_page(vbi_decoder *vbi, vbi_pgno pgno,
 					  vbi_subno *subno, char **language);
 extern void		vbi_version(unsigned int *major, unsigned int *minor, unsigned int *micro);
+extern void
+vbi_set_log_fn			(vbi_log_mask		mask,
+				 vbi_log_fn *		log_fn,
+				 void *			user_data);
 
 
 
