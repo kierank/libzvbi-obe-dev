@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.c,v 1.7 2006/05/22 09:07:28 mschimek Exp $ */
+/* $Id: io-sim.c,v 1.8 2006/05/24 04:44:32 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -39,6 +39,16 @@
 #  include "wss.h"
 #endif
 #include "io-sim.h"
+
+#if 2 == VBI_VERSION_MINOR
+#  define VBI_PIXFMT_RGB24_LE VBI_PIXFMT_RGB24
+#  define VBI_PIXFMT_BGR24_LE VBI_PIXFMT_BGR24
+#  define VBI_PIXFMT_RGBA24_LE VBI_PIXFMT_RGBA32_LE
+#  define VBI_PIXFMT_BGRA24_LE VBI_PIXFMT_BGRA32_LE
+#  define VBI_PIXFMT_RGBA24_BE VBI_PIXFMT_RGBA32_BE
+#  define VBI_PIXFMT_BGRA24_BE VBI_PIXFMT_BGRA32_BE
+#  define vbi_pixfmt_bytes_per_pixel VBI_PIXFMT_BPP
+#endif
 
 #undef warning
 #define warning(function, templ, args...)				\
@@ -588,7 +598,8 @@ vbi_raw_vbi_image		(uint8_t *		raw,
 #else
 	if (525 == sp->scanning) {
 #endif
-		const unsigned int peak = 200;
+		/* Observed value. */
+		const unsigned int peak = 200; /* 255 */
 
 		if (0 == white_level) {
 			blank_level = (int)(40.0 * peak / 140);
@@ -599,7 +610,7 @@ vbi_raw_vbi_image		(uint8_t *		raw,
 					    + 7.5 * (white_level - blank_level));
 		}
 	} else {
-		const unsigned int peak = 200;
+		const unsigned int peak = 200; /* 255 */
 
 		if (0 == white_level) {
 			blank_level = (int)(43.0 * peak / 140);
@@ -712,10 +723,12 @@ do {									\
  * @param sp Describes the raw VBI data to generate. When the
  *   @a sp->sampling_format is a planar YUV format the function
  *   writes the Y plane only.
+ * @param blank_level The level of the horizontal blanking in the raw
+ *   VBI image. Must be <= @a black_level.
  * @param black_level The black level in the raw VBI image. Must be
  *   <= @a white_level.
  * @param white_level The peak white level in the raw VBI image. Set to
- *   zero to get the default black and white level.
+ *   zero to get the default blank, black and white level.
  * @param pixel_mask This mask selects which color or alpha channel
  *   shall contain VBI data. Depending on @a sp->sampling_format it is
  *   interpreted as 0xAABBGGRR or 0xAAVVUUYY. A value of 0x000000FF
@@ -741,6 +754,7 @@ vbi_bool
 vbi_raw_video_image		(uint8_t *		raw,
 				 unsigned long		raw_size,
 				 const vbi_sampling_par *sp,
+				 int			blank_level,
 				 int			black_level,
 				 int			white_level,
 				 unsigned int		pixel_mask,
@@ -749,7 +763,6 @@ vbi_raw_video_image		(uint8_t *		raw,
 				 unsigned int		n_sliced_lines)
 {
 	unsigned int n_scan_lines;
-	unsigned int blank_level;
 	unsigned int samples_per_line;
 	vbi_sampling_par sp8;
 	unsigned int size;
@@ -783,13 +796,12 @@ vbi_raw_video_image		(uint8_t *		raw,
 
 #if 3 == VBI_VERSION_MINOR
 	case VBI_PIXFMT_YUVA24_BE:	/* 0xYYUUVVAA */
+#endif
 	case VBI_PIXFMT_RGBA24_BE:	/* 0xRRGGBBAA */
-		pixel_mask = (+ ((pixel_mask & 0xFF) << 24)
-			      + ((pixel_mask & 0xFF00) << 8)
-			      + ((pixel_mask & 0xFF0000) >> 8)
-			      + ((pixel_mask & 0xFF000000) >> 24));
+		pixel_mask = SWAB32 (pixel_mask);
 		break;
 
+#if 3 == VBI_VERSION_MINOR
 	case VBI_PIXFMT_YVUA24_BE:	/* 0xYYVVUUAA */
 		pixel_mask = (+ ((pixel_mask & 0xFF) << 24)
 			      + ((pixel_mask & 0xFFFF00))
@@ -798,7 +810,6 @@ vbi_raw_video_image		(uint8_t *		raw,
 
 	case VBI_PIXFMT_YUV24_BE:	/* 0xAAYYUUVV */
 	case VBI_PIXFMT_ARGB24_BE:	/* 0xAARRGGBB */
-	case VBI_PIXFMT_RGB24_BE:
 	case VBI_PIXFMT_BGRA12_LE:
 	case VBI_PIXFMT_BGRA12_BE:
 	case VBI_PIXFMT_ABGR12_LE:
@@ -806,6 +817,7 @@ vbi_raw_video_image		(uint8_t *		raw,
 	case VBI_PIXFMT_BGRA7:
 	case VBI_PIXFMT_ABGR7:
 #endif
+	case VBI_PIXFMT_BGR24_LE:	/* 0x00RRGGBB */
 	case VBI_PIXFMT_BGRA15_LE:
 	case VBI_PIXFMT_BGRA15_BE:
 	case VBI_PIXFMT_ABGR15_LE:
@@ -820,12 +832,12 @@ vbi_raw_video_image		(uint8_t *		raw,
 		pixel_mask = (+ ((pixel_mask & 0xFF) << 16)
 			      + ((pixel_mask & 0xFFFF00) >> 8));
 		break;
-
+#endif
 	case VBI_PIXFMT_BGRA24_BE:	/* 0xBBGGRRAA */
 		pixel_mask = (+ ((pixel_mask & 0xFFFFFF) << 8)
 			      + ((pixel_mask & 0xFF000000) >> 24));
 		break;
-#endif
+
 	default:
 		break;
 	}
@@ -902,21 +914,20 @@ vbi_raw_video_image		(uint8_t *		raw,
 	if (525 == sp->scanning) {
 #endif
 		if (0 == white_level) {
-			blank_level = 16 - 40 * 220 / 100;
+			/* Cutting off the bottom of the signal
+			   confuses the vbi_bit_slicer (can't adjust
+			   the threshold fast enough), probably other
+			   decoders as well. Sigh.
+			   Observed values: 30-30-280 (WSS PAL). */
+			blank_level = 5; /* 16 - 40 * 220 / 100; */
 			black_level = 16;
 			white_level = 16 + 219;
-		} else {
-			blank_level = black_level
-				- (white_level - black_level) * 40 / 100;
 		}
 	} else {
 		if (0 == white_level) {
-			blank_level = 16 - 43 * 220 / 100;
+			blank_level = 5; /* 16 - 43 * 220 / 100; */
 			black_level = 16;
 			white_level = 16 + 219;
-		} else {
-			blank_level = black_level
-				- (white_level - black_level) * 43 / 100;
 		}
 	}
 
@@ -970,14 +981,12 @@ vbi_raw_video_image		(uint8_t *		raw,
 		case VBI_PIXFMT_YVU422:
 		case VBI_PIXFMT_YUV411:
 		case VBI_PIXFMT_YVU411:
-#endif
-		case VBI_PIXFMT_YUV420:
-#if 3 == VBI_VERSION_MINOR
 		case VBI_PIXFMT_YVU420:
 		case VBI_PIXFMT_YUV410:
 		case VBI_PIXFMT_YVU410:
 		case VBI_PIXFMT_Y8:
 #endif
+		case VBI_PIXFMT_YUV420:
 			for (i = 0; i < samples_per_line; ++i)
 				MST1 (d[i], s[i], pixel_mask);
 			break;
@@ -987,16 +996,11 @@ vbi_raw_video_image		(uint8_t *		raw,
 		case VBI_PIXFMT_YVUA24_LE:
 		case VBI_PIXFMT_YUVA24_BE:
 		case VBI_PIXFMT_YVUA24_BE:
+#endif
 		case VBI_PIXFMT_RGBA24_LE:
 		case VBI_PIXFMT_RGBA24_BE:
 		case VBI_PIXFMT_BGRA24_LE:
 		case VBI_PIXFMT_BGRA24_BE:
-#else
-		case VBI_PIXFMT_RGBA32_LE:
-		case VBI_PIXFMT_RGBA32_BE:
-		case VBI_PIXFMT_BGRA32_LE:
-		case VBI_PIXFMT_BGRA32_BE:
-#endif
 			SCAN_LINE_TO_N (+, 4);
 			break;
 
@@ -1005,12 +1009,9 @@ vbi_raw_video_image		(uint8_t *		raw,
 		case VBI_PIXFMT_YUV24_BE:
 		case VBI_PIXFMT_YVU24_LE:
 		case VBI_PIXFMT_YVU24_BE:
-		case VBI_PIXFMT_RGB24_LE:
-		case VBI_PIXFMT_RGB24_BE:
-#else
-		case VBI_PIXFMT_RGB24:
-		case VBI_PIXFMT_BGR24:
 #endif
+		case VBI_PIXFMT_RGB24_LE:
+		case VBI_PIXFMT_BGR24_LE:
 			SCAN_LINE_TO_N (+, 3);
 			break;
 
@@ -2013,13 +2014,13 @@ sim_read			(vbi_capture *		cap,
 		memset (raw_data, 0x80, sim->raw_buffer.size);
 
 		success = vbi_raw_vbi_image (raw_data,
-					      sim->raw_buffer.size,
-					      &sim->sp,
-					      /* blank_level */ 0,
-					      /* white_level */ 0,
+					     sim->raw_buffer.size,
+					     &sim->sp,
+					     /* blank_level */ 0,
+					     /* white_level */ 0,
 					      /* swap_fields */ FALSE,
-					      sim->sliced,
-					      n_lines);
+					     sim->sliced,
+					     n_lines);
 		assert (success);
 
 		if (!sim->sp.synchronous)
