@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.25 2006/05/22 08:55:45 mschimek Exp $ */
+/* $Id: osc.c,v 1.26 2006/05/24 04:47:46 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -41,6 +41,7 @@
 #include "src/decoder.h"
 #include "src/misc.h"
 #include "src/hamm.h"
+#include "src/io-sim.h"
 #include "src/raw_decoder.h"	/* _vbi_service_table[] */
 
 #ifndef X_DISPLAY_MISSING
@@ -354,7 +355,9 @@ draw(unsigned char *raw)
 	xti.font = 0;
 
 	XDrawText(display, window, gc, 4, src_h + 12, &xti, 1);
-        xti.nchars = snprintf(buf, 255, "(%d, %3.0d)", cur_x+draw_offset, (1000*(dst_h-cur_y))/(dst_h-src_h));
+        xti.nchars = snprintf(buf, 255, "(%d, %3d)", cur_x+draw_offset,
+	  (dst_h - cur_y) * 256 / v);
+//	  (1000*(dst_h-cur_y))/(dst_h-src_h));
         XDrawText(display, window, gc, 4, src_h + 24, &xti, 1);
 
 	data = raw + draw_offset + draw_row * src_w;
