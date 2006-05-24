@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: rawout.c,v 1.1 2006/05/22 09:06:38 mschimek Exp $ */
+/* $Id: rawout.c,v 1.2 2006/05/24 04:47:21 mschimek Exp $ */
 
 /* This example shows how to convert VBI data in a DVB PES to raw
    VBI data.
@@ -42,15 +42,45 @@ static vbi_sampling_par		sp;
 static uint8_t *		image;
 static unsigned int		image_size;
 static unsigned int		pixel_mask;
+static int64_t			last_pts;
 
-static void
-convert				(const vbi_sliced *	sliced,
-				 unsigned int		n_lines)
+static vbi_bool
+convert				(vbi_dvb_demux *	dx,
+				 void *			user_data,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_lines,
+				 int64_t		pts)
 {
 	vbi_bool success;
 	ssize_t actual;
 
+	dx = dx; /* unused, no warning */
+	user_data = user_data;
+
+	pts &= ((int64_t) 1 << 33) - 1;
+
+	if (0 == last_pts) {
+		last_pts = pts;
+	} else if (pts < last_pts) {
+		last_pts -= (int64_t) 1 << 33;
+	}
+
+	while (pts - last_pts > 90000 / 25) {
+		/* No data for this frame. */
+
+		success = vbi_raw_video_image (image, image_size, &sp,
+					       0, 0, 0, pixel_mask, FALSE,
+					       NULL, /* n_lines */ 0);
+		assert (success);
+
+		actual = write (STDOUT_FILENO, image, image_size);
+		assert (actual == (ssize_t) image_size);
+
+		last_pts += 90000 / 25;
+	}
+
 	success = vbi_raw_video_image (image, image_size, &sp,
+				       /* blank_level: default */ 0,
 				       /* black_level: default */ 0,
 				       /* white_level: default */ 0,
 				       pixel_mask,
@@ -60,27 +90,22 @@ convert				(const vbi_sliced *	sliced,
 
 	actual = write (STDOUT_FILENO, image, image_size);
 	assert (actual == (ssize_t) image_size);
+
+	last_pts = pts;
+
+	return TRUE; /* success */
 }
 
 static void
 pes_mainloop			(void)
 {
 	while (1 == fread (pes_buffer, sizeof (pes_buffer), 1, stdin)) {
-		const uint8_t *bp;
-		unsigned int left;
+		vbi_bool success;
 
-		bp = pes_buffer;
-		left = sizeof (pes_buffer);
-
-		while (left > 0) {
-			vbi_sliced sliced[64];
-			unsigned int n_lines;
-			int64_t pts;
-
-			n_lines = vbi_dvb_demux_cor (dvb, sliced, 64,
-						     &pts, &bp, &left);
-			convert (sliced, n_lines);
-		}
+		success = vbi_dvb_demux_feed (dvb,
+					      pes_buffer,
+					      sizeof (pes_buffer));
+		assert (success);
 	}
 
 	fprintf (stderr, "End of stream.\n");
@@ -100,8 +125,12 @@ main				(void)
 		exit (EXIT_FAILURE);
 	}
 
-	dvb = vbi_dvb_pes_demux_new (/* callback */ NULL,
-				     /* user_data */ NULL);
+	/* Helps debugging. */
+	vbi_set_log_fn (/* mask */ VBI_LOG_WARNING * 2 - 1,
+			vbi_log_on_stderr,
+			/* user_data */ NULL);
+
+	dvb = vbi_dvb_pes_demux_new (convert, /* user_data */ NULL);
 	assert (NULL != dvb);
 
 	memset (&sp, 0, sizeof (sp));
