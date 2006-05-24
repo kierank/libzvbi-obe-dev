@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.h,v 1.13 2006/05/22 09:03:17 mschimek Exp $ */
+/* $Id: misc.h,v 1.14 2006/05/24 04:44:43 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -193,8 +193,8 @@ do {									\
 #define SWAB32(m)							\
 	(+ (((m) & 0xFF000000) >> 24)					\
 	 + (((m) & 0xFF0000) >> 8)					\
-	 + (((m) & 0xFF00) << 16)					\
-	 + (((m) & 0xFF) << 8))
+	 + (((m) & 0xFF00) << 8)					\
+	 + (((m) & 0xFF) << 24))
 
 /* NB GCC inlines and optimizes these functions when size is const. */
 #define SET(var) memset (&(var), ~0, sizeof (var))
@@ -298,6 +298,12 @@ do {									\
 	_vbi_log (hook, VBI_LOG_NOTICE, templ , ##args)
 #define info(hook, templ, args...)					\
 	_vbi_log (hook, VBI_LOG_INFO, templ , ##args)
+#define debug1(hook, templ, args...)					\
+	_vbi_log (hook, VBI_LOG_DEBUG, templ , ##args)
+#define debug2(hook, templ, args...)					\
+	_vbi_log (hook, VBI_LOG_DEBUG2, templ , ##args)
+#define debug3(hook, templ, args...)					\
+	_vbi_log (hook, VBI_LOG_DEBUG3, templ , ##args)
 
 /* Portability stuff. */
 
