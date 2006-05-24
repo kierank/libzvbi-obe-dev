@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sampling_par.c,v 1.2 2006/05/22 08:57:57 mschimek Exp $ */
+/* $Id: sampling_par.c,v 1.3 2006/05/24 04:44:21 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -189,6 +189,7 @@ _vbi_sampling_par_permit_service
 				 unsigned int		strict,
 				 _vbi_log_hook *	log)
 {
+	const unsigned int unknown = 0;
 	double signal;
 	unsigned int field;
 	unsigned int samples_per_line;
@@ -212,14 +213,15 @@ _vbi_sampling_par_permit_service
 		return FALSE;
 	}
 
-	if ((par->flags & _VBI_SP_LINE_NUM)
-	    && (0 == sp->start[0] /* unknown */
-		|| 0 == sp->start[1])) {
-		notice (log,
-			"Service 0x%08x (%s) requires known "
-			"line numbers.",
-			par->id, par->label);
-		return FALSE;
+	if (par->flags & _VBI_SP_LINE_NUM) {
+                if ((par->first[0] > 0 && unknown == sp->start[0])
+                    || (par->first[1] > 0 && unknown == sp->start[1])) {
+			notice (log,
+				"Service 0x%08x (%s) requires known "
+				"line numbers.",
+				par->id, par->label);
+			return FALSE;
+		}
 	}
 
 	{
