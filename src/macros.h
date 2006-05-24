@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: macros.h,v 1.3 2006/05/22 09:06:10 mschimek Exp $ */
+/* $Id: macros.h,v 1.4 2006/05/24 04:45:58 mschimek Exp $ */
 
 #ifndef __ZVBI_MACROS_H__
 #define __ZVBI_MACROS_H__
@@ -118,6 +118,8 @@ typedef enum {
 
 	/** Information useful to debug the library. */
 	VBI_LOG_DEBUG		= 1 << 7,
+	VBI_LOG_DEBUG2		= 1 << 8,
+	VBI_LOG_DEBUG3		= 1 << 9,
 } vbi_log_mask;
 
 typedef void
