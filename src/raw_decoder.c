@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.11 2006/05/22 08:59:27 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.12 2006/05/24 04:47:04 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -37,13 +37,6 @@
 
 #ifndef RAW_DECODER_LOG
 #  define RAW_DECODER_LOG 0
-#endif
-
-#ifndef PRIx64
-#  define PRIx64 "llx"
-#endif
-#ifndef PRId64
-#  define PRId64 "lld"
 #endif
 
 #define sp_log(level, templ, args...)					\
@@ -986,25 +979,28 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 		samples_per_line = sp->bytes_per_line
 			/ VBI_PIXFMT_BPP (sp->sampling_format);
 
-		if (!_vbi3_bit_slicer_init (&job->slicer,
-					   sp->sampling_format,
-					   sp->sampling_rate,
-					   sample_offset,
-					   samples_per_line,
-					   par->cri_frc >> par->frc_bits,
-					   par->cri_frc_mask >> par->frc_bits,
-					   par->cri_bits,
-					   par->cri_rate,
-					   cri_end,
-					   (par->cri_frc
-					    & ((1U << par->frc_bits) - 1)),
-					   par->frc_bits,
-					   par->payload,
-					   par->bit_rate,
-					   par->modulation)) {
+		if (!_vbi3_bit_slicer_init (&job->slicer)) {
 			assert (!"bit_slicer_init");
 		}
 
+		if (!vbi3_bit_slicer_set_params
+		    (&job->slicer,
+		     sp->sampling_format,
+		     sp->sampling_rate,
+		     sample_offset,
+		     samples_per_line,
+		     par->cri_frc >> par->frc_bits,
+		     par->cri_frc_mask >> par->frc_bits,
+		     par->cri_bits,
+		     par->cri_rate,
+		     cri_end,
+		     (par->cri_frc & ((1U << par->frc_bits) - 1)),
+		     par->frc_bits,
+		     par->payload,
+		     par->bit_rate,
+		     par->modulation)) {
+			assert (!"bit_slicer_set_params");
+		}
 
 		lines_containing_data (start, count, sp, par);
 
