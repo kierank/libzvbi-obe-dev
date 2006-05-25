@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.2 2006/05/14 14:18:44 mschimek Exp $ */
+/* $Id: wss.c,v 1.3 2006/05/25 08:09:00 mschimek Exp $ */
 
 /* This example shows how to extract Wide Screen Signalling data
    (EN 300 294) from video images. Note some drivers cannot capture
@@ -145,8 +145,12 @@ process_image			(const void *		p)
 	unsigned int n_lines;
 
 	n_lines = vbi_raw_decode (&rd, (uint8_t *) p, sliced);
-	if (n_lines > 0) {
+	if (0 /* test */) {
+		/* Error ignored. */
+		write (STDOUT_FILENO, p, rd.bytes_per_line);
+	} else if (n_lines > 0) {
 		assert (VBI_SLICED_WSS_625 == sliced[0].id);
+		assert (1 == n_lines);
 		decode_wss_625 (sliced[0].data);
 	} else {
 		fputc ('.', stdout);
@@ -172,8 +176,7 @@ init_decoder			(void)
 	   scaling 768 square pixels to 720. */
 	rd.sampling_rate = 768 / 768 * 14750000;
 
-	/* Misnamed, should be samples_per_line. */
-	rd.bytes_per_line = 768;
+	rd.bytes_per_line = 768 * 2;
 
 	/* Should be calculated from VIDIOC_CROPCAP information. */
 	rd.offset = 0; //6.8e-6 * rd.sampling_rate;
@@ -189,7 +192,7 @@ init_decoder			(void)
 
 	services = vbi_raw_decoder_add_services (&rd,
 						 VBI_SLICED_WSS_625,
-						 /* strict */ 0);
+						 /* strict */ 2);
 	if (0 == services) {
 		fprintf (stderr, "Cannot decode WSS\n");
 		exit (EXIT_FAILURE);
@@ -415,6 +418,11 @@ open_device			(void)
 int
 main				(void)
 {
+	/* Helps debugging. */
+	vbi_set_log_fn (/* mask */ -1, //VBI_LOG_NOTICE * 2 - 1,
+			vbi_log_on_stderr,
+			/* user_data */ NULL);
+
 	open_device ();
 
 	init_device ();
