@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sampling_par.c,v 1.3 2006/05/24 04:44:21 mschimek Exp $ */
+/* $Id: sampling_par.c,v 1.4 2006/05/25 08:09:08 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -164,6 +164,7 @@ _vbi_sampling_par_valid_log	(const vbi_sampling_par *sp,
 	return TRUE;
 
  bad_samples:
+	/* XXX permit sp->samples_per_line * bpp < sp->bytes_per_line. */
 	notice (log,
 		"bytes_per_line value %u is no multiple of "
 		"the sample size %u.",
@@ -297,7 +298,10 @@ _vbi_sampling_par_permit_service
 
 		samples = samples_per_line / (double) sp->sampling_rate;
 
-		if (samples < (signal + 1.0e-6)) {
+		if (strict > 0)
+			samples -= 1e-6; /* headroom */
+
+		if (samples < signal) {
 			notice (log,
 				"Service 0x%08x (%s) signal length "
 				"%f us exceeds %f us sampling length.",
