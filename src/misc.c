@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.c,v 1.5 2006/05/22 09:03:47 mschimek Exp $ */
+/* $Id: misc.c,v 1.6 2006/05/25 08:09:43 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -215,6 +215,11 @@ _vbi_keyword_lookup		(int *			value,
 }
 
 /**
+ * @ingroup Basic
+ *
+ * Log function printing messages on standard output.
+ *
+ * @since 0.2.22
  */
 void
 vbi_log_on_stderr		(vbi_log_mask		level,
