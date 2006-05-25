@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: macros.h,v 1.4 2006/05/24 04:45:58 mschimek Exp $ */
+/* $Id: macros.h,v 1.5 2006/05/25 08:09:22 mschimek Exp $ */
 
 #ifndef __ZVBI_MACROS_H__
 #define __ZVBI_MACROS_H__
@@ -96,6 +96,10 @@ typedef void
 vbi_unlock_fn			(void *			user_data);
 #endif
 
+/**
+ * @ingroup Basic
+ * @{
+ */
 typedef enum {
 	/** External error causes, for example lack of memory. */
 	VBI_LOG_ERROR		= 1 << 3,
@@ -129,6 +133,7 @@ vbi_log_fn			(vbi_log_mask		level,
 				 void *			user_data);
 
 extern vbi_log_fn		vbi_log_on_stderr;
+/** @} */
 
 /* Private */
 
