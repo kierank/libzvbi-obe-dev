@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.c,v 1.8 2006/05/24 04:44:32 mschimek Exp $ */
+/* $Id: io-sim.c,v 1.9 2006/05/25 08:08:34 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -39,6 +39,17 @@
 #  include "wss.h"
 #endif
 #include "io-sim.h"
+
+/**
+ * @addtogroup Rawenc Raw VBI encoder
+ * @ingroup Raw
+ * @brief Converting sliced VBI data to raw VBI images.
+ *
+ * These are functions converting sliced VBI data to raw VBI images as
+ * transmitted in the vertical blanking interval of analog video standards.
+ * They are mainly intended for tests of the libzvbi bit slicer and
+ * raw VBI decoder.
+ */
 
 #if 2 == VBI_VERSION_MINOR
 #  define VBI_PIXFMT_RGB24_LE VBI_PIXFMT_RGB24
@@ -526,28 +537,38 @@ signal_u8			(uint8_t *		raw,
 }
 
 /**
- * @internal
- * @param raw A raw VBI image will be stored here. The buffer
+ * @example examples/rawout.c
+ * Raw VBI output example.
+ */
+
+/**
+ * @param raw A raw VBI image will be stored here.
+ * @param raw_size Size of the @a raw buffer in bytes. The buffer
  *   must be large enough for @a sp->count[0] + count[1] lines
  *   of @a sp->bytes_per_line each, with @a sp->samples_per_line
  *   (in libzvbi 0.2.x @a sp->bytes_per_line) bytes actually written.
  * @param sp Describes the raw VBI data to generate. @a sp->sampling_format
  *   must be @c VBI_PIXFMT_Y8 (@c VBI_PIXFMT_YUV420 with libzvbi 0.2.x).
- *   @a sp->synchronous is ignored.
+ *   @a sp->synchronous is ignored. Note for compatibility in libzvbi
+ *   0.2.x vbi_sampling_par is a synonym of vbi_raw_decoder, but the
+ *   (private) decoder fields in this structure are ignored.
  * @param blank_level The level of the horizontal blanking in the raw
  *   VBI image. Must be <= @a white_level.
  * @param white_level The peak white level in the raw VBI image. Set to
  *   zero to get the default blanking and white level.
  * @param swap_fields If @c TRUE the second field will be stored first
  *   in the @c raw buffer. Note you can also get an interlaced image
- *   by setting @a sp->interlaced to @c TRUE.
+ *   by setting @a sp->interlaced to @c TRUE. @a sp->synchronous is
+ *   ignored.
  * @param sliced Pointer to an array of vbi_sliced containing the
  *   VBI data to be encoded.
  * @param n_sliced_lines Number of elements in the @a sliced array.
  *
- * Generates a raw VBI image similar to those you get from raw VBI
- * sampling hardware. The following data services are currently supported:
- * All Teletext services, VPS, WSS 625, Closed Caption 525 and 625.
+ * This function basically reverses the operation of the vbi_raw_decoder,
+ * taking sliced VBI data and generating a raw VBI image similar to those
+ * you would get from raw VBI sampling hardware. The following data services
+ * are currently supported: All Teletext services, VPS, WSS 625, Closed
+ * Caption 525 and 625.
  *
  * The function encodes sliced data as is, e.g. without adding or
  * checking parity bits, without checking if the line number is correct
@@ -555,11 +576,22 @@ signal_u8			(uint8_t *		raw,
  * in the given space (@a sp->offset and @a sp->samples_per_line at
  * @a sp->sampling_rate).
  *
+ * Apart of the payload the generated video signal is invariable and
+ * attempts to be faithful to related standards. You can only change the
+ * characteristics of the assumed capture device. Sync pulses and color
+ * bursts and not generated if the sampling parameters extend to this area.
+ *
+ * @note
+ * This function is mainly intended for testing purposes. It is optimized
+ * for accuracy, not for speed.
+ *
  * @returns
  * @c FALSE if the @a raw_size is too small, if the @a sp sampling
  * parameters are invalid, if the signal levels are invalid,
  * if the @a sliced array contains unsupported services or line numbers
  * outside the @a sp sampling parameters.
+ *
+ * @since 0.2.22
  */
 vbi_bool
 vbi_raw_vbi_image		(uint8_t *		raw,
@@ -586,10 +618,10 @@ vbi_raw_vbi_image		(uint8_t *		raw,
 		return FALSE;
 	}
 
-	if (unlikely (blank_level > white_level
-		      || white_level > 255)) {
+	if (unlikely (0 != white_level
+		      && blank_level > white_level)) {
 		warning (__FUNCTION__,
-			 "Invalid blanking %u or peak white level %u.",
+			 "Invalid blanking %d or peak white level %d.",
 			 blank_level, white_level);
 	}
 
@@ -606,8 +638,9 @@ vbi_raw_vbi_image		(uint8_t *		raw,
 			black_level = (int)(47.5 * peak / 140);
 			white_level = peak;
 		} else {
-			black_level = (int)(blank_level
-					    + 7.5 * (white_level - blank_level));
+			black_level =
+				(int)(blank_level
+				      + 7.5 * (white_level - blank_level));
 		}
 	} else {
 		const unsigned int peak = 200; /* 255 */
@@ -714,29 +747,32 @@ do {									\
 } while (0)
 
 /**
- * @internal
- * @param raw A raw VBI image will be stored here. The buffer
+ * @param raw A raw VBI image will be stored here.
+ * @param raw_size Size of the @a raw buffer in bytes. The buffer
  *   must be large enough for @a sp->count[0] + count[1] lines
  *   of @a sp->bytes_per_line each, with @a sp->samples_per_line
- *   (in libzvbi 0.2.x @a sp->bytes_per_line times bytes per pixel)
- *   bytes actually written.
- * @param sp Describes the raw VBI data to generate. When the
- *   @a sp->sampling_format is a planar YUV format the function
- *   writes the Y plane only.
+ *   times bytes per pixel (in libzvbi 0.2.x @a sp->bytes_per_line)
+ *   actually written.
+ * @param sp Describes the raw VBI data to generate. Note for
+ *  compatibility in libzvbi 0.2.x vbi_sampling_par is a synonym of
+ *  vbi_raw_decoder, but the (private) decoder fields in this
+ *  structure are ignored.
  * @param blank_level The level of the horizontal blanking in the raw
  *   VBI image. Must be <= @a black_level.
  * @param black_level The black level in the raw VBI image. Must be
  *   <= @a white_level.
  * @param white_level The peak white level in the raw VBI image. Set to
- *   zero to get the default blank, black and white level.
+ *   zero to get the default blanking, black and white level.
  * @param pixel_mask This mask selects which color or alpha channel
  *   shall contain VBI data. Depending on @a sp->sampling_format it is
  *   interpreted as 0xAABBGGRR or 0xAAVVUUYY. A value of 0x000000FF
  *   for example writes data in "red bits", not changing other
- *   bits in the @a raw buffer.
+ *   bits in the @a raw buffer. When the @a sp->sampling_format is a
+ *   planar YUV the function writes the Y plane only.
  * @param swap_fields If @c TRUE the second field will be stored first
  *   in the @c raw buffer. Note you can also get an interlaced image
- *   by setting @a sp->interlaced to @c TRUE.
+ *   by setting @a sp->interlaced to @c TRUE. @a sp->synchronous is
+ *   ignored.
  * @param sliced Pointer to an array of vbi_sliced containing the
  *   VBI data to be encoded.
  * @param n_sliced_lines Number of elements in the @a sliced array.
@@ -749,6 +785,8 @@ do {									\
  * parameters are invalid, if the signal levels are invalid,
  * if the @a sliced array contains unsupported services or line numbers
  * outside the @a sp sampling parameters.
+ *
+ * @since 0.2.22
  */
 vbi_bool
 vbi_raw_video_image		(uint8_t *		raw,
@@ -780,6 +818,15 @@ vbi_raw_video_image		(uint8_t *		raw,
 			 			 sp->count[0], sp->count[1],
 			 (unsigned long) sp->bytes_per_line, raw_size);
 		return FALSE;
+	}
+
+	if (unlikely (0 != white_level
+		      && (blank_level > black_level
+			  || black_level > white_level))) {
+		warning (__FUNCTION__,
+			 "Invalid blanking %d, black %d or peak "
+			 "white level %d.",
+			 blank_level, black_level, white_level);
 	}
 
 	switch (sp->sampling_format) {
@@ -917,14 +964,14 @@ vbi_raw_video_image		(uint8_t *		raw,
 			/* Cutting off the bottom of the signal
 			   confuses the vbi_bit_slicer (can't adjust
 			   the threshold fast enough), probably other
-			   decoders as well. Sigh.
-			   Observed values: 30-30-280 (WSS PAL). */
+			   decoders as well. */
 			blank_level = 5; /* 16 - 40 * 220 / 100; */
 			black_level = 16;
 			white_level = 16 + 219;
 		}
 	} else {
 		if (0 == white_level) {
+			/* Observed values: 30-30-280 (WSS PAL) -? */
 			blank_level = 5; /* 16 - 43 * 220 / 100; */
 			black_level = 16;
 			white_level = 16 + 219;
@@ -941,7 +988,7 @@ vbi_raw_video_image		(uint8_t *		raw,
 	sp8.sampling_format = VBI_PIXFMT_YUV420;
 #endif
 
-	sp8.bytes_per_line = samples_per_line;
+	sp8.bytes_per_line = samples_per_line * 1 /* bpp */;
 
 	size = n_scan_lines * samples_per_line;
 	buf = vbi_malloc (size);
@@ -1900,6 +1947,20 @@ gen_sliced_625			(vbi_capture_sim *	sim)
 	return s - sim->sliced;
 }
 
+/**
+ * @param cap Initialized vbi_capture context opened with
+ *   vbi_capture_sim_new().
+ * @param enable @c TRUE to enable decoding of the simulated raw
+ *   VBI data.
+ *
+ * By default this module generates sliced VBI data and converts it
+ * to raw VBI data, returning both through the read functions. With
+ * this function you can enable decoding of the raw VBI data back
+ * to sliced VBI data, which is mainly interesting to test the
+ * libzvbi bit slicer and raw VBI decoder.
+ *
+ * @since 0.2.22
+ */
 void
 vbi_capture_sim_decode_raw	(vbi_capture *		cap,
 				 vbi_bool		enable)
@@ -1911,7 +1972,7 @@ vbi_capture_sim_decode_raw	(vbi_capture *		cap,
 	sim = PARENT (cap, vbi_capture_sim, cap);
 	assert (MAGIC == sim->magic);
 
-	sim->decode_raw = enable;
+	sim->decode_raw = !!enable;
 }
 
 static void
@@ -2107,6 +2168,38 @@ sim_delete			(vbi_capture *		cap)
 	free (sim);
 }
 
+/**
+ * @param scanning Whether to simulate a device receiving PAL/SECAM
+ *   (value 625) or NTSC (525) video.
+ * @param services This parameter must point to a set of @ref VBI_SLICED_
+ *   symbols describing the data services to be simulated. On return the
+ *   services actually simulated will be stored here. Currently Teletext
+ *   System B, VPS, PAL WSS and PAL/NTSC Closed Caption are supported.
+ * @param interlaced If @c TRUE the simulated raw VBI images will be
+ *   interlaced like video images. Otherwise they will contain fields in
+ *   sequential order, the first field at the top. Usually real devices
+ *   provide sequential images.
+ * @param synchronous If @c FALSE raw VBI images will be delayed by
+ *   one field (putting a bottom field first in raw VBI images), simulating
+ *   defective hardware. The @a interlaced and @a synchronous parameters
+ *   correspond to fields in struct vbi_raw_decoder.
+ *
+ * This function opens a simulated VBI device providing raw and sliced VBI
+ * data. It can be used to test applications in absence of a real device.
+ * 
+ * The VBI data is valid but limited. Just one Teletext page and one line
+ * of roll-up caption. The WSS and VPS data is set to defaults, the VPS
+ * contains no CNI.
+ *
+ * @note
+ * The simulation does not run in real time.
+ * Reading from the simulated device will return data immediately.
+ * 
+ * @returns
+ * Initialized vbi_capture context, @c NULL on failure (out of memory).
+ *
+ * @since 0.2.22
+ */
 vbi_capture *
 vbi_capture_sim_new		(int			scanning,
 				 unsigned int *		services,
