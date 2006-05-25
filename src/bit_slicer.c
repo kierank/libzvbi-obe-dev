@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.c,v 1.8 2006/05/24 04:44:58 mschimek Exp $ */
+/* $Id: bit_slicer.c,v 1.9 2006/05/25 08:10:43 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -40,9 +40,9 @@
 #endif
 
 /**
- * @addtogroup BitSlicer Bit Slicer
- * @ingroup Raw
- * @brief Converting a single scan line of raw VBI
+ * $addtogroup BitSlicer Bit Slicer
+ * $ingroup Raw
+ * $brief Converting a single scan line of raw VBI
  *   data to sliced VBI data.
  *
  * These are low level functions most useful if you want to decode
