@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: rawout.c,v 1.2 2006/05/24 04:47:21 mschimek Exp $ */
+/* $Id: rawout.c,v 1.3 2006/05/25 08:09:16 mschimek Exp $ */
 
 /* This example shows how to convert VBI data in a DVB PES to raw
    VBI data.
@@ -43,6 +43,34 @@ static uint8_t *		image;
 static unsigned int		image_size;
 static unsigned int		pixel_mask;
 static int64_t			last_pts;
+static vbi_raw_decoder		rd;
+
+extern unsigned int
+vbi_sliced_payload_bits		(vbi_service_set	service);
+
+static void
+raw_test			(const vbi_sliced *	expect_sliced,
+				 unsigned int		expect_n_lines)
+{
+	vbi_sliced sliced[50];
+	unsigned int n_lines;
+	unsigned int i;
+
+	n_lines = vbi_raw_decode (&rd, image, sliced);
+	assert (n_lines == expect_n_lines);
+
+	for (i = 0; i < n_lines; ++i) {
+		unsigned int payload;
+
+		assert (sliced[i].id == expect_sliced[i].id);
+		assert (sliced[i].line == expect_sliced[i].line);
+
+		payload = (vbi_sliced_payload_bits (sliced[i].id) + 7) / 8;
+		assert (0 == memcmp (sliced[i].data,
+				     expect_sliced[i].data,
+				     payload));
+	}
+}
 
 static vbi_bool
 convert				(vbi_dvb_demux *	dx,
@@ -65,13 +93,15 @@ convert				(vbi_dvb_demux *	dx,
 		last_pts -= (int64_t) 1 << 33;
 	}
 
-	while (pts - last_pts > 90000 / 25) {
+	while (pts - last_pts > 90000 / 25 * 3 / 2) {
 		/* No data for this frame. */
 
 		success = vbi_raw_video_image (image, image_size, &sp,
 					       0, 0, 0, pixel_mask, FALSE,
 					       NULL, /* n_lines */ 0);
 		assert (success);
+
+		raw_test (NULL, 0);
 
 		actual = write (STDOUT_FILENO, image, image_size);
 		assert (actual == (ssize_t) image_size);
@@ -88,6 +118,8 @@ convert				(vbi_dvb_demux *	dx,
 				       sliced, n_lines);
 	assert (success);
 
+	raw_test (sliced, n_lines);
+
 	actual = write (STDOUT_FILENO, image, image_size);
 	assert (actual == (ssize_t) image_size);
 
@@ -97,7 +129,7 @@ convert				(vbi_dvb_demux *	dx,
 }
 
 static void
-pes_mainloop			(void)
+mainloop			(void)
 {
 	while (1 == fread (pes_buffer, sizeof (pes_buffer), 1, stdin)) {
 		vbi_bool success;
@@ -126,7 +158,7 @@ main				(void)
 	}
 
 	/* Helps debugging. */
-	vbi_set_log_fn (/* mask */ VBI_LOG_WARNING * 2 - 1,
+	vbi_set_log_fn (/* mask */ VBI_LOG_NOTICE * 2 - 1,
 			vbi_log_on_stderr,
 			/* user_data */ NULL);
 
@@ -166,7 +198,7 @@ main				(void)
 	sp.interlaced		= TRUE;
 	sp.synchronous		= TRUE;
 
-	pixel_mask		= 0x00FFFFFF; /* 0xAABBGGRR */
+	pixel_mask		= 0x0000FF00; /* 0xAABBGGRR */
 #endif
 
 	image_size = (sp.count[0] + sp.count[1]) * sp.bytes_per_line;
@@ -180,7 +212,31 @@ main				(void)
 		memset (image, 0x00, image_size);
 	}
 
-	pes_mainloop ();
+	/* Raw image test. */
+
+	vbi_raw_decoder_init (&rd);
+
+	rd.scanning		= sp.scanning;
+	rd.sampling_format	= sp.sampling_format;
+	rd.sampling_rate	= sp.sampling_rate;
+	rd.bytes_per_line	= sp.bytes_per_line;
+	rd.offset		= sp.offset;
+	rd.start[0]		= sp.start[0];
+	rd.start[1]		= sp.start[1];
+	rd.count[0]		= sp.count[0];
+	rd.count[1]		= sp.count[1];
+	rd.interlaced		= sp.interlaced;
+	rd.synchronous		= sp.synchronous;
+
+	/* Strict 0 because the function would rule out Teletext
+	   with the tight square pixel timing. */
+	vbi_raw_decoder_add_services (&rd,
+				      (VBI_SLICED_TELETEXT_B |
+				       VBI_SLICED_VPS |
+				       VBI_SLICED_CAPTION_625),
+				      /* strict */ 0);
+
+	mainloop ();
 
 	vbi_dvb_demux_delete (dvb);
 
