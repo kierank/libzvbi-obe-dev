@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.24 2006/05/22 09:01:30 mschimek Exp $ */
+/* $Id: export.c,v 1.25 2006/05/25 08:10:03 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -84,7 +84,7 @@ extern const char _zvbi_intl_domainname[];
  * functions and export modules. libzvbi client applications
  * don't use this.
  *
- * Export modules @c #include @c "export.h" to get these
+ * Export modules include @c "export.h" to get these
  * definitions. See example module exp-templ.c.
  */
 
