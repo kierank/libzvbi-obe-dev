@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.8 2006/05/24 04:47:56 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.9 2006/05/25 08:11:24 mschimek Exp $ */
 
 /* Automated test of the vbi_raw_decoder. */
 
@@ -143,8 +143,8 @@ create_raw			(uint8_t **		raw,
 	unsigned int raw_size;
 
 	scan_lines = sp->count[0] + sp->count[1];
-
 	raw_size = sp->bytes_per_line * scan_lines;
+
 	*raw = (uint8_t *) malloc (raw_size);
 	assert (NULL != *raw);
 
@@ -154,7 +154,7 @@ create_raw			(uint8_t **		raw,
 	sliced_lines = sliced_rand (*sliced, 50, b);
 
 	if (pixel_mask) {
-		memset_rand (*raw, sp->bytes_per_line * scan_lines);
+		memset_rand (*raw, raw_size);
 
 		assert (vbi_raw_video_image (*raw, raw_size, sp,
 					     /* blank_level: default */ 0,
@@ -520,8 +520,8 @@ test2				(const vbi_sampling_par *sp)
 			test_vbi (sp, ttx_c_625, 1);
 
 			/* Needs sampling beyond 0H + 63 us (?) */
-			if (sp->bytes_per_line == 2048
-			    * VBI_PIXFMT_BPP (sp->sampling_format))
+			if (sp->bytes_per_line
+			    == 2048 * VBI_PIXFMT_BPP (sp->sampling_format))
 				test_vbi (sp, ttx_d_625, 1);
 
 			test_vbi (sp, hi_625, 1);

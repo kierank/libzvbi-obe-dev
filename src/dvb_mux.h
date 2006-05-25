@@ -19,7 +19,7 @@
  *  WARNING this code is experimental, the API will change.
  */
 
-/* $Id: dvb_mux.h,v 1.3 2006/05/22 09:08:46 mschimek Exp $ */
+/* $Id: dvb_mux.h,v 1.4 2006/05/25 08:11:24 mschimek Exp $ */
 
 #ifndef __ZVBI_DVB_MUX_H__
 #define __ZVBI_DVB_MUX_H__
@@ -28,11 +28,7 @@
 
 #include "bcd.h"		/* vbi_bool */
 #include "sliced.h"		/* vbi_sliced, vbi_service_set */
-
-typedef enum {
-	VBI_VIDEOSTD_SET_525_60 = 1,
-	VBI_VIDEOSTD_SET_625_50 = 2,
-} vbi_videostd_set;
+#include "sampling_par.h"	/* vbi_videostd_set */
 
 extern void
 _vbi_dvb_multiplex_sliced	(uint8_t **		packet,

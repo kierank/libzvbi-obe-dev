@@ -1,4 +1,39 @@
+2006-05-25    <mschimek@users.sf.net>
+
+	* src/io-sim.c (vbi_raw_vbi_image): Fixed signal level check.
+	(vbi_raw_video_image): Added missing signal level check.
+
+	* test/sim.c: Replaced by io-sim.c, removed.
+	* test/Makefile.am (EXTRA_DIST): Removed sim.c.
+	* test/osc.c (main, mainloop): Use simulated capture device
+	  (io-sim.c) instead of old sim code.
+
+	* examples/wss.c (init_decoder): Bug fix bytes_per_line *is*
+	  bytes per line, not samples per line.
+
+	* src/sampling_par.c (_vbi_sampling_par_permit_service):
+	  Allow tighter samples_per_line if strict = 0, for rawout.c
+	  square pixel output.
+	* examples/rawout.c: Added a test of generated images.
+	(convert): Allow 50% PTS delay before assuming a missing frame.
+
+	* src/macros.h: Added log function definitions to doxumentation
+	  Basic types group.
+	* src/vbi.c (vbi_set_log_fn):
+	* src/misc.c (vbi_log_on_stderr):
+	* src/io-sim.h, src/io-sim.c:
+	* src/dvb_demux.c (vbi_dvb_demux_set_log_fn):
+	  Added/updated doxumentation.
+	* src/export.c, src/exp-txt.c: Corrected syntax which confused
+	  doxygen.
+	* src/dvb_demux.c: Doxygen shall not document the _vbi_dvb_demux
+	  wrappers, they exist only for compatibility with an old version
+	  of Zapping.
+
 2006-05-24    <mschimek@users.sf.net>
+
+	* doc/Doxyfile.in: Updated to doxygen 1.4.5.
+	(FILE_PATTERNS): Replaced misc.h by macros.h, added io-sim.h.
 
 	* src/sampling_par.c (_vbi_sampling_par_permit_service): Restored
 	  the 0.2.21 line number fix.
@@ -25,7 +60,7 @@
 	  definitions moved to intl-priv.h.
 	* src/intl-priv.h: New file from branch 0.3.
 
-	* src/raw_decoder.c (vbi3_raw_decoder_add_services): Bit sliced
+	* src/raw_decoder.c (vbi3_raw_decoder_add_services): Bit slicer
 	  API changed.
 	* src/bit_slicer.h, src/bit_slicer.c: Resynched with 0.3 branch.
 	  Added function to collect sampling points for debugging.

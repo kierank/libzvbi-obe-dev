@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.h,v 1.6 2006/05/22 08:59:04 mschimek Exp $ */
+/* $Id: raw_decoder.h,v 1.7 2006/05/25 08:11:24 mschimek Exp $ */
 
 #ifndef RAW_DECODER_H
 #define RAW_DECODER_H
@@ -80,6 +80,7 @@ vbi3_raw_decoder_decode		(vbi3_raw_decoder *	rd,
 
 /* Private */
 
+/* XXX make this public for rawout.c. */
 unsigned int
 vbi_sliced_payload_bits		(vbi_service_set	service);
 

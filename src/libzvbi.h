@@ -121,6 +121,7 @@ vbi_log_fn			(vbi_log_mask		level,
 
 extern vbi_log_fn		vbi_log_on_stderr;
 
+
 /* bcd.h */
 
 /* XXX unsigned? */
@@ -1235,6 +1236,7 @@ vbi_raw_vbi_image		(uint8_t *		raw,
 				 vbi_bool		swap_fields,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_sliced_lines);
+
 #if 3 == VBI_VERSION_MINOR
 extern vbi_bool
 vbi_capture_sim_load_vps	(vbi_capture *		cap,
@@ -1255,6 +1257,7 @@ vbi_capture_sim_new		(int			scanning,
 				 unsigned int *		services,
 				 vbi_bool		interlaced,
 				 vbi_bool		synchronous);
+
 
 /* proxy-msg.h */
 
