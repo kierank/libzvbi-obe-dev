@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.19 2006/05/24 04:47:36 mschimek Exp $ */
+/* $Id: vbi.c,v 1.20 2006/05/25 08:09:35 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -64,7 +64,7 @@
  *
  * The ZVBI library provides routines to access raw VBI sampling devices
  * (currently the Linux <a href="http://linux.bytesex.org/v4l2/">V4L and
- * and V4L2</a> API and the FreeBSD, OpenBSD, NetBSD and BSDi
+ * and V4L2</a> API and the FreeBSD
  * <a href="http://telepresence.dmem.strath.ac.uk/bt848/">bktr driver</a> API
  * are supported), a versatile raw VBI bit slicer,
  * decoders for various data services and basic search,
@@ -98,6 +98,23 @@ vbi_init			(void)
 #endif
 }
 
+/**
+ * @ingroup Basic
+ * @param mask Which kind of information to log. Can be @c 0.
+ * @param log_fn This function is called with log messages. Consider
+ *   vbi_log_on_stderr(). Can be @c NULL to disable logging.
+ * @param user_data User pointer passed through to the @a log_fn function.
+ *
+ * Various functions can print warnings, errors and information useful to
+ * debug the library. With this function you can enable these messages
+ * and determine a function to print them.
+ *
+ * @note
+ * The kind and contents of messages logged by particular functions
+ * may change in the future.
+ *
+ * @since 0.2.22
+ */
 void
 vbi_set_log_fn			(vbi_log_mask		mask,
 				 vbi_log_fn *		log_fn,
