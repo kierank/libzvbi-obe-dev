@@ -74,8 +74,7 @@ noinst_SCRIPTS = \
 EXTRA_DIST = \
 	README \
 	exoptest \
-	uclist \
-	sim.c
+	uclist
 
 AM_CFLAGS = \
 	-I$(top_srcdir) \
