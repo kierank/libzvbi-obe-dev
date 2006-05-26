@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.12 2006/05/25 08:09:52 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.13 2006/05/26 00:45:53 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -198,17 +198,17 @@ struct frame {
 
 	uint8_t *		raw;
 
-	/** XXX replace by vbi_sampling_par. */
+	/* XXX replace by vbi_sampling_par. */
 	unsigned int		raw_start[2];
 	unsigned int		raw_count[2];
 
-	/** Current position. */
+	/* Current position. */
 
 	vbi_sliced *		sp;
 
 	unsigned int		last_line;
 
-	/** Number of lines extracted from current packet. */
+	/* Number of lines extracted from current packet. */
 	unsigned int		sliced_count;
 
 	uint8_t *		rp;
