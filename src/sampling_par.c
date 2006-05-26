@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sampling_par.c,v 1.4 2006/05/25 08:09:08 mschimek Exp $ */
+/* $Id: sampling_par.c,v 1.5 2006/05/26 00:44:50 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -28,6 +28,7 @@
 #include "misc.h"
 #include "raw_decoder.h"
 #include "sampling_par.h"
+#include "sliced.h"
 #include "version.h"
 
 #if 2 == VBI_VERSION_MINOR
