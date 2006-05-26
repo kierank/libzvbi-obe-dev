@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.c,v 1.9 2006/05/25 08:08:34 mschimek Exp $ */
+/* $Id: io-sim.c,v 1.10 2006/05/26 00:45:03 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -2136,7 +2136,11 @@ sim_parameters			(vbi_capture *		cap)
 	/* For compatibility in libzvbi 0.2
 	   struct vbi_sampling_par == vbi_raw_decoder. In 0.3
 	   we'll drop the decoding related fields. */
+#if 3 == VBI_VERSION_MINOR
+	return &sim->rd;
+#else
 	return &sim->sp;
+#endif
 }
 
 static int
