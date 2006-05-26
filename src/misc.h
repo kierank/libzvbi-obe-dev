@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.h,v 1.14 2006/05/24 04:44:43 mschimek Exp $ */
+/* $Id: misc.h,v 1.15 2006/05/26 00:44:34 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -255,12 +255,6 @@ _vbi_keyword_lookup		(int *			value,
 				 unsigned int		n_pairs);
 
 /* Logging stuff. */
-
-typedef struct {
-	vbi_log_fn *		fn;
-	void *			user_data;
-	vbi_log_mask		mask;
-} _vbi_log_hook;
 
 extern _vbi_log_hook		_vbi_global_log;
 
