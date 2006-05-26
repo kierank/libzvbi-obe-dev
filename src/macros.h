@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: macros.h,v 1.5 2006/05/25 08:09:22 mschimek Exp $ */
+/* $Id: macros.h,v 1.6 2006/05/26 00:44:42 mschimek Exp $ */
 
 #ifndef __ZVBI_MACROS_H__
 #define __ZVBI_MACROS_H__
@@ -136,6 +136,12 @@ extern vbi_log_fn		vbi_log_on_stderr;
 /** @} */
 
 /* Private */
+
+typedef struct {
+	vbi_log_fn *		fn;
+	void *			user_data;
+	vbi_log_mask		mask;
+} _vbi_log_hook;
 
 VBI_END_DECLS
 
