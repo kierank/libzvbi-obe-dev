@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: rawout.c,v 1.3 2006/05/25 08:09:16 mschimek Exp $ */
+/* $Id: rawout.c,v 1.4 2006/05/26 00:45:16 mschimek Exp $ */
 
 /* This example shows how to convert VBI data in a DVB PES to raw
    VBI data.
@@ -44,9 +44,6 @@ static unsigned int		image_size;
 static unsigned int		pixel_mask;
 static int64_t			last_pts;
 static vbi_raw_decoder		rd;
-
-extern unsigned int
-vbi_sliced_payload_bits		(vbi_service_set	service);
 
 static void
 raw_test			(const vbi_sliced *	expect_sliced,
