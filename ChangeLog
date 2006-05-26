@@ -1,3 +1,17 @@
+2006-05-26    <mschimek@users.sf.net>
+
+	* src/misc.h, src/macros.h: Resynched with 0.3 branch.
+	  _vbi_log_hook moved from misc.h to macros.h for
+	  private declarations in various public headers.
+	* src/sampling_par.c: Resynched with 0.3 branch.
+	* src/io-sim.c (sim_parameters): Resynched with 0.3 branch.
+
+	* examples/rawout.c: Don't declare vbi_sliced_payload_bits(),
+	  is public now.
+	* src/sliced.h (vbi_sliced_payload_bits): Moved here from
+	  raw_decoder.h and made public.
+	* src/raw_decoder.h (vbi_sliced_payload_bits): Moved into sliced.h. 
+
 2006-05-25    <mschimek@users.sf.net>
 
 	* src/io-sim.c (vbi_raw_vbi_image): Fixed signal level check.

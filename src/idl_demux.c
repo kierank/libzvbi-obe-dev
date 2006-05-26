@@ -17,17 +17,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: idl_demux.c,v 1.3 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: idl_demux.c,v 1.4 2006/05/26 00:46:33 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
 #endif
 
-#include <stdlib.h>		/* malloc() */
-#include <string.h>		/* memset() */
-#include <assert.h>
+#include "misc.h"
 #include "hamm.h"		/* vbi_unham8() */
-#include "misc.h"		/* MIN() */
 #include "idl_demux.h"
 
 static void
@@ -350,7 +347,7 @@ vbi_idl_demux_feed		(vbi_idl_demux *	dx,
 		return lbra_demux_feed (dx, buffer);
 
 	default:
-		assert (!"reached");
+		assert (0);
 	}
 }
 
@@ -398,7 +395,7 @@ _vbi_idl_demux_init		(vbi_idl_demux *	dx,
 		break;
 
 	default:
-		assert (!"reached");
+		assert (0);
 	}
 
 	dx->format		= format;
@@ -457,7 +454,7 @@ vbi_idl_a_demux_new		(unsigned int		channel,
 {
 	vbi_idl_demux *dx;
 
-	if (!(dx = malloc (sizeof (*dx)))) {
+	if (!(dx = vbi_malloc (sizeof (*dx)))) {
 		return NULL;
 	}
 

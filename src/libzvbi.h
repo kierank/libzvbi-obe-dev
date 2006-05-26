@@ -753,7 +753,12 @@ typedef struct {
 	uint8_t			data[56];
 } vbi_sliced;
 
-extern const char *		vbi_sliced_name(unsigned int service);
+extern const char *
+vbi_sliced_name			(vbi_service_set	service)
+  __attribute__ ((const));
+extern unsigned int
+vbi_sliced_payload_bits		(vbi_service_set	service)
+  __attribute__ ((const));
 
 
 /* decoder.h */

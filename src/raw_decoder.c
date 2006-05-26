@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.13 2006/05/25 08:11:24 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.14 2006/05/26 00:46:33 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -288,12 +288,12 @@ vbi_sliced_name			(vbi_service_set	service)
 }
 
 /**
- * $ingroup Sliced
- * $param service A data service identifier, for example from a
+ * @ingroup Sliced
+ * @param service A data service identifier, for example from a
  *   vbi_sliced structure.
  *
- * $return
- * Number of payload bits, $c 0 if the service is unknown.
+ * @return
+ * Number of payload bits, @c 0 if the service is unknown.
  */
 unsigned int
 vbi_sliced_payload_bits		(unsigned int		service)
