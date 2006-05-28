@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.14 2006/05/22 08:56:18 mschimek Exp $ */
+/* $Id: decode.c,v 1.15 2006/05/28 20:16:09 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -111,20 +111,6 @@ extern void
 _vbi_pfc_block_dump		(const vbi_pfc_block *	pb,
 				 FILE *			fp,
 				 vbi_bool		binary);
-
-static int
-_vbi_to_ascii			(int			c)
-{
-	if (c < 0)
-		return '?';
-
-	c &= 0x7F;
-
-	if (c < 0x20 || c >= 0x7F)
-		return '.';
-
-	return c;
-}
 
 static void
 error_exit			(const char *		template,

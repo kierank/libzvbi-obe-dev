@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.26 2006/05/24 04:47:46 mschimek Exp $ */
+/* $Id: osc.c,v 1.27 2006/05/28 20:15:59 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -76,20 +76,6 @@ int			depth;
 int			draw_row, draw_offset;
 int			draw_count = -1;
 int                     cur_x, cur_y;
-
-vbi_inline int
-_vbi_to_ascii			(int			c)
-{
-	if (c < 0)
-		return '?';
-
-	c &= 0x7F;
-
-	if (c < 0x20 || c >= 0x7F)
-		return '.';
-
-	return c;
-}
 
 extern void
 vbi_capture_set_log_fp		(vbi_capture *		capture,
