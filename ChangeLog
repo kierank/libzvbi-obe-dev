@@ -1,3 +1,17 @@
+2006-05-28    <mschimek@users.sf.net>
+
+	* test/osc.c (_vbi_to_ascii):
+	* test/decode.c (_vbi_to_ascii): Removed this redundant function.
+
+	* src/io.c (device_close): Bug fix: logged only if failed.
+
+	* test/raw_decoder.c: Enabled VPS tests because a VPS simulation
+	  is available now.
+
+	* src/sampling_par.h: Don't make the sampling_par functions
+	  public yet, have to brush up the definition of video standards
+	  first.
+
 2006-05-26    <mschimek@users.sf.net>
 
 	* src/misc.h, src/macros.h: Resynched with 0.3 branch.

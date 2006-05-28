@@ -1,3 +1,17 @@
+libzvbi 0.2.22, 2006-05-29
+--------------------------
+This version adds a simulated raw and sliced VBI capture device
+to debug applications. The VBI simulation in the capture and osc
+tools is more accurate and includes VPS. Functions to convert
+sliced VBI data to raw VBI images are public now and an example
+application was added. An interface to enable warning and debugging
+messages was added.
+
+Fixes:
+- Bit slicing of WSS data started a little early. It should work
+  better now with noisy signals.
+- The WSS capture example used an incorrect bytes-per-line value.
+
 libzvbi 0.2.21, 2006-05-10
 --------------------------
 This is a bugfix release.
