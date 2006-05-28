@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.13 2005/05/07 03:40:27 mschimek Exp $ */
+/* $Id: io.c,v 1.14 2006/05/28 20:16:19 mschimek Exp $ */
 
 #include <assert.h>
 
@@ -692,7 +692,7 @@ device_close			(FILE *			fp,
 
 	err = close (fd);
 
-	if (err) {
+	if (fp) {
 		int saved_errno;
 
 		saved_errno = errno;
