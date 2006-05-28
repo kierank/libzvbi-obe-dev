@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.9 2006/05/25 08:11:24 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.10 2006/05/28 20:16:29 mschimek Exp $ */
 
 /* Automated test of the vbi_raw_decoder. */
 
@@ -452,9 +452,7 @@ static const block hi_625 [] = {
 };
 
 static const block hi_f1_625 [] = {
-/* No simulation yet.
 	{ VBI_SLICED_VPS,		16, 16 },
-*/
 	{ VBI_SLICED_CAPTION_625_F1,	22, 22 },
 	{ VBI_SLICED_WSS_625,		23, 23 },
 	BLOCK_END,
@@ -466,9 +464,7 @@ static const block hi_f2_525 [] = {
 };
 
 static const block low_625 [] = {
-/* No simulation yet.
 	{ VBI_SLICED_VPS,		16, 16 },
-*/
 	{ VBI_SLICED_CAPTION_625,	22, 22 },
 	{ VBI_SLICED_WSS_625,		23, 23 },
 	{ VBI_SLICED_CAPTION_625,	335, 335 },
