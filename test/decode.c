@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.15 2006/05/28 20:16:09 mschimek Exp $ */
+/* $Id: decode.c,v 1.16 2006/05/31 03:55:11 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1079,7 +1079,7 @@ Decoding options:\n"
                        -i     decode IDL packets\n\
                        -a     decode everything\n\
                        -a -i  everything except IDL\n\
--c | --idl-ch N\n\
+-l | --idl-ch N\n\
 -d | --idl-addr NNN\n\
                        Decode Teletext IDL format A data from channel N,\n\
                        service packet address NNN [0]\n\
