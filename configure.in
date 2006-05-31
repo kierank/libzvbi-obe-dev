@@ -20,8 +20,12 @@ AC_PROG_CC
 dnl For header tests only.
 AC_PROG_CXX
 
-dnl BSD/GNU extensions.
+dnl Check for BSD/GNU extensions.
+dnl If not present we use replacements.
+SAVE_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -D_GNU_SOURCE"
 AC_CHECK_FUNCS([strndup strlcpy asprintf vasprintf getopt_long getaddrinfo])
+CFLAGS="$SAVE_CFLAGS"
 
 dnl __BYTE_ORDER is not portable.
 AC_DEFINE(Z_LITTLE_ENDIAN, 1234, [naidne elttiL])
