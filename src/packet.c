@@ -17,13 +17,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.24 2006/05/18 16:52:37 mschimek Exp $ */
+/* $Id: packet.c,v 1.25 2006/05/31 03:51:43 mschimek Exp $ */
 
 #include "site_def.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #include <unistd.h>
 #include <limits.h>
 #include <fcntl.h>
