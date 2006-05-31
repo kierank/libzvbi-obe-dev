@@ -22,17 +22,18 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: trigger.c,v 1.9 2005/01/20 01:40:22 mschimek Exp $ */
+/* $Id: trigger.c,v 1.10 2006/05/31 03:55:52 mschimek Exp $ */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h>
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #include <ctype.h>
 #include <time.h>
 #include <limits.h>
 #include <math.h>
 
+#include "misc.h"
 #include "trigger.h"
 #include "tables.h"
 #include "vbi.h"

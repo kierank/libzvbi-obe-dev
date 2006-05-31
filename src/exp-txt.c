@@ -21,15 +21,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.17 2006/05/25 08:10:22 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.18 2006/05/31 03:55:52 mschimek Exp $ */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #include <limits.h>
 #include <iconv.h>
-#include <assert.h>
 
+#include "misc.h"
 #include "lang.h"
 #include "export.h"
 #include "exp-txt.h"

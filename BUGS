@@ -1,7 +1,8 @@
-$Id: BUGS,v 1.22 2005/10/30 02:50:41 mschimek Exp $
+$Id: BUGS,v 1.23 2006/05/31 03:55:51 mschimek Exp $
 
 * v4l and v4l2 i/o can ignore timeout parameter
   > maybe a sleep() loop works, but what about timestamping?
 * vbi_page.text[1056] < 26 * 41. D'oh! (fixed in 0.3)
 * timestamp routines assume timeval.tv_sec and .tv_usec are signed.
 * Doxumentation needs compile instructions and more examples.
+* test/decode --idl, --pfc broken?

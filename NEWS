@@ -1,4 +1,4 @@
-libzvbi 0.2.22, 2006-05-29
+libzvbi 0.2.22, 2006-05-30
 --------------------------
 This version adds a simulated raw and sliced VBI capture device
 to debug applications. The VBI simulation in the capture and osc
@@ -11,6 +11,9 @@ Fixes:
 - Bit slicing of WSS data started a little early. It should work
   better now with noisy signals.
 - The WSS capture example used an incorrect bytes-per-line value.
+- A work-around for a line allocation bug in older versions of
+  the bttv driver was added. Enables capturing of single lines
+  (VPS, WSS, CC).
 
 libzvbi 0.2.21, 2006-05-10
 --------------------------

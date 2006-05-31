@@ -21,9 +21,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: hamm.c,v 1.5 2005/01/20 20:49:30 mschimek Exp $ */
+/* $Id: hamm.c,v 1.6 2006/05/31 03:55:52 mschimek Exp $ */
 
 #include <limits.h>		/* CHAR_BIT */
+
 #include "hamm.h"
 
 const uint8_t

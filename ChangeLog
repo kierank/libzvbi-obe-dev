@@ -1,3 +1,39 @@
+2006-05-30    <mschimek@users.sf.net>
+
+	* Release 0.2.22.
+
+2006-05-30    <mschimek@users.sf.net>
+
+	* src/vps.c, src/packet.c, src/wss.c, src/packet.c, 
+	  src/io.c, src/dvb_mux.c, src/caption.c, src/cache.c:
+	  Include config.h.
+
+	* src/io-v4l2k.c (v4l2_update_services): Don't request start[1]
+	  line zero if count is zero, may confuse broken drivers. Added
+	  work-around for start line bug in older versions of the bttv
+	  driver which broke proxy-test vps and wss.
+	* src/raw_decoder.c (lines_containing_data): Did not expect a
+	  service completely outside the current sampling parameters.
+
+	* src/proxy-client.c (proxy_client_alloc_msg_buf): Older
+	  gcc/libc do not recognize %zd for size_t. 
+
+	* configure.in: Run function checks with -D_GNU_SOURCE
+	  because we also compile with this flag.
+
+	* src/videodev2k.h: Don't include linux/compiler.h, that's
+	  __KERNEL__ stuff and it conflicts with our misc.h.
+
+	* src/macros.h: Added VBI_LOG_DRIVER to replace device log_fp
+	  later.
+
+	* test/decode.c (usage): --idl-ch correction.
+
+2006-05-29    <mschimek@users.sf.net>
+
+	* src/io-v4l2k.c (v4l2_get_videostd): Limit the number of
+	  of videostd enumerations in case the driver is broken.
+
 2006-05-28    <mschimek@users.sf.net>
 
 	* test/osc.c (_vbi_to_ascii):

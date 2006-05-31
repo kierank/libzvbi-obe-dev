@@ -18,16 +18,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: xds_demux.c,v 1.6 2006/05/18 16:52:01 mschimek Exp $ */
+/* $Id: xds_demux.c,v 1.7 2006/05/31 03:55:52 mschimek Exp $ */
 
-#include "../site_def.h"
-#include "../config.h"
+#include "site_def.h"
 
-#include <assert.h>
-#include <stdlib.h>		/* malloc() */
-#include <string.h>		/* memcpy() */
-#include "hamm.h"		/* vbi_ipar8() */
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #include "misc.h"		/* vbi_log_printf() */
+#include "hamm.h"		/* vbi_ipar8() */
 #include "tables.h"		/* vbi_rating/prog_type_string() */
 #include "xds_demux.h"
 
