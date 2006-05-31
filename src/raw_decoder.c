@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.14 2006/05/26 00:46:33 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.15 2006/05/31 03:54:15 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -804,6 +804,7 @@ lines_containing_data		(unsigned int		start[2],
 
 	start[0] = 0;
 	start[1] = sp->count[0];
+
 	count[0] = sp->count[0];
 	count[1] = sp->count[1];
 
@@ -826,11 +827,18 @@ lines_containing_data		(unsigned int		start[2],
 		first = sp->start[field];
 		last = first + sp->count[field] - 1;
 
-		if (first > 0) {
+		if (first > 0 && sp->count[field] > 0) {
+			assert (par->first[field] <= par->last[field]);
+
+			if ((unsigned int) par->first[field] > last
+			    || (unsigned int) par->last[field] < first)
+				continue;
+
 			first = MAX (first, (unsigned int) par->first[field]);
+			last = MIN ((unsigned int) par->last[field], last);
+
 			start[field] += first - sp->start[field];
-			last = MIN (last, (unsigned int) par->last[field]);
-			count[field] = last - first + 1;
+			count[field] = last + 1 - first;
 		}
 	}
 }
