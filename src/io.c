@@ -18,9 +18,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.14 2006/05/28 20:16:19 mschimek Exp $ */
+/* $Id: io.c,v 1.15 2006/05/31 03:52:08 mschimek Exp $ */
 
-#include <assert.h>
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <fcntl.h>		/* open() */
 #include <unistd.h>		/* close(), mmap(), munmap(), gettimeofday() */
@@ -30,6 +32,7 @@
 #include <sys/types.h>
 #include <errno.h>
 
+#include "misc.h"
 #include "io.h"
 
 /* Preliminary hack for tests. */
