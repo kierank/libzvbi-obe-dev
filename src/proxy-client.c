@@ -17,10 +17,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-client.c,v 1.11 2006/05/22 09:00:26 mschimek Exp $
+ *  $Id: proxy-client.c,v 1.12 2006/05/31 03:54:28 mschimek Exp $
  */
 
-static const char rcsid[] = "$Id: proxy-client.c,v 1.11 2006/05/22 09:00:26 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-client.c,v 1.12 2006/05/31 03:54:28 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -190,7 +190,8 @@ static vbi_bool proxy_client_alloc_msg_buf( vbi_proxy_client * vpc )
       if (vpc->p_client_msg != NULL)
          free(vpc->p_client_msg);
 
-      dprintf2("alloc_msg_buf: allocate buffer for max. %zd bytes\n", msg_size);
+      dprintf2("alloc_msg_buf: allocate buffer for "
+	       "max. %lu bytes\n", (unsigned long) msg_size);
       vpc->max_client_msg_size = msg_size;
       vpc->p_client_msg = malloc(msg_size);
 
