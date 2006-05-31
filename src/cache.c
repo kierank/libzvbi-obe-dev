@@ -23,11 +23,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <stddef.h>
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
+#include "misc.h"
 #include "cache.h"
 #include "vbi.h"
 
