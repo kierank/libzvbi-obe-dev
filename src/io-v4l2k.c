@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.40 2006/05/22 08:57:47 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.41 2006/05/31 03:54:00 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -108,6 +108,7 @@ typedef struct vbi_capture_v4l2 {
 	vbi_bool		saa7134_ntsc_fix;
 	vbi_bool		bttv_offset_fix;
 	vbi_bool		cx88_ntsc_fix;
+	vbi_bool		bttv_min_start_fix;
 
 	_vbi_log_hook		log;
 
@@ -733,6 +734,7 @@ v4l2_get_videostd(vbi_capture_v4l2 *v, char ** errstr)
 {
 	struct v4l2_standard vstd;
 	v4l2_std_id stdid;
+	unsigned int i;
 	int r;
 	char * guess = NULL;
 
@@ -746,12 +748,21 @@ v4l2_get_videostd(vbi_capture_v4l2 *v, char ** errstr)
 		goto failure;
 	}
 
-	vstd.index = 0;
+	for (i = 0; i < 100; ++i) {
+		CLEAR (vstd);
+		vstd.index = i;
 
-	while (0 == (r = xioctl (v, VIDIOC_ENUMSTD, &vstd))) {
+		r = xioctl (v, VIDIOC_ENUMSTD, &vstd);
+		if (-1 == r)
+			break;
+
 		if (vstd.id & stdid)
 			break;
-		vstd.index++;
+	}
+
+	if (i >= 100) {
+		r = -1;
+		errno = 0;
 	}
 
 	if (-1 == r) {
@@ -888,6 +899,7 @@ v4l2_update_services(vbi_capture *vc,
 	if (strict >= 0) {
 		struct v4l2_format vfmt_temp = vfmt;
 		vbi_sampling_par dec_temp;
+		unsigned int f2_offset;
 	        unsigned int sup_services;
 		int r;
 
@@ -919,14 +931,56 @@ v4l2_update_services(vbi_capture *vc,
 		vfmt.fmt.vbi.start[1]		= dec_temp.start[1];
 		vfmt.fmt.vbi.count[1]		= dec_temp.count[1];
 
+		f2_offset = (625 == v->sp.scanning) ? 312 : 263;
+
+		/* Some broken drivers may take start (= 0) into account
+		   despite count being zero. */
+		if (0 == vfmt.fmt.vbi.count[1]) {
+			vfmt.fmt.vbi.start[1] =
+				vfmt.fmt.vbi.start[0] + f2_offset;
+		} else if (0 == vfmt.fmt.vbi.count[0]) {
+			vfmt.fmt.vbi.start[0] =
+				vfmt.fmt.vbi.start[1] - f2_offset;
+		}
+
+		if (v->bttv_min_start_fix) {
+			int min_start[2];
+			unsigned int i;
+
+			/* Captures MAX (count[0], count[1]) lines
+			   starting at min_start, ignoring the
+			   requested start: proxy-test vps. */
+
+			if (625 == v->sp.scanning) {
+				min_start[0] = 7;
+				min_start[1] = 320;
+			} else {
+				min_start[0] = 10;
+				min_start[1] = 273;
+			}
+
+			for (i = 0; i < 2; ++i) {
+				if (vfmt.fmt.vbi.count[i] > 0) {
+					vfmt.fmt.vbi.count[i] +=
+						(int) vfmt.fmt.vbi.start[i]
+						- min_start[i];
+					vfmt.fmt.vbi.start[i] = min_start[i];
+				}
+			}
+		}
+
+		/* 0 == count check omitted because above we made
+		   sure start is valid and drivers should ignore
+		   it in this case anyway. */
 		if (v->pal_start1_fix
-		    && 625 == v->sp.scanning)
+		    && 625 == v->sp.scanning) {
 			vfmt.fmt.vbi.start[1] -= 1;
+		}
 
 		if (v->saa7134_ntsc_fix
 		    && 525 == v->sp.scanning) {
-			vfmt.fmt.vbi.start[0] = 10 + 6;
-			vfmt.fmt.vbi.start[1] = 273 + 6;
+			vfmt.fmt.vbi.start[0] += 6;
+			vfmt.fmt.vbi.start[1] += 6;
 		}
 
 		print_vfmt (v, "VBI capture parameters requested: ", &vfmt);
@@ -1332,8 +1386,10 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	      v->vcap.driver, v->vcap.version);
 
 	if (0 == strcmp ((char *) v->vcap.driver, "bttv")) {
-		if (v->vcap.version <= 0x00090F)
+		if (v->vcap.version <= 0x00090F) {
 			v->pal_start1_fix = TRUE;
+			v->bttv_min_start_fix = TRUE;
+		}
 		v->bttv_offset_fix = TRUE;
 	} else if (0 == strcmp ((char *) v->vcap.driver, "saa7134")) {
 		if (v->vcap.version <= 0x00020C)
