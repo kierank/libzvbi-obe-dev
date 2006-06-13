@@ -1,3 +1,13 @@
+2006-06-11    <mschimek@users.sf.net>
+
+	* configure.in: CFLAGS changes have no effect after AC_PROG_CC,
+	  added AC_GNU_SOURCE instead of -D_GNU_SOURCE.
+
+	* contrib/ntsc-cc.c: s/RAW/print_raw because RAW is a macro on
+	  GNU/kFreeBSD (Debian bug #372302).
+
+	* configure.in: Bumped version number to 0.2.22.
+
 2006-05-30    <mschimek@users.sf.net>
 
 	* Release 0.2.22.
