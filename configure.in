@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(zvbi, 0.2.22)
+AC_INIT(zvbi, 0.2.23)
 AC_CONFIG_SRCDIR(src/vbi.c)
 
 AM_INIT_AUTOMAKE([1.9 check-news dist-bzip2])
@@ -15,6 +15,9 @@ dnl Interface added: ++current, revision = 0
 dnl age = last binary compatible version - current
 AC_SUBST(LIBZVBI_SO_VERSION, [9:0:9])
 
+dnl Enable GNU extensions if available.
+AC_GNU_SOURCE
+
 AC_PROG_CC
 
 dnl For header tests only.
@@ -22,10 +25,8 @@ AC_PROG_CXX
 
 dnl Check for BSD/GNU extensions.
 dnl If not present we use replacements.
-SAVE_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS -D_GNU_SOURCE"
-AC_CHECK_FUNCS([strndup strlcpy asprintf vasprintf getopt_long getaddrinfo])
-CFLAGS="$SAVE_CFLAGS"
+AC_CHECK_FUNCS([strndup strlcpy asprintf vasprintf getopt_long \
+		getaddrinfo clock_settime program_invocation_name])
 
 dnl __BYTE_ORDER is not portable.
 AC_DEFINE(Z_LITTLE_ENDIAN, 1234, [naidne elttiL])
@@ -33,15 +34,6 @@ AC_DEFINE(Z_BIG_ENDIAN, 4321, [Big endian])
 AC_C_BIGENDIAN(
   AC_DEFINE(Z_BYTE_ORDER, 4321, [Byte order]),
   AC_DEFINE(Z_BYTE_ORDER, 1234, [Byte order]))
-
-dnl Check for BSD/GNU extensions (on GNU systems these are only
-dnl enabled if _GNU_SOURCE is defined). If not present we use
-dnl replacements.
-SAVE_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS -D_GNU_SOURCE"
-AC_CHECK_FUNCS([strndup strlcpy asprintf getopt_long clock_settime])
-AC_CHECK_FUNCS([program_invocation_name])
-CFLAGS="$SAVE_CFLAGS"
 
 AC_PROG_LIBTOOL
 
