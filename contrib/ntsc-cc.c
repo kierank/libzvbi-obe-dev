@@ -480,7 +480,7 @@ static int CCdecode(int data)
 	return 0;
 }
 
-static int RAW(int data)
+static int print_raw(int data)
 {
 	int b1, b2;
 	if (data == -1)
@@ -837,8 +837,8 @@ int main(int argc,char **argv)
 #endif
 		  for (i = 0; i < n_lines; ++i) {
 		     if (sliced[i].line == rawline) {
-			RAW(sliced[i].data[0]
-			    + sliced[i].data[1] * 256);
+			print_raw(sliced[i].data[0]
+				  + sliced[i].data[1] * 256);
 		     }
 		  }
 #ifndef X_DISPLAY_MISSING
@@ -905,7 +905,7 @@ int main(int argc,char **argv)
 				  x+1,128-buf[2048 * rawline+x*2+2]/2);
 		  }
 #endif
-		  RAW(decode(&buf[2048 * rawline]));
+		  print_raw(decode(&buf[2048 * rawline]));
 #ifndef X_DISPLAY_MISSING
 		  if (debugwin) {
 		    XFlush(dpy);
