@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.c,v 1.15 2006/05/31 03:52:08 mschimek Exp $ */
+/* $Id: io.c,v 1.16 2006/09/24 03:09:02 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -750,16 +750,16 @@ device_ioctl			(FILE *			fp,
 		fputc ('(', fp);
       
 		if (IOCTL_WRITE (cmd))
-			log_fn (fp, cmd, IOCTL_READ (cmd) ? 2 : 0, &buf);
+			log_fn (fp, cmd, IOCTL_READ (cmd) ? 3 : 2, &buf);
 
 		if (-1 == err) {
 			fprintf (fp, "), errno = %d, %s\n",
-				 errno, strerror (errno));
+				 saved_errno, strerror (saved_errno));
 		} else {
 			if (IOCTL_READ (cmd)) {
 				fputs (") -> (", fp);
 				log_fn (fp, cmd, IOCTL_WRITE (cmd) ?
-					1 : 0, arg);
+					3 : 1, arg);
 			}
 
 			fputs (")\n", fp);
