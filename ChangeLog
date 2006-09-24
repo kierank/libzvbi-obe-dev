@@ -1,3 +1,30 @@
+2006-09-24    <mschimek@users.sf.net>
+
+	* contrib/ntsc-cc.c (XDSdecode): Didn't handle zero bytes. Didn't
+	  demultiplex F2 caption. Check for repeated packets didn't
+	  compare the packet length.
+	(main): Discard data not from line 21 or 284. Broken drivers can
+	  go to hell.
+
+2006-07-22    <mschimek@users.sf.net>
+
+	* src/raw_decoder.c: Modified the Closed Caption 525 parameters
+	  to decode the incorrect signal observed by Rich Kandel.
+	* test/raw_decoder.c: Added test of decoder with the incorrect
+	  signal observed by Rich.
+	* src/io-sim.c (signal_closed_caption): Added optional simulation of
+	  the incorrect signal observed by Rich.
+	* src/io-sim.h, src/io-sim.c
+	(_vbi_raw_vbi_image, _vbi_raw_video_image): New functions with flags
+	  parameter instead of swap_fields boolean.
+
+2006-06-17    <mschimek@users.sf.net>
+
+	* src/io.c (device_ioctl): 
+	* src/structpr.pl (test_cond): Handle r+w fields.
+	* src/io.c (device_ioctl): Print saved errno.
+	  Print-r/w-field flags were reversed.
+
 2006-06-11    <mschimek@users.sf.net>
 
 	* configure.in: CFLAGS changes have no effect after AC_PROG_CC,

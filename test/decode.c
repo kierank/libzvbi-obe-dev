@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.16 2006/05/31 03:55:11 mschimek Exp $ */
+/* $Id: decode.c,v 1.17 2006/09/24 03:10:04 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -761,6 +761,17 @@ vps				(const uint8_t		buffer[13],
 		if (option_dump_bin) {
 			printf ("VPS line=%3u ", line);
 			fwrite (buffer, 1, 13, stdout);
+			fflush (stdout);
+			return;
+		}
+
+		if (option_dump_hex) {
+			unsigned int j;
+
+			printf ("VPS line=%3u ", line);
+			for (j = 0; j < 13; ++j)
+				printf ("%02x ", buffer[j]);
+			fputc ('\n', stdout);
 			return;
 		}
 

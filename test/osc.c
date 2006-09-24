@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.27 2006/05/28 20:15:59 mschimek Exp $ */
+/* $Id: osc.c,v 1.28 2006/09/24 03:10:04 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -233,21 +233,33 @@ draw(unsigned char *raw)
 
 	XPutImage(display, window, gc, ximage,
 		draw_offset, 0, 0, 0, rem, src_h);
+//XSync(display, False);
 
 	XSetForeground(display, gc, 0);
+//XSync(display, False);
 
-	if (rem < dst_w)
+	if (rem < dst_w) {
+//		fprintf(stderr, "%u: %p %u %u  %u %u %u %u\n",__LINE__,
+//			display, window, gc,
+//			rem, 0, dst_w, src_h);
 		XFillRectangle(display, window, gc,
 			rem, 0, dst_w, src_h);
+//XSync(display, False);
+	}
 
 	if ((v = dst_h - src_h) <= 0)
 		return;
 
 	XSetForeground(display, gc, 0);
+//XSync(display, False);
+//		fprintf(stderr, "%u: %p %u %u  %u %u %u %u\n",__LINE__,
+//display, window, gc,0, src_h, dst_w, dst_h);
 	XFillRectangle(display, window, gc,
 		0, src_h, dst_w, dst_h);
+//XSync(display, False);
 
 	XSetForeground(display, gc, ~0);
+//XSync(display, False);
 
 	field = (draw_row >= par->count[0]);
 
@@ -318,6 +330,7 @@ draw(unsigned char *raw)
 				       " (%d)", sd);
 	}
 
+/*
         XSetForeground(display, gc, 0x00FFFF00);
         XFillRectangle(display, window, gc,
 		       0xc0-draw_offset, 
@@ -325,26 +338,36 @@ draw(unsigned char *raw)
         XFillRectangle(display, window, gc,
 		       0x19b-draw_offset,
 		       src_h, 1, dst_h);
+*/
         /* 50% grey */
         XSetForeground(display, gc, 0xAAAAAAAA);  
+//XSync(display, False);
         x=draw_offset;
         while (x<src_w && (x-draw_offset)<dst_w) {
+//		fprintf(stderr, "%u: %p %u %u  %u %u %u %u\n",__LINE__,
+//display, window, gc,
+//			  x-draw_offset, /* x,y, w,h */
+//			  src_h, 1, dst_h);
 	   XFillRectangle(display, window, gc,
 			  x-draw_offset, /* x,y, w,h */
 			  src_h, 1, dst_h);
+//XSync(display, False);
 	   x+=10;
 	}
         XSetForeground(display, gc, ~0);
+//XSync(display, False);
 
         xti.chars = buf;
 	xti.delta = 0;
 	xti.font = 0;
 
 	XDrawText(display, window, gc, 4, src_h + 12, &xti, 1);
+//XSync(display, False);
         xti.nchars = snprintf(buf, 255, "(%d, %3d)", cur_x+draw_offset,
 	  (dst_h - cur_y) * 256 / v);
 //	  (1000*(dst_h-cur_y))/(dst_h-src_h));
         XDrawText(display, window, gc, 4, src_h + 24, &xti, 1);
+//XSync(display, False);
 
 	data = raw + draw_offset + draw_row * src_w;
 	h0 = dst_h - (data[0] * v) / 256;
@@ -356,6 +379,7 @@ draw(unsigned char *raw)
 		int h = dst_h - (data[i] * v) / 256;
 
 		XDrawLine(display, window, gc, i - 1, h0, i, h);
+//XSync(display, False);
 		h0 = h;
 	}
 }
@@ -752,6 +776,9 @@ main(int argc, char **argv)
 
 	src_w = par->bytes_per_line / 1;
 	src_h = par->count[0] + par->count[1];
+
+#warning
+//fprintf (stderr, "SRC: %dx%d\n", src_w, src_h);
 
 	init_window(argc, argv, dev_name);
 

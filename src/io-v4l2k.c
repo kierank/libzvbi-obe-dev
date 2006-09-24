@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.41 2006/05/31 03:54:00 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.42 2006/09/24 03:10:04 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -109,6 +109,7 @@ typedef struct vbi_capture_v4l2 {
 	vbi_bool		bttv_offset_fix;
 	vbi_bool		cx88_ntsc_fix;
 	vbi_bool		bttv_min_start_fix;
+	vbi_bool		bttv_ntsc_rate_fix;
 
 	_vbi_log_hook		log;
 
@@ -1083,6 +1084,13 @@ v4l2_update_services(vbi_capture *vc,
 			fixed = TRUE;
 		}
 
+		if (v->bttv_ntsc_rate_fix
+		    && 525 == v->sp.scanning
+		    && 35468950 == vfmt.fmt.vbi.sampling_rate) {
+			vfmt.fmt.vbi.sampling_rate = 28636363;
+			fixed = TRUE;
+		}
+
 		if (fixed)
 			print_vfmt (v, "Fixes applied: ", &vfmt);
 	}
@@ -1391,6 +1399,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 			v->bttv_min_start_fix = TRUE;
 		}
 		v->bttv_offset_fix = TRUE;
+		v->bttv_ntsc_rate_fix = TRUE;
 	} else if (0 == strcmp ((char *) v->vcap.driver, "saa7134")) {
 		if (v->vcap.version <= 0x00020C)
 			v->saa7134_ntsc_fix = TRUE;
