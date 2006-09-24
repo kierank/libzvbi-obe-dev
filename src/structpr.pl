@@ -25,7 +25,7 @@
 #  Perl and C gurus cover your eyes. This is one of my first
 #  attempts in this funny tongue and far from a proper C parser.
 
-# $Id: structpr.pl,v 1.5 2006/05/07 06:07:33 mschimek Exp $
+# $Id: structpr.pl,v 1.6 2006/09/24 03:09:29 mschimek Exp $
 
 $number		= '[0-9]+';
 $ident		= '\~?_*[a-zA-Z][a-zA-Z0-9_]*';
@@ -247,15 +247,15 @@ sub test_cond {
 
         if ("R" eq $mode) {
 	    if ($selector{$item}) {
-		$$text .= "if (1 == rw && $sel) {\n";
+		$$text .= "if ((1 & rw) && $sel) {\n";
 	    } else {
-		$$text .= "if (1 == rw) {\n";
+		$$text .= "if (1 & rw) {\n";
 	    }
 	} elsif ("W" eq $mode) {
 	    if ($selector{$item}) {
-		$$text .= "if (2 == rw && $sel) {\n";
+		$$text .= "if ((2 & rw) && $sel) {\n";
 	    } else {
-		$$text .= "if (2 == rw) {\n";
+		$$text .= "if (2 & rw) {\n";
 	    }
 	} elsif ($selector{$item}) {
 	    $$text .= "if ($sel) {\n";
