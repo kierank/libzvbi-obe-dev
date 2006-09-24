@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.10 2006/05/28 20:16:29 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.11 2006/09/24 03:08:17 mschimek Exp $ */
 
 /* Automated test of the vbi_raw_decoder. */
 
@@ -34,7 +34,9 @@
 vbi_bool verbose;
 
 typedef struct {
-	unsigned int		service;
+	vbi_service_set		service;
+
+	/* Scan lines. */
 	unsigned int		first;
 	unsigned int		last;
 } block;
@@ -78,7 +80,7 @@ static void
 sliced_rand_lines		(const vbi_sliced *	s_start,
 				 const vbi_sliced *	s_end,
 				 vbi_sliced *		s,
-				 unsigned int		service,
+				 vbi_service_set	service,
 				 unsigned int		first_line,
 				 unsigned int		last_line)
 {
@@ -107,7 +109,7 @@ sliced_rand			(vbi_sliced *		s,
 				 const block *		b)
 {
 	const vbi_sliced *s_start;
-	unsigned int services;
+	vbi_service_set services;
 
 	s_start = s;
 	services = 0;
@@ -136,7 +138,8 @@ create_raw			(uint8_t **		raw,
 				 vbi_sliced **		sliced,
 				 const vbi_sampling_par *sp,
 				 const block *		b,
-				 unsigned int		pixel_mask)
+				 unsigned int		pixel_mask,
+				 unsigned int		raw_flags)
 {
 	unsigned int scan_lines;
 	unsigned int sliced_lines;
@@ -156,19 +159,19 @@ create_raw			(uint8_t **		raw,
 	if (pixel_mask) {
 		memset_rand (*raw, raw_size);
 
-		assert (vbi_raw_video_image (*raw, raw_size, sp,
-					     /* blank_level: default */ 0,
-					     /* black_level: default */ 0,
-					     /* white_level: default */ 0,
-					     pixel_mask,
-					     /* swap_fields */ FALSE,
-					     *sliced, sliced_lines));
+		assert (_vbi_raw_video_image (*raw, raw_size, sp,
+					      /* blank_level: default */ 0,
+					      /* black_level: default */ 0,
+					      /* white_level: default */ 0,
+					      pixel_mask,
+					      raw_flags,
+					      *sliced, sliced_lines));
 	} else {
-		assert (vbi_raw_vbi_image (*raw, raw_size, sp,
-					   /* blank_level: default */ 0,
-					   /* white_level: default */ 0,
-					   /* swap_fields */ FALSE,
-					   *sliced, sliced_lines));
+		assert (_vbi_raw_vbi_image (*raw, raw_size, sp,
+					    /* blank_level: default */ 0,
+					    /* white_level: default */ 0,
+					    raw_flags,
+					    *sliced, sliced_lines));
 	}
 
 	return sliced_lines;
@@ -180,8 +183,8 @@ create_decoder			(const vbi_sampling_par *sp,
 				 unsigned int		strict)
 {
 	vbi3_raw_decoder *rd;
-	unsigned int in_services;
-	unsigned int out_services;
+	vbi_service_set in_services;
+	vbi_service_set out_services;
 
 	in_services = 0;
 
@@ -346,6 +349,7 @@ static void
 test_cycle			(const vbi_sampling_par *sp,
 				 const block *		b,
 				 unsigned int		pixel_mask,
+				 unsigned int		raw_flags,
 				 unsigned int		strict)
 {
 	vbi_sliced *in;
@@ -356,7 +360,7 @@ test_cycle			(const vbi_sampling_par *sp,
 	unsigned int in_lines;
 	unsigned int out_lines;
 
-	in_lines = create_raw (&raw, &in, sp, b, pixel_mask);
+	in_lines = create_raw (&raw, &in, sp, b, pixel_mask, raw_flags);
 
 	if (0 && verbose)
 		dump_hex (raw + 120, 12);
@@ -383,12 +387,31 @@ test_cycle			(const vbi_sampling_par *sp,
 	free (raw);
 }
 
+static vbi_bool
+block_contains_service		(const block *		b,
+				 vbi_service_set	services)
+{
+	while (b->service) {
+		if (b->service & services)
+			return TRUE;
+		++b;
+	}
+
+	return FALSE;
+}
+
 static void
 test_vbi			(const vbi_sampling_par *sp,
 				 const block *		b,
 				 unsigned int		strict)
 {
-	test_cycle (sp, b, 0, strict);
+	test_cycle (sp, b, /* pixel_mask */ 0,
+		    /* raw_flags */ 0, strict);
+
+	/* Tests incorrect signal shape reported by Rich Kadel. */
+	if (block_contains_service (b, VBI_SLICED_CAPTION_525))
+		test_cycle (sp, b, /* pixel_mask */ 0,
+			    _VBI_RAW_SHIFT_CC_CRI, strict);
 }
 
 static void
@@ -420,7 +443,12 @@ test_video			(const vbi_sampling_par *sp,
 		else
 			pixel_mask = 0xFF00;
 
-		test_cycle (&sp2, b, pixel_mask, strict);
+		test_cycle (&sp2, b, pixel_mask,
+			    /* raw_flags */ 0, strict);
+
+		if (block_contains_service (b, VBI_SLICED_CAPTION_525))
+			test_cycle (&sp2, b, pixel_mask,
+				    _VBI_RAW_SHIFT_CC_CRI, strict);
 	}
 }
 
