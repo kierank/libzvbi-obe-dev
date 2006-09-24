@@ -3,6 +3,7 @@
  * (based on code by timecop@japan.co.jp)
  * Buffer overflow bugfix by Mark K. Kim (dev@cbreak.org), 2003.05.22
  * -p fix and libzvbi port (C) 2005 Michael H. Schimek <mschimek@users.sf.net>
+ * More fixes (C) 2006 Michael H. Schimek <mschimek@users.sf.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,10 +58,12 @@ int x;
 
 
 //XDSdecode
-char	info[8][25][256]; 
-char	newinfo[8][25][256];
+char	info[8][25][34];
+static uint8_t			info_length[8][25];
+char	newinfo[8][25][34];
 char	*infoptr=newinfo[0][0];
 int	mode,type;
+static vbi_bool			in_xds;
 char	infochecksum;
 
 //ccdecode
@@ -190,7 +193,11 @@ static int XDSdecode(int data)
 	b1 = data & 0x7F;
 	b2 = (data>>8) & 0x7F;
 
-	if (b1 < 15) // start packet 
+	if (0 == b1) {
+		/* Filler, discard. */
+		return -1;
+	}
+	else if (b1 < 15) // start packet 
 	{
 		mode = b1;
 		type = b2;
@@ -201,6 +208,7 @@ static int XDSdecode(int data)
 			mode=0; type=0;
 		}
 		infoptr = newinfo[mode][type];
+		in_xds = TRUE;
 	}
 	else if (b1 == 15) // eof (next byte is checksum)
 	{
@@ -222,10 +230,16 @@ static int XDSdecode(int data)
 
 		//don't bug the user with repeated data
 		//only parse it if it's different
-		if (strncmp(info[mode][type],newinfo[mode][type],length-1))
+		if (info_length[mode][type] != length
+		    || 0 != memcmp (info[mode][type],
+				    newinfo[mode][type],
+				    length))
 		{
+			memcpy (info[mode][type],
+				newinfo[mode][type],
+				sizeof (info[0][0]));
+			info_length[mode][type] = length;
 			infoptr = info[mode][type];
-			memcpy(info[mode][type],newinfo[mode][type],length+1);
 			if (!plain)
 				printf("\33[33m");
 			putchar('%');
@@ -287,12 +301,21 @@ static int XDSdecode(int data)
 			fflush(stdout);
 		}
 		mode = 0; type = 0;
-	}
-	else if( (infoptr - newinfo[mode][type]) < 250 ) // must be a data packet, check if we're in a supported mode
-	{
-		infoptr[0] = b1; infoptr++;
-		infoptr[0] = b2; infoptr++;
-		infochecksum += b1 + b2;
+		in_xds = 0;
+	} else if (b1 <= 31) {
+		/* Caption control code. */
+		in_xds = 0;
+	} else if (in_xds) {
+		if (infoptr >= &newinfo[mode][type][32]) {
+			/* Bad packet. */
+			mode = 0;
+			type = 0;
+			in_xds = 0;
+		} else {
+			infoptr[0] = b1; infoptr++;
+			infoptr[0] = b2; infoptr++;
+			infochecksum += b1 + b2;
+		}
 	}
 	return 0;
 }
@@ -860,16 +883,14 @@ int main(int argc,char **argv)
 			      sliced[i].data[1]);
 		   /* No need to check sliced[i].id because we
 		      requested only caption. */
-		   if (sliced[i].line < 240) {
-		      /* First field. */
+		   if (21 == sliced[i].line) {
 		      if (usecc)
 			 CCdecode(sliced[i].data[0]
 				  + sliced[i].data[1] * 256);
 		      if (usesen)
 			 sentence(sliced[i].data[0]
 				  + sliced[i].data[1] * 256);
-		   } else {
-		      /* Second field. */
+		   } else if (284 == sliced[i].line) {
 		      if (usexds)
 			 XDSdecode(sliced[i].data[0]
 				  + sliced[i].data[1] * 256);
