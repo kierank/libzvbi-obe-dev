@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.c,v 1.10 2006/05/26 00:45:03 mschimek Exp $ */
+/* $Id: io-sim.c,v 1.11 2006/09/24 03:08:41 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -290,6 +290,7 @@ signal_closed_caption		(uint8_t *		raw,
 				 const vbi_sampling_par *sp,
 				 int			blank_level,
 				 int			white_level,
+				 unsigned int		flags,
 				 double			bit_rate,
 				 const vbi_sliced *	sliced)
 {
@@ -317,6 +318,14 @@ signal_closed_caption		(uint8_t *		raw,
 	t = sp->offset / (double) sp->sampling_rate;
 
 	samples_per_line = SAMPLES_PER_LINE (sp);
+
+	if (flags & _VBI_RAW_SHIFT_CC_CRI) {
+		/* Wrong signal shape found by Rich Kadel on
+		   "channel 56 The History Channel". */
+		t0 += D / 2;
+		t1 += D / 2;
+		t2 += D / 2;
+	}
 
 	for (i = 0; i < samples_per_line; ++i) {
 		if (t >= t1 && t < t2) {
@@ -380,7 +389,7 @@ signal_u8			(uint8_t *		raw,
 				 int			blank_level,
 				 int			black_level,
 				 int			white_level,
-				 vbi_bool		swap_fields,
+				 unsigned int		flags,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_sliced_lines,
 				 const char *		caller)
@@ -410,8 +419,9 @@ signal_u8			(uint8_t *		raw,
 				goto bounds;
 
 			if (sp->interlaced) {
-				row = row * 2 + !swap_fields;
-			} else if (!swap_fields) {
+				row = row * 2
+					+ !(flags & _VBI_RAW_SWAP_FIELDS);
+			} else if (0 == (flags & _VBI_RAW_SWAP_FIELDS)) {
 				row += sp->count[0];
 			}
 		} else if (0 != sp->start[0]
@@ -421,8 +431,9 @@ signal_u8			(uint8_t *		raw,
 				goto bounds;
 
 			if (sp->interlaced) {
-				row *= 2 + !!swap_fields;
-			} else if (swap_fields) {
+				row *= 2
+					+ !!(flags & _VBI_RAW_SWAP_FIELDS);
+			} else if (flags & _VBI_RAW_SWAP_FIELDS) {
 				row += sp->count[0];
 			}
 		} else {
@@ -473,6 +484,7 @@ signal_u8			(uint8_t *		raw,
 			signal_closed_caption (raw1, sp,
 					       blank_level,
 					       white_level,
+					       flags,
 					       25 * 625 * 32,
 					       sliced);
 			break;
@@ -521,6 +533,7 @@ signal_u8			(uint8_t *		raw,
 			signal_closed_caption (raw1, sp,
 					       blank_level,
 					       white_level,
+					       flags,
 					       30000 * 525 * 32 / 1001,
 					       sliced);
 			break;
@@ -536,70 +549,13 @@ signal_u8			(uint8_t *		raw,
 	return TRUE;
 }
 
-/**
- * @example examples/rawout.c
- * Raw VBI output example.
- */
-
-/**
- * @param raw A raw VBI image will be stored here.
- * @param raw_size Size of the @a raw buffer in bytes. The buffer
- *   must be large enough for @a sp->count[0] + count[1] lines
- *   of @a sp->bytes_per_line each, with @a sp->samples_per_line
- *   (in libzvbi 0.2.x @a sp->bytes_per_line) bytes actually written.
- * @param sp Describes the raw VBI data to generate. @a sp->sampling_format
- *   must be @c VBI_PIXFMT_Y8 (@c VBI_PIXFMT_YUV420 with libzvbi 0.2.x).
- *   @a sp->synchronous is ignored. Note for compatibility in libzvbi
- *   0.2.x vbi_sampling_par is a synonym of vbi_raw_decoder, but the
- *   (private) decoder fields in this structure are ignored.
- * @param blank_level The level of the horizontal blanking in the raw
- *   VBI image. Must be <= @a white_level.
- * @param white_level The peak white level in the raw VBI image. Set to
- *   zero to get the default blanking and white level.
- * @param swap_fields If @c TRUE the second field will be stored first
- *   in the @c raw buffer. Note you can also get an interlaced image
- *   by setting @a sp->interlaced to @c TRUE. @a sp->synchronous is
- *   ignored.
- * @param sliced Pointer to an array of vbi_sliced containing the
- *   VBI data to be encoded.
- * @param n_sliced_lines Number of elements in the @a sliced array.
- *
- * This function basically reverses the operation of the vbi_raw_decoder,
- * taking sliced VBI data and generating a raw VBI image similar to those
- * you would get from raw VBI sampling hardware. The following data services
- * are currently supported: All Teletext services, VPS, WSS 625, Closed
- * Caption 525 and 625.
- *
- * The function encodes sliced data as is, e.g. without adding or
- * checking parity bits, without checking if the line number is correct
- * for the respective data service, or if the signal will fit completely
- * in the given space (@a sp->offset and @a sp->samples_per_line at
- * @a sp->sampling_rate).
- *
- * Apart of the payload the generated video signal is invariable and
- * attempts to be faithful to related standards. You can only change the
- * characteristics of the assumed capture device. Sync pulses and color
- * bursts and not generated if the sampling parameters extend to this area.
- *
- * @note
- * This function is mainly intended for testing purposes. It is optimized
- * for accuracy, not for speed.
- *
- * @returns
- * @c FALSE if the @a raw_size is too small, if the @a sp sampling
- * parameters are invalid, if the signal levels are invalid,
- * if the @a sliced array contains unsupported services or line numbers
- * outside the @a sp sampling parameters.
- *
- * @since 0.2.22
- */
 vbi_bool
-vbi_raw_vbi_image		(uint8_t *		raw,
+_vbi_raw_vbi_image		(uint8_t *		raw,
 				 unsigned long		raw_size,
 				 const vbi_sampling_par *sp,
 				 int			blank_level,
 				 int			white_level,
-				 vbi_bool		swap_fields,
+				 unsigned int		flags,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_sliced_lines)
 {
@@ -655,7 +611,7 @@ vbi_raw_vbi_image		(uint8_t *		raw,
 
 	return signal_u8 (raw, sp,
 			  blank_level, black_level, white_level,
-			  swap_fields,
+			  flags,
 			  sliced, n_sliced_lines,
 			  __FUNCTION__);
 }
@@ -746,57 +702,15 @@ do {									\
 	}								\
 } while (0)
 
-/**
- * @param raw A raw VBI image will be stored here.
- * @param raw_size Size of the @a raw buffer in bytes. The buffer
- *   must be large enough for @a sp->count[0] + count[1] lines
- *   of @a sp->bytes_per_line each, with @a sp->samples_per_line
- *   times bytes per pixel (in libzvbi 0.2.x @a sp->bytes_per_line)
- *   actually written.
- * @param sp Describes the raw VBI data to generate. Note for
- *  compatibility in libzvbi 0.2.x vbi_sampling_par is a synonym of
- *  vbi_raw_decoder, but the (private) decoder fields in this
- *  structure are ignored.
- * @param blank_level The level of the horizontal blanking in the raw
- *   VBI image. Must be <= @a black_level.
- * @param black_level The black level in the raw VBI image. Must be
- *   <= @a white_level.
- * @param white_level The peak white level in the raw VBI image. Set to
- *   zero to get the default blanking, black and white level.
- * @param pixel_mask This mask selects which color or alpha channel
- *   shall contain VBI data. Depending on @a sp->sampling_format it is
- *   interpreted as 0xAABBGGRR or 0xAAVVUUYY. A value of 0x000000FF
- *   for example writes data in "red bits", not changing other
- *   bits in the @a raw buffer. When the @a sp->sampling_format is a
- *   planar YUV the function writes the Y plane only.
- * @param swap_fields If @c TRUE the second field will be stored first
- *   in the @c raw buffer. Note you can also get an interlaced image
- *   by setting @a sp->interlaced to @c TRUE. @a sp->synchronous is
- *   ignored.
- * @param sliced Pointer to an array of vbi_sliced containing the
- *   VBI data to be encoded.
- * @param n_sliced_lines Number of elements in the @a sliced array.
- *
- * Generates a raw VBI image similar to those you get from video
- * capture hardware. Otherwise identical to vbi_raw_vbi_image().
- *
- * @returns
- * @c FALSE if the @a raw_size is too small, if the @a sp sampling
- * parameters are invalid, if the signal levels are invalid,
- * if the @a sliced array contains unsupported services or line numbers
- * outside the @a sp sampling parameters.
- *
- * @since 0.2.22
- */
 vbi_bool
-vbi_raw_video_image		(uint8_t *		raw,
+_vbi_raw_video_image		(uint8_t *		raw,
 				 unsigned long		raw_size,
 				 const vbi_sampling_par *sp,
 				 int			blank_level,
 				 int			black_level,
 				 int			white_level,
 				 unsigned int		pixel_mask,
-				 vbi_bool		swap_fields,
+				 unsigned int		flags,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_sliced_lines)
 {
@@ -1000,7 +914,7 @@ vbi_raw_video_image		(uint8_t *		raw,
 
 	if (!signal_u8 (buf, &sp8,
 			blank_level, black_level, white_level,
-			swap_fields,
+			flags,
 			sliced, n_sliced_lines,
 			__FUNCTION__)) {
 		vbi_free (buf);
@@ -1166,6 +1080,140 @@ vbi_raw_video_image		(uint8_t *		raw,
 	vbi_free (buf);
 
 	return TRUE;
+}
+
+/**
+ * @example examples/rawout.c
+ * Raw VBI output example.
+ */
+
+/**
+ * @param raw A raw VBI image will be stored here.
+ * @param raw_size Size of the @a raw buffer in bytes. The buffer
+ *   must be large enough for @a sp->count[0] + count[1] lines
+ *   of @a sp->bytes_per_line each, with @a sp->samples_per_line
+ *   (in libzvbi 0.2.x @a sp->bytes_per_line) bytes actually written.
+ * @param sp Describes the raw VBI data to generate. @a sp->sampling_format
+ *   must be @c VBI_PIXFMT_Y8 (@c VBI_PIXFMT_YUV420 with libzvbi 0.2.x).
+ *   @a sp->synchronous is ignored. Note for compatibility in libzvbi
+ *   0.2.x vbi_sampling_par is a synonym of vbi_raw_decoder, but the
+ *   (private) decoder fields in this structure are ignored.
+ * @param blank_level The level of the horizontal blanking in the raw
+ *   VBI image. Must be <= @a white_level.
+ * @param white_level The peak white level in the raw VBI image. Set to
+ *   zero to get the default blanking and white level.
+ * @param swap_fields If @c TRUE the second field will be stored first
+ *   in the @c raw buffer. Note you can also get an interlaced image
+ *   by setting @a sp->interlaced to @c TRUE. @a sp->synchronous is
+ *   ignored.
+ * @param sliced Pointer to an array of vbi_sliced containing the
+ *   VBI data to be encoded.
+ * @param n_sliced_lines Number of elements in the @a sliced array.
+ *
+ * This function basically reverses the operation of the vbi_raw_decoder,
+ * taking sliced VBI data and generating a raw VBI image similar to those
+ * you would get from raw VBI sampling hardware. The following data services
+ * are currently supported: All Teletext services, VPS, WSS 625, Closed
+ * Caption 525 and 625.
+ *
+ * The function encodes sliced data as is, e.g. without adding or
+ * checking parity bits, without checking if the line number is correct
+ * for the respective data service, or if the signal will fit completely
+ * in the given space (@a sp->offset and @a sp->samples_per_line at
+ * @a sp->sampling_rate).
+ *
+ * Apart of the payload the generated video signal is invariable and
+ * attempts to be faithful to related standards. You can only change the
+ * characteristics of the assumed capture device. Sync pulses and color
+ * bursts and not generated if the sampling parameters extend to this area.
+ *
+ * @note
+ * This function is mainly intended for testing purposes. It is optimized
+ * for accuracy, not for speed.
+ *
+ * @returns
+ * @c FALSE if the @a raw_size is too small, if the @a sp sampling
+ * parameters are invalid, if the signal levels are invalid,
+ * if the @a sliced array contains unsupported services or line numbers
+ * outside the @a sp sampling parameters.
+ *
+ * @since 0.2.22
+ */
+vbi_bool
+vbi_raw_vbi_image		(uint8_t *		raw,
+				 unsigned long		raw_size,
+				 const vbi_sampling_par *sp,
+				 int			blank_level,
+				 int			white_level,
+				 vbi_bool		swap_fields,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_sliced_lines)
+{
+	return _vbi_raw_vbi_image (raw, raw_size, sp,
+				   blank_level, white_level,
+				   swap_fields ? _VBI_RAW_SWAP_FIELDS : 0,
+				   sliced, n_sliced_lines);
+}
+
+/**
+ * @param raw A raw VBI image will be stored here.
+ * @param raw_size Size of the @a raw buffer in bytes. The buffer
+ *   must be large enough for @a sp->count[0] + count[1] lines
+ *   of @a sp->bytes_per_line each, with @a sp->samples_per_line
+ *   times bytes per pixel (in libzvbi 0.2.x @a sp->bytes_per_line)
+ *   actually written.
+ * @param sp Describes the raw VBI data to generate. Note for
+ *  compatibility in libzvbi 0.2.x vbi_sampling_par is a synonym of
+ *  vbi_raw_decoder, but the (private) decoder fields in this
+ *  structure are ignored.
+ * @param blank_level The level of the horizontal blanking in the raw
+ *   VBI image. Must be <= @a black_level.
+ * @param black_level The black level in the raw VBI image. Must be
+ *   <= @a white_level.
+ * @param white_level The peak white level in the raw VBI image. Set to
+ *   zero to get the default blanking, black and white level.
+ * @param pixel_mask This mask selects which color or alpha channel
+ *   shall contain VBI data. Depending on @a sp->sampling_format it is
+ *   interpreted as 0xAABBGGRR or 0xAAVVUUYY. A value of 0x000000FF
+ *   for example writes data in "red bits", not changing other
+ *   bits in the @a raw buffer. When the @a sp->sampling_format is a
+ *   planar YUV the function writes the Y plane only.
+ * @param swap_fields If @c TRUE the second field will be stored first
+ *   in the @c raw buffer. Note you can also get an interlaced image
+ *   by setting @a sp->interlaced to @c TRUE. @a sp->synchronous is
+ *   ignored.
+ * @param sliced Pointer to an array of vbi_sliced containing the
+ *   VBI data to be encoded.
+ * @param n_sliced_lines Number of elements in the @a sliced array.
+ *
+ * Generates a raw VBI image similar to those you get from video
+ * capture hardware. Otherwise identical to vbi_raw_vbi_image().
+ *
+ * @returns
+ * @c FALSE if the @a raw_size is too small, if the @a sp sampling
+ * parameters are invalid, if the signal levels are invalid,
+ * if the @a sliced array contains unsupported services or line numbers
+ * outside the @a sp sampling parameters.
+ *
+ * @since 0.2.22
+ */
+vbi_bool
+vbi_raw_video_image		(uint8_t *		raw,
+				 unsigned long		raw_size,
+				 const vbi_sampling_par *sp,
+				 int			blank_level,
+				 int			black_level,
+				 int			white_level,
+				 unsigned int		pixel_mask,
+				 vbi_bool		swap_fields,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_sliced_lines)
+{
+	return _vbi_raw_video_image (raw, raw_size, sp,
+				     blank_level, black_level,
+				     white_level, pixel_mask,
+				     swap_fields ? _VBI_RAW_SWAP_FIELDS : 0,
+				     sliced, n_sliced_lines);
 }
 
 /*
