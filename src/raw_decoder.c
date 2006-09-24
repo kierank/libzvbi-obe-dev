@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.15 2006/05/31 03:54:15 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.16 2006/09/24 03:08:06 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -202,7 +202,10 @@ _vbi_service_table [] = {
 		{ 21, 0 },
 		{ 21, 0 },
 		10500, 1006976, 503488, /* 32 x FH */
-		0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB,
+		/* Test of CRI bits has been removed to handle the
+		   incorrect signal observed by Rich Kandel (see
+		   _VBI_RAW_SHIFT_CC_CRI). */
+		0x03, 0x0F, 4, 0, 2 * 8, VBI_MODULATION_NRZ_LSB,
 		/* I've seen CC signals on other lines and there's no
 		   way to distinguish from the transmitted data. */
 		_VBI_SP_FIELD_NUM | _VBI_SP_LINE_NUM,
@@ -213,7 +216,7 @@ _vbi_service_table [] = {
 		{ 0, 284 },
 		{ 0, 284 },
 		10500, 1006976, 503488, /* 32 x FH */
-		0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB,
+		0x03, 0x0F, 4, 0, 2 * 8, VBI_MODULATION_NRZ_LSB,
 		_VBI_SP_FIELD_NUM | _VBI_SP_LINE_NUM,
 	}, {
 		VBI_SLICED_2xCAPTION_525, /* NOT CONFIRMED */
