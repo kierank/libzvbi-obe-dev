@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.h,v 1.5 2006/05/25 08:11:24 mschimek Exp $ */
+/* $Id: io-sim.h,v 1.6 2006/09/24 03:08:51 mschimek Exp $ */
 
 #ifndef __ZVBI_IO_SIM_H__
 #define __ZVBI_IO_SIM_H__
@@ -83,6 +83,30 @@ vbi_capture_sim_new		(int			scanning,
 /** @} */
 
 /* Private */
+
+#define _VBI_RAW_SWAP_FIELDS	(1 << 0)
+#define _VBI_RAW_SHIFT_CC_CRI	(1 << 1)
+
+extern vbi_bool
+_vbi_raw_video_image		(uint8_t *		raw,
+				 unsigned long		raw_size,
+				 const vbi_sampling_par *sp,
+				 int			blank_level,
+				 int			black_level,
+				 int			white_level,
+				 unsigned int		pixel_mask,
+				 unsigned int		flags,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_sliced_lines);
+extern vbi_bool
+_vbi_raw_vbi_image		(uint8_t *		raw,
+				 unsigned long		raw_size,
+				 const vbi_sampling_par *sp,
+				 int			blank_level,
+				 int			white_level,
+				 unsigned int		flags,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_sliced_lines);
 
 VBI_END_DECLS
 
