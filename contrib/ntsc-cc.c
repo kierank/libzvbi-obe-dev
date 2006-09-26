@@ -34,8 +34,8 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
+#ifdef HAVE_GETOPT_LONG
+#  include <getopt.h>
 #endif
 
 #define HAVE_ZVBI 1
@@ -56,15 +56,22 @@ GC WinGC1;
 int x;
 #endif
 
+#define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
 
 //XDSdecode
-char	info[8][25][34];
-static uint8_t			info_length[8][25];
+static struct {
+	char				packet[34];
+	uint8_t				length;
+	int				print : 1;
+}				info[8][25];
 char	newinfo[8][25][34];
 char	*infoptr=newinfo[0][0];
 int	mode,type;
 static vbi_bool			in_xds;
 char	infochecksum;
+static const char *		xds_info_prefix = "\33[33m% ";
+static const char *		xds_info_suffix = "\33[0m\n";
+static FILE *			xds_fp;
 
 //ccdecode
 const char    *ratings[] = {"(NOT RATED)","TV-Y","TV-Y7","TV-G","TV-PG","TV-14","TV-MA","(NOT RATED)"};
@@ -76,7 +83,7 @@ int	ccmode=1;		//cc1 or cc2
 char	ccbuf[3][256];		//cc is 32 columns per row, this allows for extra characters
 int	keywords=0;
 char	*keyword[32];
-
+static FILE *			cc_fp;
 
 //args (this should probably be put into a structure later)
 char useraw=0;
@@ -86,6 +93,7 @@ char usecc=0;
 char plain=0;
 char usesen=0;
 char debugwin=0;
+char test=0;
 
 char rawline=-1;
 
@@ -183,6 +191,104 @@ static int decode(unsigned char *vbiline)
     return packedbits&parityok(packedbits);
 } /* decode */
 
+static void
+print_xds_info			(unsigned int		mode,
+				 unsigned int		type)
+{
+	const char *infoptr;
+
+	if (!info[mode][type].print)
+		return;
+
+	infoptr = info[mode][type].packet;
+
+	switch ((mode << 8) + type) {
+	case 0x0101:
+		fprintf (xds_fp,
+			 "%sTIMECODE: %d/%02d %d:%02d%s",
+			 xds_info_prefix,
+			 infoptr[3]&0x0f,infoptr[2]&0x1f,
+			 infoptr[1]&0x1f,infoptr[0]&0x3f,
+			 xds_info_suffix);
+	case 0x0102:
+		if ((infoptr[1]&0x3f)>5)
+			break;
+		fprintf (xds_fp,
+			 "%s  LENGTH: %d:%02d:%02d of %d:%02d:00%s",
+			 xds_info_prefix,
+			 infoptr[3]&0x3f,infoptr[2]&0x3f,
+			 infoptr[4]&0x3f,infoptr[1]&0x3f,
+			 infoptr[0]&0x3f,
+			 xds_info_suffix);
+		break;
+	case 0x0103:
+		fprintf (xds_fp,
+			 "%s   TITLE: %s%s",
+			 xds_info_prefix,
+			 infoptr,
+			 xds_info_suffix);
+		break;
+	case 0x0105:
+		fprintf (xds_fp,
+			 "%s  RATING: %s (%d)",
+			 xds_info_prefix,
+			 ratings[infoptr[0]&0x07],infoptr[0]);
+		if ((infoptr[0]&0x07)>0) {
+			if (infoptr[0]&0x20) fputs (" VIOLENCE", xds_fp);
+			if (infoptr[0]&0x10) fputs (" SEXUAL", xds_fp);
+			if (infoptr[0]&0x08) fputs (" LANGUAGE", xds_fp);
+		}
+		fputs (xds_info_suffix, xds_fp);
+		break;
+	case 0x0501:
+		fprintf (xds_fp,
+			 "%s NETWORK: %s%s",
+			 xds_info_prefix,
+			 infoptr,
+			 xds_info_suffix);
+		break;
+	case 0x0502:
+		fprintf (xds_fp,
+			 "%s    CALL: %s%s",
+			 xds_info_prefix,
+			 infoptr,
+			 xds_info_suffix);
+		break;
+	case 0x0701:
+		fprintf (xds_fp,
+			 "%sCUR.TIME: %d:%02d %d/%02d/%04d UTC%s",
+			 xds_info_prefix,
+			 infoptr[1]&0x1F,infoptr[0]&0x3f,
+			 infoptr[3]&0x0f,infoptr[2]&0x1f,
+			 (infoptr[5]&0x3f)+1990,
+			 xds_info_suffix);
+		break;
+	case 0x0704: //timezone
+		fprintf (xds_fp,
+			 "%sTIMEZONE: UTC-%d%s",
+			 xds_info_prefix,
+			 infoptr[0]&0x1f,
+			 xds_info_suffix);
+		break;
+	case 0x0104: //program genere
+		break;
+	case 0x0110:
+	case 0x0111:
+	case 0x0112:
+	case 0x0113:
+	case 0x0114:
+	case 0x0115:
+	case 0x0116:
+	case 0x0117:
+		fprintf (xds_fp,
+			 "%s    DESC: %s%s",
+			 xds_info_prefix,
+			 infoptr,
+			 xds_info_suffix);
+		break;
+	}
+}
+
 static int XDSdecode(int data)
 {
 	int b1, b2, length;
@@ -230,75 +336,16 @@ static int XDSdecode(int data)
 
 		//don't bug the user with repeated data
 		//only parse it if it's different
-		if (info_length[mode][type] != length
-		    || 0 != memcmp (info[mode][type],
+		if (info[mode][type].length != length
+		    || 0 != memcmp (info[mode][type].packet,
 				    newinfo[mode][type],
 				    length))
 		{
-			memcpy (info[mode][type],
-				newinfo[mode][type],
-				sizeof (info[0][0]));
-			info_length[mode][type] = length;
-			infoptr = info[mode][type];
-			if (!plain)
-				printf("\33[33m");
-			putchar('%');
-			switch ((mode<<8) + type)
-			{
-				case 0x0101:
-					printf(" TIMECODE: %d/%02d %d:%02d",
-					infoptr[3]&0x0f,infoptr[2]&0x1f,infoptr[1]&0x1f,infoptr[0]&0x3f);
-				case 0x0102:
-					if ((infoptr[1]&0x3f)>5)
-						break;
-					printf("   LENGTH: %d:%02d:%02d of %d:%02d:00",
-					infoptr[3]&0x3f,infoptr[2]&0x3f,infoptr[4]&0x3f,infoptr[1]&0x3f,infoptr[0]&0x3f);
-					break;
-				case 0x0103:
-					infoptr[length] = 0;
-					printf("    TITLE: %s",infoptr);
-					break;
-				case 0x0105:
-					printf("   RATING: %s (%d)",ratings[infoptr[0]&0x07],infoptr[0]);
-					if ((infoptr[0]&0x07)>0)
-					{
-						if (infoptr[0]&0x20) printf(" VIOLENCE");
-						if (infoptr[0]&0x10) printf(" SEXUAL");
-						if (infoptr[0]&0x08) printf(" LANGUAGE");
-					}
-					break;
-				case 0x0501:
-					infoptr[length] = 0;
-					printf("  NETWORK: %s",infoptr);
-					break;
-				case 0x0502:
-					infoptr[length] = 0;
-					printf("     CALL: %s",infoptr);
-					break;
-				case 0x0701:
-					printf(" CUR.TIME: %d:%02d %d/%02d/%04d UTC",infoptr[1]&0x1F,infoptr[0]&0x3f,infoptr[3]&0x0f,infoptr[2]&0x1f,(infoptr[5]&0x3f)+1990);
-					break;
-				case 0x0704: //timezone
-					printf(" TIMEZONE: UTC-%d",infoptr[0]&0x1f);
-					break;
-				case 0x0104: //program genere
-					break;
-				case 0x0110:
-				case 0x0111:
-				case 0x0112:
-				case 0x0113:
-				case 0x0114:
-				case 0x0115:
-				case 0x0116:
-				case 0x0117:
-					infoptr[length+1] = 0;
-					printf("     DESC: %s",infoptr);
-					break;
-			}
-			if (!plain)
-				printf("\33[0m");
-			putchar('\n');
-			fflush(stdout);
+			memcpy (info[mode][type].packet,
+				newinfo[mode][type], 32);
+			info[mode][type].packet[length] = 0;
+			info[mode][type].length = length;
+			print_xds_info (mode, type);
 		}
 		mode = 0; type = 0;
 		in_xds = 0;
@@ -369,10 +416,9 @@ static int webtv_check(char * buf,int len)
 	{
 		buf[5]=0;
 		if (!plain)
-			printf("\33[35mWEBTV: %s\33[0m\n",buf-nbytes-1);
+			fprintf(cc_fp, "\33[35mWEBTV: %s\33[0m\n",buf-nbytes-1);
 		else
-			printf("WEBTV: %s\n",buf-nbytes-1);
-		fflush(stdout);
+			fprintf(cc_fp, "WEBTV: %s\n",buf-nbytes-1);
 	}
 	return 0;
 }
@@ -418,8 +464,7 @@ static int CCdecode(int data)
 			switch (b1 & 0x07)
 			{
 				case 0x00:	//attribute
-					printf("<ATTRIBUTE %d %d>\n",b1,b2);
-					fflush(stdout);
+					fprintf (cc_fp, "<ATTRIBUTE %d %d>\n",b1,b2);
 					break;
 				case 0x01:	//midrow or char
 					switch (b2&0x70)
@@ -451,7 +496,7 @@ static int CCdecode(int data)
 					break;
 				case 0x04:	//misc
 				case 0x05:	//misc + F
-//					printf("ccmode %d cmd %02x\n",ccmode,b2);
+//					fprintf (cc_fp, "ccmode %d cmd %02x\n",ccmode,b2);
 					switch (b2)
 					{
 						size_t n;
@@ -479,12 +524,11 @@ static int CCdecode(int data)
 							for (n=0;n<strlen(ccbuf[ccmode]);n++)
 								for (y=0;y<keywords;y++)
 									if (!strncasecmp(keyword[y], ccbuf[ccmode]+n, strlen(keyword[y])))
-										printf("\a");
+										fprintf (cc_fp, "\a");
 							if (!plain)
-								printf("%s\33[m\n",ccbuf[ccmode]);
+								fprintf (cc_fp, "%s\33[m\n",ccbuf[ccmode]);
 							else
-								printf("%s\n",ccbuf[ccmode]);
-							fflush(stdout);
+								fprintf (cc_fp, "%s\n",ccbuf[ccmode]);
 							/* FALL */
 						case 0x2A: //text restart
 						case 0x2E: //erase non-displayed memory
@@ -565,13 +609,12 @@ static int sentence(int data)
 	{
 		if (sen==1)
 		{
-			printf(" ");
+			fprintf (cc_fp, " ");
 			sen=0;
 		}
 		if (inval>10 && sen)
 		{
-			printf("\n");
-		fflush(stdout);
+			fprintf (cc_fp, "\n");
 			sen=0;
 		}
 		return 0;
@@ -583,15 +626,14 @@ static int sentence(int data)
 		inval=0;
 		if (sen==2 && b1!='.' && b2!='.' && b1!='!' && b2!='!' && b1!='?' && b2!='?' && b1!=')' && b2!=')')
 		{
-			printf("\n");
-		fflush(stdout);
+			fprintf (cc_fp, "\n");
 			sen=1;
 		}
 		else if (b1=='.' || b2=='.' || b1=='!' || b2=='!' || b1=='?' || b2=='?' || b1==')' || b2==')')
 			sen=2;
 		else
 			sen=1;
-		printf("%c%c",tolower(b1),tolower(b2));
+		fprintf (cc_fp, "%c%c",tolower(b1),tolower(b2));
 
 	}
 	return 0;
@@ -616,6 +658,198 @@ static unsigned long getColor(const char *colorName, float dim)
 	return Color.pixel;
 }
 #endif
+
+static ssize_t
+read_test_stream		(vbi_sliced *		sliced,
+				 int *			n_lines,
+				 unsigned int		max_lines)
+{
+	char buf[256];
+	double dt;
+	unsigned int n_items;
+	vbi_sliced *s;
+
+	if (ferror (stdin) || !fgets (buf, 255, stdin)) {
+		fprintf (stderr, "End of test stream\n");
+		exit (EXIT_SUCCESS);
+	}
+
+	dt = strtod (buf, NULL);
+	n_items = fgetc (stdin);
+
+	assert (n_items < max_lines);
+
+	s = sliced;
+
+	while (n_items-- > 0) {
+		int index;
+
+		index = fgetc (stdin);
+
+		s->line = (fgetc (stdin)
+			   + 256 * fgetc (stdin)) & 0xFFF;
+
+		if (index < 0) {
+			fprintf (stderr, "Bad index in test stream\n");
+			exit (EXIT_FAILURE);
+		}
+
+		switch (index) {
+		case 0:
+			s->id = VBI_SLICED_TELETEXT_B;
+			fread (s->data, 1, 42, stdin);
+			break;
+		case 1:
+			s->id = VBI_SLICED_CAPTION_625; 
+			fread (s->data, 1, 2, stdin);
+			break; 
+		case 2:
+			s->id = VBI_SLICED_VPS;
+			fread (s->data, 1, 13, stdin);
+			break;
+		case 3:
+			s->id = VBI_SLICED_WSS_625; 
+			fread (s->data, 1, 2, stdin);
+			break;
+		case 4:
+			s->id = VBI_SLICED_WSS_CPR1204; 
+			fread (s->data, 1, 3, stdin);
+			break;
+		case 7:
+			s->id = VBI_SLICED_CAPTION_525; 
+			fread(s->data, 1, 2, stdin);
+			break;
+		default:
+			fprintf (stderr,
+				 "\nUnknown data type %d "
+				 "in test stream\n", index);
+			exit (EXIT_FAILURE);
+		}
+
+		++s;
+	}
+
+	*n_lines = s - sliced;
+
+	return 1; /* success */
+}
+
+static void
+option_cc			(void)
+{
+	usecc = TRUE;
+
+	if (NULL == optarg
+	    || 0 == strcmp (optarg, "-")) {
+		cc_fp = stdout;
+		return;
+	}
+
+	cc_fp = fopen (optarg, "w");
+	if (NULL == cc_fp) {
+		fprintf (stderr, "Couldn't open '%s' for output: %s.\n",
+			 optarg, strerror (errno));
+		exit (EXIT_FAILURE);
+	}
+}
+
+static void
+option_xds			(void)
+{
+	const char *s;
+
+	usexds = TRUE;
+
+	if (NULL == optarg) {
+		unsigned int i;
+
+		for (i = 0; i < (N_ELEMENTS (info)
+				 * N_ELEMENTS (info[0])); ++i) {
+			info[0][i].print = TRUE;
+		}
+
+		return;
+	}
+
+	s = optarg;
+
+	while (0 != *s) {
+		char buf[16];
+		unsigned int len;
+
+		for (;;) {
+			if (0 == *s)
+				return;
+			if (isalnum (*s))
+				break;
+			++s;
+		}
+
+		for (len = 0; len < N_ELEMENTS (buf) - 1; ++len) {
+			if (!isalnum (*s))
+				break;
+			buf[len] = *s++;
+		}
+
+		buf[len] = 0;
+
+		if (0 == strcasecmp (buf, "timecode")) {
+			info[1][1].print = TRUE;
+		} else if (0 == strcasecmp (buf, "length")) {
+			info[1][2].print = TRUE;
+		} else if (0 == strcasecmp (buf, "title")) {
+			info[1][3].print = TRUE;
+		} else if (0 == strcasecmp (buf, "rating")) {
+			info[1][5].print = TRUE;
+		} else if (0 == strcasecmp (buf, "network")) {
+			info[5][1].print = TRUE;
+		} else if (0 == strcasecmp (buf, "call")) {
+			info[5][2].print = TRUE;
+		} else if (0 == strcasecmp (buf, "time")) {
+			info[7][1].print = TRUE;
+		} else if (0 == strcasecmp (buf, "timezone")) {
+			info[7][4].print = TRUE;
+		} else if (0 == strcasecmp (buf, "desc")) {
+			info[1][0x10].print = TRUE;
+			info[1][0x11].print = TRUE;
+			info[1][0x12].print = TRUE;
+			info[1][0x13].print = TRUE;
+			info[1][0x14].print = TRUE;
+			info[1][0x15].print = TRUE;
+			info[1][0x16].print = TRUE;
+			info[1][0x17].print = TRUE;
+		} else {
+			fprintf (stderr, "Unknown XDS info '%s'\n", buf);
+		}
+	}
+}
+
+static const char
+short_options [] = "?c::d:hkpr:stvwx::R";
+
+#ifdef HAVE_GETOPT_LONG
+static const struct option
+long_options [] = {
+	{ "help",	no_argument,		NULL,		'?' },
+	{ "cc",		optional_argument,	NULL,		'c' },
+	{ "device",	required_argument,	NULL,		'd' },
+	{ "help",	no_argument,		NULL,		'h' },
+	{ "keyword",	required_argument,	NULL,		'k' },
+	{ "plain-ascii", no_argument,		NULL,		'p' },
+	{ "raw",	required_argument,	NULL,		'r' },
+	{ "sentence",	no_argument,		NULL,		's' },
+	{ "test",	no_argument,		NULL,		't' },
+	{ "verbose",	no_argument,		NULL,		'v' },
+	{ "window",	no_argument,		NULL,		'w' },
+	{ "xds",	optional_argument,	NULL,		'x' },
+	{ "semi-raw",	no_argument,		NULL,		'R' },
+	{ NULL, 0, 0, 0 }
+};
+#else
+#  define getopt_long(ac, av, s, l, i) getopt(ac, av, s)
+#endif
+
+static int			option_index;
 
 int main(int argc,char **argv)
 {
@@ -646,10 +880,15 @@ int main(int argc,char **argv)
 #endif
 
    verbose = 0;
-   
+
+   xds_fp = stdout;
+   cc_fp = stdout;
+
    for (;;) //commandline parsing
    {
-           if (-1 == (arg = getopt(argc, argv, "?hxsckpwRr:d:v")))
+           arg = getopt_long (argc, argv, short_options,
+			      long_options, &option_index);
+           if (-1 == arg)
 		   break;
 	   switch (arg)
 	   {
@@ -668,13 +907,18 @@ int main(int argc,char **argv)
 				  );
 			   exit(0);
 		   case 'x':
-			   usexds=1; args++;
+			   option_xds ();
+			   args++;
 			   break;
 		   case 's':
 			   usesen=1; args++;
 			   break;
+		   case 't':
+			   test=1; args++;
+			   break;
 		   case 'c':
-			   usecc=1; args++;
+			   option_cc ();
+			   args++;
 			   break;
 		   case 'k':
 		           //args++;
@@ -682,7 +926,9 @@ int main(int argc,char **argv)
 			   break;
 		   case 'p':
 			   plain=1; args++;
-			   break;
+			   xds_info_prefix = "% ";
+			   xds_info_suffix = "\n";
+   			   break;
 	           case 'w':
 		           debugwin=1;
 		           break;
@@ -719,6 +965,10 @@ int main(int argc,char **argv)
    ignore_read_error = 1;
 
    do {
+      if (test) {
+	 break;
+      }
+
       /* Linux */
 
       /* DVB interface omitted, doesn't support NTSC/ATSC. */
@@ -758,15 +1008,21 @@ int main(int argc,char **argv)
 
    } while (0);
 
-   par = vbi_capture_parameters (cap);
-   assert (NULL != par);
+   if (test) {
+	   src_w = 1440;
+	   src_h = 50;
+   } else {
+	   par = vbi_capture_parameters (cap);
+	   assert (NULL != par);
 
-   src_w = par->bytes_per_line / 1;
-   src_h = par->count[0] + par->count[1];
+	   src_w = par->bytes_per_line / 1;
+	   src_h = par->count[0] + par->count[1];
 
-   if (useraw && (unsigned int) rawline >= src_h) {
-      fprintf (stderr, "-r must be in range 0 ... %u\n", src_h - 1);
-      exit (EXIT_FAILURE);
+	   if (useraw && (unsigned int) rawline >= src_h) {
+		   fprintf (stderr, "-r must be in range 0 ... %u\n",
+			    src_h - 1);
+		   exit (EXIT_FAILURE);
+	   }
    }
 
    raw = calloc (1, src_w * src_h);
@@ -819,8 +1075,12 @@ int main(int argc,char **argv)
       int r;
       int i;
 
-      r = vbi_capture_read (cap, raw, sliced,
-			    &n_lines, &timestamp, &timeout);
+      if (test) {
+	      r = read_test_stream (sliced, &n_lines, src_h);
+      } else {
+	      r = vbi_capture_read (cap, raw, sliced,
+				    &n_lines, &timestamp, &timeout);
+      }
       switch (r) {
       case -1:
 	 fprintf (stderr, "VBI read error: %d, %s%s\n",
