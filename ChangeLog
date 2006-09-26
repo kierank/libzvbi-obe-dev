@@ -1,3 +1,10 @@
+2006-09-26    <mschimek@users.sf.net>
+
+	* contrib/ntsc-cc.c: Added --long options, -x optional arg to
+	  filter out XDS packages, -c optional arg to redirect
+	  caption to a different file. Don't print % if the XDS package
+	  type is unknown.
+
 2006-09-24    <mschimek@users.sf.net>
 
 	* contrib/ntsc-cc.c (XDSdecode): Didn't handle zero bytes. Didn't

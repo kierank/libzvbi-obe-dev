@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.3 2006/05/22 08:54:36 mschimek Exp $ */
+/* $Id: ttxfilter.c,v 1.4 2006/09/26 00:38:59 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -145,7 +145,7 @@ teletext			(const uint8_t		buffer[42],
 
 	pmag = vbi_unham16p (buffer);
 	if (pmag < 0) {
-		fprintf (stderr, "Hamming error in pmag\n");
+		fprintf (stderr, "Hamming error in packet number\n");
 		return FALSE;
 	}
 
