@@ -1,3 +1,9 @@
+2006-09-27    <mschimek@users.sf.net>
+
+	* contrib/ntsc-cc.c: Replaced -x, -c optional args by new options
+	  for compatibility with earlier versions. Added a more verbose
+	  help text.
+
 2006-09-26    <mschimek@users.sf.net>
 
 	* contrib/ntsc-cc.c: Added --long options, -x optional arg to
