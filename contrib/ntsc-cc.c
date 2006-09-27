@@ -56,7 +56,14 @@ GC WinGC1;
 int x;
 #endif
 
+#undef PROGRAM
+#define PROGRAM "CCDecoder"
+#undef VERSION
+#define VERSION "0.11"
+
 #define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
+
+static char *			my_name;
 
 //XDSdecode
 static struct {
@@ -735,32 +742,14 @@ read_test_stream		(vbi_sliced *		sliced,
 }
 
 static void
-option_cc			(void)
-{
-	usecc = TRUE;
-
-	if (NULL == optarg
-	    || 0 == strcmp (optarg, "-")) {
-		cc_fp = stdout;
-		return;
-	}
-
-	cc_fp = fopen (optarg, "w");
-	if (NULL == cc_fp) {
-		fprintf (stderr, "Couldn't open '%s' for output: %s.\n",
-			 optarg, strerror (errno));
-		exit (EXIT_FAILURE);
-	}
-}
-
-static void
-option_xds			(void)
+xds_filter_option		(const char *		optarg)
 {
 	const char *s;
 
-	usexds = TRUE;
+	/* Attention: may be called multiple times. */
 
-	if (NULL == optarg) {
+	if (NULL == optarg
+	    || 0 == strcasecmp (optarg, "all")) {
 		unsigned int i;
 
 		for (i = 0; i < (N_ELEMENTS (info)
@@ -824,25 +813,61 @@ option_xds			(void)
 	}
 }
 
+static void
+usage				(FILE *			fp)
+{
+	fprintf (fp, "\
+" PROGRAM " " VERSION " -- Closed Caption and XDS decoder\n\
+Copyright (C) 2003-2006 Mike Baker, Mark K. Kim, Michael H. Schimek\n\
+<mschimek@users.sf.net>; Based on code by timecop@japan.co.jp.\n\
+This program is licensed under GPL 2 or later. NO WARRANTIES.\n\n\
+Usage: %s [options]\n\
+Options:\n\
+-? | -h | --help | --usage  Print this message and exit\n\
+-c | --cc                   Print Closed Caption (includes WebTV)\n\
+-d | --device filename      VBI device [/dev/vbi]\n\
+-f | --filter type[,type]*  Select XDS info: all, call, desc, length,\n\
+                            network, rating, time, timecode, timezone,\n\
+                            title. Multiple -f options accumulate. [all]\n\
+-k | --keyword keyword      Break caption line at this keyword (broken?).\n\
+                            Multiple -k options accumulate.\n\
+-p | --plain-ascii          Print plain ASCII, else insert VT.100 color,\n\
+                            italic and underline control codes\n\
+-r | --raw line-number      Dump raw VBI data\n\
+-s | --sentences            Decode caption by sentences\n\
+-v | --verbose              Increase verbosity\n\
+-w | --window               Open debugging window (with -r option)\n\
+-x | --xds                  Print XDS info\n\
+-C | --cc-file filename     Write caption to this file [stdout]\n\
+-R | --semi-raw             Dump semi-raw VBI data (with -r option)\n\
+-X | --xds-file filename    Write XDS info to this file [stdout]\n\
+",
+		 my_name);
+}
+
 static const char
-short_options [] = "?c::d:hkpr:stvwx::R";
+short_options [] = "?cd:f:hkpr:stvwxC:RX:";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options [] = {
 	{ "help",	no_argument,		NULL,		'?' },
-	{ "cc",		optional_argument,	NULL,		'c' },
+	{ "cc",		no_argument,		NULL,		'c' },
 	{ "device",	required_argument,	NULL,		'd' },
+	{ "filter",	required_argument,	NULL,		'f' },
 	{ "help",	no_argument,		NULL,		'h' },
 	{ "keyword",	required_argument,	NULL,		'k' },
 	{ "plain-ascii", no_argument,		NULL,		'p' },
 	{ "raw",	required_argument,	NULL,		'r' },
-	{ "sentence",	no_argument,		NULL,		's' },
+	{ "sentences",	no_argument,		NULL,		's' },
 	{ "test",	no_argument,		NULL,		't' },
 	{ "verbose",	no_argument,		NULL,		'v' },
 	{ "window",	no_argument,		NULL,		'w' },
-	{ "xds",	optional_argument,	NULL,		'x' },
+	{ "xds",	no_argument,		NULL,		'x' },
+	{ "usage",	no_argument,		NULL,		'u' },
+	{ "cc-file",	required_argument,	NULL,		'C' },
 	{ "semi-raw",	no_argument,		NULL,		'R' },
+	{ "xds-file",	required_argument,	NULL,		'X' },
 	{ NULL, 0, 0, 0 }
 };
 #else
@@ -851,16 +876,39 @@ long_options [] = {
 
 static int			option_index;
 
+static FILE *
+open_output_file		(const char *		name)
+{
+	FILE *fp;
+
+	if (NULL == name
+	    || 0 == strcmp (name, "-")) {
+		return stdout;
+	}
+
+	fp = fopen (name, "w");
+	if (NULL == fp) {
+		fprintf (stderr, "Couldn't open '%s' for output: %s.\n",
+			 name, strerror (errno));
+		exit (EXIT_FAILURE);
+	}
+
+	return fp;
+}
+
 int main(int argc,char **argv)
 {
-   const char *vbifile = "/dev/vbi";
    unsigned char buf[65536];
    int arg;
    int args=0;
    int vbifd;
    fd_set rfds;
    int x;
-   int verbose;
+	const char *device_file_name;
+	const char *cc_file_name;
+	const char *xds_file_name;
+	int verbose;
+	int have_xds_filter_option;
 
 #ifdef HAVE_ZVBI
 
@@ -879,74 +927,109 @@ int main(int argc,char **argv)
 
 #endif
 
-   verbose = 0;
+	my_name = argv[0];
 
-   xds_fp = stdout;
-   cc_fp = stdout;
+	device_file_name = "/dev/vbi";
+	cc_file_name = "-";
+	xds_file_name = "-";
 
-   for (;;) //commandline parsing
-   {
-           arg = getopt_long (argc, argv, short_options,
-			      long_options, &option_index);
-           if (-1 == arg)
-		   break;
-	   switch (arg)
-	   {
-		   case '?':
-		   case 'h':
-			   printf("CCDecoder 0.10 (mbm@linux.com)\n"
-				  "\tx \t decode XDS info\n"
-				  "\ts \t decode by sentences \n"
-				  "\tc \t decode Closed Caption (includes webtv)\n"
-				  "\tk word \t keywords to break line at [broken???]\n"
-				  "\tp \t plain output. do not display underline and italic\n"
-				  "\tw \t open debugging window (used with -r option)\n"
-				  "\tR \t semi-raw data (used with -r option)\n"
-				  "\tr #\t raw dump of data (use 11 or 27 as line number)\n"
-				  "\td dev \t file to open (default: /dev/vbi)\n"
-				  );
-			   exit(0);
-		   case 'x':
-			   option_xds ();
-			   args++;
-			   break;
-		   case 's':
-			   usesen=1; args++;
-			   break;
-		   case 't':
-			   test=1; args++;
-			   break;
-		   case 'c':
-			   option_cc ();
-			   args++;
-			   break;
-		   case 'k':
-		           //args++;
-			   keyword[keywords++]=optarg;
-			   break;
-		   case 'p':
-			   plain=1; args++;
-			   xds_info_prefix = "% ";
-			   xds_info_suffix = "\n";
-   			   break;
-	           case 'w':
-		           debugwin=1;
-		           break;
-	           case 'R':
-		           semirawdata=1;
-		           break;
-		   case 'r':
-			   useraw=1; args++;
-			   rawline=atoi(optarg);
-			   break;
-	           case 'd':
-			   vbifile = optarg;
-			   break;
-	           case 'v':
-			   ++verbose;
-			   break;
-	   }
-   }
+	verbose = 0;
+
+	have_xds_filter_option = FALSE;	
+
+	for (;;) {
+		int c;
+
+		c = getopt_long (argc, argv, short_options,
+				 long_options, &option_index);
+		if (-1 == c)
+			break;
+
+		switch (c) {
+		case '?':
+		case 'h':
+			usage (stdout);
+			exit (EXIT_SUCCESS);
+
+		case 'c':
+			usecc=1;
+			break;
+
+		case 'd':
+			assert (NULL != optarg);
+			device_file_name = optarg;
+			break;
+
+		case 'f':
+			usexds = TRUE;
+			xds_filter_option (optarg);
+			have_xds_filter_option = TRUE;
+			break;
+
+		case 'k':
+			keyword[keywords++]=optarg;
+			break;
+
+		case 'p':
+			plain=1;
+			xds_info_prefix = "% ";
+			xds_info_suffix = "\n";
+			break;
+
+		case 'r':
+			assert (NULL != optarg);
+			useraw=1;
+			rawline=atoi(optarg);
+			break;
+
+		case 's':
+			usesen=1;
+			break;
+
+		case 't':
+			test=1;
+			break;
+
+		case 'v':
+			++verbose;
+			break;
+
+		case 'w':
+			debugwin=1;
+			break;
+
+		case 'x':
+			usexds=1;
+			break;
+
+		case 'C':
+			assert (NULL != optarg);
+			cc_file_name = optarg;
+			break;
+
+		case 'R':
+			semirawdata=1;
+			break;
+
+		case 'X':
+			assert (NULL != optarg);
+			xds_file_name = optarg;
+			break;
+
+		default:
+			usage (stderr);
+			exit (EXIT_FAILURE);
+		}
+	}
+
+	if (!(usecc | usexds | useraw)) {
+		fprintf (stderr, "Give one of the -c, -x or -r options "
+			 "or -h for help.\n");
+		exit (EXIT_FAILURE);
+	}
+
+	if (usexds && !have_xds_filter_option)
+		xds_filter_option ("all");
 
 #ifdef HAVE_ZVBI
 
@@ -973,7 +1056,7 @@ int main(int argc,char **argv)
 
       /* DVB interface omitted, doesn't support NTSC/ATSC. */
 
-      cap = vbi_capture_v4l2_new (vbifile,
+      cap = vbi_capture_v4l2_new (device_file_name,
 				  /* buffers */ 5,
 				  &services,
 				  strict,
@@ -988,7 +1071,7 @@ int main(int argc,char **argv)
 
       free (errstr);
 
-      cap = vbi_capture_v4l_new (vbifile,
+      cap = vbi_capture_v4l_new (device_file_name,
 				 scanning,
 				 &services,
 				 strict,
@@ -1037,18 +1120,21 @@ int main(int argc,char **argv)
 
 #else
 
-   if ((vbifd = open(vbifile, O_RDONLY)) < 0) {
+   if ((vbifd = open(device_file_name, O_RDONLY)) < 0) {
 	perror(vbifile);
 	exit(1);
    }
 
 #endif
 
-   if (!args)
-	   exit(0);
+   if (usecc)
+	   cc_fp = open_output_file (cc_file_name);
+
+   if (usexds)
+	   xds_fp = open_output_file (xds_file_name);
+
    for (x=0;x<keywords;x++)
 	printf("Keyword(%d): %s\n",x,keyword[x]);
-
 
 #ifndef X_DISPLAY_MISSING
    if (debugwin) {
