@@ -1,8 +1,14 @@
+2006-09-29    <mschimek@users.sf.net>
+
+	* contrib/ntsc-cc.c, test/capture.c, test/decode.c:
+	* test/ttxfilter.c, test/sliced2pes.c: Explicitely fflush output
+	  buffers to ensure real time output of CC/XDS data.
+
 2006-09-27    <mschimek@users.sf.net>
 
 	* contrib/ntsc-cc.c: Replaced -x, -c optional args by new options
 	  for compatibility with earlier versions. Added a more verbose
-	  help text.
+	  help text. Added an option to suppress WebTV links.
 
 2006-09-26    <mschimek@users.sf.net>
 
