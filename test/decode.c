@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.17 2006/09/24 03:10:04 mschimek Exp $ */
+/* $Id: decode.c,v 1.18 2006/09/29 09:29:43 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -913,6 +913,8 @@ decode				(const vbi_sliced *	s,
 		++s;
 		--n_lines;
 	}
+
+	fflush (stdout);
 }
 
 static void

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.24 2006/05/25 08:11:24 mschimek Exp $ */
+/* $Id: capture.c,v 1.25 2006/09/29 09:29:17 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -305,6 +305,8 @@ binary_sliced(vbi_sliced *s, double time, int lines)
 			}
 		}
 	}
+
+	fflush (stdout);
 }
 
 static vbi_bool
@@ -317,6 +319,9 @@ binary_ts_pes			(vbi_dvb_mux *		mx,
 	user_data = user_data;
 
 	fwrite (packet, 1, packet_size, stdout);
+
+	fflush (stdout);
+
 	return TRUE;
 }
 

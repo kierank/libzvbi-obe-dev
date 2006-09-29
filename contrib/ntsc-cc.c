@@ -101,6 +101,7 @@ char plain=0;
 char usesen=0;
 char debugwin=0;
 char test=0;
+char usewebtv=1;
 
 char rawline=-1;
 
@@ -294,6 +295,8 @@ print_xds_info			(unsigned int		mode,
 			 xds_info_suffix);
 		break;
 	}
+
+	fflush (xds_fp);
 }
 
 static int XDSdecode(int data)
@@ -426,6 +429,7 @@ static int webtv_check(char * buf,int len)
 			fprintf(cc_fp, "\33[35mWEBTV: %s\33[0m\n",buf-nbytes-1);
 		else
 			fprintf(cc_fp, "WEBTV: %s\n",buf-nbytes-1);
+		fflush (cc_fp);
 	}
 	return 0;
 }
@@ -448,7 +452,7 @@ static int CCdecode(int data)
 	{
 		if(len < 255) ccbuf[ccmode][len++]=b1;
 		if ((b2&0x60) && (len < 255)) ccbuf[ccmode][len++]=b2;
-		if (b1 == ']' || b2 == ']')
+		if ((b1 == ']' || b2 == ']') && usewebtv)
 			webtv_check(ccbuf[ccmode],len);
 	}
 	else if ((b1&0x10) && (b2>0x1F) && (data != lastcode)) //codes are always transmitted twice (apparently not, ignore the second occurance)
@@ -472,6 +476,7 @@ static int CCdecode(int data)
 			{
 				case 0x00:	//attribute
 					fprintf (cc_fp, "<ATTRIBUTE %d %d>\n",b1,b2);
+					fflush (cc_fp);
 					break;
 				case 0x01:	//midrow or char
 					switch (b2&0x70)
@@ -536,6 +541,7 @@ static int CCdecode(int data)
 								fprintf (cc_fp, "%s\33[m\n",ccbuf[ccmode]);
 							else
 								fprintf (cc_fp, "%s\n",ccbuf[ccmode]);
+							fflush (cc_fp);
 							/* FALL */
 						case 0x2A: //text restart
 						case 0x2E: //erase non-displayed memory
@@ -570,6 +576,7 @@ static int print_raw(int data)
 
 	if (!semirawdata) {
 	  fprintf(stderr,"%c%c",b1,b2);
+	  fflush(stderr);
 	  return 0;
 	}
 
@@ -579,6 +586,7 @@ static int print_raw(int data)
 	if ( ( b1 >= 0x10 ) && ( b1 <= 0x1F ) ) {
 	  if ( ( b2 >= 0x20 ) && ( b2 <= 0x7F ) ) 
 	    fprintf(stderr,"[%02X-%02X]",b1,b2); 
+	    fflush(stderr);
 	  return 0;
 	}
 
@@ -589,17 +597,20 @@ static int print_raw(int data)
 	  fprintf(stderr,"(%02x)%c",b1,b2);
 	  //fprintf(stderr,"%c",b2);
 	  //fprintf(stderr,"%c%c",0,b2);
+	  fflush(stderr);
 	  return 0;
 	}
 	if ( ( b2 >= 0x0 ) && ( b2 <= 0xF ) ) {
 	  fprintf(stderr,"%c{%02x}",b1,b2);
 	  //fprintf(stderr,"%c",b1);
 	  //fprintf(stderr,"%c%c",b1,1);
+	  fflush(stderr);
 	  return 0;
 	}
 
 	// just classic two chars to print.
 	fprintf(stderr,"%c%c",b1,b2);
+	fflush(stderr);
 
 	return 0;
 }
@@ -617,11 +628,13 @@ static int sentence(int data)
 		if (sen==1)
 		{
 			fprintf (cc_fp, " ");
+			fflush (cc_fp);
 			sen=0;
 		}
 		if (inval>10 && sen)
 		{
 			fprintf (cc_fp, "\n");
+			fflush (cc_fp);
 			sen=0;
 		}
 		return 0;
@@ -641,7 +654,7 @@ static int sentence(int data)
 		else
 			sen=1;
 		fprintf (cc_fp, "%c%c",tolower(b1),tolower(b2));
-
+		fflush (cc_fp);
 	}
 	return 0;
 }
@@ -824,12 +837,13 @@ This program is licensed under GPL 2 or later. NO WARRANTIES.\n\n\
 Usage: %s [options]\n\
 Options:\n\
 -? | -h | --help | --usage  Print this message and exit\n\
+-b | --no-webtv             Do not print WebTV links\n\
 -c | --cc                   Print Closed Caption (includes WebTV)\n\
 -d | --device filename      VBI device [/dev/vbi]\n\
 -f | --filter type[,type]*  Select XDS info: all, call, desc, length,\n\
                             network, rating, time, timecode, timezone,\n\
                             title. Multiple -f options accumulate. [all]\n\
--k | --keyword keyword      Break caption line at this keyword (broken?).\n\
+-k | --keyword string       Break caption line at this word (broken?).\n\
                             Multiple -k options accumulate.\n\
 -p | --plain-ascii          Print plain ASCII, else insert VT.100 color,\n\
                             italic and underline control codes\n\
@@ -838,20 +852,21 @@ Options:\n\
 -v | --verbose              Increase verbosity\n\
 -w | --window               Open debugging window (with -r option)\n\
 -x | --xds                  Print XDS info\n\
--C | --cc-file filename     Write caption to this file [stdout]\n\
+-C | --cc-file filename     Append caption to this file [stdout]\n\
 -R | --semi-raw             Dump semi-raw VBI data (with -r option)\n\
--X | --xds-file filename    Write XDS info to this file [stdout]\n\
+-X | --xds-file filename    Append XDS info to this file [stdout]\n\
 ",
 		 my_name);
 }
 
 static const char
-short_options [] = "?cd:f:hkpr:stvwxC:RX:";
+short_options [] = "?bcd:f:hkpr:stvwxC:RX:";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options [] = {
 	{ "help",	no_argument,		NULL,		'?' },
+	{ "no-webtv",	no_argument,		NULL,		'b' },
 	{ "cc",		no_argument,		NULL,		'c' },
 	{ "device",	required_argument,	NULL,		'd' },
 	{ "filter",	required_argument,	NULL,		'f' },
@@ -883,14 +898,15 @@ open_output_file		(const char *		name)
 
 	if (NULL == name
 	    || 0 == strcmp (name, "-")) {
-		return stdout;
-	}
-
-	fp = fopen (name, "w");
-	if (NULL == fp) {
-		fprintf (stderr, "Couldn't open '%s' for output: %s.\n",
-			 name, strerror (errno));
-		exit (EXIT_FAILURE);
+		fp = stdout;
+	} else {
+		fp = fopen (name, "a");
+		if (NULL == fp) {
+			fprintf (stderr,
+				 "Couldn't open '%s' for appending: %s.\n",
+				 name, strerror (errno));
+			exit (EXIT_FAILURE);
+		}
 	}
 
 	return fp;
@@ -950,6 +966,10 @@ int main(int argc,char **argv)
 		case 'h':
 			usage (stdout);
 			exit (EXIT_SUCCESS);
+
+		case 'b':
+			usewebtv=0; /* sic, compatibility */
+			break;
 
 		case 'c':
 			usecc=1;

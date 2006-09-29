@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.4 2006/09/26 00:38:59 mschimek Exp $ */
+/* $Id: ttxfilter.c,v 1.5 2006/09/29 09:30:06 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -294,6 +294,8 @@ old_mainloop			(void)
 						/* n_lines */ 1,
 						timestamp);
 			assert (success);
+
+			fflush (stdout);
 		}
 	}
 
