@@ -3,7 +3,7 @@
  * (based on code by timecop@japan.co.jp)
  * Buffer overflow bugfix by Mark K. Kim (dev@cbreak.org), 2003.05.22
  * -p fix and libzvbi port (C) 2005 Michael H. Schimek <mschimek@users.sf.net>
- * More fixes (C) 2006 Michael H. Schimek <mschimek@users.sf.net>
+ * More fixes and improvements (C) 2006 Michael H. Schimek
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,6 +64,7 @@ int x;
 #define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
 
 static char *			my_name;
+static int			channel = -1;
 
 //XDSdecode
 static struct {
@@ -457,7 +458,10 @@ static int CCdecode(int data)
 	}
 	else if ((b1&0x10) && (b2>0x1F) && (data != lastcode)) //codes are always transmitted twice (apparently not, ignore the second occurance)
 	{
-		ccmode=((b1>>3)&1)+1;
+		if (channel < 0) {
+			/* WTF? */
+			ccmode=((b1>>3)&1)+1;
+		}
 		len = strlen(ccbuf[ccmode]);
 
 		if (b2 & 0x40)	//preamble address code (row & indent)
@@ -679,6 +683,72 @@ static unsigned long getColor(const char *colorName, float dim)
 }
 #endif
 
+static int
+caption_filter			(unsigned int		c1,
+				 unsigned int		c2)
+{
+	static int cur_ch = -1;
+	static unsigned int in_xds = 0;
+	unsigned int p;
+	
+	p = c1 + c2 * 256;
+	p ^= p >> 4;
+	p ^= p >> 2;
+	p ^= p >> 1;
+
+	c1 &= 0x7F;
+	c2 &= 0x7F;
+
+	if (0x0101 != (p & 0x0101)) {
+		/* Parity error. */
+		cur_ch = -1;
+	} else if (0 == c1) {
+		/* Filler. */
+	} else if (c1 < 0x10) {
+		in_xds = TRUE;
+	} else if (c1 < 0x20) {
+		in_xds = FALSE;
+
+		if (c2 < 0x20) {
+			/* Invalid. */
+		} else {
+			cur_ch &= ~1;
+			cur_ch |= (c1 >> 3) & 1;
+
+			if (c2 < 0x30 && 0x14 == (c1 & 0xF6)) {
+				cur_ch &= ~2;
+				cur_ch |= (c1 << 1) & 2;
+
+				switch (c2) {
+				case 0x20: /* RCL */
+				case 0x25: /* RU2 */
+				case 0x26: /* RU3 */
+				case 0x27: /* RU4 */
+				case 0x29: /* RDC */
+					cur_ch &= 3;
+					break;
+
+				case 0x2A: /* TR */
+				case 0x2B: /* RTD */
+					cur_ch &= 3; /* now >= 0 */
+					cur_ch |= 4;
+					break;
+
+				default:
+					break;
+				}
+			}
+		}
+	}
+
+	if (0) {
+		fprintf (stderr, "in_xds=%d cur_ch=%d channel=%d\n",
+			 in_xds, cur_ch, channel);
+	}
+
+	return (!in_xds && cur_ch == channel);
+}
+
 static ssize_t
 read_test_stream		(vbi_sliced *		sliced,
 				 int *			n_lines,
@@ -845,6 +915,7 @@ Options:\n\
                             title. Multiple -f options accumulate. [all]\n\
 -k | --keyword string       Break caption line at this word (broken?).\n\
                             Multiple -k options accumulate.\n\
+-l | --channel number       Select caption channel 1 ... 4 [no filter]\n\
 -p | --plain-ascii          Print plain ASCII, else insert VT.100 color,\n\
                             italic and underline control codes\n\
 -r | --raw line-number      Dump raw VBI data\n\
@@ -860,7 +931,7 @@ Options:\n\
 }
 
 static const char
-short_options [] = "?bcd:f:hkpr:stvwxC:RX:";
+short_options [] = "?bcd:f:hkl:pr:stvwxC:RX:";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -872,6 +943,7 @@ long_options [] = {
 	{ "filter",	required_argument,	NULL,		'f' },
 	{ "help",	no_argument,		NULL,		'h' },
 	{ "keyword",	required_argument,	NULL,		'k' },
+	{ "channel",	required_argument,	NULL,		'l' },
 	{ "plain-ascii", no_argument,		NULL,		'p' },
 	{ "raw",	required_argument,	NULL,		'r' },
 	{ "sentences",	no_argument,		NULL,		's' },
@@ -984,6 +1056,18 @@ int main(int argc,char **argv)
 			usexds = TRUE;
 			xds_filter_option (optarg);
 			have_xds_filter_option = TRUE;
+			break;
+
+		case 'l':
+			assert (NULL != optarg);
+			channel = strtol (optarg, NULL, 0) - 1;
+			if (channel < 0 || channel > 7) {
+				fprintf (stderr,
+					 "Invalid channel number %d, "
+					 "should be 1 ... 8.\n",
+					 channel + 1);
+				exit (EXIT_FAILURE);
+			}
 			break;
 
 		case 'k':
@@ -1242,24 +1326,33 @@ int main(int argc,char **argv)
 		  fprintf (stderr, "No data in this frame\n");
 
 		for (i = 0; i < n_lines; ++i) {
+		   unsigned int c1, c2;
+
+		   c1 = sliced[i].data[0];
+		   c2 = sliced[i].data[1];
+
 		   if (verbose > 2)
 		     fprintf (stderr, "Line %3d %02x %02x\n",
-		    	      sliced[i].line,
-			      sliced[i].data[0],
-			      sliced[i].data[1]);
+		    	      sliced[i].line, c1, c2);
 		   /* No need to check sliced[i].id because we
 		      requested only caption. */
 		   if (21 == sliced[i].line) {
-		      if (usecc)
-			 CCdecode(sliced[i].data[0]
-				  + sliced[i].data[1] * 256);
-		      if (usesen)
-			 sentence(sliced[i].data[0]
-				  + sliced[i].data[1] * 256);
+		      if (channel < 0 /* compatibility */
+		          || caption_filter (c1, c2)) {
+		         if (usecc)
+			    CCdecode(c1 + c2 * 256);
+		         if (usesen)
+			    sentence(c1 + c2 * 256);
+		      }
 		   } else if (284 == sliced[i].line) {
+		      if (channel >= 4 && caption_filter (c1, c2)) {
+		         if (usecc)
+			    CCdecode(c1 + c2 * 256);
+		         if (usesen)
+			    sentence(c1 + c2 * 256);
+		      }
 		      if (usexds)
-			 XDSdecode(sliced[i].data[0]
-				  + sliced[i].data[1] * 256);
+			 XDSdecode(c1 + c2 * 256);
 		   }
 		}
 #ifndef X_DISPLAY_MISSING

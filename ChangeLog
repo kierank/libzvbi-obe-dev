@@ -1,5 +1,6 @@
 2006-09-29    <mschimek@users.sf.net>
 
+	* contrib/ntsc-cc.c: Added a caption channel filter.
 	* contrib/ntsc-cc.c, test/capture.c, test/decode.c:
 	* test/ttxfilter.c, test/sliced2pes.c: Explicitely fflush output
 	  buffers to ensure real time output of CC/XDS data.
