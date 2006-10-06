@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.18 2006/09/29 09:29:43 mschimek Exp $ */
+/* $Id: decode.c,v 1.19 2006/10/06 19:23:15 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -41,31 +41,24 @@
 #include "src/version.h"
 #if 2 == VBI_VERSION_MINOR
 #  include "src/bcd.h"
+#  include "src/conv.h"
 #  include "src/pfc_demux.h"
 #  include "src/dvb_demux.h"
 #  include "src/idl_demux.h"
 #  include "src/xds_demux.h"
 #  include "src/vps.h"
 #  include "src/hamm.h"
+#  include "src/lang.h"
 #  include "sliced.h"		/* sliced data from file */
-#  define HAVE_VBI_PFC_DEMUX 1 /* XXX port me */
 #else /* 0.3 */
 #  include "src/zvbi.h"
 #  include "src/misc.h"		/* _vbi_to_ascii() */
-   /* XXX update me */
-#  define vbi_dvb_pes_demux_new _vbi_dvb_pes_demux_new
-#  define vbi_dvb_demux_cor _vbi_dvb_demux_cor
-#  define vbi_dvb_demux_delete _vbi_dvb_demux_delete
 #endif
 
 #define _(x) x /* i18n TODO */
 
 /* Will be installed one day. */
 #define PROGRAM_NAME "zvbi-decode"
-
-#ifndef PRId64
-#  define PRId64 "lld"
-#endif
 
 static vbi_bool			source_is_pes; /* ATSC/DVB */
 
@@ -95,9 +88,7 @@ static unsigned int		option_idl_address = 0;
 
 /* Demultiplexers. */
 
-#ifdef HAVE_VBI_PFC_DEMUX
 static vbi_pfc_demux *		pfc;
-#endif
 static vbi_dvb_demux *		dvb;
 static vbi_idl_demux *		idl;
 static vbi_xds_demux *		xds;
@@ -136,6 +127,23 @@ no_mem_exit			(void)
 }
 
 static void
+put_cc_char			(unsigned int		c1,
+				 unsigned int		c2)
+{
+	uint16_t ucs2_str[1];
+
+	/* All caption characters are representable
+	   in UTF-8, but not necessarily in ASCII. */
+	ucs2_str[0] = vbi_caption_unicode ((c1 * 256 + c2) & 0x777F,
+					   /* to_upper */ FALSE);
+
+	vbi_fputs_iconv_ucs2 (stdout,
+			       vbi_locale_codeset (),
+			       ucs2_str, 1,
+			       /* repl_char */ '?');
+}
+
+static void
 caption_command			(unsigned int		line,
 				 unsigned int		c1,
 				 unsigned int		c2)
@@ -151,11 +159,14 @@ caption_command			(unsigned int		line,
 	if (0 == c1) {
 		printf ("null\n");
 		return;
+	} else if (c2 < 0x20) {
+		printf ("invalid\n");
+		return;
 	}
 
 	/* Some common bit groups. */
 
-	ch = (c1 >> 3) & 1; /* channel (language) */
+	ch = (c1 >> 3) & 1; /* channel */
 	a7 = c1 & 7;
 	f = c1 & 1; /* field */
 	b7 = (c2 >> 1) & 7;
@@ -171,7 +182,7 @@ caption_command			(unsigned int		line,
 		};
 		unsigned int rrrr;
 
-		/* Preamble Address Codes -- 001 crrr  1ri xxxu */
+		/* Preamble Address Codes -- 001 crrr  1ri bbbu */
   
 		rrrr = a7 * 2 + ((c2 >> 5) & 1);
 
@@ -184,106 +195,54 @@ caption_command			(unsigned int		line,
 		return;
 	}
 
-	switch (c1 & 7) {
-	case 0:
-		if (c2 & 0x10)
-			break;
+	/* Control codes -- 001 caaa  01x bbbu */
 
-		printf ("bkg. color ch=%u color=%u translucent=%u\n",
-			ch, b7, u);
-		return;
+	switch (a7) {
+	case 0:
+		if (c2 < 0x30) {
+			const char *mnemo [16] = {
+				"BWO", "BWS", "BGO", "BGS",
+				"BBO", "BBS", "BCO", "BCS",
+				"BRO", "BRS", "BYO", "BYS",
+				"BMO", "BMS", "BAO", "BAS"
+			};
+
+			printf ("%s ch=%u\n", mnemo[c2 & 0xF], ch);
+			return;
+		}
+
+		break;
 
 	case 1:
-		if (c2 & 0x10) {
-#if 3 == VBI_VERSION_MINOR /* XXX port me back */
-			uint16_t ucs2_str[1];
-
-			c2 &= 15;
-
-			printf ("special character ch=%u %u='",
-				ch, c2);
-			/* All caption characters are representable
-			   in UTF-8, but not necessarily in ASCII. */
-			ucs2_str[0] = vbi_caption_unicode (c2);
-			vbi_fputs_locale_ucs2 (stdout, ucs2_str, 1);
-			puts ("'");
-#else
-			printf ("special character ch=%u %u\n",
-				ch, c2 & 15);
-#endif
-		} else {
+		if (c2 < 0x30) {
 			printf ("mid-row ch=%u color=%u u=%u\n", ch, b7, u);
+		} else {
+			printf ("special character ch=%u 0x%02x%02x='",
+				ch, c1, c2);
+			put_cc_char (c1, c2);
+			puts ("'");
 		}
 
 		return;
 
-	case 2: /* ? */
-	case 3: /* ? */
-		break;
+	case 2: /* first group */
+	case 3: /* second group */
+		printf ("extended character ch=%u 0x%02x%02x='", ch, c1, c2);
+		put_cc_char (c1, c2);
+		puts ("'");
+		return;
 
-	case 4:
-	case 5:
-		if (c2 & 0x10)
-			break;
+	case 4: /* f=0 */
+	case 5: /* f=1 */
+		if (c2 < 0x30) {
+			const char *mnemo [16] = {
+				"RCL", "BS",  "AOF", "AON",
+				"DER", "RU2", "RU3", "RU4",
+				"FON", "RDC", "TR",  "RTD",
+				"EDM", "CR",  "ENM", "EOC"
+			};
 
-		switch (c2 & 15) {
-		case 0:	
-			printf ("resume caption ch=%u f=%u\n", ch, f);
-			return;
-
-		case 1:
-			printf ("backspace ch=%u f=%u\n", ch, f);
-			return;
-
-		case 2:
-			printf ("alarm off ch=%u f=%u\n", ch, f);
-			return;
-
-		case 3:
-			printf ("alarm on ch=%u f=%u\n", ch, f);
-			return;
-
-		case 4:
-			printf ("delete to end of row ch=%u f=%u\n", ch, f);
-			return;
-
-		case 5:
-		case 6:
-		case 7:
-			printf ("roll-up caption ch=%u f=%u rows=%u\n",
-				ch, f, (c2 & 7) - 3);
-			return;
-
-		case 8:
-			printf ("flash on ch=%u f=%u\n", ch, f);
-			return;
-
-		case 9:
-			printf ("resume direct ch=%u f=%u\n", ch, f);
-			return;
-
-		case 10:
-			printf ("text restart ch=%u f=%u\n", ch, f);
-			return;
-
-		case 11:
-			printf ("resume text ch=%u f=%u\n", ch, f);
-			return;
-
-		case 12:
-			printf ("erase displayed ch=%u f=%u\n", ch, f);
-			return;
-
-		case 13:
-			printf ("carriage return ch=%u f=%u\n", ch, f);
-			return;
-
-		case 14:
-			printf ("erase non-displayed ch=%u f=%u\n", ch, f);
-			return;
-
-		case 15:
-			printf ("end of caption ch=%u f=%u\n", ch, f);
+			printf ("%s ch=%u f=%u\n", mnemo[c2 & 0xF], ch, f);
 			return;
 		}
 
@@ -295,19 +254,22 @@ caption_command			(unsigned int		line,
 	case 7:
 		switch (c2) {
 		case 0x21 ... 0x23:
-			printf ("tab ch=%u offs=%u\n", ch, c2 & 3);
+			printf ("TO%u ch=%u\n", c2 - 0x20, ch);
 			return;
 
 		case 0x2D:
-			printf ("transp. bkg. ch=%u\n", ch);
+			printf ("BT ch=%u\n", ch);
 			return;
 
 		case 0x2E:
-		case 0x2F:
-			printf ("black bkg. ch=%u u=%u\n", ch, u);
+			printf ("FA ch=%u\n", ch);
 			return;
 
-		default: /* ? */
+		case 0x2F:
+			printf ("FAU ch=%u\n", ch);
+			return;
+
+		default:
 			break;
 		}
 
@@ -356,33 +318,28 @@ caption				(const uint8_t		buffer[2],
 				(c1 < 0) ? ">" : "", buffer[0] & 0xFF,
 				(c2 < 0) ? ">" : "", buffer[1] & 0xFF);
 		} else if (c1 >= 0x20) {
-#if 3 == VBI_VERSION_MINOR /* XXX port me back */
-			uint16_t ucs2_str[2];
+			char text[2];
 
 			printf ("CC line=%3u text 0x%02x 0x%02x '",
 				line, c1, c2);
 
 			/* All caption characters are representable
 			   in UTF-8, but not necessarily in ASCII. */
-			ucs2_str[0] = vbi_caption_unicode (c1);
-			if (c2 >= 0x20) {
-				ucs2_str[1] = vbi_caption_unicode (c2);
-				vbi_fputs_locale_ucs2 (stdout, ucs2_str, 2);
-			} else {
-				vbi_fputs_locale_ucs2 (stdout, ucs2_str, 1);
-			}
+			text[0] = c1;
+			text[1] = c2; /* may be zero */
+
+			/* Error ignored. */
+			vbi_fputs_iconv (stdout,
+					 vbi_locale_codeset (),
+					 /* src_codeset */ "EIA-608",
+					 text, 2, /* repl_char */ '?');
 
 			puts ("'");
-#else
-			printf ("CC line=%3u text 0x%02x 0x%02x '%c%c'\n",
-				line, c1, c2,
-				_vbi_to_ascii (c1),
-				_vbi_to_ascii (c2));
-#endif
 		} else if (0 == c1 || c1 >= 0x10) {
 			caption_command (line, c1, c2);
 		} else if (option_decode_xds) {
-			printf ("CC line=%3u cmd 0x%02x 0x%02x ", line, c1, c2);
+			printf ("CC line=%3u cmd 0x%02x 0x%02x ",
+				line, c1, c2);
 			if (0x0F == c1)
 				puts ("XDS packet end");
 			else
@@ -674,7 +631,6 @@ teletext			(const uint8_t		buffer[42],
 	unsigned int magazine;
 	unsigned int packet;
 
-#ifdef HAVE_VBI_PFC_DEMUX
 	if (NULL != pfc) {
 		if (!vbi_pfc_demux_feed (pfc, buffer)) {
 			printf (_("Error in Teletext "
@@ -682,7 +638,6 @@ teletext			(const uint8_t		buffer[42],
 			return;
 		}
 	}
-#endif
 
 	if (!(option_decode_ttx |
 	      option_decode_8301 |
@@ -765,16 +720,6 @@ vps				(const uint8_t		buffer[13],
 			return;
 		}
 
-		if (option_dump_hex) {
-			unsigned int j;
-
-			printf ("VPS line=%3u ", line);
-			for (j = 0; j < 13; ++j)
-				printf ("%02x ", buffer[j]);
-			fputc ('\n', stdout);
-			return;
-		}
-
 		if (!vbi_decode_vps_cni (&cni, buffer)) {
 			printf (_("Error in VPS packet CNI.\n"));
 			return;
@@ -845,6 +790,8 @@ wss_625				(const uint8_t		buffer[2])
 			return;
 		}
 
+		fputs ("WSS ", stdout);
+
 		_vbi_aspect_ratio_dump (&ar, stdout);
 
 		putchar ('\n');
@@ -913,8 +860,6 @@ decode				(const vbi_sliced *	s,
 		++s;
 		--n_lines;
 	}
-
-	fflush (stdout);
 }
 
 static void
@@ -1092,7 +1037,7 @@ Decoding options:\n"
                        -i     decode IDL packets\n\
                        -a     decode everything\n\
                        -a -i  everything except IDL\n\
--l | --idl-ch N\n\
+-c | --idl-ch N\n\
 -d | --idl-addr NNN\n\
                        Decode Teletext IDL format A data from channel N,\n\
                        service packet address NNN [0]\n\
@@ -1282,7 +1227,6 @@ main				(int			argc,
 	if (isatty (STDIN_FILENO))
 		error_exit (_("No VBI data on standard input."));
 
-#ifdef HAVE_VBI_PFC_DEMUX
 	if (0 != option_pfc_pgno) {
 		pfc = vbi_pfc_demux_new (option_pfc_pgno,
 					 option_pfc_stream,
@@ -1291,7 +1235,6 @@ main				(int			argc,
 		if (NULL == pfc)
 			no_mem_exit ();
 	}
-#endif
 
 	if (0 != option_idl_channel) {
 		idl = vbi_idl_a_demux_new (option_idl_channel,
@@ -1328,9 +1271,7 @@ main				(int			argc,
 
 	vbi_dvb_demux_delete (dvb);
 	vbi_idl_demux_delete (idl);
-#ifdef HAVE_VBI_PFC_DEMUX
 	vbi_pfc_demux_delete (pfc);
-#endif
 	vbi_xds_demux_delete (xds);
 
 	exit (EXIT_SUCCESS);
