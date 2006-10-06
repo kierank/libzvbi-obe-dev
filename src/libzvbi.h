@@ -171,6 +171,61 @@ vbi_is_bcd(unsigned int bcd)
 	return (((bcd + x) ^ (bcd ^ x)) & 0x11111110) == 0;
 }
 
+/* conv.h */
+
+#include <inttypes.h>		/* uint16_t */
+
+#define VBI_NUL_TERMINATED -1
+
+extern size_t
+vbi_strlen_ucs2			(const uint16_t *	src);
+extern char *
+vbi_strndup_iconv		(const char *		dst_codeset,
+				 const char *		src_codeset,
+				 const char *		src,
+				 size_t			src_size,
+				 int			repl_char)
+  __attribute__ ((_vbi_alloc));
+extern char *
+vbi_strndup_iconv_ucs2		(const char *		dst_codeset,
+				 const uint16_t *	src,
+				 ssize_t		src_length,
+				 int			repl_char)
+  __attribute__ ((_vbi_alloc));
+extern char *
+vbi_strndup_iconv_caption	(const char *		dst_codeset,
+				 const char *		src,
+				 ssize_t		src_length,
+				 int			repl_char)
+  __attribute__ ((_vbi_alloc));
+#if 3 == VBI_VERSION_MINOR
+extern char *
+vbi_strndup_iconv_teletext	(const char *		dst_codeset,
+				 const vbi_ttx_charset *cs,
+				 const uint8_t *	src,
+				 ssize_t		src_length,
+				 int			repl_char)
+  __attribute__ ((_vbi_alloc,
+		  _vbi_nonnull (2)));
+#endif
+extern vbi_bool
+vbi_fputs_iconv			(FILE *			fp,
+				 const char *		dst_codeset,
+				 const char *		src_codeset,
+				 const char *		src,
+				 size_t			src_size,
+				 int			repl_char)
+  __attribute__ ((_vbi_nonnull (1)));
+extern vbi_bool
+vbi_fputs_iconv_ucs2		(FILE *			fp,
+				 const char *		dst_codeset,
+				 const uint16_t *	src,
+				 ssize_t		src_length,
+				 int			repl_char)
+  __attribute__ ((_vbi_nonnull (1)));
+extern const char *
+vbi_locale_codeset		(void);
+
 /* event.h */
 
 #include <inttypes.h>
@@ -585,6 +640,10 @@ vbi_is_drcs(unsigned int unicode)
 {
 	return unicode >= 0xF000;
 }
+
+extern unsigned int
+vbi_caption_unicode		(unsigned int		c,
+				 vbi_bool		to_upper);
 
 /* export.h */
 

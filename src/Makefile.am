@@ -62,6 +62,7 @@ libzvbi_la_SOURCES = \
 	bit_slicer.c bit_slicer.h \
 	cache.c cache.h \
 	caption.c cc.h \
+	conv.c conv.h \
 	dvb.h \
 	dvb_mux.c dvb_mux.h \
 	dvb_demux.c dvb_demux.h \
@@ -125,6 +126,7 @@ version.h: ../configure.in
 LIBZVBI_HDRS = \
 	macros.h \
 	bcd.h \
+	conv.h \
 	event.h \
 	format.h \
 	lang.h \

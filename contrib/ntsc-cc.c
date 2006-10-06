@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <locale.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -62,20 +63,23 @@ int x;
 #define VERSION "0.11"
 
 #define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
+#define CLEAR(var) memset (&(var), 0, sizeof (var))
 
 static char *			my_name;
-static int			channel = -1;
+
+static unsigned int		field;
+static vbi_bool			in_xds[2];
+static int			cur_ch[2];
 
 //XDSdecode
 static struct {
 	char				packet[34];
 	uint8_t				length;
 	int				print : 1;
-}				info[8][25];
-char	newinfo[8][25][34];
-char	*infoptr=newinfo[0][0];
+}				info[2][8][25];
+char	newinfo[2][8][25][34];
+char	*infoptr=newinfo[0][0][0];
 int	mode,type;
-static vbi_bool			in_xds;
 char	infochecksum;
 static const char *		xds_info_prefix = "\33[33m% ";
 static const char *		xds_info_suffix = "\33[0m\n";
@@ -88,10 +92,12 @@ const char	*specialchar[] = {"®","°","½","¿","(TM)","¢","£","o/~ ","à"," ","è","
 const char	*modes[]={"current","future","channel","miscellaneous","public service","reserved","invalid","invalid","invalid","invalid"};
 int	lastcode;
 int	ccmode=1;		//cc1 or cc2
-char	ccbuf[3][256];		//cc is 32 columns per row, this allows for extra characters
+char	ccbuf[8][3][256];	//cc is 32 columns per row, this allows for extra characters
+static uint16_t			cc_ubuf[8][3][256];
 int	keywords=0;
 char	*keyword[32];
-static FILE *			cc_fp;
+static int			is_upper[8];
+static FILE *			cc_fp[8];
 
 //args (this should probably be put into a structure later)
 char useraw=0;
@@ -206,10 +212,10 @@ print_xds_info			(unsigned int		mode,
 {
 	const char *infoptr;
 
-	if (!info[mode][type].print)
+	if (!info[0][mode][type].print)
 		return;
 
-	infoptr = info[mode][type].packet;
+	infoptr = info[field][mode][type].packet;
 
 	switch ((mode << 8) + type) {
 	case 0x0101:
@@ -302,6 +308,7 @@ print_xds_info			(unsigned int		mode,
 
 static int XDSdecode(int data)
 {
+	static vbi_bool in_xds[2];
 	int b1, b2, length;
 
 	if (data == -1)
@@ -324,51 +331,55 @@ static int XDSdecode(int data)
 //			printf("%% Unsupported mode %s(%d) [%d]\n",modes[(mode-1)>>1],mode,type);
 			mode=0; type=0;
 		}
-		infoptr = newinfo[mode][type];
-		in_xds = TRUE;
+		infoptr = newinfo[field][mode][type];
+		in_xds[field] = TRUE;
 	}
 	else if (b1 == 15) // eof (next byte is checksum)
 	{
 #if 0 //debug
 		if (mode == 0)
 		{
-			length=infoptr - newinfo[0][0];
+			length=infoptr - newinfo[field][0][0];
 			infoptr[1]=0;
 			printf("LEN: %d\n",length);
 			for (y=0;y<length;y++)
-				printf(" %03d",newinfo[0][0][y]);
-			printf(" --- %s\n",newinfo[0][0]);
+				printf(" %03d",newinfo[field][0][0][y]);
+			printf(" --- %s\n",newinfo[field][0][0]);
 		}
 #endif
 		if (mode == 0) return 0;
 		if (b2 != 128-((infochecksum%128)&0x7F)) return 0;
 
-		length = infoptr - newinfo[mode][type];
+		length = infoptr - newinfo[field][mode][type];
 
 		//don't bug the user with repeated data
 		//only parse it if it's different
-		if (info[mode][type].length != length
-		    || 0 != memcmp (info[mode][type].packet,
-				    newinfo[mode][type],
+		if (info[field][mode][type].length != length
+		    || 0 != memcmp (info[field][mode][type].packet,
+				    newinfo[field][mode][type],
 				    length))
 		{
-			memcpy (info[mode][type].packet,
-				newinfo[mode][type], 32);
-			info[mode][type].packet[length] = 0;
-			info[mode][type].length = length;
+			memcpy (info[field][mode][type].packet,
+				newinfo[field][mode][type], 32);
+			info[field][mode][type].packet[length] = 0;
+			info[field][mode][type].length = length;
+			if (0)
+				fprintf (stderr, "XDS %d %d %d %d %d\n",
+					 field, mode, type, length,
+					 info[0][mode][type].print);
 			print_xds_info (mode, type);
 		}
 		mode = 0; type = 0;
-		in_xds = 0;
+		in_xds[field] = FALSE;
 	} else if (b1 <= 31) {
 		/* Caption control code. */
-		in_xds = 0;
-	} else if (in_xds) {
-		if (infoptr >= &newinfo[mode][type][32]) {
+		in_xds[field] = FALSE;
+	} else if (in_xds[field]) {
+		if (infoptr >= &newinfo[field][mode][type][32]) {
 			/* Bad packet. */
 			mode = 0;
 			type = 0;
-			in_xds = 0;
+			in_xds[field] = 0;
 		} else {
 			infoptr[0] = b1; infoptr++;
 			infoptr[0] = b2; infoptr++;
@@ -426,61 +437,108 @@ static int webtv_check(char * buf,int len)
 	if(!strncmp(buf,temp,4))
 	{
 		buf[5]=0;
+		if (cur_ch[field] >= 0 && cc_fp[cur_ch[field]]) {
 		if (!plain)
-			fprintf(cc_fp, "\33[35mWEBTV: %s\33[0m\n",buf-nbytes-1);
+			fprintf(cc_fp[cur_ch[field]], "\33[35mWEBTV: %s\33[0m\n",buf-nbytes-1);
 		else
-			fprintf(cc_fp, "WEBTV: %s\n",buf-nbytes-1);
-		fflush (cc_fp);
+			fprintf(cc_fp[cur_ch[field]], "WEBTV: %s\n",buf-nbytes-1);
+		fflush (cc_fp[cur_ch[field]]);
+		}
 	}
 	return 0;
+}
+
+static void
+append_control_seq		(const char *		seq)
+{
+	unsigned int len;
+	unsigned int i;
+
+	if (plain)
+		return;
+
+	strcat (ccbuf[cur_ch[field]][ccmode], seq);
+
+	len = vbi_strlen_ucs2 (cc_ubuf[cur_ch[field]][ccmode]);
+	for (i = 0; 0 != seq[i]; ++i)
+		cc_ubuf[cur_ch[field]][ccmode][len + i] = seq[i]; /* ASCII -> UCS-2 */
+	cc_ubuf[cur_ch[field]][ccmode][len + i] = 0;
+}
+
+static int
+unicode				(int			c)
+{
+	if (c >= 'a' && c <= 'z') {
+		is_upper[cur_ch[field]] = 0;
+	} else if (c >= 'A' && c <= 'Z') {
+		if (is_upper[cur_ch[field]] < 3)
+			++is_upper[cur_ch[field]];
+	}
+
+	/* The standard character set has no upper case accented
+	   characters, so we convert to upper case if that appears
+	   to be intended. */
+	return vbi_caption_unicode (c, (is_upper[cur_ch[field]] >= 3));
 }
 
 static int CCdecode(int data)
 {
 	int b1, b2, row, len, x,y;
+
+	if (-1 == cur_ch[field])
+		return;
 	if (data == -1) //invalid data. flush buffers to be safe.
 	{
-		memset(ccbuf[1],0,255);
-		memset(ccbuf[2],0,255);
+		CLEAR (ccbuf);
+		CLEAR (cc_ubuf);
 		return -1;
 	}
 	b1 = data & 0x7f;
 	b2 = (data>>8) & 0x7f;
 	if(ccmode >= 3) ccmode = 0;
-	len = strlen(ccbuf[ccmode]);
+	len = strlen(ccbuf[cur_ch[field]][ccmode]);
 
 	if (b1&0x60 && data != lastcode) // text
 	{
-		if(len < 255) ccbuf[ccmode][len++]=b1;
-		if ((b2&0x60) && (len < 255)) ccbuf[ccmode][len++]=b2;
+		if(len < 255) {
+			cc_ubuf[cur_ch[field]][ccmode][len] = unicode (b1);
+			ccbuf[cur_ch[field]][ccmode][len++]=b1;
+		}
+		if ((b2&0x60) && (len < 255)) {
+			cc_ubuf[cur_ch[field]][ccmode][len] = unicode (b2);
+			ccbuf[cur_ch[field]][ccmode][len++]=b2;
+		}
 		if ((b1 == ']' || b2 == ']') && usewebtv)
-			webtv_check(ccbuf[ccmode],len);
+			webtv_check(ccbuf[cur_ch[field]][ccmode],len);
 	}
 	else if ((b1&0x10) && (b2>0x1F) && (data != lastcode)) //codes are always transmitted twice (apparently not, ignore the second occurance)
 	{
-		if (channel < 0) {
-			/* WTF? */
-			ccmode=((b1>>3)&1)+1;
-		}
-		len = strlen(ccbuf[ccmode]);
+		ccmode=((b1>>3)&1)+1;
+		len = strlen(ccbuf[cur_ch[field]][ccmode]);
 
 		if (b2 & 0x40)	//preamble address code (row & indent)
 		{
 			row=rowdata[((b1<<1)&14)|((b2>>5)&1)];
-			if (len!=0)
-				ccbuf[ccmode][len++]='\n';
+			if (len!=0) {
+				cc_ubuf[cur_ch[field]][ccmode][len] = '\n';
+				ccbuf[cur_ch[field]][ccmode][len++]='\n';
+			}
 
 			if (b2&0x10) //row contains indent flag
-				for (x=0;x<(b2&0x0F)<<1;x++)
-					ccbuf[ccmode][len++]=' ';
+				for (x=0;x<(b2&0x0F)<<1;x++) {
+					cc_ubuf[cur_ch[field]][ccmode][len] = ' ';
+					ccbuf[cur_ch[field]][ccmode][len++]=' ';
+				}
 		}
 		else
 		{
 			switch (b1 & 0x07)
 			{
 				case 0x00:	//attribute
-					fprintf (cc_fp, "<ATTRIBUTE %d %d>\n",b1,b2);
-					fflush (cc_fp);
+					if (cc_fp[cur_ch[field]]) {
+//					fprintf (cc_fp[cur_ch[field]], "<ATTRIBUTE %d %d>\n",b1,b2);
+//					fflush (cc_fp[cur_ch[field]]);
+					}
 					break;
 				case 0x01:	//midrow or char
 					switch (b2&0x70)
@@ -489,36 +547,38 @@ static int CCdecode(int data)
 							switch (b2&0x0e)
 							{
 								case 0x00: //italics off
-									if (!plain)
-									  strcat(ccbuf[ccmode],"\33[0m ");
+									append_control_seq ("\33[0m ");
 									break;
 								case 0x0e: //italics on
-									if (!plain)
-									  strcat(ccbuf[ccmode],"\33[36m ");
+									append_control_seq ("\33[36m ");
 									break;
 							}
 							if (b2&0x01) { //underline
-									if (!plain)
-									  strcat(ccbuf[ccmode],"\33[4m");
+								append_control_seq ("\33[4m");
 							} else {
-							  if (!plain)
-								strcat(ccbuf[ccmode],"\33[24m");
+								append_control_seq ("\33[24m");
 							}
 							break;
 						case 0x30: //special character..
-							strcat(ccbuf[ccmode],specialchar[b2&0x0f]);
+							cc_ubuf[cur_ch[field]][ccmode][len] = unicode (0x1100 | b2);
+							strcat(ccbuf[cur_ch[field]][ccmode],specialchar[b2&0x0f]);
 							break;
 					}
 					break;
 				case 0x04:	//misc
 				case 0x05:	//misc + F
-//					fprintf (cc_fp, "ccmode %d cmd %02x\n",ccmode,b2);
+					if (cc_fp[cur_ch[field]]) {
+//					fprintf (cc_fp[cur_ch[field]], "ccmode %d cmd %02x\n",ccmode,b2);
+					}
 					switch (b2)
 					{
 						size_t n;
 
 						case 0x21: //backspace
-							ccbuf[ccmode][len--]=0;
+							if (len > 0) {
+								ccbuf[cur_ch[field]][ccmode][--len]=0;
+								cc_ubuf[cur_ch[field]][ccmode][len] = 0;
+							}
 							break;
 							
 						/* these codes are insignifigant if we're ignoring positioning */
@@ -535,27 +595,38 @@ static int CCdecode(int data)
 								break;
 						case 0x2F: //end caption + swap memory
 						case 0x20: //resume caption (new caption)
-							if (!strlen(ccbuf[ccmode]))
+							if (!strlen(ccbuf[cur_ch[field]][ccmode]))
 									break;
-							for (n=0;n<strlen(ccbuf[ccmode]);n++)
+							for (n=0;n<strlen(ccbuf[cur_ch[field]][ccmode]);n++)
 								for (y=0;y<keywords;y++)
-									if (!strncasecmp(keyword[y], ccbuf[ccmode]+n, strlen(keyword[y])))
-										fprintf (cc_fp, "\a");
-							if (!plain)
-								fprintf (cc_fp, "%s\33[m\n",ccbuf[ccmode]);
-							else
-								fprintf (cc_fp, "%s\n",ccbuf[ccmode]);
-							fflush (cc_fp);
+									if (!strncasecmp(keyword[y], ccbuf[cur_ch[field]][ccmode]+n, strlen(keyword[y])))
+										if (cc_fp[cur_ch[field]])
+											fprintf (cc_fp[cur_ch[field]], "\a");
+							append_control_seq ("\33[m");
+							len = strlen (ccbuf[cur_ch[field]][ccmode]);
+							cc_ubuf[cur_ch[field]][ccmode][len] = '\n';
+							ccbuf[cur_ch[field]][ccmode][len] = '\n';
+							if (cc_fp[cur_ch[field]]) {
+							vbi_fputs_iconv_ucs2 (cc_fp[cur_ch[field]],
+									      vbi_locale_codeset (),
+									      cc_ubuf[cur_ch[field]][ccmode],
+									      VBI_NUL_TERMINATED,
+									      /* repl_char */ '?');
+							fflush (cc_fp[cur_ch[field]]);
+							}
 							/* FALL */
 						case 0x2A: //text restart
 						case 0x2E: //erase non-displayed memory
-							memset(ccbuf[ccmode],0,255);
+							memset(ccbuf[cur_ch[field]][ccmode],0,255);
+							CLEAR (cc_ubuf[cur_ch[field]][ccmode]);
 							break;
 					}
 					break;
 				case 0x07:	//misc (TAB)
-					for(x=0;x<(b2&0x03);x++)
-						ccbuf[ccmode][len++]=' ';
+					for(x=0;x<(b2&0x03);x++) {
+						cc_ubuf[cur_ch[field]][ccmode][len] = ' ';
+						ccbuf[cur_ch[field]][ccmode][len++]=' ';
+					}
 					break;
 			}
 		}
@@ -624,6 +695,8 @@ static int sentence(int data)
 	int b1, b2;
 	if (data == -1)
 		return -1;
+	if (cur_ch[field] < 0 || !cc_fp[cur_ch[field]])
+		return 0;
 	b1 = data & 0x7f;
 	b2 = (data>>8) & 0x7f;
 	inval++;
@@ -631,14 +704,14 @@ static int sentence(int data)
 	{
 		if (sen==1)
 		{
-			fprintf (cc_fp, " ");
-			fflush (cc_fp);
+			fprintf (cc_fp[cur_ch[field]], " ");
+			fflush (cc_fp[cur_ch[field]]);
 			sen=0;
 		}
 		if (inval>10 && sen)
 		{
-			fprintf (cc_fp, "\n");
-			fflush (cc_fp);
+			fprintf (cc_fp[cur_ch[field]], "\n");
+			fflush (cc_fp[cur_ch[field]]);
 			sen=0;
 		}
 		return 0;
@@ -650,15 +723,15 @@ static int sentence(int data)
 		inval=0;
 		if (sen==2 && b1!='.' && b2!='.' && b1!='!' && b2!='!' && b1!='?' && b2!='?' && b1!=')' && b2!=')')
 		{
-			fprintf (cc_fp, "\n");
+			fprintf (cc_fp[cur_ch[field]], "\n");
 			sen=1;
 		}
 		else if (b1=='.' || b2=='.' || b1=='!' || b2=='!' || b1=='?' || b2=='?' || b1==')' || b2==')')
 			sen=2;
 		else
 			sen=1;
-		fprintf (cc_fp, "%c%c",tolower(b1),tolower(b2));
-		fflush (cc_fp);
+		fprintf (cc_fp[cur_ch[field]], "%c%c",tolower(b1),tolower(b2));
+		fflush (cc_fp[cur_ch[field]]);
 	}
 	return 0;
 }
@@ -683,12 +756,10 @@ static unsigned long getColor(const char *colorName, float dim)
 }
 #endif
 
-static int
+static void
 caption_filter			(unsigned int		c1,
 				 unsigned int		c2)
 {
-	static int cur_ch = -1;
-	static unsigned int in_xds = 0;
 	unsigned int p;
 	
 	p = c1 + c2 * 256;
@@ -701,23 +772,23 @@ caption_filter			(unsigned int		c1,
 
 	if (0x0101 != (p & 0x0101)) {
 		/* Parity error. */
-		cur_ch = -1;
+		cur_ch[field] = -1;
 	} else if (0 == c1) {
 		/* Filler. */
 	} else if (c1 < 0x10) {
-		in_xds = TRUE;
+		in_xds[field] = TRUE;
 	} else if (c1 < 0x20) {
-		in_xds = FALSE;
+		in_xds[field] = FALSE;
 
 		if (c2 < 0x20) {
 			/* Invalid. */
 		} else {
-			cur_ch &= ~1;
-			cur_ch |= (c1 >> 3) & 1;
+			cur_ch[field] &= ~1;
+			cur_ch[field] |= (c1 >> 3) & 1;
 
 			if (c2 < 0x30 && 0x14 == (c1 & 0xF6)) {
-				cur_ch &= ~2;
-				cur_ch |= (c1 << 1) & 2;
+				cur_ch[field] &= ~2;
+				cur_ch[field] |= (c1 << 1) & 2;
 
 				switch (c2) {
 				case 0x20: /* RCL */
@@ -725,13 +796,13 @@ caption_filter			(unsigned int		c1,
 				case 0x26: /* RU3 */
 				case 0x27: /* RU4 */
 				case 0x29: /* RDC */
-					cur_ch &= 3;
+					cur_ch[field] &= 3;
 					break;
 
 				case 0x2A: /* TR */
 				case 0x2B: /* RTD */
-					cur_ch &= 3; /* now >= 0 */
-					cur_ch |= 4;
+					cur_ch[field] &= 3; /* now >= 0 */
+					cur_ch[field] |= 4;
 					break;
 
 				default:
@@ -742,11 +813,9 @@ caption_filter			(unsigned int		c1,
 	}
 
 	if (0) {
-		fprintf (stderr, "in_xds=%d cur_ch=%d channel=%d\n",
-			 in_xds, cur_ch, channel);
+		fprintf (stderr, "in_xds=%d cur_ch=%d\n",
+			 in_xds[field], cur_ch[field]);
 	}
-
-	return (!in_xds && cur_ch == channel);
 }
 
 static ssize_t
@@ -835,9 +904,9 @@ xds_filter_option		(const char *		optarg)
 	    || 0 == strcasecmp (optarg, "all")) {
 		unsigned int i;
 
-		for (i = 0; i < (N_ELEMENTS (info)
-				 * N_ELEMENTS (info[0])); ++i) {
-			info[0][i].print = TRUE;
+		for (i = 0; i < (N_ELEMENTS (info[0])
+				 * N_ELEMENTS (info[0][0])); ++i) {
+			info[0][0][i].print = TRUE;
 		}
 
 		return;
@@ -866,30 +935,30 @@ xds_filter_option		(const char *		optarg)
 		buf[len] = 0;
 
 		if (0 == strcasecmp (buf, "timecode")) {
-			info[1][1].print = TRUE;
+			info[0][1][1].print = TRUE;
 		} else if (0 == strcasecmp (buf, "length")) {
-			info[1][2].print = TRUE;
+			info[0][1][2].print = TRUE;
 		} else if (0 == strcasecmp (buf, "title")) {
-			info[1][3].print = TRUE;
+			info[0][1][3].print = TRUE;
 		} else if (0 == strcasecmp (buf, "rating")) {
-			info[1][5].print = TRUE;
+			info[0][1][5].print = TRUE;
 		} else if (0 == strcasecmp (buf, "network")) {
-			info[5][1].print = TRUE;
+			info[0][5][1].print = TRUE;
 		} else if (0 == strcasecmp (buf, "call")) {
-			info[5][2].print = TRUE;
+			info[0][5][2].print = TRUE;
 		} else if (0 == strcasecmp (buf, "time")) {
-			info[7][1].print = TRUE;
+			info[0][7][1].print = TRUE;
 		} else if (0 == strcasecmp (buf, "timezone")) {
-			info[7][4].print = TRUE;
+			info[0][7][4].print = TRUE;
 		} else if (0 == strcasecmp (buf, "desc")) {
-			info[1][0x10].print = TRUE;
-			info[1][0x11].print = TRUE;
-			info[1][0x12].print = TRUE;
-			info[1][0x13].print = TRUE;
-			info[1][0x14].print = TRUE;
-			info[1][0x15].print = TRUE;
-			info[1][0x16].print = TRUE;
-			info[1][0x17].print = TRUE;
+			info[0][1][0x10].print = TRUE;
+			info[0][1][0x11].print = TRUE;
+			info[0][1][0x12].print = TRUE;
+			info[0][1][0x13].print = TRUE;
+			info[0][1][0x14].print = TRUE;
+			info[0][1][0x15].print = TRUE;
+			info[0][1][0x16].print = TRUE;
+			info[0][1][0x17].print = TRUE;
 		} else {
 			fprintf (stderr, "Unknown XDS info '%s'\n", buf);
 		}
@@ -907,6 +976,8 @@ This program is licensed under GPL 2 or later. NO WARRANTIES.\n\n\
 Usage: %s [options]\n\
 Options:\n\
 -? | -h | --help | --usage  Print this message and exit\n\
+-1 ... -4 | --cc1-file ... --cc4-file filename\n\
+                            Append caption channel CC1 ... CC4 to this file\n\
 -b | --no-webtv             Do not print WebTV links\n\
 -c | --cc                   Print Closed Caption (includes WebTV)\n\
 -d | --device filename      VBI device [/dev/vbi]\n\
@@ -923,7 +994,7 @@ Options:\n\
 -v | --verbose              Increase verbosity\n\
 -w | --window               Open debugging window (with -r option)\n\
 -x | --xds                  Print XDS info\n\
--C | --cc-file filename     Append caption to this file [stdout]\n\
+-C | --cc-file filename     Append all caption to this file [stdout]\n\
 -R | --semi-raw             Dump semi-raw VBI data (with -r option)\n\
 -X | --xds-file filename    Append XDS info to this file [stdout]\n\
 ",
@@ -931,12 +1002,20 @@ Options:\n\
 }
 
 static const char
-short_options [] = "?bcd:f:hkl:pr:stvwxC:RX:";
+short_options [] = "?1:2:3:4:5:6:7:8:bcd:f:hkl:pr:stvwxC:RX:";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options [] = {
 	{ "help",	no_argument,		NULL,		'?' },
+	{ "cc1-file",	required_argument,	NULL,		'1' },
+	{ "cc2-file",	required_argument,	NULL,		'2' },
+	{ "cc3-file",	required_argument,	NULL,		'3' },
+	{ "cc4-file",	required_argument,	NULL,		'4' },
+	{ "t1-file",	required_argument,	NULL,		'5' },
+	{ "t2-file",	required_argument,	NULL,		'6' },
+	{ "t3-file",	required_argument,	NULL,		'7' },
+	{ "t4-file",	required_argument,	NULL,		'8' },
 	{ "no-webtv",	no_argument,		NULL,		'b' },
 	{ "cc",		no_argument,		NULL,		'c' },
 	{ "device",	required_argument,	NULL,		'd' },
@@ -993,10 +1072,13 @@ int main(int argc,char **argv)
    fd_set rfds;
    int x;
 	const char *device_file_name;
-	const char *cc_file_name;
+	const char *cc_file_name[8];
 	const char *xds_file_name;
 	int verbose;
 	int have_xds_filter_option;
+	vbi_bool use_cc_filter;
+	unsigned int i;
+	unsigned int channels;
 
 #ifdef HAVE_ZVBI
 
@@ -1017,13 +1099,17 @@ int main(int argc,char **argv)
 
 	my_name = argv[0];
 
-	device_file_name = "/dev/vbi";
-	cc_file_name = "-";
-	xds_file_name = "-";
+	setlocale (LC_ALL, "");
 
+	device_file_name = "/dev/vbi";
+	for (i = 0; i < 8; ++i)
+		cc_file_name[i] = "-";
+	xds_file_name = "-";
 	verbose = 0;
+	channels = 0;
 
 	have_xds_filter_option = FALSE;	
+	use_cc_filter = FALSE;
 
 	for (;;) {
 		int c;
@@ -1038,6 +1124,14 @@ int main(int argc,char **argv)
 		case 'h':
 			usage (stdout);
 			exit (EXIT_SUCCESS);
+
+		case '1' ... '8':
+			assert (NULL != optarg);
+			cc_file_name[c - '1'] = optarg;
+			channels |= 1 << (c - '1');
+			use_cc_filter = TRUE;
+			usecc=1;
+			break;
 
 		case 'b':
 			usewebtv=0; /* sic, compatibility */
@@ -1059,16 +1153,23 @@ int main(int argc,char **argv)
 			break;
 
 		case 'l':
+		{
+			long ch;
+
 			assert (NULL != optarg);
-			channel = strtol (optarg, NULL, 0) - 1;
-			if (channel < 0 || channel > 7) {
+			ch = strtol (optarg, NULL, 0);
+			if (ch < 1 || ch > 8) {
 				fprintf (stderr,
 					 "Invalid channel number %d, "
 					 "should be 1 ... 8.\n",
-					 channel + 1);
+					 ch);
 				exit (EXIT_FAILURE);
 			}
+			channels |= 1 << (ch - 1);
+			use_cc_filter = TRUE;
+			usecc=1;
 			break;
+		}
 
 		case 'k':
 			keyword[keywords++]=optarg;
@@ -1108,7 +1209,9 @@ int main(int argc,char **argv)
 
 		case 'C':
 			assert (NULL != optarg);
-			cc_file_name = optarg;
+			for (i = 0; i < 8; ++i)
+				cc_file_name[i] = optarg;
+			usecc=1;
 			break;
 
 		case 'R':
@@ -1131,6 +1234,9 @@ int main(int argc,char **argv)
 			 "or -h for help.\n");
 		exit (EXIT_FAILURE);
 	}
+
+	if (usecc && 0 == channels)
+		channels = 0x01;
 
 	if (usexds && !have_xds_filter_option)
 		xds_filter_option ("all");
@@ -1231,8 +1337,12 @@ int main(int argc,char **argv)
 
 #endif
 
-   if (usecc)
-	   cc_fp = open_output_file (cc_file_name);
+	if (usecc) {
+		for (i = 0; i < 8; ++i) {
+			if (channels & (1 << i))
+				cc_fp[i] = open_output_file (cc_file_name[i]);
+		}
+	}
 
    if (usexds)
 	   xds_fp = open_output_file (xds_file_name);
@@ -1337,18 +1447,23 @@ int main(int argc,char **argv)
 		   /* No need to check sliced[i].id because we
 		      requested only caption. */
 		   if (21 == sliced[i].line) {
-		      if (channel < 0 /* compatibility */
-		          || caption_filter (c1, c2)) {
-		         if (usecc)
-			    CCdecode(c1 + c2 * 256);
+		      field = 0;
+		      caption_filter (c1, c2);
+		      if (!in_xds[field]) { /* fields swapped? */
+			 if (usecc)
+			   CCdecode(c1 + c2 * 256);
 		         if (usesen)
-			    sentence(c1 + c2 * 256);
+			   sentence(c1 + c2 * 256);
 		      }
+		      if (usexds) /* fields swapped? */
+			 XDSdecode(c1 + c2 * 256);
 		   } else if (284 == sliced[i].line) {
-		      if (channel >= 4 && caption_filter (c1, c2)) {
+		      field = 1;
+		      caption_filter (c1, c2);
+		      if (!in_xds[field]) {
 		         if (usecc)
 			    CCdecode(c1 + c2 * 256);
-		         if (usesen)
+			 if (usesen)
 			    sentence(c1 + c2 * 256);
 		      }
 		      if (usexds)

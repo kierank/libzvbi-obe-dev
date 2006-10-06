@@ -1,3 +1,27 @@
+2006-10-06    <mschimek@users.sf.net>
+
+	* test/unicode.c (main): Now prints extended caption characters
+	  too.
+	* test/decode.c: Replaced by a new version from branch 0.3 with
+	  improved caption decoder.
+	* src/lang.h, src/lang.c (vbi_caption_unicode): Replaced by a
+	  new version from branch 0.3 which can convert extended
+	  characters. Added an option to convert the character to upper
+	  case.
+	* test/unicode.c (main), test/glyph.c (main),
+	  src/caption.c (caption_command, vbi_decode_caption):
+	  vbi_caption_unicode() changed.
+
+	* src/conv.c, src/conv.h: New Unicode conversion helper functions
+	  from branch 0.3.
+	* src/Makefile.am (libzvbi_la_SOURCES): Added conv.c conv.h.
+	(LIBZVBI_HDRS): Added conv.h.
+	* doc/Doxyfile.in (FILE_PATTERNS): Added conv.h.
+
+	* contrib/ntsc-cc.c: Added parallel decoding of all channels.
+	  Added proper conversion from CC to locale character set
+	  with automagic uppercasing of accented characters.
+
 2006-09-29    <mschimek@users.sf.net>
 
 	* contrib/ntsc-cc.c: Added a caption channel filter.

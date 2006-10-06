@@ -472,6 +472,7 @@ FILE_PATTERNS          = *.c \
                          bcd.h \
                          cache.h \
                          cc.h \
+			 conv.h \
                          decoder.h \
                          dvb_demux.h \
                          idl_demux.h \
