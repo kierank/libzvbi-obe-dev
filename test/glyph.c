@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: glyph.c,v 1.6 2005/05/25 02:27:33 mschimek Exp $ */
+/* $Id: glyph.c,v 1.7 2006/10/06 19:23:55 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -31,7 +31,6 @@
 
 extern unsigned int	vbi_teletext_unicode(int, int, int);
 extern unsigned int	vbi_teletext_composed_unicode(unsigned int a, unsigned int c);
-extern unsigned int	vbi_caption_unicode(unsigned int c);
 
 static vbi_page *pg;
 static vbi_char ac;
@@ -247,7 +246,8 @@ main(int argc, char **argv)
 		unsigned int j;
 
 		for (j = 0x20; j < 0x80; j += 8) {
-			putwchar(vbi_caption_unicode(j + i));
+			putwchar(vbi_caption_unicode(j + i,
+						     /* to_upper */ FALSE));
 			putwchar(' ');
 		}
 
@@ -263,7 +263,8 @@ main(int argc, char **argv)
 	putwstr("EIA 608 Closed Captioning Special Characters\n\n");
 
 	for (i = 0; i < 16; i++) {
-		putwchar(vbi_caption_unicode(i));
+		putwchar(vbi_caption_unicode(0x1130 | i,
+					     /* to_upper */ FALSE));
 	}
 
 	store(17);
