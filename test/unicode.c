@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: unicode.c,v 1.6 2005/05/25 02:27:33 mschimek Exp $ */
+/* $Id: unicode.c,v 1.7 2006/10/06 19:23:06 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -32,7 +32,6 @@
 
 extern unsigned int	vbi_teletext_unicode (int, int, int);
 extern unsigned int	vbi_teletext_composed_unicode (unsigned int a, unsigned int c);
-extern unsigned int	vbi_caption_unicode (unsigned int c);
 
 static void
 putwchar (unsigned int c)
@@ -141,12 +140,7 @@ main (int argc, char **argv)
 
 	print_set ("ETS 300 706 Table 48: G3 Smooth Mosaics and Line Drawing Set\n", 13);
 
-	putwstr ("Teletext composed glyphs\n\n   ");
-
-	for (i = 0x40; i < 0x60; i++)
-		putwchar (vbi_teletext_unicode (1, 0, i));
-
-	putwstr ("\n\n");
+	putwstr ("Teletext upper case composed glyphs\n\n");
 
 	for (i = 0; i < 16; i++) {
 		putwchar (vbi_teletext_unicode (2, 0, 0x40 + i));
@@ -163,12 +157,7 @@ main (int argc, char **argv)
 
 	putwchar ('\n');
 
-	putwstr ("Teletext composed glyphs\n\n   ");
-
-	for (i = 0x60; i < 0x80; i++)
-		putwchar (vbi_teletext_unicode (1, 0, i));
-
-	putwstr ("\n\n");
+	putwstr ("Teletext lower case composed glyphs\n\n");
 
 	for (i = 0; i < 16; i++) {
 		putwchar (vbi_teletext_unicode (2, 0, 0x40 + i));
@@ -189,7 +178,8 @@ main (int argc, char **argv)
 
 	for (i = 0; i < 8; i++) {
 		for (j = 0x20; j < 0x80; j += 8) {
-			putwchar (vbi_caption_unicode (j + i));
+			putwchar (vbi_caption_unicode (j + i,
+						       /* to_upper */ FALSE));
 			putwchar (' ');
 		}
 
@@ -200,8 +190,36 @@ main (int argc, char **argv)
 
 	putwstr ("EIA 608 Closed Captioning Special Characters\n\n");
 
-	for (i = 0; i < 16; i++) {
-		putwchar (vbi_caption_unicode (i));
+	for (i = 0; i < 16; ++i) {
+		putwchar (vbi_caption_unicode (0x1130 + i,
+					       /* to_upper */ FALSE));
+		putwchar (' ');
+	}
+
+	putwstr ("\n\n");
+
+	putwstr ("EIA 608 Closed Captioning Extended Characters\n\n");
+
+	for (i = 0; i < 32; i += 16) {
+		for (j = 0; j < 16; ++j) {
+			putwchar (vbi_caption_unicode (0x1220 + i + j,
+						       /* to_upper */ FALSE));
+			putwchar (' ');
+		}
+
+		putwchar ('\n');
+	}
+
+	putwchar ('\n');
+
+	for (i = 0; i < 32; i += 16) {
+		for (j = 0; j < 16; ++j) {
+			putwchar (vbi_caption_unicode (0x1320 + i + j,
+						       /* to_upper */ FALSE));
+			putwchar (' ');
+		}
+
+		putwchar ('\n');
 	}
 
 	putwchar ('\n');
