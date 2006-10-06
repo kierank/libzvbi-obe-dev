@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.23 2006/05/31 03:53:36 mschimek Exp $ */
+/* $Id: caption.c,v 1.24 2006/10/06 19:24:04 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -987,7 +987,8 @@ caption_command(vbi_decoder *vbi, struct caption *cc,
 			} else {
 				vbi_char c = ch->attr;
 
-				c.unicode = vbi_caption_unicode(c2 & 15);
+				c.unicode = vbi_caption_unicode (0x1130 | (c2 & 15),
+								 /* to_upper */ FALSE);
 
 				put_char(cc, ch, c);
 			}
@@ -1368,7 +1369,7 @@ vbi_decode_caption(vbi_decoder *vbi, int line, uint8_t *buf)
 			if (ch == cc->channel + 5) // 'T2'
 				itv_separator(vbi, cc, ci);
 
-			c.unicode = vbi_caption_unicode(ci);
+			c.unicode = vbi_caption_unicode(ci, /* to_upper */ FALSE);
 
 			put_char(cc, ch, c);
 		}
