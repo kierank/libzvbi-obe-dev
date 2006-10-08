@@ -173,29 +173,31 @@ vbi_is_bcd(unsigned int bcd)
 
 /* conv.h */
 
+#include <stdio.h>
 #include <inttypes.h>		/* uint16_t */
 
+ 
 #define VBI_NUL_TERMINATED -1
 
-extern size_t
+extern unsigned long
 vbi_strlen_ucs2			(const uint16_t *	src);
 extern char *
 vbi_strndup_iconv		(const char *		dst_codeset,
 				 const char *		src_codeset,
 				 const char *		src,
-				 size_t			src_size,
+				 unsigned long		src_size,
 				 int			repl_char)
   __attribute__ ((_vbi_alloc));
 extern char *
 vbi_strndup_iconv_ucs2		(const char *		dst_codeset,
 				 const uint16_t *	src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
   __attribute__ ((_vbi_alloc));
 extern char *
 vbi_strndup_iconv_caption	(const char *		dst_codeset,
 				 const char *		src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
   __attribute__ ((_vbi_alloc));
 #if 3 == VBI_VERSION_MINOR
@@ -203,7 +205,7 @@ extern char *
 vbi_strndup_iconv_teletext	(const char *		dst_codeset,
 				 const vbi_ttx_charset *cs,
 				 const uint8_t *	src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
   __attribute__ ((_vbi_alloc,
 		  _vbi_nonnull (2)));
@@ -213,18 +215,20 @@ vbi_fputs_iconv			(FILE *			fp,
 				 const char *		dst_codeset,
 				 const char *		src_codeset,
 				 const char *		src,
-				 size_t			src_size,
+				 unsigned long		src_size,
 				 int			repl_char)
   __attribute__ ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_fputs_iconv_ucs2		(FILE *			fp,
 				 const char *		dst_codeset,
 				 const uint16_t *	src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
   __attribute__ ((_vbi_nonnull (1)));
 extern const char *
 vbi_locale_codeset		(void);
+
+
 
 /* event.h */
 

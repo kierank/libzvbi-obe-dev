@@ -21,7 +21,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: tables.c,v 1.7 2005/10/07 14:52:26 mschimek Exp $ */
+/* $Id: tables.c,v 1.8 2006/10/08 06:19:48 mschimek Exp $ */
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <stdlib.h>
 

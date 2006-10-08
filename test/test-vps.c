@@ -3,7 +3,11 @@
  *  Copyright (C) 2006 Michael H. Schimek
  */
 
-/* $Id: test-vps.c,v 1.2 2006/05/07 20:52:16 mschimek Exp $ */
+/* $Id: test-vps.c,v 1.3 2006/10/08 06:19:48 mschimek Exp $ */
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #undef NDEBUG
 #include <assert.h>

@@ -486,7 +486,7 @@ static int CCdecode(int data)
 	int b1, b2, row, len, x,y;
 
 	if (-1 == cur_ch[field])
-		return;
+		return -1;
 	if (data == -1) //invalid data. flush buffers to be safe.
 	{
 		CLEAR (ccbuf);
@@ -1160,7 +1160,7 @@ int main(int argc,char **argv)
 			ch = strtol (optarg, NULL, 0);
 			if (ch < 1 || ch > 8) {
 				fprintf (stderr,
-					 "Invalid channel number %d, "
+					 "Invalid channel number %ld, "
 					 "should be 1 ... 8.\n",
 					 ch);
 				exit (EXIT_FAILURE);

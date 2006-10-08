@@ -18,12 +18,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: conv.h,v 1.2 2006/10/06 19:27:48 mschimek Exp $ */
+/* $Id: conv.h,v 1.3 2006/10/08 06:19:48 mschimek Exp $ */
 
 #ifndef __ZVBI_CONV_H__
 #define __ZVBI_CONV_H__
 
-#include <stdio.h>
 #include "macros.h"
 #include "lang.h"		/* vbi_ttx_charset */
 #include "version.h"
@@ -32,6 +31,7 @@ VBI_BEGIN_DECLS
 
 /* Public */
 
+#include <stdio.h>
 #include <inttypes.h>		/* uint16_t */
 
 /**
@@ -44,25 +44,25 @@ VBI_BEGIN_DECLS
  
 #define VBI_NUL_TERMINATED -1
 
-extern size_t
+extern unsigned long
 vbi_strlen_ucs2			(const uint16_t *	src);
 extern char *
 vbi_strndup_iconv		(const char *		dst_codeset,
 				 const char *		src_codeset,
 				 const char *		src,
-				 size_t			src_size,
+				 unsigned long		src_size,
 				 int			repl_char)
   __attribute__ ((_vbi_alloc));
 extern char *
 vbi_strndup_iconv_ucs2		(const char *		dst_codeset,
 				 const uint16_t *	src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
   __attribute__ ((_vbi_alloc));
 extern char *
 vbi_strndup_iconv_caption	(const char *		dst_codeset,
 				 const char *		src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
   __attribute__ ((_vbi_alloc));
 #if 3 == VBI_VERSION_MINOR
@@ -70,7 +70,7 @@ extern char *
 vbi_strndup_iconv_teletext	(const char *		dst_codeset,
 				 const vbi_ttx_charset *cs,
 				 const uint8_t *	src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
   __attribute__ ((_vbi_alloc,
 		  _vbi_nonnull (2)));
@@ -80,14 +80,14 @@ vbi_fputs_iconv			(FILE *			fp,
 				 const char *		dst_codeset,
 				 const char *		src_codeset,
 				 const char *		src,
-				 size_t			src_size,
+				 unsigned long		src_size,
 				 int			repl_char)
   __attribute__ ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_fputs_iconv_ucs2		(FILE *			fp,
 				 const char *		dst_codeset,
 				 const uint16_t *	src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
   __attribute__ ((_vbi_nonnull (1)));
 extern const char *
@@ -102,9 +102,9 @@ typedef struct _vbi_iconv_t vbi_iconv_t;
 extern vbi_bool
 _vbi_iconv_ucs2			(vbi_iconv_t *		cd,
 				 char **		dst,
-				 size_t			dst_size,
+				 unsigned long		dst_size,
 				 const uint16_t *	src,
-				 ssize_t		src_length)
+				 long			src_length)
   __attribute__ ((_vbi_nonnull (1, 2)));
 extern void
 _vbi_iconv_close		(vbi_iconv_t *		cd);
@@ -112,7 +112,7 @@ extern vbi_iconv_t *
 _vbi_iconv_open			(const char *		dst_codeset,
 				 const char *		src_codeset,
 				 char **		dst,
-				 size_t			dst_size,
+				 unsigned long		dst_size,
 				 int			repl_char);
 
 VBI_END_DECLS

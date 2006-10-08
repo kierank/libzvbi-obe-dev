@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: lang.c,v 1.7 2006/10/06 19:23:46 mschimek Exp $ */
+/* $Id: lang.c,v 1.8 2006/10/08 06:19:48 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -175,7 +175,7 @@ gfx_transcript[] = {
 /*
  *  Teletext character set
  *
- *  (This is somehow related to ISO 6937 -
+ *  (Similar to ISO 6937 -
  *   ftp://dkuug.dk/i18n/charmaps/ISO_6937)
  */
 
@@ -827,7 +827,10 @@ caption_extended3 [32][2] = {
  * @param c Character code in range 0x20 ... 0x7F,
  *   0x1130 ... 0x113F, 0x1930 ... 0x193F, 0x1220 ... 0x123F,
  *   0x1A20 ... 0x1A3F, 0x1320 ... 0x133F, 0x1B20 ... 0x1B3F.
- * @param to_upper Convert the character to upper case.
+ * @param to_upper Convert the character to upper case. (Often
+ *   programs are captioned in all upper case, but except for
+ *   one character the basic and special CC character sets contain
+ *   only lower case accented characters.)
  *
  * Converts a Closed Caption character code to Unicode. Codes
  * in range 0x1130 to 0x1B3F are special and extended characters

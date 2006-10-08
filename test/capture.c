@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.25 2006/09/29 09:29:17 mschimek Exp $ */
+/* $Id: capture.c,v 1.26 2006/10/08 06:19:48 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -444,7 +444,7 @@ main(int argc, char **argv)
 	char *errstr;
 	unsigned int services;
 	int scanning = 625;
-	int strict;
+	int strict = 0;
 	int verbose = 0;
 	int c, index;
 	int interface = 0;

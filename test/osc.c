@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.28 2006/09/24 03:10:04 mschimek Exp $ */
+/* $Id: osc.c,v 1.29 2006/10/08 06:19:48 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -776,9 +776,6 @@ main(int argc, char **argv)
 
 	src_w = par->bytes_per_line / 1;
 	src_h = par->count[0] + par->count[1];
-
-#warning
-//fprintf (stderr, "SRC: %dx%d\n", src_w, src_h);
 
 	init_window(argc, argv, dev_name);
 

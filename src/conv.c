@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: conv.c,v 1.2 2006/10/06 19:27:48 mschimek Exp $ */
+/* $Id: conv.c,v 1.3 2006/10/08 06:19:48 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -128,11 +128,10 @@ iconv_ucs2			(vbi_iconv_t *		cd,
 vbi_bool
 _vbi_iconv_ucs2			(vbi_iconv_t *		cd,
 				 char **		dst,
-				 size_t			dst_size,
+				 unsigned long		dst_size,
 				 const uint16_t *	src,
-				 ssize_t		src_length)
+				 long			src_length)
 {
-	static const uint16_t dummy[1] = { 0 };
 	const char *s;
 	size_t d_left;
 	size_t s_left;
@@ -211,7 +210,7 @@ vbi_iconv_t *
 _vbi_iconv_open			(const char *		dst_codeset,
 				 const char *		src_codeset,
 				 char **		dst,
-				 size_t			dst_size,
+				 unsigned long		dst_size,
 				 int			repl_char)
 {
 #ifdef HAVE_ICONV
@@ -236,11 +235,14 @@ _vbi_iconv_open			(const char *		dst_codeset,
 	cd->ucs2_repl[0] = repl_char;
 
 	if (NULL != dst) {
+		size_t d_left;
 		size_t n;
+
+		d_left = dst_size;
 
 		/* Write out the byte sequence to get into the
 		   initial state if this is necessary. */
-		n = iconv (cd->icd, NULL, NULL, dst, &dst_size);
+		n = iconv (cd->icd, NULL, NULL, dst, &d_left);
 
 		if ((size_t) -1 == n) {
 			_vbi_iconv_close (cd);
@@ -294,7 +296,7 @@ same_codeset			(const char *		dst_codeset,
  *
  * @since 0.2.23
  */
-size_t
+unsigned long
 vbi_strlen_ucs2			(const uint16_t *	src)
 {
 	const uint16_t *s;
@@ -327,9 +329,9 @@ vbi_strlen_ucs2			(const uint16_t *	src)
  * @since 0.2.23
  */
 static char *
-strndup_identity		(size_t *		out_size,
+strndup_identity		(unsigned long *	out_size,
 				 const char *		src,
-				 size_t			src_size)
+				 unsigned long		src_size)
 {
 	char *buffer;
 
@@ -370,9 +372,9 @@ strndup_identity		(size_t *		out_size,
  * @since 0.2.23
  */
 static char *
-strndup_utf8_ucs2		(size_t *		out_size,
+strndup_utf8_ucs2		(unsigned long *	out_size,
 				 const uint16_t *	src,
-				 ssize_t		src_length)
+				 long			src_length)
 {
 	char *d;
 	char *buffer;
@@ -444,16 +446,16 @@ strndup_utf8_ucs2		(size_t *		out_size,
  * @since 0.2.23
  */
 static char *
-strndup_iconv_from_ucs2		(size_t *		out_size,
+strndup_iconv_from_ucs2		(unsigned long *	out_size,
 				 const char *		dst_codeset,
 				 const uint16_t *	src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
 {
 	char *d;
 	uint32_t *d32;
 	char *buffer;
-	size_t buffer_size;
+	unsigned long buffer_size;
 
 	if (NULL == dst_codeset || same_codeset (dst_codeset, "UTF8")) {
 		return strndup_utf8_ucs2 (out_size, src, src_length);
@@ -564,12 +566,12 @@ strndup_iconv_from_ucs2		(size_t *		out_size,
 char *
 vbi_strndup_iconv_ucs2		(const char *		dst_codeset,
 				 const uint16_t *	src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
 {
 	char *buffer;
 	char *result;
-	size_t size;
+	unsigned long size;
 
 	buffer = strndup_iconv_from_ucs2 (&size,
 					  dst_codeset,
@@ -610,14 +612,14 @@ vbi_strndup_iconv_ucs2		(const char *		dst_codeset,
  * @since 0.2.23
  */
 static char *
-strndup_ucs2_eia608		(size_t *		out_size,
+strndup_ucs2_eia608		(unsigned long *	out_size,
 				 const char *		src,
-				 size_t			src_length,
+				 long			src_length,
 				 vbi_bool		to_upper)
 {
 	uint16_t *d16;
 	char *buffer;
-	size_t i;
+	long i;
 
 	if (NULL != out_size)
 		*out_size = 0;
@@ -701,15 +703,15 @@ ilseq:
  * @since 0.2.23
  */
 static char *
-strndup_iconv_to_ucs2		(size_t *		out_size,
+strndup_iconv_to_ucs2		(unsigned long *	out_size,
 				 const char *		src_codeset,
 				 const char *		src,
-				 size_t			src_size)
+				 unsigned long		src_size)
 {
 	char *d;
 	uint16_t *d16;
 	char *buffer;
-	size_t buffer_size;
+	unsigned long buffer_size;
 
 	if (NULL == src_codeset) {
 		src_codeset = "UTF-8";
@@ -824,11 +826,11 @@ strndup_iconv_to_ucs2		(size_t *		out_size,
  * @since 0.2.23
  */
 static char *
-strndup_iconv			(size_t *		out_size,
+strndup_iconv			(unsigned long *	out_size,
 				 const char *		dst_codeset,
 				 const char *		src_codeset,
 				 const char *		src,
-				 size_t			src_size,
+				 unsigned long		src_size,
 				 int			repl_char)
 {
 	if (same_codeset (dst_codeset, src_codeset)) {
@@ -849,7 +851,7 @@ strndup_iconv			(size_t *		out_size,
 	} else {
 		char *buffer;
 		char *result;
-		size_t size;
+		unsigned long size;
 
 		buffer = strndup_iconv_to_ucs2 (&size,
 						src_codeset,
@@ -902,12 +904,12 @@ char *
 vbi_strndup_iconv		(const char *		dst_codeset,
 				 const char *		src_codeset,
 				 const char *		src,
-				 size_t			src_size,
+				 unsigned long		src_size,
 				 int			repl_char)
 {
 	char *result;
 	char *buffer;
-	size_t size;
+	unsigned long size;
 
 	buffer = strndup_iconv (&size,
 				dst_codeset,
@@ -955,7 +957,7 @@ vbi_strndup_iconv		(const char *		dst_codeset,
 char *
 vbi_strndup_iconv_caption	(const char *		dst_codeset,
 				 const char *		src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
 {
 	if (NULL == src)
@@ -992,14 +994,14 @@ vbi_strndup_iconv_caption	(const char *		dst_codeset,
  * @since 0.2.23
  */
 static char *
-strndup_ucs2_teletext		(size_t *		out_size,
+strndup_ucs2_teletext		(unsigned long *	out_size,
 				 const vbi_ttx_charset *cs,
 				 const char *		src,
-				 size_t			src_length)
+				 unsigned long		src_length)
 {
 	uint16_t *d16;
 	char *buffer;
-	size_t i;
+	unsigned long i;
 
 	assert (NULL != cs);
 
@@ -1062,12 +1064,12 @@ char *
 vbi_strndup_iconv_teletext	(const char *		dst_codeset,
 				 const vbi_ttx_charset *cs,
 				 const uint8_t *	src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
 {
 	char *buffer;
 	char *result;
-	size_t size;
+	unsigned long size;
 
 	buffer = strndup_ucs2_teletext (&size, cs, src, src_length);
 	if (NULL == buffer)
@@ -1117,11 +1119,11 @@ vbi_fputs_iconv			(FILE *			fp,
 				 const char *		dst_codeset,
 				 const char *		src_codeset,
 				 const char *		src,
-				 size_t			src_size,
+				 unsigned long		src_size,
 				 int			repl_char)
 {
 	char *buffer;
-	size_t size;
+	unsigned long size;
 	size_t actual;
 
 	assert (NULL != fp);
@@ -1153,7 +1155,7 @@ vbi_fputs_iconv			(FILE *			fp,
 	free (buffer);
 	buffer = NULL;
 
-	return (actual == size);
+	return (actual == (size_t) size);
 }
 
 /**
@@ -1180,7 +1182,7 @@ vbi_bool
 vbi_fputs_iconv_ucs2		(FILE *			fp,
 				 const char *		dst_codeset,
 				 const uint16_t *	src,
-				 ssize_t		src_length,
+				 long			src_length,
 				 int			repl_char)
 {
 	if (NULL == src)
