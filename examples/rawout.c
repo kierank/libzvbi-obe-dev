@@ -18,10 +18,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: rawout.c,v 1.4 2006/05/26 00:45:16 mschimek Exp $ */
+/* $Id: rawout.c,v 1.5 2006/10/27 04:52:08 mschimek Exp $ */
 
-/* This example shows how to convert VBI data in a DVB PES to raw
-   VBI data.
+/* This example shows how to convert VBI data in a DVB PES stream
+   to raw VBI data.
 
    gcc -o rawout rawout.c `pkg-config zvbi-0.2 --cflags --libs`
 
@@ -79,11 +79,12 @@ convert				(vbi_dvb_demux *	dx,
 	vbi_bool success;
 	ssize_t actual;
 
-	dx = dx; /* unused, no warning */
+	dx = dx; /* unused */
 	user_data = user_data;
 
 	pts &= ((int64_t) 1 << 33) - 1;
 
+	/* Handle PTS wrap-around. */
 	if (0 == last_pts) {
 		last_pts = pts;
 	} else if (pts < last_pts) {
@@ -155,7 +156,9 @@ main				(void)
 	}
 
 	/* Helps debugging. */
-	vbi_set_log_fn (/* mask */ VBI_LOG_NOTICE * 2 - 1,
+	vbi_set_log_fn ((VBI_LOG_NOTICE |
+			 VBI_LOG_WARNING |
+			 VBI_LOG_ERROR),
 			vbi_log_on_stderr,
 			/* user_data */ NULL);
 
@@ -179,6 +182,7 @@ main				(void)
 	sp.interlaced		= TRUE;
 	sp.synchronous		= TRUE;
 
+	/* Other bytes are left unmodified. */
 	pixel_mask		= 0x000000FF; /* 0xAAVVUUYY */
 #else
 	/* PAL square pixels BGRA32. */
@@ -203,13 +207,14 @@ main				(void)
 	assert (NULL != image);
 
 	if (VBI_PIXFMT_YUYV == sp.sampling_format) {
-		/* Reset U/V bytes. */
+		/* Reset Cb/Cr bytes. */
 		memset (image, 0x80, image_size);
 	} else {
 		memset (image, 0x00, image_size);
 	}
 
-	/* Raw image test. */
+	/* To verify the generated raw VBI data we feed it back
+	   into a decoder and compare the sliced VBI data. */
 
 	vbi_raw_decoder_init (&rd);
 
@@ -225,8 +230,9 @@ main				(void)
 	rd.interlaced		= sp.interlaced;
 	rd.synchronous		= sp.synchronous;
 
-	/* Strict 0 because the function would rule out Teletext
-	   with the tight square pixel timing. */
+	/* Strict 0 because the function would consider the
+	   square pixel timing too tight to reliably decode
+	   Teletext. */
 	vbi_raw_decoder_add_services (&rd,
 				      (VBI_SLICED_TELETEXT_B |
 				       VBI_SLICED_VPS |

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.5 2006/09/29 09:30:06 mschimek Exp $ */
+/* $Id: ttxfilter.c,v 1.6 2006/10/27 04:52:08 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <assert.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -351,6 +352,8 @@ main				(int			argc,
 {
 	int index;
 	int c;
+
+	setlocale (LC_ALL, "");
 
 	while (-1 != (c = getopt_long (argc, argv, short_options,
 				       long_options, &index))) {

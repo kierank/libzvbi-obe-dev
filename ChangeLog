@@ -1,3 +1,14 @@
+2006-10-27    <mschimek@users.sf.net>
+
+	* Release 0.2.23.
+
+2006-10-27    <mschimek@users.sf.net>
+
+	* configure.in: Bumped .so revision to 10.
+
+	* contrib/ntsc-cc.c (main): Added a brief delay before retrying
+	  after an error.
+
 2006-10-06    <mschimek@users.sf.net>
 
 	* test/unicode.c (main): Now prints extended caption characters
@@ -77,7 +88,7 @@
 	* contrib/ntsc-cc.c: s/RAW/print_raw because RAW is a macro on
 	  GNU/kFreeBSD (Debian bug #372302).
 
-	* configure.in: Bumped version number to 0.2.22.
+	* configure.in: Bumped version number to 0.2.23.
 
 2006-05-30    <mschimek@users.sf.net>
 

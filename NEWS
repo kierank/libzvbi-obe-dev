@@ -1,3 +1,20 @@
+libzvbi 0.2.23, 2006-10-27
+--------------------------
+This versions adds a few helper functions to convert Closed Caption
+and UCS-2 strings. The raw VBI decoder was modified to handle a CC
+signal with incorrect clock run-in.
+
+The zvbi-ntsc-cc tool can now decode all caption channels
+simultaneously and converts from caption to locale character encoding
+for proper display of Spanish captions. It can write caption and XDS
+information to separate files. Some bugs in the XDS decoder were fixed
+and a filter was added to discard unwanted XDS information and WebTV
+links.
+
+Fixes:
+- The library did not compile on GNU/kFreeBSD due to a naming space
+  conflict with the RAW macro (Debian bug #372302).
+
 libzvbi 0.2.22, 2006-05-30
 --------------------------
 This version adds a simulated raw and sliced VBI capture device

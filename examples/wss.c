@@ -18,11 +18,17 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.3 2006/05/25 08:09:00 mschimek Exp $ */
+/* $Id: wss.c,v 1.4 2006/10/27 04:52:08 mschimek Exp $ */
 
 /* This example shows how to extract Wide Screen Signalling data
-   (EN 300 294) from video images. Note some drivers cannot capture
-   line 23 at all, for example the saa7134 driver.
+   (EN 300 294) from video images. The signal is transmitted on the
+   first half of PAL/SECAM scan line 23, which ITU-R BT.601 defines
+   as the first line of a 576 line picture.
+
+   The author is not aware of any drivers which can capture a scan
+   line as raw VBI and video data at the same time, and sliced VBI
+   capturing is not supported yet by libzvbi. Note some drivers like
+   saa7134 cannot capture line 23 at all.
 
    gcc -o wss wss.c `pkg-config zvbi-0.2 --cflags --libs` */
 
@@ -171,15 +177,15 @@ init_decoder			(void)
 	/* Should be calculated from VIDIOC_CROPCAP information.
 	   Common sampling rates are 14.75 MHz to get 768 PAL/SECAM
 	   square pixels per line, and 13.5 MHz according to ITU-R Rec.
-           BT.601, 720 pixels/line. Note BT.601 overscans the line:
+           BT.601 with 720 pixels/line. Note BT.601 overscans the line:
 	   13.5e6 / 720 > 14.75e6 / 768. Don't be fooled by a driver
 	   scaling 768 square pixels to 720. */
-	rd.sampling_rate = 768 / 768 * 14750000;
+	rd.sampling_rate = 768 * 14750000 / 768;
 
 	rd.bytes_per_line = 768 * 2;
 
 	/* Should be calculated from VIDIOC_CROPCAP information. */
-	rd.offset = 0; //6.8e-6 * rd.sampling_rate;
+	rd.offset = 0;
 
 	rd.start[0] = 23;
 	rd.count[0] = 1;
@@ -419,7 +425,7 @@ int
 main				(void)
 {
 	/* Helps debugging. */
-	vbi_set_log_fn (/* mask */ -1, //VBI_LOG_NOTICE * 2 - 1,
+	vbi_set_log_fn (/* mask: log everything */ -1,
 			vbi_log_on_stderr,
 			/* user_data */ NULL);
 

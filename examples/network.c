@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: network.c,v 1.1 2006/05/07 20:55:00 mschimek Exp $ */
+/* $Id: network.c,v 1.2 2006/10/27 04:52:08 mschimek Exp $ */
 
 /* This example shows how to identify a network from data transmitted
    in XDS packets, Teletext packet 8/30 format 1 and 2, and VPS packets.
@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <errno.h>
 
 #include <libzvbi.h>
@@ -47,6 +48,7 @@ handler				(vbi_event *		ev,
 	const char *event_name;
 	const char *network_name;
 	const char *call_sign;
+	char *locale_network_name;
 
 	user_data = user_data; /* unused */
 
@@ -68,11 +70,18 @@ handler				(vbi_event *		ev,
 		assert (0);
 	}
 
-	/* Note this is an ISO-8859-1 string (yeah it's a pretty old
-	   API). Use iconv() to convert to nl_langinfo(CODESET). */
 	network_name = "unknown";
 	if (0 != ev->ev.network.name[0])
 		network_name = ev->ev.network.name;
+
+	/* The network name is an ISO-8859-1 string (the API is
+	   quite old...) so we convert it to locale encoding,
+	   nowadays usually UTF-8. */
+	locale_network_name = vbi_strndup_iconv (vbi_locale_codeset (),
+						 "ISO-8859-1",
+						 network_name,
+						 strlen (network_name),
+						 /* repl_char */ '?');
 
 	/* ASCII. */
 	call_sign = "unknown";
@@ -82,11 +91,14 @@ handler				(vbi_event *		ev,
 	printf ("%s: receiving: \"%s\" call sign: \"%s\" "
 	        "CNI VPS: 0x%x 8/30-1: 0x%x 8/30-2: 0x%x\n",
 		event_name,
-		network_name,
+		(NULL == locale_network_name) ?
+		"iconv-error" : locale_network_name,
 		call_sign,
 		ev->ev.network.cni_vps,
 		ev->ev.network.cni_8301,
 		ev->ev.network.cni_8302);
+
+	free (locale_network_name);
 }
 
 static void
@@ -153,6 +165,8 @@ main				(void)
 {
 	char *errstr;
 	vbi_bool success;
+
+	setlocale (LC_ALL, "");
 
 	services = (VBI_SLICED_TELETEXT_B |
 		    VBI_SLICED_VPS |
