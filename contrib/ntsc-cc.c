@@ -1369,42 +1369,49 @@ int main(int argc,char **argv)
 	
 #ifdef HAVE_ZVBI
 
-   for (;;) {
-      double timestamp;
-      int n_lines;
-      int r;
-      int i;
+	for (;;) {
+		double timestamp;
+		int n_lines;
+		int r;
+		int i;
 
-      if (test) {
-	      r = read_test_stream (sliced, &n_lines, src_h);
-      } else {
-	      r = vbi_capture_read (cap, raw, sliced,
-				    &n_lines, &timestamp, &timeout);
-      }
-      switch (r) {
-      case -1:
-	 fprintf (stderr, "VBI read error: %d, %s%s\n",
-		  errno, strerror (errno),
-		  ignore_read_error ? " (ignored)" : "");
-	 if (ignore_read_error)
-	    continue;
-	 else
-	    exit (EXIT_FAILURE);
+		if (test) {
+			r = read_test_stream (sliced, &n_lines, src_h);
+		} else {
+			r = vbi_capture_read (cap, raw, sliced,
+					      &n_lines, &timestamp, &timeout);
+		}
 
-      case 0: 
-	 fprintf (stderr, "VBI read timeout%s\n",
-		  ignore_read_error ? " (ignored)" : "");
-	 if (ignore_read_error)
-	    continue;
-	 else
-	    exit (EXIT_FAILURE);
+		switch (r) {
+		case -1:
+			fprintf (stderr, "VBI read error: %d, %s%s\n",
+				 errno, strerror (errno),
+				 ignore_read_error ? " (ignored)" : "");
+			if (ignore_read_error) {
+				/* Avoid idle loop. */
+				usleep (250000);
+				continue;
+			} else {
+				exit (EXIT_FAILURE);
+			}
 
-      case 1: /* ok */
-	 break;
+		case 0: 
+			fprintf (stderr, "VBI read timeout%s\n",
+				 ignore_read_error ? " (ignored)" : "");
+			if (ignore_read_error) {
+				/* Avoid idle loop. */
+				usleep (250000);
+				continue;
+			} else {
+				exit (EXIT_FAILURE);
+			}
 
-      default:
-	 assert (0);
-      }
+		case 1: /* ok */
+			break;
+
+		default:
+			assert (0);
+		}
 
 		if (useraw)
 		{
