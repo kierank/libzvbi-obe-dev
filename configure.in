@@ -13,7 +13,7 @@ dnl [current:revision:age]
 dnl Any change: ++revision
 dnl Interface added: ++current, revision = 0
 dnl age = last binary compatible version - current
-AC_SUBST(LIBZVBI_SO_VERSION, [9:0:9])
+AC_SUBST(LIBZVBI_SO_VERSION, [10:0:10])
 
 dnl Enable GNU extensions if available.
 AC_GNU_SOURCE
