@@ -485,7 +485,7 @@ static int CCdecode(int data)
 {
 	int b1, b2, row, len, x,y;
 
-	if (-1 == cur_ch[field])
+	if (cur_ch[field] < 0)
 		return -1;
 	if (data == -1) //invalid data. flush buffers to be safe.
 	{
