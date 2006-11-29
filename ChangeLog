@@ -1,7 +1,11 @@
+2006-11-29    <mschimek@users.sf.net>
+
+	* Release 0.2.24.
+
 2006-11-21    <mschimek@users.sf.net>
 
 	* contrib/ntsc-cc.c (CCdecode): Fixed channel number check.
-	  Symptom of this bug may be a segfault.
+	  Symptom of this bug may be a segfault on reception errors.
 
 2006-10-27    <mschimek@users.sf.net>
 

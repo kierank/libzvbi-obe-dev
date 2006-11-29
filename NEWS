@@ -1,3 +1,8 @@
+libzvbi 0.2.24, 2006-11-29
+--------------------------
+This version fixes a bug in the zvbi-ntsc-cc tool which may cause
+a segfault on reception errors.
+
 libzvbi 0.2.23, 2006-10-27
 --------------------------
 This versions adds a few helper functions to convert Closed Caption
