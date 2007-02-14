@@ -60,7 +60,7 @@ int x;
 #undef PROGRAM
 #define PROGRAM "CCDecoder"
 #undef VERSION
-#define VERSION "0.11"
+#define VERSION "0.12"
 
 #define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
 #define CLEAR(var) memset (&(var), 0, sizeof (var))
@@ -448,23 +448,6 @@ static int webtv_check(char * buf,int len)
 	return 0;
 }
 
-static void
-append_control_seq		(const char *		seq)
-{
-	unsigned int len;
-	unsigned int i;
-
-	if (plain)
-		return;
-
-	strcat (ccbuf[cur_ch[field]][ccmode], seq);
-
-	len = vbi_strlen_ucs2 (cc_ubuf[cur_ch[field]][ccmode]);
-	for (i = 0; 0 != seq[i]; ++i)
-		cc_ubuf[cur_ch[field]][ccmode][len + i] = seq[i]; /* ASCII -> UCS-2 */
-	cc_ubuf[cur_ch[field]][ccmode][len + i] = 0;
-}
-
 static int
 unicode				(int			c)
 {
@@ -481,9 +464,80 @@ unicode				(int			c)
 	return vbi_caption_unicode (c, (is_upper[cur_ch[field]] >= 3));
 }
 
+static void
+append_char			(int			c,
+				 int			uc)
+{
+	unsigned int ch = cur_ch[field];
+	unsigned int dlen;
+
+	dlen = strlen (ccbuf[ch][ccmode]);
+	if (dlen < N_ELEMENTS (ccbuf[0][0]) - 1) {
+		ccbuf[ch][ccmode][dlen] = c;
+		ccbuf[ch][ccmode][dlen + 1] = 0;
+	}
+
+	dlen = vbi_strlen_ucs2 (cc_ubuf[ch][ccmode]);
+	if (dlen < N_ELEMENTS (cc_ubuf[0][0]) - 1) {
+		cc_ubuf[ch][ccmode][dlen] = uc;
+		cc_ubuf[ch][ccmode][dlen + 1] = 0;
+	}
+}
+
+static void
+append_special_char		(int			b2)
+{
+	unsigned int ch = cur_ch[field];
+	unsigned int dlen;
+	unsigned int slen;
+
+	slen = strlen (specialchar[b2&0x0f]);
+	dlen = strlen (ccbuf[ch][ccmode]);
+	if (dlen + slen < N_ELEMENTS (ccbuf[0][0]) - 1) {
+		strcpy (&ccbuf[ch][ccmode][dlen],
+			specialchar[b2&0x0f]);
+	}
+
+	dlen = vbi_strlen_ucs2 (cc_ubuf[ch][ccmode]);
+	if (dlen < N_ELEMENTS (cc_ubuf[0][0]) - 1) {
+		cc_ubuf[ch][ccmode][dlen] = unicode (0x1100 | b2);
+		cc_ubuf[ch][ccmode][dlen + 1] = 0;
+	}
+}
+
+static void
+append_control_seq		(const char *		seq)
+{
+	unsigned int ch = cur_ch[field];
+	unsigned int slen;
+	unsigned int dlen;
+
+	if (plain)
+		return;
+
+	slen = strlen (seq);
+
+	dlen = strlen (ccbuf[ch][ccmode]);
+	if (dlen + slen < N_ELEMENTS (ccbuf[0][0]) - 1) {
+		strcpy (&ccbuf[ch][ccmode][dlen], seq);
+	}
+
+	dlen = vbi_strlen_ucs2 (cc_ubuf[ch][ccmode]);
+	if (dlen + slen < N_ELEMENTS (cc_ubuf[0][0]) - 1) {
+		unsigned int i;
+
+		for (i = 0; 0 != seq[i]; ++i) {
+			/* ASCII -> UCS-2 */
+			cc_ubuf[ch][ccmode][dlen + i] = seq[i];
+		}
+
+		cc_ubuf[ch][ccmode][dlen + i] = 0;
+	}
+}
+
 static int CCdecode(int data)
 {
-	int b1, b2, row, len, x,y;
+	int b1, b2, row, x,y;
 
 	if (cur_ch[field] < 0)
 		return -1;
@@ -496,38 +550,31 @@ static int CCdecode(int data)
 	b1 = data & 0x7f;
 	b2 = (data>>8) & 0x7f;
 	if(ccmode >= 3) ccmode = 0;
-	len = strlen(ccbuf[cur_ch[field]][ccmode]);
 
 	if (b1&0x60 && data != lastcode) // text
 	{
-		if(len < 255) {
-			cc_ubuf[cur_ch[field]][ccmode][len] = unicode (b1);
-			ccbuf[cur_ch[field]][ccmode][len++]=b1;
-		}
-		if ((b2&0x60) && (len < 255)) {
-			cc_ubuf[cur_ch[field]][ccmode][len] = unicode (b2);
-			ccbuf[cur_ch[field]][ccmode][len++]=b2;
+		append_char (b1, unicode (b1));
+		if (b2&0x60) {
+			append_char (b2, unicode (b2));
 		}
 		if ((b1 == ']' || b2 == ']') && usewebtv)
-			webtv_check(ccbuf[cur_ch[field]][ccmode],len);
+			webtv_check(ccbuf[cur_ch[field]][ccmode],
+				    strlen (ccbuf[cur_ch[field]][ccmode]));
 	}
 	else if ((b1&0x10) && (b2>0x1F) && (data != lastcode)) //codes are always transmitted twice (apparently not, ignore the second occurance)
 	{
 		ccmode=((b1>>3)&1)+1;
-		len = strlen(ccbuf[cur_ch[field]][ccmode]);
 
 		if (b2 & 0x40)	//preamble address code (row & indent)
 		{
 			row=rowdata[((b1<<1)&14)|((b2>>5)&1)];
-			if (len!=0) {
-				cc_ubuf[cur_ch[field]][ccmode][len] = '\n';
-				ccbuf[cur_ch[field]][ccmode][len++]='\n';
+			if (strlen (ccbuf[cur_ch[field]][ccmode]) > 0) {
+				append_char ('\n', '\n');
 			}
 
 			if (b2&0x10) //row contains indent flag
 				for (x=0;x<(b2&0x0F)<<1;x++) {
-					cc_ubuf[cur_ch[field]][ccmode][len] = ' ';
-					ccbuf[cur_ch[field]][ccmode][len++]=' ';
+					append_char (' ', ' ');
 				}
 		}
 		else
@@ -560,8 +607,7 @@ static int CCdecode(int data)
 							}
 							break;
 						case 0x30: //special character..
-							cc_ubuf[cur_ch[field]][ccmode][len] = unicode (0x1100 | b2);
-							strcat(ccbuf[cur_ch[field]][ccmode],specialchar[b2&0x0f]);
+							append_special_char (b2);
 							break;
 					}
 					break;
@@ -573,11 +619,16 @@ static int CCdecode(int data)
 					switch (b2)
 					{
 						size_t n;
+						unsigned int dlen;
 
 						case 0x21: //backspace
-							if (len > 0) {
-								ccbuf[cur_ch[field]][ccmode][--len]=0;
-								cc_ubuf[cur_ch[field]][ccmode][len] = 0;
+							dlen = strlen (ccbuf[cur_ch[field]][ccmode]);
+							if (dlen > 0) {
+								ccbuf[cur_ch[field]][ccmode][dlen - 1] = 0;
+							}
+							dlen = vbi_strlen_ucs2 (cc_ubuf[cur_ch[field]][ccmode]);
+							if (dlen > 0) {
+								cc_ubuf[cur_ch[field]][ccmode][dlen - 1] = 0;
 							}
 							break;
 							
@@ -603,9 +654,7 @@ static int CCdecode(int data)
 										if (cc_fp[cur_ch[field]])
 											fprintf (cc_fp[cur_ch[field]], "\a");
 							append_control_seq ("\33[m");
-							len = strlen (ccbuf[cur_ch[field]][ccmode]);
-							cc_ubuf[cur_ch[field]][ccmode][len] = '\n';
-							ccbuf[cur_ch[field]][ccmode][len] = '\n';
+							append_char ('\n', '\n');
 							if (cc_fp[cur_ch[field]]) {
 							vbi_fputs_iconv_ucs2 (cc_fp[cur_ch[field]],
 									      vbi_locale_codeset (),
@@ -617,15 +666,14 @@ static int CCdecode(int data)
 							/* FALL */
 						case 0x2A: //text restart
 						case 0x2E: //erase non-displayed memory
-							memset(ccbuf[cur_ch[field]][ccmode],0,255);
+							CLEAR (ccbuf[cur_ch[field]][ccmode]);
 							CLEAR (cc_ubuf[cur_ch[field]][ccmode]);
 							break;
 					}
 					break;
 				case 0x07:	//misc (TAB)
 					for(x=0;x<(b2&0x03);x++) {
-						cc_ubuf[cur_ch[field]][ccmode][len] = ' ';
-						ccbuf[cur_ch[field]][ccmode][len++]=' ';
+						append_char (' ', ' ');
 					}
 					break;
 			}
