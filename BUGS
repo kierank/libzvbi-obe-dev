@@ -1,4 +1,4 @@
-$Id: BUGS,v 1.24 2006/09/29 09:30:42 mschimek Exp $
+$Id: BUGS,v 1.25 2007/02/14 03:56:06 mschimek Exp $
 
 * v4l and v4l2 i/o can ignore timeout parameter
   > maybe a sleep() loop works, but what about timestamping?
@@ -8,3 +8,4 @@ $Id: BUGS,v 1.24 2006/09/29 09:30:42 mschimek Exp $
 * test/decode --idl, --pfc broken?
 * Make sure test apps flush their output buffers once per frame
   for real time output.
+* strerror() isn't thread-safe.
