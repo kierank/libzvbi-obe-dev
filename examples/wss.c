@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.4 2006/10/27 04:52:08 mschimek Exp $ */
+/* $Id: wss.c,v 1.5 2007/04/05 04:59:24 mschimek Exp $ */
 
 /* This example shows how to extract Wide Screen Signalling data
    (EN 300 294) from video images. The signal is transmitted on the
@@ -180,7 +180,7 @@ init_decoder			(void)
            BT.601 with 720 pixels/line. Note BT.601 overscans the line:
 	   13.5e6 / 720 > 14.75e6 / 768. Don't be fooled by a driver
 	   scaling 768 square pixels to 720. */
-	rd.sampling_rate = 768 * 14750000 / 768;
+	rd.sampling_rate = 768 * 14.75e6 / 768;
 
 	rd.bytes_per_line = 768 * 2;
 

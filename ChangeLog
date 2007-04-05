@@ -1,3 +1,20 @@
+2007-04-02    <mschimek@users.sf.net>
+
+	* src/videodev2k.h: Updated to latest version.
+	* contrib/ntsc-cc.c: Added V4L2 sliced VBI interface for tests.
+	* test/decode.c: Added a --metronome option to examine timestamp
+	  errors.
+	* configure.in: Bumped version to 0.2.26.
+
+2007-03-09    <mschimek@users.sf.net>
+
+	* Release 0.2.25.
+
+2007-03-09    <mschimek@users.sf.net>
+
+	* src/chains.c: Don't include videodev.h on GNU/kFreeBSD systems
+	  (Debian bug #407621).
+
 2007-02-14    <mschimek@users.sf.net>
 
 	* contrib/ntsc-cc.c (CCdecode): Fixed a buffer overflow.

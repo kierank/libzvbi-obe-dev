@@ -45,7 +45,7 @@
 #include "proxy-msg.h"
 #include "proxy-client.h"
 
-#if !defined (__NetBSD__) && !defined (__FreeBSD__)
+#if !defined (__NetBSD__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__)
 #include "videodev.h"
 #include "videodev2k.h"
 # define BASE_VIDIOCPRIVATE      192

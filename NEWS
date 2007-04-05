@@ -1,3 +1,9 @@
+libzvbi 0.2.25, 2007-03-09
+--------------------------
+This version fixes a buffer overflow bug in the zvbi-ntsc-cc
+tool which may cause a segfault on reception errors, and a
+GNU/kFreeBSD compile problem (Debian bug #407621).
+
 libzvbi 0.2.24, 2006-11-29
 --------------------------
 This version fixes a bug in the zvbi-ntsc-cc tool which may cause
