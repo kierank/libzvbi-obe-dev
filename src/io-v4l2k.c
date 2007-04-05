@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.43 2007/04/05 04:59:25 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.44 2007/04/05 05:06:32 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into

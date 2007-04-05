@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.5 2007/04/05 04:59:24 mschimek Exp $ */
+/* $Id: wss.c,v 1.6 2007/04/05 05:06:31 mschimek Exp $ */
 
 /* This example shows how to extract Wide Screen Signalling data
    (EN 300 294) from video images. The signal is transmitted on the

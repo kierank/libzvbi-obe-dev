@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.21 2007/04/05 04:59:25 mschimek Exp $ */
+/* $Id: decode.c,v 1.22 2007/04/05 05:06:32 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"

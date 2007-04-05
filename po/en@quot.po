@@ -1,6 +1,6 @@
 # English translations for zvbi package.
 # This file is put in the public domain.
-# Automatically generated, 2006.
+# Automatically generated, 2007.
 #
 # All this catalog "translates" are quotation characters.
 # The msgids must be ASCII and therefore cannot contain real quotation
@@ -26,7 +26,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: zvbi 0.2.24\n"
+"Project-Id-Version: zvbi 0.2.25\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-10-27 21:47+0200\n"
 "PO-Revision-Date: 2006-10-27 21:47+0200\n"
