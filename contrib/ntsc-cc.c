@@ -2,8 +2,9 @@
  * Mike Baker (mbm@linux.com)
  * (based on code by timecop@japan.co.jp)
  * Buffer overflow bugfix by Mark K. Kim (dev@cbreak.org), 2003.05.22
- * -p fix and libzvbi port (C) 2005 Michael H. Schimek <mschimek@users.sf.net>
- * More fixes and improvements (C) 2006 Michael H. Schimek
+ *
+ * Libzvbi port, various fixes and improvements
+ * (C) 2005-2007 Michael H. Schimek <mschimek@users.sf.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +19,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- * 
  */
 
 #include "config.h"
@@ -43,6 +43,11 @@
 #include <assert.h>
 #include "src/libzvbi.h"
 
+#ifdef ENABLE_V4L2
+#  include <asm/types.h>
+#  include "src/videodev2k.h"
+#endif
+
 #ifndef X_DISPLAY_MISSING
 # include <X11/X.h>
 # include <X11/Xlib.h>
@@ -60,12 +65,20 @@ int x;
 #undef PROGRAM
 #define PROGRAM "CCDecoder"
 #undef VERSION
-#define VERSION "0.12"
+#define VERSION "0.13"
 
 #define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
 #define CLEAR(var) memset (&(var), 0, sizeof (var))
 
+#ifndef _
+#  define _(x) x /* future l18n */ 
+#endif
+
 static char *			my_name;
+
+static int			vbifd = -1;
+static void *			io_buffer;
+static size_t			io_size;
 
 static unsigned int		field;
 static vbi_bool			in_xds[2];
@@ -98,6 +111,7 @@ int	keywords=0;
 char	*keyword[32];
 static int			is_upper[8];
 static FILE *			cc_fp[8];
+static vbi_bool			opt_v4l2_sliced;
 
 //args (this should probably be put into a structure later)
 char useraw=0;
@@ -866,6 +880,176 @@ caption_filter			(unsigned int		c1,
 	}
 }
 
+#ifdef ENABLE_V4L2
+
+static ssize_t
+read_v4l2_sliced		(vbi_sliced *		sliced_out,
+				 int *			n_lines_out,
+				 unsigned int		max_lines)
+{
+
+	const struct v4l2_sliced_vbi_data *s;
+	unsigned int n_lines;
+	ssize_t size;
+
+	size = read (vbifd, io_buffer, io_size);
+	if (size <= 0) {
+		return size;
+	}
+
+	s = (const struct v4l2_sliced_vbi_data *) io_buffer;
+	n_lines = size / sizeof (struct v4l2_sliced_vbi_data);
+
+	*n_lines_out = 0;
+
+	while (n_lines > 0) {
+		if ((unsigned int) *n_lines_out >= max_lines)
+			return 1; /* ok */
+
+		if (V4L2_SLICED_CAPTION_525 == s->id && 21 == s->line) {
+			sliced_out->id = VBI_SLICED_CAPTION_525;
+
+			if (0 == s->field)
+				sliced_out->line = 21;
+			else
+				sliced_out->line = 284;
+
+			memcpy (sliced_out->data, s->data, 2);
+
+			++sliced_out;
+			++*n_lines_out;
+		}
+
+		++s;
+		--n_lines;
+	}
+
+	return 1; /* ok */
+}
+
+static vbi_bool
+open_v4l2_sliced		(const char *		dev_name)
+{
+	struct stat st; 
+	struct v4l2_capability cap;
+	struct v4l2_format fmt;
+
+	if (-1 == stat (dev_name, &st)) {
+		fprintf (stderr,
+			 _("%s: Cannot identify '%s'. %s.\n"),
+			 my_name, dev_name, strerror (errno));
+		exit (EXIT_FAILURE);
+	}
+
+	if (!S_ISCHR (st.st_mode)) {
+		fprintf (stderr,
+			 _("%s: %s is not a character device.\n"),
+			 my_name, dev_name);
+		exit (EXIT_FAILURE);
+	}
+
+	vbifd = open (dev_name, O_RDWR, 0);
+
+	if (-1 == vbifd) {
+		fprintf (stderr,
+			 _("%s: Cannot open %s. %s.\n"),
+			 my_name, dev_name, strerror (errno));
+		exit (EXIT_FAILURE);
+	}
+
+	if (-1 == ioctl (vbifd, VIDIOC_QUERYCAP, &cap)) {
+		if (EINVAL == errno) {
+			fprintf (stderr,
+				 _("%s: %s is not a V4L2 device.\n"),
+				 my_name, dev_name);
+		} else {
+			fprintf (stderr,
+				 _("%s: VIDIOC_QUERYCAP failed: %s.\n"),
+				 my_name, strerror (errno));
+		}
+
+		goto failed;
+	}
+
+	if (0 == (cap.capabilities & V4L2_CAP_SLICED_VBI_CAPTURE)) {
+		fprintf (stderr,
+			 _("%s: %s does not support sliced VBI capturing.\n"),
+			 my_name, dev_name);
+
+		goto failed;
+	}
+
+	if (0 == (cap.capabilities & V4L2_CAP_READWRITE)) {
+		fprintf (stderr,
+			 _("%s: %s does not support the read() function.\n"),
+			 my_name, dev_name);
+
+		goto failed;
+	}
+
+	CLEAR (fmt);
+
+	fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
+	fmt.fmt.sliced.service_set = V4L2_SLICED_CAPTION_525;
+
+	if (-1 == ioctl (vbifd, VIDIOC_S_FMT, &fmt)) {
+		fprintf (stderr,
+			 _("%s: VIDIOC_S_FMT failed: %s.\n"),
+			 my_name, strerror (errno));
+
+		goto failed;
+	}
+
+	if (0 == (fmt.fmt.sliced.service_set & V4L2_SLICED_CAPTION_525)) {
+		fprintf (stderr,
+			 _("%s: %s cannot capture Closed Caption.\n"),
+			 my_name, dev_name);
+
+		goto failed;
+	}
+
+	io_size = fmt.fmt.sliced.io_size;
+
+	io_buffer = malloc (io_size);
+
+	if (NULL == io_buffer) {
+		fprintf (stderr,
+			 _("%s: Cannot allocate %u byte I/O buffer.\n"),
+			 my_name, (unsigned int) io_size);
+
+		goto failed;
+	}
+
+	return TRUE;
+
+ failed:
+	if (-1 != vbifd) {
+		close (vbifd);
+		vbifd = -1;
+	}
+
+	return FALSE;
+}
+
+#else /* !ENABLE_V4L2 */
+
+static ssize_t
+read_v4l2_sliced		(vbi_sliced *		sliced,
+				 int *			n_lines,
+				 unsigned int		max_lines)
+{
+	assert (0); /* not reached */
+}
+
+static vbi_bool
+open_v4l2_sliced		(const char *		dev_name)
+{
+	/* Not supported, fall back to standard i/o. */
+	return FALSE;
+}
+
+#endif /* !ENABLE_V4L2 */
+
 static ssize_t
 read_test_stream		(vbi_sliced *		sliced,
 				 int *			n_lines,
@@ -946,7 +1130,7 @@ xds_filter_option		(const char *		optarg)
 {
 	const char *s;
 
-	/* Attention: may be called multiple times. */
+	/* Attention: may be called repeatedly. */
 
 	if (NULL == optarg
 	    || 0 == strcasecmp (optarg, "all")) {
@@ -1018,7 +1202,7 @@ usage				(FILE *			fp)
 {
 	fprintf (fp, "\
 " PROGRAM " " VERSION " -- Closed Caption and XDS decoder\n\
-Copyright (C) 2003-2006 Mike Baker, Mark K. Kim, Michael H. Schimek\n\
+Copyright (C) 2003-2007 Mike Baker, Mark K. Kim, Michael H. Schimek\n\
 <mschimek@users.sf.net>; Based on code by timecop@japan.co.jp.\n\
 This program is licensed under GPL 2 or later. NO WARRANTIES.\n\n\
 Usage: %s [options]\n\
@@ -1043,45 +1227,49 @@ Options:\n\
 -w | --window               Open debugging window (with -r option)\n\
 -x | --xds                  Print XDS info\n\
 -C | --cc-file filename     Append all caption to this file [stdout]\n\
--R | --semi-raw             Dump semi-raw VBI data (with -r option)\n\
--X | --xds-file filename    Append XDS info to this file [stdout]\n\
+-R | --semi-raw             Dump semi-raw VBI data (with -r option)\n"
+#ifdef ENABLE_V4L2
+"-S | --v4l2-sliced          Capture sliced (not raw) VBI data [raw]\n"
+#endif
+"-X | --xds-file filename    Append XDS info to this file [stdout]\n\
 ",
 		 my_name);
 }
 
 static const char
-short_options [] = "?1:2:3:4:5:6:7:8:bcd:f:hkl:pr:stvwxC:RX:";
+short_options [] = "?1:2:3:4:5:6:7:8:bcd:f:hkl:pr:stvwxC:RSX:";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options [] = {
-	{ "help",	no_argument,		NULL,		'?' },
-	{ "cc1-file",	required_argument,	NULL,		'1' },
-	{ "cc2-file",	required_argument,	NULL,		'2' },
-	{ "cc3-file",	required_argument,	NULL,		'3' },
-	{ "cc4-file",	required_argument,	NULL,		'4' },
-	{ "t1-file",	required_argument,	NULL,		'5' },
-	{ "t2-file",	required_argument,	NULL,		'6' },
-	{ "t3-file",	required_argument,	NULL,		'7' },
-	{ "t4-file",	required_argument,	NULL,		'8' },
-	{ "no-webtv",	no_argument,		NULL,		'b' },
-	{ "cc",		no_argument,		NULL,		'c' },
-	{ "device",	required_argument,	NULL,		'd' },
-	{ "filter",	required_argument,	NULL,		'f' },
-	{ "help",	no_argument,		NULL,		'h' },
-	{ "keyword",	required_argument,	NULL,		'k' },
-	{ "channel",	required_argument,	NULL,		'l' },
+	{ "help",	 no_argument,		NULL,		'?' },
+	{ "cc1-file",	 required_argument,	NULL,		'1' },
+	{ "cc2-file",	 required_argument,	NULL,		'2' },
+	{ "cc3-file",	 required_argument,	NULL,		'3' },
+	{ "cc4-file",	 required_argument,	NULL,		'4' },
+	{ "t1-file",	 required_argument,	NULL,		'5' },
+	{ "t2-file",	 required_argument,	NULL,		'6' },
+	{ "t3-file",	 required_argument,	NULL,		'7' },
+	{ "t4-file",	 required_argument,	NULL,		'8' },
+	{ "no-webtv",	 no_argument,		NULL,		'b' },
+	{ "cc",		 no_argument,		NULL,		'c' },
+	{ "device",	 required_argument,	NULL,		'd' },
+	{ "filter",	 required_argument,	NULL,		'f' },
+	{ "help",	 no_argument,		NULL,		'h' },
+	{ "keyword",	 required_argument,	NULL,		'k' },
+	{ "channel",	 required_argument,	NULL,		'l' },
 	{ "plain-ascii", no_argument,		NULL,		'p' },
-	{ "raw",	required_argument,	NULL,		'r' },
-	{ "sentences",	no_argument,		NULL,		's' },
-	{ "test",	no_argument,		NULL,		't' },
-	{ "verbose",	no_argument,		NULL,		'v' },
-	{ "window",	no_argument,		NULL,		'w' },
-	{ "xds",	no_argument,		NULL,		'x' },
-	{ "usage",	no_argument,		NULL,		'u' },
-	{ "cc-file",	required_argument,	NULL,		'C' },
-	{ "semi-raw",	no_argument,		NULL,		'R' },
-	{ "xds-file",	required_argument,	NULL,		'X' },
+	{ "raw",	 required_argument,	NULL,		'r' },
+	{ "sentences",	 no_argument,		NULL,		's' },
+	{ "test",	 no_argument,		NULL,		't' },
+	{ "verbose",	 no_argument,		NULL,		'v' },
+	{ "window",	 no_argument,		NULL,		'w' },
+	{ "xds",	 no_argument,		NULL,		'x' },
+	{ "usage",	 no_argument,		NULL,		'u' },
+	{ "cc-file",	 required_argument,	NULL,		'C' },
+	{ "semi-raw",	 no_argument,		NULL,		'R' },
+	{ "v4l2-sliced", no_argument,		NULL,		'S' },
+	{ "xds-file",	 required_argument,	NULL,		'X' },
 	{ NULL, 0, 0, 0 }
 };
 #else
@@ -1116,7 +1304,6 @@ int main(int argc,char **argv)
    unsigned char buf[65536];
    int arg;
    int args=0;
-   int vbifd;
    fd_set rfds;
    int x;
 	const char *device_file_name;
@@ -1266,6 +1453,10 @@ int main(int argc,char **argv)
 			semirawdata=1;
 			break;
 
+		case 'S':
+			opt_v4l2_sliced = TRUE;
+			break;
+
 		case 'X':
 			assert (NULL != optarg);
 			xds_file_name = optarg;
@@ -1312,6 +1503,14 @@ int main(int argc,char **argv)
 
       /* Linux */
 
+      if (opt_v4l2_sliced) {
+	      if (open_v4l2_sliced (device_file_name)) {
+		      break;
+	      } else {
+		      opt_v4l2_sliced = FALSE;
+	      }
+      }
+
       /* DVB interface omitted, doesn't support NTSC/ATSC. */
 
       cap = vbi_capture_v4l2_new (device_file_name,
@@ -1349,7 +1548,7 @@ int main(int argc,char **argv)
 
    } while (0);
 
-   if (test) {
+   if (test || opt_v4l2_sliced) {
 	   src_w = 1440;
 	   src_h = 50;
    } else {
@@ -1377,6 +1576,7 @@ int main(int argc,char **argv)
    timeout.tv_usec = 0;
 
 #else
+   opt_v4l2_sliced = FALSE;
 
    if ((vbifd = open(device_file_name, O_RDONLY)) < 0) {
 	perror(vbifile);
@@ -1423,7 +1623,9 @@ int main(int argc,char **argv)
 		int r;
 		int i;
 
-		if (test) {
+		if (opt_v4l2_sliced) {
+			r = read_v4l2_sliced (sliced, &n_lines, src_h);
+		} else if (test) {
 			r = read_test_stream (sliced, &n_lines, src_h);
 		} else {
 			r = vbi_capture_read (cap, raw, sliced,
