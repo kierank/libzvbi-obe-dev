@@ -2,7 +2,7 @@
  *  zvbi-decode -- decode sliced VBI data using low-level
  *		   libzvbi functions
  *
- *  Copyright (C) 2004, 2006 Michael H. Schimek
+ *  Copyright (C) 2004, 2006, 2007 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.19 2006/10/06 19:23:15 mschimek Exp $ */
+/* $Id: decode.c,v 1.20 2007/04/05 04:38:53 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -60,6 +60,11 @@
 /* Will be installed one day. */
 #define PROGRAM_NAME "zvbi-decode"
 
+#ifndef HAVE_PROGRAM_INVOCATION_NAME
+static char *			program_invocation_name;
+static char *			program_invocation_short_name;
+#endif
+
 static vbi_bool			source_is_pes; /* ATSC/DVB */
 
 static vbi_pgno			option_pfc_pgno;
@@ -79,6 +84,7 @@ static vbi_bool			option_dump_network;
 static vbi_bool			option_dump_hex;
 static vbi_bool			option_dump_bin;
 static vbi_bool			option_dump_time;
+static double			option_metronome_tick;
 
 static vbi_pgno			option_pfc_pgno	= 0;
 static unsigned int		option_pfc_stream = 0;
@@ -92,11 +98,6 @@ static vbi_pfc_demux *		pfc;
 static vbi_dvb_demux *		dvb;
 static vbi_idl_demux *		idl;
 static vbi_xds_demux *		xds;
-
-#ifndef HAVE_PROGRAM_INVOCATION_NAME
-static char *			program_invocation_name;
-static char *			program_invocation_short_name;
-#endif
 
 extern void
 _vbi_pfc_block_dump		(const vbi_pfc_block *	pb,
@@ -806,10 +807,11 @@ decode				(const vbi_sliced *	s,
 				 double			sample_time,
 				 int64_t		stream_time)
 {
+	static double metronome = 0.0;
 	static double last_sample_time = 0.0;
 	static int64_t last_stream_time = 0;
 
-	if (option_dump_time) {
+	if (option_dump_time || option_metronome_tick > 0.0) {
 		/* Sample time: When we captured the data, in
 		   		seconds since 1970-01-01 (gettimeofday()).
 		   Stream time: For ATSC/DVB the Presentation TimeStamp.
@@ -817,9 +819,21 @@ decode				(const vbi_sliced *	s,
 				the nominal frame period (1/25 or
 				1001/30000 s). Both given in 90000 kHz units.
 		   Note this isn't fully implemented yet. */
-		printf ("ST %f (%+f) PTS %" PRId64 " (%+" PRId64 ")\n",
-			sample_time, sample_time - last_sample_time,
-			stream_time, stream_time - last_stream_time);
+
+		if (option_metronome_tick > 0.0) {
+			printf ("ST %f (adv %+f, err %+f) PTS %"
+				PRId64 " (adv %+" PRId64 ", err %+f)\n",
+				sample_time, sample_time - last_sample_time,
+				sample_time - metronome,
+				stream_time, stream_time - last_stream_time,
+				(double) stream_time - metronome);
+
+			metronome += option_metronome_tick;
+		} else {
+			printf ("ST %f (%+f) PTS %" PRId64 " (%+" PRId64 ")\n",
+				sample_time, sample_time - last_sample_time,
+				stream_time, stream_time - last_stream_time);
+		}
 
 		last_sample_time = sample_time;
 		last_stream_time = stream_time;
@@ -1013,7 +1027,7 @@ usage				(FILE *			fp)
 {
 	fprintf (fp, "\
 %s %s -- low-level VBI decoder\n\n\
-Copyright (C) 2004, 2006 Michael H. Schimek\n\
+Copyright (C) 2004, 2006, 2007 Michael H. Schimek\n\
 This program is licensed under GPL 2 or later. NO WARRANTIES.\n\n\
 Usage: %s [options] < sliced VBI data\n\n\
 -h | --help | --usage  Print this message and exit\n\
@@ -1053,12 +1067,14 @@ Modifying options:\n\
 -b | --bin             With -t, -p, -v dump data in binary format\n\
                          instead of ASCII\n\
 -T | --time            Dump capture timestamps\n\
+-m | --metronome tick  Compare timestamps against a metronome advancing\n\
+                       by tick seconds per frame\n\
 ",
 		 PROGRAM_NAME, VERSION, program_invocation_name);
 }
 
 static const char
-short_options [] = "12abcd:ehil:np:rs:tvwxPTV";
+short_options [] = "12abcd:ehil:m:np:rs:tvwxPTV";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -1074,6 +1090,7 @@ long_options [] = {
 	{ "usage",	no_argument,		NULL,		'h' },
 	{ "idl",	no_argument,		NULL,		'i' },
 	{ "idl-ch",	required_argument,	NULL,		'l' },
+	{ "metronome",	required_argument,	NULL,		'm' },
 	{ "network",	no_argument,		NULL,		'n' },
 	{ "pfc-pgno",	required_argument,	NULL,		'p' },
 	{ "vps-other",	no_argument,		NULL,		'r' },
@@ -1143,6 +1160,7 @@ main				(int			argc,
 			break;
 
 		case 'd':
+			assert (NULL != optarg);
 			option_idl_address = strtol (optarg, NULL, 10);
 			break;
 
@@ -1171,7 +1189,13 @@ main				(int			argc,
 			break;
 
 		case 'l':
+			assert (NULL != optarg);
 			option_idl_channel = strtol (optarg, NULL, 10);
+			break;
+
+		case 'm':
+			assert (NULL != optarg);
+			option_metronome_tick = strtod (optarg, NULL);
 			break;
 
 		case 'n':
@@ -1179,6 +1203,7 @@ main				(int			argc,
 			break;
 
 		case 'p':
+			assert (NULL != optarg);
 			option_pfc_pgno = strtol (optarg, NULL, 16);
 			break;
 
@@ -1187,6 +1212,7 @@ main				(int			argc,
 			break;
 
 		case 's':
+			assert (NULL != optarg);
 			option_pfc_stream = strtol (optarg, NULL, 10);
 			break;
 
