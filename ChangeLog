@@ -1,3 +1,45 @@
+2007-07-04    <mschimek@users.sf.net>
+
+	* test/ttxfilter.c: Added time option and a few other
+	  improvements.
+
+	* src/io-dvb.c (dvb_init): Some drivers fail with O_RDWR.
+	  Open with O_RDONLY instead.
+
+	* src/videodev2k.h: Don't use anonymous union, which is a GCC
+	  extension.
+	* src/lang.c, src/export.c: Replaced GCC's __PRETTY_FUNCTION__
+	  by __FUNCTION__.
+	* src/exp-gfx.c (draw_char): Added #if __GNUC__ around
+	  #if #cpu conditional.
+	* src/conv.c (strndup_iconv_to_ucs2): Force a const cast in
+	  iconv() call.
+	* src/vt.h: Don't typedef enum drcs_mode. Some compilers cannot
+	  distinguish btw variable and type of same name.
+	* src/cache.c, src/cache.h: Don't typedef struct list, struct
+	  node. Some compilers cannot distinguish btw variable and
+	  type of same name.
+
+	* src/io-v4l2k.c, src/io-v4l2.c, src/io-dvb.c: Define __s64 and
+	  __u64 if asm/types.h does not.
+	* configure.in: Check if asm/types.h defines __s64 and __u64
+	  to compile with non-GCC compilers.
+
+	* m4/autogen.sh (REQUIRED_GETTEXT_VERSION): Bumped to 0.16.
+
+	* autogen-maint.sh: Added maintainer autogen.sh.
+
+2007-07-04  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* m4/iconv.m4: Upgrade to gettext-0.16.1.
+	* m4/lib-ld.m4: Upgrade to gettext-0.16.1.
+	* m4/lib-link.m4: Upgrade to gettext-0.16.1.
+	* m4/lib-prefix.m4: Upgrade to gettext-0.16.1.
+	* m4/nls.m4: Upgrade to gettext-0.16.1.
+	* m4/po.m4: Upgrade to gettext-0.16.1.
+	* m4/progtest.m4: Upgrade to gettext-0.16.1.
+	* configure.in (AM_GNU_GETTEXT_VERSION): Bump to 0.16.1.
+
 2007-04-02    <mschimek@users.sf.net>
 
 	* src/videodev2k.h: Updated to latest version.

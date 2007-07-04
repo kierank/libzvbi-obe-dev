@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: cache.h,v 1.5 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: cache.h,v 1.6 2007/07/04 05:08:45 mschimek Exp $ */
 
 #ifndef CACHE_H
 #define CACHE_H
@@ -35,22 +35,19 @@ typedef struct vbi_decoder vbi_decoder;
 
 #define HASH_SIZE 113
 
-typedef struct node node;
-typedef struct list list;
-
 struct node {
-	node *			_succ;
-	node *			_pred;
+	struct node *		_succ;
+	struct node *		_pred;
 };
 
 struct list {
-	node			_head;
+	struct node		_head;
 	unsigned int		_n_members;
 };
 
 struct cache {
 	/* TODO: thread safe */
-	list			hash[HASH_SIZE];
+	struct list		hash[HASH_SIZE];
 
 	int			n_pages;
 

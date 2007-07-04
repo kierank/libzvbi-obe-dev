@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2.c,v 1.33 2006/05/22 09:00:47 mschimek Exp $";
+"$Id: io-v4l2.c,v 1.34 2007/07/04 05:08:45 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -40,6 +40,14 @@ static const char rcsid [] =
 #include <sys/ioctl.h>		/* for (_)videodev2.h */
 #include <asm/types.h>		/* for videodev2.h */
 #include <pthread.h>
+
+#ifndef HAVE_S64_U64
+#  include <inttypes.h>
+  /* Linux 2.6.x asm/types.h defines __s64 and __u64 only
+     if __GNUC__ is defined. */
+typedef int64_t __s64;
+typedef uint64_t __u64;
+#endif
 
 #include "videodev2.h"
 #include "_videodev2.h"

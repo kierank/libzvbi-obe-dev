@@ -35,6 +35,14 @@
 
 #include <sys/select.h>
 #include <sys/ioctl.h>
+
+#ifndef HAVE_S64_U64
+  /* Linux 2.6.x asm/types.h defines __s64 and __u64 only
+     if __GNUC__ is defined. */
+typedef int64_t __s64;
+typedef uint64_t __u64;
+#endif
+
 #include "dvb/frontend.h"
 #include "dvb/dmx.h"
 #include "hamm.h"
@@ -82,7 +90,7 @@ static vbi_capture_dvb* dvb_init(const char *dev, char **errstr, int debug)
     }
 
     dvb->debug = debug;
-    dvb->fd = open(dev, O_RDWR | O_NONBLOCK);
+    dvb->fd = open(dev, O_RDONLY | O_NONBLOCK);
     if (-1 == dvb->fd) {
 	asprintf(errstr, _("Cannot open '%s': %d, %s."),
 		 dev, errno, strerror(errno));

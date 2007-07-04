@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.44 2007/04/05 05:06:32 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.45 2007/07/04 05:08:45 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -54,6 +54,14 @@ static const char rcsid [] =
 
 #include "raw_decoder.h"
 #include "version.h"
+
+#ifndef HAVE_S64_U64
+#  include <inttypes.h>
+  /* Linux 2.6.x asm/types.h defines __s64 and __u64 only
+     if __GNUC__ is defined. */
+typedef int64_t __s64;
+typedef uint64_t __u64;
+#endif
 
 #include "videodev2k.h"
 #include "_videodev2k.h"

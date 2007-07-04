@@ -328,6 +328,24 @@ fputs (" reserved[] ", fp);
 }
 
 static void
+fprint_struct_v4l2_fract (FILE *fp, int rw __attribute__ ((unused)), const struct v4l2_fract *t)
+{
+ fprintf (fp, "%u/%u", t->numerator, t->denominator); 
+}
+
+static void
+fprint_struct_v4l2_frmival_stepwise (FILE *fp, int rw __attribute__ ((unused)), const struct v4l2_frmival_stepwise *t)
+{
+fputs ("min={", fp);
+fprint_struct_v4l2_fract (fp, rw, &t->min);
+fputs ("} max={", fp);
+fprint_struct_v4l2_fract (fp, rw, &t->max);
+fputs ("} step={", fp);
+fprint_struct_v4l2_fract (fp, rw, &t->step);
+fputs ("} ", fp);
+}
+
+static void
 fprint_struct_v4l2_frmivalenum (FILE *fp, int rw __attribute__ ((unused)), const struct v4l2_frmivalenum *t)
 {
 fprintf (fp, "index=%lu "
@@ -340,7 +358,12 @@ fprintf (fp, "index=%lu "
 (unsigned long) t->width, 
 (unsigned long) t->height, 
 (unsigned long) t->type);
-fputs ("? reserved[] ", fp);
+fputs ("u={discrete={", fp);
+fprint_struct_v4l2_fract (fp, rw, &t->u.discrete);
+fputs ("} stepwise={", fp);
+fprint_struct_v4l2_frmival_stepwise (fp, rw, &t->u.stepwise);
+fputs ("} ", fp);
+fputs ("} reserved[] ", fp);
 }
 
 static void
@@ -736,6 +759,32 @@ fprintf (fp, " value=%ld ",
 }
 
 static void
+fprint_struct_v4l2_frmsize_discrete (FILE *fp, int rw __attribute__ ((unused)), const struct v4l2_frmsize_discrete *t)
+{
+fprintf (fp, "width=%lu "
+"height=%lu ",
+(unsigned long) t->width, 
+(unsigned long) t->height);
+}
+
+static void
+fprint_struct_v4l2_frmsize_stepwise (FILE *fp, int rw __attribute__ ((unused)), const struct v4l2_frmsize_stepwise *t)
+{
+fprintf (fp, "min_width=%lu "
+"max_width=%lu "
+"step_width=%lu "
+"min_height=%lu "
+"max_height=%lu "
+"step_height=%lu ",
+(unsigned long) t->min_width, 
+(unsigned long) t->max_width, 
+(unsigned long) t->step_width, 
+(unsigned long) t->min_height, 
+(unsigned long) t->max_height, 
+(unsigned long) t->step_height);
+}
+
+static void
 fprint_struct_v4l2_frmsizeenum (FILE *fp, int rw __attribute__ ((unused)), const struct v4l2_frmsizeenum *t)
 {
 fprintf (fp, "index=%lu "
@@ -744,13 +793,12 @@ fprintf (fp, "index=%lu "
 (unsigned long) t->index, 
 (unsigned long) t->pixel_format, 
 (unsigned long) t->type);
-fputs ("? reserved[] ", fp);
-}
-
-static void
-fprint_struct_v4l2_fract (FILE *fp, int rw __attribute__ ((unused)), const struct v4l2_fract *t)
-{
- fprintf (fp, "%u/%u", t->numerator, t->denominator); 
+fputs ("u={discrete={", fp);
+fprint_struct_v4l2_frmsize_discrete (fp, rw, &t->u.discrete);
+fputs ("} stepwise={", fp);
+fprint_struct_v4l2_frmsize_stepwise (fp, rw, &t->u.stepwise);
+fputs ("} ", fp);
+fputs ("} reserved[] ", fp);
 }
 
 static void

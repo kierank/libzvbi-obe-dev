@@ -194,6 +194,20 @@ if test "x$enable_bktr" = xyes; then
   AC_DEFINE(ENABLE_BKTR, 1, [Define to build bktr driver interface])
 fi
 
+if test "x$enable_v4l" = xyes -o "x$enable_dvb" = xyes; then
+  dnl Linux 2.6.x asm/types.h defines __s64 and __u64 only
+  dnl if __GNUC__ is defined. These types are required to compile
+  dnl videodev2.h and the Linux DVB headers.
+  AC_MSG_CHECKING([if asm/types.h defines __s64 and __u64])
+  AC_COMPILE_IFELSE([#include <asm/types.h>
+__s64 a = 1;
+__u64 b = 2;
+  ], [AC_DEFINE(HAVE_S64_U64, 1,
+		[Define if asm/types.h defines __s64 and __u64])
+      AC_MSG_RESULT(yes)],
+  [AC_MSG_RESULT(no)]) 
+fi
+
 dnl
 dnl Enable vbi proxy
 dnl
@@ -221,7 +235,7 @@ AM_CONDITIONAL(ENABLE_PROXY, [test "x$enable_proxy" = xyes])
 dnl
 dnl Native language support.
 dnl
-AM_GNU_GETTEXT_VERSION([0.14])
+AM_GNU_GETTEXT_VERSION([0.16.1])
 AM_GNU_GETTEXT([external], [need-ngettext])
 LIBS="$LTLIBINTL $LIBS"
 if test "x${prefix}" = xNONE; then

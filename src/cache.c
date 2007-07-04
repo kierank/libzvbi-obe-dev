@@ -27,6 +27,7 @@
 #  include "config.h"
 #endif
 
+#include "macros.h"
 #include "misc.h"
 #include "cache.h"
 #include "vbi.h"
@@ -84,7 +85,7 @@ for ((p) = PARENT ((l)->_head._succ, __typeof__ (* (p)), _node_);	\
  * Does not free the list object or any nodes.
  */
 static __inline__ void
-destroy_list(list *l)
+destroy_list(struct list *l)
 {
 	CLEAR (*l);
 }
@@ -96,8 +97,8 @@ destroy_list(list *l)
  * @return
  * The list pointer.
  */
-static inline list *
-init_list(list *l)
+static inline struct list *
+init_list(struct list *l)
 {
 	l->_head._succ = &l->_head;
 	l->_head._pred = &l->_head;
@@ -109,37 +110,37 @@ init_list(list *l)
 
 /**
  * @internal
- * @param l list *
+ * @param l struct list *
  * 
  * @return
  * Number of nodes linked in the list. You can read
  * l->members directly when the rwlock is unused.
  */
 static inline unsigned int
-list_members(list *l)
+list_members(struct list *l)
 {
 	return l->_n_members;
 }
 
 /**
  * @internal
- * @param l list *
+ * @param l struct list *
  * 
  * @return
  * @c 1 if the list is empty, @c 0 otherwise. You can read
  * l->members directly when the rwlock is unused.
  */
 static inline int
-empty_list(list *l)
+empty_list(struct list *l)
 {
 	return (0 == l->_n_members);
 }
 
-static inline node *
-_remove_nodes			(node *			before,
-				 node *			after,
-				 node *			first,
-				 node *			last)
+static inline struct node *
+_remove_nodes			(struct node *		before,
+				 struct node *		after,
+				 struct node *		first,
+				 struct node *		last)
 {
 	before->_succ = after;
 	after->_pred = before;
@@ -150,11 +151,11 @@ _remove_nodes			(node *			before,
 	return first;
 }
 
-static inline node *
-_insert_nodes			(node *			before,
-				 node *			after,
-				 node *			first,
-				 node *			last)
+static inline struct node *
+_insert_nodes			(struct node *		before,
+				 struct node *		after,
+				 struct node *		first,
+				 struct node *		last)
 {
 	first->_pred = before;
         last->_succ = after;
@@ -167,16 +168,16 @@ _insert_nodes			(node *			before,
 
 /**
  * @internal
- * @param l list *
- * @param n node *
+ * @param l struct list *
+ * @param n struct node *
  * 
  * Add node at the head of the list.
  *
  * @return
  * The node pointer.
  */
-static inline node *
-add_head(list *l, node *n)
+static inline struct node *
+add_head(struct list *l, struct node *n)
 {
 	++l->_n_members;
 	return _insert_nodes (&l->_head, l->_head._succ, n, n);
@@ -184,16 +185,16 @@ add_head(list *l, node *n)
 
 /**
  * @internal
- * @param l list *
- * @param n node *
+ * @param l struct list *
+ * @param n struct node *
  * 
  * Add node at the end of the list.
  * 
  * @return 
  * The node pointer.
  */
-static inline node *
-add_tail(list *l, node *n)
+static inline struct node *
+add_tail(struct list *l, struct node *n)
 {
 	++l->_n_members;
 	return _insert_nodes (l->_head._pred, &l->_head, n, n);
@@ -201,17 +202,17 @@ add_tail(list *l, node *n)
 
 /**
  * @internal
- * @param l list *
+ * @param l struct list *
  * 
  * Remove first node of the list.
  * 
  * @return 
  * Node pointer, or @c NULL if the list is empty.
  */
-static inline node *
-rem_head(list *l)
+static inline struct node *
+rem_head(struct list *l)
 {
-	node *n = l->_head._succ;
+	struct node *n = l->_head._succ;
 
 	if (unlikely (n == &l->_head))
 		return NULL;
@@ -222,17 +223,17 @@ rem_head(list *l)
 
 /**
  * @internal
- * @param l list *
+ * @param l struct list *
  * 
  * Remove last node of the list.
  * 
  * @return 
  * Node pointer, or @c NULL if the list is empty.
  */
-static inline node *
-rem_tail(list *l)
+static inline struct node *
+rem_tail(struct list *l)
 {
-	node *n = l->_head._pred;
+	struct node *n = l->_head._pred;
 
 	if (unlikely (n == &l->_head))
 		return NULL;
@@ -242,8 +243,8 @@ rem_tail(list *l)
 }
 
 /**
- * @param l list *
- * @param n node *
+ * @param l struct list *
+ * @param n struct node *
  * 
  * Remove the node from its list. The node must
  * be a member of the list, not verified.
@@ -251,18 +252,18 @@ rem_tail(list *l)
  * @return 
  * The node pointer.
  */
-static inline node *
-unlink_node(list *l, node *n)
+static inline struct node *
+unlink_node(struct list *l, struct node *n)
 {
 	--l->_n_members;
 	return _remove_nodes (n->_pred, n->_succ, n, n);
 }
 
 static inline vbi_bool
-is_member			(const list *		l,
-				 const node *		n)
+is_member			(const struct list *	l,
+				 const struct node *	n)
 {
-	const node *q;
+	const struct node *q;
 
 	for (q = l->_head._succ; q != &l->_head; q = q->_succ) {
 		if (unlikely (q == n)) {
@@ -274,8 +275,8 @@ is_member			(const list *		l,
 }
 
 /**
- * @param l list *
- * @param n node *
+ * @param l struct list *
+ * @param n struct node *
  * 
  * Remove the node if member of the list.
  * 
@@ -283,8 +284,8 @@ is_member			(const list *		l,
  * The node pointer or @c NULL if the node is not
  * member of the list.
  */
-static inline node *
-rem_node(list *l, node *n)
+static inline struct node *
+rem_node(struct list *l, struct node *n)
 {
 	if (!is_member (l, n))
 		return NULL;
@@ -293,7 +294,7 @@ rem_node(list *l, node *n)
 }
 
 typedef struct {
-	node			node;		/* hash chain */
+	struct node		node;		/* hash chain */
 #if 0
 	nuid			nuid;		/* network sending this page */
 	int			priority;	/* cache purge priority */

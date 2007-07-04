@@ -1,7 +1,7 @@
 /*
  *  libzvbi test
  *
- *  Copyright (C) 2005 Michael H. Schimek
+ *  Copyright (C) 2005, 2007 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,9 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.6 2006/10/27 04:52:08 mschimek Exp $ */
-
-#undef NDEBUG
+/* $Id: ttxfilter.c,v 1.7 2007/07/04 05:08:46 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -28,10 +26,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <locale.h>
 #include <assert.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/time.h>
 #include <ctype.h>
 #ifdef HAVE_GETOPT_LONG
@@ -42,6 +42,10 @@
 #include "src/hamm.h"
 #include "sliced.h"
 
+#define PROGRAM_NAME "zvbi-ttxfilter"
+
+#define _(x) x /* TODO */
+
 #define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
 
 static struct {
@@ -49,16 +53,57 @@ static struct {
 	vbi_pgno			last;
 }				filter_pages[30];
 
-static vbi_bool		source_pes	= FALSE;
-static vbi_bool		system_pages	= FALSE;
+#ifndef HAVE_PROGRAM_INVOCATION_NAME
+static char *			program_invocation_name;
+static char *			program_invocation_short_name;
+#endif
+
+static vbi_bool			option_source_is_pes;
+static vbi_bool			option_keep_system_pages;
+static double			option_start_time;
+static double			option_end_time;
 
 static vbi_dvb_demux *		dx;
 
-/* Data is all zero, ignored due to hamming and parity error. */
+/* Data is all zero, hopefully ignored due to hamming and parity error. */
 static vbi_sliced		sliced_blank;
 
 static unsigned int		pass_this;
 static unsigned int		pass_next;
+
+static void
+vprint_error			(const char *		template,
+				 va_list		ap)
+{
+	fprintf (stderr, "%s: ", program_invocation_short_name);
+	vfprintf (stderr, template, ap);
+	fputc ('\n', stderr);
+}
+
+static void
+error_exit			(const char *		template,
+				 ...)
+{
+	va_list ap;
+
+	va_start (ap, template);
+	vprint_error (template, ap);
+	va_end (ap);
+
+	exit (EXIT_FAILURE);
+}
+
+static void
+invalid_pgno_exit		(const char *		arg)
+{
+	error_exit (_("Invalid page number '%s'."), arg);
+}
+
+static void
+no_mem_exit			(void)
+{
+	error_exit ("%s.", strerror (ENOMEM));
+}
 
 static vbi_bool
 decode_packet_0			(const uint8_t		buffer[42],
@@ -103,7 +148,7 @@ decode_packet_0			(const uint8_t		buffer[42],
 	if (!vbi_is_bcd (pgno)) {
 		/* Page inventories and TOP pages (e.g. to
 		   find subtitles), DRCS and object pages, etc. */
-		match = system_pages;
+		match = option_keep_system_pages;
 	} else {
 		unsigned int i;
 
@@ -236,6 +281,11 @@ static void
 pes_mainloop			(void)
 {
 	uint8_t buffer[2048];
+	int64_t min_pts;
+	double c_start_time;
+	double c_end_time;
+
+	min_pts = ((int64_t) 1) << 62;
 
 	while (1 == fread (buffer, sizeof (buffer), 1, stdin)) {
 		const uint8_t *bp;
@@ -253,14 +303,31 @@ pes_mainloop			(void)
 						     sliced, 64,
 						     &pts,
 						     &bp, &left);
+			if (pts < 0) {
+				/* WTF? */
+				continue;
+			}
+			if (pts < min_pts) {
+				c_start_time = option_start_time * 90000 + pts;
+				c_end_time = option_end_time * 90000 + pts;
+				min_pts = pts;
+			}
+			
+			if (pts >= c_start_time
+			    && pts < c_end_time) {
 			if (n_lines > 0) {
 				decode (sliced, &n_lines, 0, pts);
 
 				if (n_lines > 0) {
-					fprintf (stderr, "OOPS!\n");
-					/* Write n_lines here. */
-					exit (EXIT_FAILURE);
+					double timestamp = (pts - c_start_time) / 90000.0;
+					vbi_bool success;
+
+					success = write_sliced (sliced, n_lines, timestamp);
+					assert (success);
+
+					fflush (stdout);
 				}
+			}
 			}
 		}
 	}
@@ -271,6 +338,8 @@ pes_mainloop			(void)
 static void
 old_mainloop			(void)
 {
+	vbi_bool start = TRUE;
+
 	for (;;) {
 		vbi_sliced sliced[40];
 		double timestamp;
@@ -281,8 +350,16 @@ old_mainloop			(void)
 		if ((int) n_lines < 0)
 			break; /* eof */
 
+		if (start) {
+			option_start_time += timestamp;
+			option_end_time += timestamp;
+			start = FALSE;
+		}
+
 		decode (sliced, &n_lines, timestamp, /* sample_time */ 0);
 
+		if (timestamp >= option_start_time
+		    && timestamp < option_end_time) {
 		if (n_lines > 0) {
 			success = write_sliced (sliced, n_lines, timestamp);
 			assert (success);
@@ -298,40 +375,64 @@ old_mainloop			(void)
 
 			fflush (stdout);
 		}
+		}
 	}
 
 	fprintf (stderr, "\rEnd of stream\n");
 }
 
+static void
+usage				(FILE *			fp)
+{
+	fprintf (fp, _("\
+%s %s -- Teletext filter\n\n\
+Copyright (C) 2005-2006 Michael H. Schimek\n\
+This program is licensed under GPL 2. NO WARRANTIES.\n\n\
+Usage: %s [options] [page numbers] < sliced vbi data > sliced vbi data\n\n\
+-h | --help | --usage  Print this message and exit\n\
+-s | --system          Keep system pages (page inventories, DRCS etc)\n\
+-t | --time from-to    Keep pages in this time interval (in seconds)\n\
+-P | --pes             Source is a DVB PES\n\
+-V | --version         Print the program version and exit\n\n\
+Valid page numbers are 100 to 899. You can also specify a range like\n\
+150-299.\n\
+"),
+		 PROGRAM_NAME, VERSION, program_invocation_name);
+}
+
 static const char
-short_options [] = "hsPV";
+short_options [] = "hst:PV";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options [] = {
 	{ "help",	no_argument,		NULL,		'h' },
+	{ "usage",	no_argument,		NULL,		'h' },
 	{ "system",	no_argument,		NULL,		's' },
+	{ "time",	no_argument,		NULL,		't' },
 	{ "pes",	no_argument,		NULL,		'P' },
 	{ "version",	no_argument,		NULL,		'V' },
-	{ 0, 0, 0, 0 }
+	{ NULL, 0, 0, 0 }
 };
 #else
 #  define getopt_long(ac, av, s, l, i) getopt(ac, av, s)
 #endif
 
+static int			option_index;
+
 static void
-usage				(FILE *			fp,
-				 char **		argv)
+error_usage_exit		(const char *		template,
+				 ...)
 {
-	fprintf (fp,
-		 "Libzvbi Teletext filter version " VERSION "\n"
-		 "Copyright (C) 2005 Michael H. Schimek\n"
-		 "This program is licensed under GPL 2. NO WARRANTIES.\n\n"
-		 "Usage: %s [options] [pages] < sliced vbi data "
-		   "> sliced vbi data\n\n"
-		 "Input options:\n"
-		 "-P | --pes     Source is a DVB PES\n",
-		 argv[0]);
+	va_list ap;
+
+	va_start (ap, template);
+	vprint_error (template, ap);
+	va_end (ap);
+
+	usage (stderr);
+
+	exit (EXIT_FAILURE);
 }
 
 static vbi_bool
@@ -346,39 +447,86 @@ is_valid_pgno			(vbi_pgno		pgno)
 	return FALSE;
 }
 
+static void
+option_time			(void)
+{
+	char *s = optarg;
+
+	option_start_time = strtod (s, &s);
+
+	while (isspace (*s))
+		++s;
+
+	if ('-' != *s++)
+		goto invalid;
+
+	option_end_time = strtod (s, &s);
+
+	if (option_start_time < 0
+	    || option_end_time < 0
+	    || option_end_time <= option_start_time)
+		goto invalid;
+
+	return;
+
+ invalid:
+	error_usage_exit (_("Invalid time range '%s'."), optarg);
+}
+
 int
 main				(int			argc,
 				 char **		argv)
 {
-	int index;
 	int c;
+
+#ifndef HAVE_PROGRAM_INVOCATION_NAME
+	{
+		unsigned int i;
+
+		for (i = strlen (argv[0]); i > 0; --i) {
+			if ('/' == argv[0][i - 1])
+				break;
+		}
+
+		program_invocation_name = argv[0];
+		program_invocation_short_name = &argv[0][i];
+	}
+#endif
 
 	setlocale (LC_ALL, "");
 
+	option_start_time = 0.0;
+	option_end_time = 1e40;
+
 	while (-1 != (c = getopt_long (argc, argv, short_options,
-				       long_options, &index))) {
+				       long_options, &option_index))) {
 		switch (c) {
 		case 0:
 			break;
 
 		case 'h':
-			usage (stdout, argv);
+			usage (stdout);
 			exit (EXIT_SUCCESS);
 
 		case 's':
-			system_pages ^= TRUE;
+			option_keep_system_pages ^= TRUE;
+			break;
+
+		case 't':
+			assert (NULL != optarg);
+			option_time ();
 			break;
 
 		case 'P':
-			source_pes ^= TRUE;
+			option_source_is_pes ^= TRUE;
 			break;
 
 		case 'V':
-			printf (VERSION "\n");
+			printf (PROGRAM_NAME " " VERSION "\n");
 			exit (EXIT_SUCCESS);
 
 		default:
-			usage (stderr, argv);
+			usage (stderr);
 			exit (EXIT_FAILURE);
 		}
 	}
@@ -402,10 +550,8 @@ main				(int			argc,
 			pgno = strtoul (s, &end, 16);
 			s = end;
 
-			if (!is_valid_pgno (pgno)) {
-				usage (stderr, argv);
-				exit (EXIT_FAILURE);
-			}
+			if (!is_valid_pgno (pgno))
+				invalid_pgno_exit (argv[i]);
 
 			filter_pages[n_pages].first = pgno;
 
@@ -421,12 +567,10 @@ main				(int			argc,
 				pgno = strtoul (s, &end, 16);
 				s = end;
 
-				if (!is_valid_pgno (pgno)) {
-					usage (stderr, argv);
-					exit (EXIT_FAILURE);
-				}
+				if (!is_valid_pgno (pgno))
+					invalid_pgno_exit (argv[i]);
 			} else if (0 != *s) {
-				usage (stderr, argv);
+				usage (stderr);
 				exit (EXIT_FAILURE);
 			}
 
@@ -437,21 +581,28 @@ main				(int			argc,
 	sliced_blank.id = VBI_SLICED_TELETEXT_B_L10_625;
 	sliced_blank.line = 7;
 
-	if (isatty (STDIN_FILENO)) {
-		fprintf (stderr, "No vbi data on stdin\n");
-		exit (EXIT_FAILURE);
-	}
+	if (isatty (STDIN_FILENO))
+		error_exit (_("No VBI data on standard input."));
 
 	c = getchar ();
 	ungetc (c, stdin);
 
 	if (0 == c)
-		source_pes = TRUE;
+		option_source_is_pes = TRUE;
 
-	if (source_pes) {
+	if (option_source_is_pes) {
+		vbi_bool success;
+
 		dx = vbi_dvb_pes_demux_new (/* callback */ NULL,
 					    /* user_data */ NULL);
-		assert (NULL != dx);
+		if (NULL == dx)
+			no_mem_exit ();
+
+		success = open_sliced_write (stdout, 0);
+		if (!success) {
+			error_exit (_("Cannot open output stream: %s."),
+				    strerror (errno));
+		}
 
 		pes_mainloop ();
 	} else {
@@ -461,15 +612,24 @@ main				(int			argc,
 		int r;
 
 		r = gettimeofday (&tv, NULL);
-		assert (0 == r);
+		if (-1 == r) {
+			error_exit (_("Cannot determine system time: %s."),
+				    strerror (errno));
+		}
 
 		timestamp = tv.tv_sec + tv.tv_usec * (1 / 1e6);
 
 		success = open_sliced_read (stdin);
-		assert (success);
+		if (!success) {
+			error_exit (_("Cannot open input stream: %s."),
+				    strerror (errno));
+		}
 
 		success = open_sliced_write (stdout, timestamp);
-		assert (success);
+		if (!success) {
+			error_exit (_("Cannot open output stream: %s."),
+				    strerror (errno));
+		}
 
 		old_mainloop ();
 	}

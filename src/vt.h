@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vt.h,v 1.8 2005/10/04 10:06:33 mschimek Exp $ */
+/* $Id: vt.h,v 1.9 2007/07/04 05:08:45 mschimek Exp $ */
 
 #ifndef VT_H
 #define VT_H
@@ -85,14 +85,14 @@ typedef enum {
  * Table 31: DRCS modes; Section 9.4.6, Table 9: Coding of Packet
  * X/28/3 for DRCS Downloading Pages.
  */
-typedef enum {
+enum drcs_mode {
 	DRCS_MODE_12_10_1,
 	DRCS_MODE_12_10_2,
 	DRCS_MODE_12_10_4,
 	DRCS_MODE_6_5_4,
 	DRCS_MODE_SUBSEQUENT_PTU = 14,
 	DRCS_MODE_NO_DATA
-} drcs_mode;
+};
 
 /*
     Only a minority of pages need this
@@ -343,7 +343,7 @@ typedef struct {
 
 struct raw_page {
 	vt_page			page[1];
-        uint8_t		        drcs_mode[48];
+	uint8_t			drcs_mode[48];
 	int			num_triplets;
 	int			ait_page;
 };

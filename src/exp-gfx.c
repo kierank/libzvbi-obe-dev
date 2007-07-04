@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.c,v 1.11 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: exp-gfx.c,v 1.12 2007/07/04 05:08:45 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -300,10 +300,14 @@ draw_char(int canvas_type, uint8_t *canvas, int rowstride,
 		int bits = ~0;
 
 		if (!(underline & 1)) {
+#ifdef __GNUC__
 #if #cpu (i386)
 			bits = (*((uint16_t *) src) >> shift);
 #else
                         /* unaligned/little endian */
+			bits = ((src[1] * 256 + src[0]) >> shift);
+#endif
+#else
 			bits = ((src[1] * 256 + src[0]) >> shift);
 #endif
 			bits |= bits << bold;

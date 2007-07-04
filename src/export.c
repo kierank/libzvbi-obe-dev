@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.25 2006/05/25 08:10:03 mschimek Exp $ */
+/* $Id: export.c,v 1.26 2007/07/04 05:08:45 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -416,7 +416,7 @@ reset_options(vbi_export *e)
 
 		default:
 			fprintf(stderr,	"%s: unknown export option type %d\n",
-				__PRETTY_FUNCTION__, oi->type);
+				__FUNCTION__, oi->type);
 			exit(EXIT_FAILURE);
 		}
 }
@@ -495,7 +495,7 @@ option_string(vbi_export *e, const char *s2)
 
 		default:
 			fprintf(stderr, "%s: unknown export option type %d\n",
-				__PRETTY_FUNCTION__, oi->type);
+				__FUNCTION__, oi->type);
 			exit(EXIT_FAILURE);
 		}
 
@@ -858,7 +858,7 @@ vbi_export_option_menu_get(vbi_export *export, const char *keyword,
 
 		default:
 			fprintf(stderr,	"%s: unknown export option type %d\n",
-				__PRETTY_FUNCTION__, oi->type);
+				__FUNCTION__, oi->type);
 			exit(EXIT_FAILURE);
 		}
 
@@ -917,7 +917,7 @@ vbi_export_option_menu_set(vbi_export *export, const char *keyword,
 
 	default:
 		fprintf(stderr, "%s: unknown export option type %d\n",
-			__PRETTY_FUNCTION__, oi->type);
+			__FUNCTION__, oi->type);
 		exit(EXIT_FAILURE);
 	}
 }
