@@ -18,15 +18,23 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.h,v 1.4 2006/05/22 08:55:09 mschimek Exp $ */
+/* $Id: sliced.h,v 1.5 2007/07/09 23:40:24 mschimek Exp $ */
 
 #include <stdio.h>
+#include <sys/time.h>
+
 #include "src/macros.h"
 #include "src/sliced.h"
 
 /* Reader and write for old test/capture --sliced output.
    Attn: this code is not reentrant. */
 
+extern vbi_bool
+write_sliced_xml		(vbi_sliced *		sliced,
+				 unsigned int		n_lines,
+				 unsigned int		n_frame_lines,
+				 int64_t		stream_time,
+				 struct timeval		capture_time);
 extern vbi_bool
 write_sliced			(vbi_sliced *		sliced,
 				 unsigned int		n_lines,

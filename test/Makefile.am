@@ -9,6 +9,7 @@ TESTS = \
 
 check_PROGRAMS = \
 	cpptest \
+	explist \
 	hamm \
 	raw_decoder
 
@@ -16,10 +17,6 @@ cpptest_SOURCES = cpptest.cc
 
 check_SCRIPTS = \
 	exoptest
-
-# exoptest uses explist, build that first
-# XXX requires a make before make dist
-exoptest : explist
 
 if ENABLE_PROXY
 proxy_programs = proxy-test

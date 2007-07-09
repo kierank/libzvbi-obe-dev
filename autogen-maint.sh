@@ -23,7 +23,7 @@ esac
 # Default compiler.
 export CC=${CC-"gcc -V4.1.2"}
 
-if echo $CC | grep -q -e '[^a-z]tcc$' ; then
+if $CC -v 2>&1 | grep -q -e '^tcc version' ; then
 
   # If preprocessor output is required use GCC.
   AUTOGENOPTS="$AUTOGENOPTS CPP=cpp"
@@ -39,7 +39,7 @@ if echo $CC | grep -q -e '[^a-z]tcc$' ; then
   CFLAGS="$CFLAGS -Wunsupported"        # unsupported GCC features
   CFLAGS="$CFLAGS -Wwrite-strings"	# char *foo = "blah";
 
-elif $CC --version | grep -q -e '(GCC) [3-9]\.' ; then
+elif $CC -v 2>&1 | grep -q -e '^gcc version [3-9]\.' ; then
 
   # Optimizations.
   if echo "$CFLAGS" | grep -q -e -O2; then

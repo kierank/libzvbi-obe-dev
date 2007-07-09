@@ -1,3 +1,6 @@
+libzvbi 0.2.26
+--------------
+
 libzvbi 0.2.25, 2007-03-09
 --------------------------
 This version fixes a buffer overflow bug in the zvbi-ntsc-cc

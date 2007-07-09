@@ -90,6 +90,7 @@ libzvbi_la_SOURCES = \
 	raw_decoder.c raw_decoder.h \
 	sampling_par.c sampling_par.h \
 	search.c search.h ure.c ure.h \
+	sliced_filter.c sliced_filter.h \
 	tables.c tables.h network-table.h \
 	trigger.c trigger.h \
 	vbi.c vbi.h event.h \

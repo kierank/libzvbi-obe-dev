@@ -10,7 +10,6 @@ EXTRA_DIST = \
 	BUGS \
 	config.rpath \
 	depcomp \
-	mkinstalldirs \
 	zvbi.spec.in
 
 DISTCLEANFILES = site_def.h
