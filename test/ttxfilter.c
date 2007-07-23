@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.8 2007/07/09 23:40:24 mschimek Exp $ */
+/* $Id: ttxfilter.c,v 1.9 2007/07/23 20:00:01 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -29,6 +29,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <locale.h>
+#include <math.h>
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h>
@@ -49,15 +50,19 @@
 
 #define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
 
+#define DEBUG 0
+
 #ifndef HAVE_PROGRAM_INVOCATION_NAME
 #  define HAVE_PROGRAM_INVOCATION_NAME 0
 static char *			program_invocation_name;
 static char *			program_invocation_short_name;
 #endif
 
-static vbi_bool			option_source_is_pes		= FALSE;
-static vbi_bool			option_keep_ttx_system_pages	= FALSE;
+static vbi_bool			option_abort_on_error		= FALSE;
 static vbi_bool			option_experimental_output	= FALSE;
+static vbi_bool			option_keep_ttx_system_pages	= FALSE;
+static vbi_bool			option_quiet			= FALSE;
+static vbi_bool			option_source_is_pes		= FALSE;
 static double			option_start_time		= 0.0;
 static double			option_end_time			= 1e30;
 
@@ -71,9 +76,23 @@ static void
 vprint_error			(const char *		template,
 				 va_list		ap)
 {
+	if (option_quiet)
+		return;
+
 	fprintf (stderr, "%s: ", program_invocation_short_name);
 	vfprintf (stderr, template, ap);
 	fputc ('\n', stderr);
+}
+
+static void
+error_msg			(const char *		template,
+				 ...)
+{
+	va_list ap;
+
+	va_start (ap, template);
+	vprint_error (template, ap);
+	va_end (ap);
 }
 
 static void
@@ -97,25 +116,52 @@ no_mem_exit			(void)
 
 static void
 filter_frame			(const vbi_sliced *	sliced_in,
-				 unsigned int		n_lines_in,
+				 unsigned int		n_lines,
 				 double			timestamp)
 {
 	vbi_sliced sliced_out[64];
 	vbi_sliced *s;
+	unsigned int n_lines_prev_in;
+	unsigned int n_lines_prev_out;
+	unsigned int n_lines_in;
 	unsigned int n_lines_out;
 	vbi_bool success;
 
-	if (0 == n_lines_in)
+	if (0 == n_lines)
 		return;
 
-	success = vbi_sliced_filter_cor	(sf,
-					 sliced_out,
-					 &n_lines_out,
-					 /* max_lines_out */ 64,
-					 sliced_in,
-					 &n_lines_in);
-	if (!success)
-		return;
+	n_lines_prev_in = 0;
+	n_lines_prev_out = 0;
+
+	do {
+		n_lines_in = n_lines - n_lines_prev_in;
+
+		success = vbi_sliced_filter_cor
+			(sf,
+			 sliced_out + n_lines_prev_out,
+			 &n_lines_out,
+			 /* max_lines_out */ 64 - n_lines_prev_out,
+			 sliced_in + n_lines_prev_in,
+			 &n_lines_in);
+
+		if (success)
+			break;
+
+		error_msg (vbi_sliced_filter_errstr (sf));
+
+		if (option_abort_on_error) {
+			exit (EXIT_FAILURE);
+		}
+
+		assert (n_lines_in > 0);
+
+		n_lines_prev_in += n_lines_in;
+		n_lines_prev_out += n_lines_out;
+
+	} while (n_lines_prev_in < n_lines);
+
+	n_lines_in += n_lines_prev_in;
+	n_lines_out += n_lines_prev_out;
 
 	s = sliced_out;
 
@@ -201,8 +247,7 @@ pes_mainloop			(void)
 		}
 	}
 
-	if (0)
-		fprintf (stderr, "\rEnd of stream\n");
+	error_msg (_("End of stream."));
 }
 
 static void
@@ -231,8 +276,7 @@ old_mainloop			(void)
 		}
 	}
 
-	if (0)
-		fprintf (stderr, "\rEnd of stream\n");
+	error_msg (_("End of stream."));
 }
 
 static void
@@ -256,19 +300,21 @@ Valid page numbers are 100 to 899. You can also specify a range like\n\
 }
 
 static const char
-short_options [] = "hst:xPV";
+short_options [] = "ahst:qxPV";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options [] = {
-	{ "help",	no_argument,		NULL,		'h' },
-	{ "usage",	no_argument,		NULL,		'h' },
-	{ "system",	no_argument,		NULL,		's' },
-	{ "time",	no_argument,		NULL,		't' },
-	{ "experimental", no_argument,		NULL,		'x' },
-	{ "pes",	no_argument,		NULL,		'P' },
+	{ "abort-on-error",	no_argument,	NULL,	'a' },
+	{ "help",		no_argument,	NULL,	'h' },
+	{ "usage",		no_argument,	NULL,	'h' },
+	{ "system",		no_argument,	NULL,	's' },
+	{ "time",		no_argument,	NULL,	't' },
+	{ "quiet",		no_argument,	NULL,	'q' },
+	{ "experimental",	no_argument,	NULL,	'x' },
+	{ "pes",		no_argument,	NULL,	'P' },
 	/* -T --ts [pid] reserved for transport streams. */
-	{ "version",	no_argument,		NULL,		'V' },
+	{ "version",		no_argument,	NULL,	'V' },
 	{ NULL, 0, 0, 0 }
 };
 #else
@@ -399,6 +445,10 @@ main				(int			argc,
 		case 0: /* getopt_long() flag */
 			break;
 
+		case 'a':
+			option_abort_on_error ^= TRUE;
+			break;
+
 		case 'h':
 			usage (stdout);
 			exit (EXIT_SUCCESS);
@@ -409,6 +459,10 @@ main				(int			argc,
 
 		case 't':
 			option_time ();
+			break;
+
+		case 'q':
+			option_quiet ^= TRUE;
 			break;
 
 		case 'x':
@@ -433,6 +487,12 @@ main				(int			argc,
 				    /* user_data */ NULL);
 	if (NULL == sf)
 		no_mem_exit ();
+
+	if (DEBUG) {
+		vbi_sliced_filter_set_log_fn (sf, /* mask */ -1,
+					      vbi_log_on_stderr,
+					      /* user_data */ NULL);
+	}
 
 	vbi_sliced_filter_keep_ttx_system_pages
 		(sf, option_keep_ttx_system_pages);
@@ -459,6 +519,12 @@ main				(int			argc,
 					    /* user_data */ NULL);
 		if (NULL == dx)
 			no_mem_exit ();
+
+		if (DEBUG) {
+			vbi_dvb_demux_set_log_fn (dx, /* mask */ -1,
+						  vbi_log_on_stderr,
+						  /* user_data */ NULL);
+		}
 
 		success = open_sliced_write (stdout, 0);
 		if (!success) {
