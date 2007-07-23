@@ -9,6 +9,10 @@ case `whoami` in
     ;;
 
   michael)
+    # Build system is x86_64 but default host is x86.
+    host=${host-"i686-pc-linux-gnu"}
+    CONFIGOPTS=${CONFIGOPTS-"--host=$host"}
+
     # Regenerate all files. May require Perl, XML tools, Internet
     # access, dead cat, magic spells, ...
     AUTOGENOPTS=${AUTOGENOPTS-"--enable-maintainer-mode"}
@@ -24,12 +28,11 @@ esac
 export CC=${CC-"gcc -V4.1.2"}
 
 if $CC -v 2>&1 | grep -q -e '^tcc version' ; then
-
   # If preprocessor output is required use GCC.
   AUTOGENOPTS="$AUTOGENOPTS CPP=cpp"
 
   # Optimizations.
-  if ! echo "$CFLAGS" | grep -q -e -O2; then
+  if ! echo "$CFLAGS" | grep -q -e '-O[s1-3]'; then
     CFLAGS="$CFLAGS -g -b -bt 10"
   fi
 
@@ -40,10 +43,9 @@ if $CC -v 2>&1 | grep -q -e '^tcc version' ; then
   CFLAGS="$CFLAGS -Wwrite-strings"	# char *foo = "blah";
 
 elif $CC -v 2>&1 | grep -q -e '^gcc version [3-9]\.' ; then
-
   # Optimizations.
-  if echo "$CFLAGS" | grep -q -e -O2; then
-    CFLAGS="$CFLAGS -O2 -fomit-frame-pointer -pipe"
+  if echo "$CFLAGS" | grep -q -e '-O[s1-3]'; then
+    CFLAGS="$CFLAGS -fomit-frame-pointer -pipe"
   else
     CFLAGS="$CFLAGS -O0 -g -pipe"
   fi
@@ -54,8 +56,8 @@ elif $CC -v 2>&1 | grep -q -e '^gcc version [3-9]\.' ; then
   CFLAGS="$CFLAGS -Wformat"		# printf format args mismatch
   CFLAGS="$CFLAGS -Wformat-y2k"		# two-digit year strftime format
   CFLAGS="$CFLAGS -Wformat-nonliteral"	# printf format cannot be checked
-  CFLAGS="$CFLAGS -Wformat-security"	# printf (foo); where user may
-                                        # supply foo
+  CFLAGS="$CFLAGS -Wformat-security"	# printf (var); where user may
+                                        # supply var
   CFLAGS="$CFLAGS -Wnonnull"		# function __attribute__ says
                                         # argument must be non-NULL
   CFLAGS="$CFLAGS -Wimplicit-int"	# func decl without a return type
