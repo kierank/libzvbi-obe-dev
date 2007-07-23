@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: trigger.c,v 1.10 2006/05/31 03:55:52 mschimek Exp $ */
+/* $Id: trigger.c,v 1.11 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -719,3 +719,10 @@ vbi_atvef_trigger(vbi_decoder *vbi, unsigned char *s)
 	}
 }
 
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

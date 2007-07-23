@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vbi.c,v 1.20 2006/05/25 08:09:35 mschimek Exp $ */
+/* $Id: vbi.c,v 1.21 2007/07/23 20:01:18 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -887,3 +887,10 @@ vbi_version			(unsigned int *		major,
 	if (minor) *minor = VBI_VERSION_MINOR;
 	if (micro) *micro = VBI_VERSION_MICRO;
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

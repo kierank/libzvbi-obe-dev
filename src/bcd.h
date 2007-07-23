@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bcd.h,v 1.14 2005/02/17 10:21:06 mschimek Exp $ */
+/* $Id: bcd.h,v 1.15 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -177,3 +177,10 @@ vbi_is_bcd(unsigned int bcd)
 /* Private */
 
 #endif /* BCD_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

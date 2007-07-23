@@ -1,3 +1,24 @@
+2007-07-23    <mschimek@users.sf.net>
+
+	* src/sliced_filter.c, src/sliced_filter.h: Move the Teletext
+	  filter code from test/ttxfilter.c here and improved it
+	  somewhat. This not yet part of the library API.
+	* test/ttxfilter.c (main): Added some debugging code.
+	(main): Added -q (quiet) and -a (abort-on-error) option.
+	(filter_frame): Report parity/hamming errors and continue with
+	  the next line instead of discarding the entire frame.
+
+	* src/misc.h (_vbi_vlog): New variadic counterpart of _vbi_log().
+	* src/misc.h, src/misc.c (_vbi_log_vprintf, _vbi_log_printf):
+	  Context was only the function name. Added a file name
+	  argument to make it unique.
+	* src/misc.c (vbi_log_on_stderr): Minor formatting fix.
+	(_vbi_log_vprintf, _vbi_log_printf): 
+
+	* src/lang.c (vbi_caption_unicode): Clarified doxumentation.
+
+	* autogen-maint.sh: CFLAGS -Ox fixes.
+
 2007-07-04    <mschimek@users.sf.net>
 
 	* test/ttxfilter.c: Added time option and a few other

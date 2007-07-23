@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.h,v 1.12 2006/05/24 04:46:20 mschimek Exp $ */
+/* $Id: export.h,v 1.13 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -489,3 +489,10 @@ static void vbi_autoreg_##name(void) {					\
 /** @} */
 
 #endif /* EXPORT_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

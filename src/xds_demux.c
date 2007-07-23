@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: xds_demux.c,v 1.7 2006/05/31 03:55:52 mschimek Exp $ */
+/* $Id: xds_demux.c,v 1.8 2007/07/23 20:01:18 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -1106,3 +1106,10 @@ vbi_xds_demux_new		(vbi_xds_demux_cb *	callback,
 
 	return xd;
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

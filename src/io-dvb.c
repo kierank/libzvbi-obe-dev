@@ -603,3 +603,10 @@ vbi_capture_dvb_new(char *dev, int scanning,
 }
 
 #endif /* !ENABLE_DVB */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

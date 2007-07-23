@@ -1684,3 +1684,10 @@ vbi_set_log_fn			(vbi_log_mask		mask,
 #endif
 
 #endif /* __LIBZVBI_H__ */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

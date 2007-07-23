@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.20 2006/05/24 04:46:12 mschimek Exp $ */
+/* $Id: io.h,v 1.21 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifndef IO_H
 #define IO_H
@@ -264,3 +264,10 @@ vbi_capture_io_select		(int			fd,
 				 struct timeval *	timeout);
 
 #endif /* IO_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

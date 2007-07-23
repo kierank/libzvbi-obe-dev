@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_mux.c,v 1.7 2006/05/31 03:52:18 mschimek Exp $ */
+/* $Id: dvb_mux.c,v 1.8 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -759,3 +759,10 @@ _vbi_dvb_mux_ts_new		(unsigned int		pid,
 
 	return mx;
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

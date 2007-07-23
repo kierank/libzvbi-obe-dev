@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *  $Id: proxy-client.h,v 1.2 2004/10/24 18:26:12 tomzo Exp $
+ *  $Id: proxy-client.h,v 1.3 2007/07/23 20:01:18 mschimek Exp $
  */
 
 #ifndef PROXY_CLIENT_H
@@ -166,3 +166,10 @@ vbi_proxy_client_has_channel_control( vbi_proxy_client * vpc );
 /* Private */
 
 #endif  /* PROXY_CLIENT_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

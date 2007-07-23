@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.26 2007/07/04 05:08:45 mschimek Exp $ */
+/* $Id: export.c,v 1.27 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -37,7 +37,7 @@
 #include <iconv.h>
 
 #include "export.h"
-#include "vbi.h" /* vbi_asprintf */
+#include "vbi.h" /* asprintf */
 
 extern const char _zvbi_intl_domainname[];
 
@@ -1199,3 +1199,10 @@ vbi_export_errstr(vbi_export *export)
 
 	return export->errstr;
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

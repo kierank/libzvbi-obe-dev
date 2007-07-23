@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-bktr.c,v 1.14 2006/05/22 09:01:20 mschimek Exp $";
+"$Id: io-bktr.c,v 1.15 2007/07/23 20:01:17 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -392,3 +392,10 @@ vbi_capture_bktr_new		(const char *		dev_name,
 }
 
 #endif /* !ENABLE_BKTR */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

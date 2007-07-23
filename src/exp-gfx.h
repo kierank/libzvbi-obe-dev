@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.h,v 1.3 2005/01/19 04:23:53 mschimek Exp $ */
+/* $Id: exp-gfx.h,v 1.4 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef EXP_GFX_H
 #define EXP_GFX_H
@@ -98,3 +98,10 @@ extern void vbi_get_vt_cell_size(int *w, int *h);
 
 
 
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

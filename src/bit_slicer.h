@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.h,v 1.6 2006/05/24 04:44:50 mschimek Exp $ */
+/* $Id: bit_slicer.h,v 1.7 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef __ZVBI_BIT_SLICER_H__
 #define __ZVBI_BIT_SLICER_H__
@@ -183,3 +183,10 @@ _vbi3_bit_slicer_init		(vbi3_bit_slicer *	bs)
 VBI_END_DECLS
 
 #endif /* __ZVBI_BIT_SLICER_H__ */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

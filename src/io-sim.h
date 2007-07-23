@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.h,v 1.6 2006/09/24 03:08:51 mschimek Exp $ */
+/* $Id: io-sim.h,v 1.7 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef __ZVBI_IO_SIM_H__
 #define __ZVBI_IO_SIM_H__
@@ -111,3 +111,10 @@ _vbi_raw_vbi_image		(uint8_t *		raw,
 VBI_END_DECLS
 
 #endif /* __ZVBI_IO_SIM_H__ */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

@@ -51,3 +51,10 @@ _vbi_sampling_par_valid_log    (const vbi_sampling_par *sp,
   __attribute__ ((_vbi_pure));
 
 #endif /* __SAMPLING_PAR_H__ */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

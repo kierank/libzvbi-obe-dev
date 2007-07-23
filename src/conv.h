@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: conv.h,v 1.3 2006/10/08 06:19:48 mschimek Exp $ */
+/* $Id: conv.h,v 1.4 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef __ZVBI_CONV_H__
 #define __ZVBI_CONV_H__
@@ -118,3 +118,10 @@ _vbi_iconv_open			(const char *		dst_codeset,
 VBI_END_DECLS
 
 #endif /* __ZVBI_CONV_H__ */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

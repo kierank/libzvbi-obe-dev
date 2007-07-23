@@ -546,3 +546,10 @@ vbi_cache_init(vbi_decoder *vbi)
 
 	memset(vbi->vt.cached, 0, sizeof(vbi->vt.cached));
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

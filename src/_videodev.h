@@ -508,3 +508,10 @@ static __inline__ void IOCTL_ARG_TYPE_CHECK_VIDIOCSMICROCODE (const struct video
 static __inline__ void IOCTL_ARG_TYPE_CHECK_VIDIOCGVBIFMT (struct vbi_format *arg __attribute__ ((unused))) {}
 static __inline__ void IOCTL_ARG_TYPE_CHECK_VIDIOCSVBIFMT (const struct vbi_format *arg __attribute__ ((unused))) {}
 
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

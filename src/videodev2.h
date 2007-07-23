@@ -993,3 +993,10 @@ extern void v4l2_v4l_compat_unregister(struct v4l2_v4l_compat *);
 #include "videodev.h"
 
 #endif/*ifndef __LINUX_VIDEODEV_H*/
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

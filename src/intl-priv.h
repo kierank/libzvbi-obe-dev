@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: intl-priv.h,v 1.2 2006/05/24 04:46:55 mschimek Exp $ */
+/* $Id: intl-priv.h,v 1.3 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef INTL_PRIV_H
 #define INTL_PRIV_H
@@ -57,3 +57,10 @@
 #endif
 
 #endif /* INTL_PRIV_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: macros.h,v 1.7 2006/05/31 03:54:58 mschimek Exp $ */
+/* $Id: macros.h,v 1.8 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifndef __ZVBI_MACROS_H__
 #define __ZVBI_MACROS_H__
@@ -151,3 +151,10 @@ typedef struct {
 VBI_END_DECLS
 
 #endif /* __ZVBI_MACROS_H__ */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

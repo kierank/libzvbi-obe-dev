@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: conv.c,v 1.4 2007/07/04 05:08:45 mschimek Exp $ */
+/* $Id: conv.c,v 1.5 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1222,3 +1222,10 @@ vbi_locale_codeset		(void)
 
 	return dst_format; /* may be NULL */
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

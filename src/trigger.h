@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: trigger.h,v 1.2 2002/10/22 04:42:40 mschimek Exp $ */
+/* $Id: trigger.h,v 1.3 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifndef TRIGGER_H
 #define TRIGGER_H
@@ -38,3 +38,10 @@ extern void		vbi_eacem_trigger(vbi_decoder *vbi, unsigned char *s);
 extern void		vbi_atvef_trigger(vbi_decoder *vbi, unsigned char *s);
 
 #endif /* TRIGGER_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

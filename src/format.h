@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: format.h,v 1.8 2005/02/17 10:21:16 mschimek Exp $ */
+/* $Id: format.h,v 1.9 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef FORMAT_H
 #define FORMAT_H
@@ -397,3 +397,10 @@ typedef struct vbi_page {
 /* Private */
 
 #endif /* FORMAT_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.25 2006/05/31 03:51:43 mschimek Exp $ */
+/* $Id: packet.c,v 1.26 2007/07/23 20:01:18 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -2559,3 +2559,10 @@ vbi_teletext_init(vbi_decoder *vbi)
 
 	vbi_teletext_channel_switched(vbi);     /* Reset */
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

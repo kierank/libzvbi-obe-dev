@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: search.h,v 1.2 2002/07/16 00:11:36 mschimek Exp $ */
+/* $Id: search.h,v 1.3 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifndef SEARCH_H
 #define SEARCH_H
@@ -87,3 +87,10 @@ extern vbi_search_status vbi_search_next(vbi_search *search, vbi_page **pg, int 
 /* Private */
 
 #endif /* SEARCH_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

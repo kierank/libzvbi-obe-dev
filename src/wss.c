@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: wss.c,v 1.3 2006/05/31 03:51:55 mschimek Exp $ */
+/* $Id: wss.c,v 1.4 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -333,3 +333,10 @@ wss_test_init(v4l_device *v4l)
 }
 
 #endif
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

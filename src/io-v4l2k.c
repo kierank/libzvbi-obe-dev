@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.45 2007/07/04 05:08:45 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.46 2007/07/23 20:01:18 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -1539,3 +1539,10 @@ vbi_capture_v4l2k_new(const char *dev_name, int fd, int buffers,
 }
 
 #endif /* !ENABLE_V4L2 */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

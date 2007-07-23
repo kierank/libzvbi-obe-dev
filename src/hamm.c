@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: hamm.c,v 1.7 2006/10/08 06:19:48 mschimek Exp $ */
+/* $Id: hamm.c,v 1.8 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -322,3 +322,10 @@ vbi_unham24p			(const uint8_t *	p)
 
 	return x ^ (int) _vbi_hamm24_corr[e];
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

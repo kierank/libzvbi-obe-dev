@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.16 2006/09/24 03:08:06 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.17 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1211,3 +1211,10 @@ vbi3_raw_decoder_new		(const vbi_sampling_par *sp)
 
 	return rd;
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

@@ -25,7 +25,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-vtx.c,v 1.9 2005/01/19 04:23:53 mschimek Exp $ */
+/* $Id: exp-vtx.c,v 1.10 2007/07/23 20:01:17 mschimek Exp $ */
 
 /*
  *  VTX is the file format used by VideoteXt. It stores Teletext pages in
@@ -146,3 +146,10 @@ vbi_export_class_vtx = {
 };
 
 VBI_AUTOREG_EXPORT_MODULE(vbi_export_class_vtx)
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

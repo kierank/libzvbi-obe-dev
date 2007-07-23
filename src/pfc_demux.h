@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pfc_demux.h,v 1.5 2006/05/22 09:05:46 mschimek Exp $ */
+/* $Id: pfc_demux.h,v 1.6 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifndef __ZVBI_PFC_DEMUX_H__
 #define __ZVBI_PFC_DEMUX_H__
@@ -141,3 +141,10 @@ _vbi_pfc_demux_init		(vbi_pfc_demux *	dx,
 VBI_END_DECLS
 
 #endif /* __ZVBI_PFC_DEMUX_H__ */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

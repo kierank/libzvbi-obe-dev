@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decoder.h,v 1.8 2005/01/19 04:23:53 mschimek Exp $ */
+/* $Id: decoder.h,v 1.9 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef DECODER_H
 #define DECODER_H
@@ -403,3 +403,10 @@ extern int		vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out);
 /* Private */
 
 #endif /* DECODER_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

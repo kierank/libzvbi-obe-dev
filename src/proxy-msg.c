@@ -29,9 +29,12 @@
  *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
  *    the latter ones are currently not officially supported.
  *
- *  $Id: proxy-msg.c,v 1.15 2006/05/22 09:08:46 mschimek Exp $
+ *  $Id: proxy-msg.c,v 1.16 2007/07/23 20:01:18 mschimek Exp $
  *
  *  $Log: proxy-msg.c,v $
+ *  Revision 1.16  2007/07/23 20:01:18  mschimek
+ *  *** empty log message ***
+ *
  *  Revision 1.15  2006/05/22 09:08:46  mschimek
  *  *** empty log message ***
  *
@@ -1435,3 +1438,10 @@ int vbi_proxy_msg_check_ioctl( VBI_DRIVER_API_REV vbi_api,
 }
 
 #endif  /* ENABLE_PROXY */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

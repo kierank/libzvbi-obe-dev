@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.h,v 1.6 2005/01/19 04:23:53 mschimek Exp $ */
+/* $Id: exp-txt.h,v 1.7 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef EXP_TXT_H
 #define EXP_TXT_H
@@ -75,3 +75,10 @@ vbi_print_page(vbi_page *pg, char *buf, int size,
 /* Private */
 
 #endif /* EXP_TXT_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

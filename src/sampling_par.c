@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sampling_par.c,v 1.5 2006/05/26 00:44:50 mschimek Exp $ */
+/* $Id: sampling_par.c,v 1.6 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -653,3 +653,10 @@ _vbi_videostd_name		(vbi_videostd		videostd)
 }
 
 #endif /* 3 == VBI_VERSION_MINOR */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

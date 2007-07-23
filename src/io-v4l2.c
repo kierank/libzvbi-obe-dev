@@ -18,7 +18,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2.c,v 1.34 2007/07/04 05:08:45 mschimek Exp $";
+"$Id: io-v4l2.c,v 1.35 2007/07/23 20:01:17 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -223,3 +223,10 @@ vbi_capture_v4l2_new		(const char *		dev_name,
 }
 
 #endif /* !ENABLE_V4L2 */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-gfx.c,v 1.12 2007/07/04 05:08:45 mschimek Exp $ */
+/* $Id: exp-gfx.c,v 1.13 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1286,3 +1286,10 @@ vbi_export_class_png = {
 VBI_AUTOREG_EXPORT_MODULE(vbi_export_class_png)
 
 #endif /* HAVE_LIBPNG */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

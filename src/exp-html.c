@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-html.c,v 1.9 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: exp-html.c,v 1.10 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -742,3 +742,10 @@ vbi_export_class_html = {
 };
 
 VBI_AUTOREG_EXPORT_MODULE(vbi_export_class_html)
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

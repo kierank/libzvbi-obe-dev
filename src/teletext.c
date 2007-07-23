@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.23 2006/05/24 04:46:45 mschimek Exp $ */
+/* $Id: teletext.c,v 1.24 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -2636,3 +2636,10 @@ vbi_fetch_vt_page(vbi_decoder *vbi, vbi_page *pg,
 					  max_level, display_rows, navigation);
 	}
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

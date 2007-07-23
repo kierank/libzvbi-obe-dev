@@ -671,3 +671,10 @@ vbi_cni_table[] = {
 	{ 0, "", 0, 0, 0, 0, 0 }
 };
 
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

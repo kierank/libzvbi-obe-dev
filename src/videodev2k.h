@@ -1398,3 +1398,10 @@ struct v4l2_chip_ident {
  * c-basic-offset: 8
  * End:
  */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

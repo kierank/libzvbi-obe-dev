@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: lang.h,v 1.6 2006/10/06 19:23:24 mschimek Exp $ */
+/* $Id: lang.h,v 1.7 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifndef LANG_H
 #define LANG_H
@@ -153,3 +153,10 @@ extern unsigned int	vbi_teletext_composed_unicode(unsigned int a, unsigned int c
 extern void		vbi_optimize_page(vbi_page *pg, int column, int row, int width, int height);
 
 #endif /* LANG_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

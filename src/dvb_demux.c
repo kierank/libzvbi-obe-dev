@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.13 2006/05/26 00:45:53 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.14 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1245,3 +1245,10 @@ _vbi_dvb_demux_pes_new		(vbi_dvb_demux_cb *	callback,
 }
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

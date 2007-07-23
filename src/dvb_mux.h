@@ -19,7 +19,7 @@
  *  WARNING this code is experimental, the API will change.
  */
 
-/* $Id: dvb_mux.h,v 1.4 2006/05/25 08:11:24 mschimek Exp $ */
+/* $Id: dvb_mux.h,v 1.5 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef __ZVBI_DVB_MUX_H__
 #define __ZVBI_DVB_MUX_H__
@@ -81,3 +81,10 @@ _vbi_dvb_mux_ts_new		(unsigned int		pid,
 				 void *			user_data);
 
 #endif /* __ZVBI_DVB_MUX_H__ */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

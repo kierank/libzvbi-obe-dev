@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: idl_demux.h,v 1.5 2006/05/26 00:46:33 mschimek Exp $ */
+/* $Id: idl_demux.h,v 1.6 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef __ZVBI_IDL_DEMUX_H__
 #define __ZVBI_IDL_DEMUX_H__
@@ -150,3 +150,10 @@ _vbi_idl_demux_init		(vbi_idl_demux *	dx,
 VBI_END_DECLS
 
 #endif /* __ZVBI_IDL_DEMUX_H__ */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

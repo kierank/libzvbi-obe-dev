@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: cc.h,v 1.6 2005/01/20 01:40:14 mschimek Exp $ */
+/* $Id: cc.h,v 1.7 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifndef CC_H
 #define CC_H
@@ -104,3 +104,10 @@ extern void		vbi_caption_channel_switched(vbi_decoder *vbi);
 extern void		vbi_caption_color_level(vbi_decoder *vbi);
 
 #endif /* CC_H */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

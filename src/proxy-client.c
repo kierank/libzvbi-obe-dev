@@ -17,10 +17,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-client.c,v 1.12 2006/05/31 03:54:28 mschimek Exp $
+ *  $Id: proxy-client.c,v 1.13 2007/07/23 20:01:18 mschimek Exp $
  */
 
-static const char rcsid[] = "$Id: proxy-client.c,v 1.12 2006/05/31 03:54:28 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-client.c,v 1.13 2007/07/23 20:01:18 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1919,3 +1919,10 @@ vbi_proxy_client_create(const char *p_dev_name, const char *p_client_name,
 }
 
 #endif /* !ENABLE_PROXY */
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

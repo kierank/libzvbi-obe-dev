@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: vt.h,v 1.9 2007/07/04 05:08:45 mschimek Exp $ */
+/* $Id: vt.h,v 1.10 2007/07/23 20:01:18 mschimek Exp $ */
 
 #ifndef VT_H
 #define VT_H
@@ -446,3 +446,10 @@ extern vbi_bool		vbi_format_vt_page(vbi_decoder *, vbi_page *,
 					   int display_rows, vbi_bool navigation);
 
 #endif
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

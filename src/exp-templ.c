@@ -2,7 +2,7 @@
  *  Template for export modules
  */
 
-/* $Id: exp-templ.c,v 1.8 2006/02/10 06:25:37 mschimek Exp $ */
+/* $Id: exp-templ.c,v 1.9 2007/07/23 20:01:17 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -297,3 +297,10 @@ vbi_export_class_tmpl = {
 #if 0
 VBI_AUTOREG_EXPORT_MODULE(vbi_export_class_tmpl)
 #endif
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/
