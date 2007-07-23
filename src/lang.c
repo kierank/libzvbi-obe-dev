@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: lang.c,v 1.9 2007/07/04 05:08:45 mschimek Exp $ */
+/* $Id: lang.c,v 1.10 2007/07/23 20:00:18 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -833,8 +833,8 @@ caption_extended3 [32][2] = {
  *   only lower case accented characters.)
  *
  * Converts a Closed Caption character code to Unicode. Codes
- * in range 0x1130 to 0x1B3F are special and extended characters
- * (e.g. caption command 11 37).
+ * in range 0x1130 to 0x1B3F are "special characters" and "extended
+ * characters" (e.g. caption command 11 37).
  *
  * @see vbi_strndup_iconv_caption()
  *
@@ -869,3 +869,10 @@ vbi_caption_unicode		(unsigned int		c,
 
 	return 0;
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/
