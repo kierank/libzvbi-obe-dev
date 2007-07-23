@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.c,v 1.6 2006/05/25 08:09:43 mschimek Exp $ */
+/* $Id: misc.c,v 1.7 2007/07/23 20:00:11 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -38,6 +38,7 @@ _vbi_log_hook		_vbi_global_log;
 /**
  * @internal
  * strlcpy() is a BSD/GNU extension.
+ * Don't call this function directly, we #define strlcpy if necessary.
  */
 size_t
 _vbi_strlcpy			(char *			dst,
@@ -67,6 +68,7 @@ _vbi_strlcpy			(char *			dst,
 /**
  * @internal
  * strndup() is a BSD/GNU extension.
+ * Don't call this function directly, we #define strndup if necessary.
  */
 char *
 _vbi_strndup			(const char *		s,
@@ -94,6 +96,7 @@ _vbi_strndup			(const char *		s,
 /**
  * @internal
  * vasprintf() is a GNU extension.
+ * Don't call this function directly, we #define vasprintf if necessary.
  */
 int
 _vbi_vasprintf			(char **		dstp,
@@ -138,7 +141,13 @@ _vbi_vasprintf			(char **		dstp,
 	}
 
 	free (buf);
+	buf = NULL;
+
+	/* According to man 3 asprintf GNU's version leaves *dstp
+	   undefined on error, so don't count on it. FreeBSD's
+	   asprintf NULLs *dstp, which is safer. */
 	*dstp = NULL;
+
 	errno = temp;
 
 	return -1;
@@ -147,6 +156,7 @@ _vbi_vasprintf			(char **		dstp,
 /**
  * @internal
  * asprintf() is a GNU extension.
+ * Don't call this function directly, we #define asprintf if necessary.
  */
 int
 _vbi_asprintf			(char **		dstp,
@@ -158,6 +168,7 @@ _vbi_asprintf			(char **		dstp,
 
 	va_start (ap, templ);
 
+	/* May fail, returning -1. */
 	len = vasprintf (dstp, templ, ap);
 
 	va_end (ap);
@@ -229,9 +240,13 @@ vbi_log_on_stderr		(vbi_log_mask		level,
 {
 	vbi_log_mask max_level;
 
+	/* This function exists in libzvbi 0.2 with vbi_ prefix and
+	   in libzvbi 0.3 and Zapping with vbi3_ prefix (so I can
+	   use both versions in Zapping until 0.3 is finished). */
 	if (0 == strncmp (context, "vbi_", 4)) {
 		context += 4;
-	} else if (0 == strncmp (context, "vbi_", 5)) {
+	/* Not "vbi3_" to prevent an accidental s/vbi3_/vbi_. */
+	} else if (0 == strncmp (context, "vbi" "3_", 5)) {
 		context += 5;
 	}
 
@@ -249,13 +264,19 @@ void
 _vbi_log_vprintf		(vbi_log_fn		log_fn,
 				 void *			user_data,
 				 vbi_log_mask		mask,
+				 const char *		source_file,
 				 const char *		context,
 				 const char *		templ,
 				 va_list		ap)
 {
+	char ctx_buffer[160];
+	char *msg_buffer;
 	int saved_errno;
-	char *buffer;
+	unsigned int i;
+	int r;
 
+	assert (NULL != source_file);
+	assert (NULL != context);
 	assert (NULL != templ);
 
 	if (NULL == log_fn)
@@ -263,12 +284,26 @@ _vbi_log_vprintf		(vbi_log_fn		log_fn,
 
 	saved_errno = errno;
 
-	vasprintf (&buffer, templ, ap);
-	if (NULL != buffer) {
-		log_fn (mask, context, buffer, user_data);
+	for (i = 0; i < N_ELEMENTS (ctx_buffer) - 2; ++i) {
+		int c = source_file[i];
 
-		free (buffer);
-		buffer = NULL;
+		if ('.' == c)
+			break;
+
+		ctx_buffer[i] = c;
+	}
+
+	ctx_buffer[i++] = ':';
+
+	strlcpy (ctx_buffer + i, context,
+		 N_ELEMENTS (ctx_buffer) - i);
+
+	r = vasprintf (&msg_buffer, templ, ap);
+	if (r > 1 && NULL != msg_buffer) {
+		log_fn (mask, ctx_buffer, msg_buffer, user_data);
+
+		free (msg_buffer);
+		msg_buffer = NULL;
 	}
 
 	errno = saved_errno;
@@ -279,6 +314,7 @@ void
 _vbi_log_printf			(vbi_log_fn		log_fn,
 				 void *			user_data,
 				 vbi_log_mask		mask,
+				 const char *		source_file,
 				 const char *		context,
 				 const char *		templ,
 				 ...)
@@ -287,7 +323,15 @@ _vbi_log_printf			(vbi_log_fn		log_fn,
 
 	va_start (ap, templ);
 
-	_vbi_log_vprintf (log_fn, user_data, mask, context, templ, ap);
+	_vbi_log_vprintf (log_fn, user_data, mask,
+			  source_file, context, templ, ap);
 
 	va_end (ap);
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/
