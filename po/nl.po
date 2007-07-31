@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-27 21:47+0200\n"
+"POT-Creation-Date: 2007-07-01 20:21+0200\n"
 "PO-Revision-Date: 2005-02-07 04:11+0100\n"
 "Last-Translator: Guus Bonnema <abonnema@xs4all.nl>\n"
 "Language-Team: Dutch <ime@iae.nl>\n"
@@ -319,8 +319,8 @@ msgstr "BKTR driver"
 
 #: src/io-bktr.c:202 src/io-bktr.c:283 src/io-bktr.c:301 src/io-v4l.c:162
 #: src/io-v4l.c:1131 src/io-v4l.c:1169 src/io-v4l.c:1197 src/io-v4l2.c:105
-#: src/io-v4l2k.c:221 src/io-v4l2k.c:591 src/io-v4l2k.c:1179
-#: src/io-v4l2k.c:1313 src/io-v4l2k.c:1341 src/proxy-client.c:200
+#: src/io-v4l2k.c:221 src/io-v4l2k.c:591 src/io-v4l2k.c:1180
+#: src/io-v4l2k.c:1314 src/io-v4l2k.c:1342 src/proxy-client.c:200
 #: src/proxy-client.c:1566
 msgid "Virtual memory exhausted."
 msgstr "Geen virtueel geheugen beschikbaar."
@@ -330,7 +330,7 @@ msgstr "Geen virtueel geheugen beschikbaar."
 msgid "Cannot open '%s': %s."
 msgstr "Kan apparaat '%s' niet openen: %s."
 
-#: src/io-bktr.c:271 src/io-v4l.c:756 src/io-v4l.c:1116 src/io-v4l2k.c:1166
+#: src/io-bktr.c:271 src/io-v4l.c:756 src/io-v4l.c:1116 src/io-v4l2k.c:1167
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "%s (%s) kan de gewenste datadienst helaas niet ontvangen."
@@ -354,7 +354,7 @@ msgstr "%s (%s) is al in gebruik."
 msgid "Could not set the vbi capture parameters for %s (%s): %s."
 msgstr "Kan de VBI-capture-parameters voor %s (%s) niet activeren: %s."
 
-#: src/io-v4l.c:959 src/io-v4l2k.c:1115
+#: src/io-v4l.c:959 src/io-v4l2k.c:1116
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -383,7 +383,7 @@ msgstr ""
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr "Kan de huidige videostandaard van %s (%s) niet uitlezen of bepalen."
 
-#: src/io-v4l.c:1088 src/io-v4l2k.c:1130
+#: src/io-v4l.c:1088 src/io-v4l2k.c:1131
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -392,7 +392,7 @@ msgstr ""
 "Kan de gewenste datadienst niet ontvangen met %s (%s), de samplingfrequentie "
 "%.2f MHz is te laag."
 
-#: src/io-v4l.c:1205 src/io-v4l2.c:120 src/io-v4l2k.c:1358
+#: src/io-v4l.c:1205 src/io-v4l2.c:120 src/io-v4l2k.c:1359
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Kan apparaat '%s' niet openen: %d, %s."
@@ -401,7 +401,7 @@ msgstr "Kan apparaat '%s' niet openen: %d, %s."
 msgid "driver unknown"
 msgstr "Onbekende driver"
 
-#: src/io-v4l.c:1237 src/io-v4l2k.c:1385
+#: src/io-v4l.c:1237 src/io-v4l2k.c:1386
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) is geen VBI-apparaat."
@@ -415,7 +415,7 @@ msgstr "%s (%s) ondersteunt de select() functie niet."
 msgid "V4L driver interface not compiled."
 msgstr "V4L driver interface niet gecompileerd."
 
-#: src/io-v4l2.c:212 src/io-v4l2k.c:1527
+#: src/io-v4l2.c:212 src/io-v4l2k.c:1528
 msgid "V4L2 driver interface not compiled."
 msgstr "V4L2 driver interface niet gecompileerd."
 
@@ -479,23 +479,23 @@ msgstr "%s (%s) kan de gewenste datadienst niet ontvangen met scanning %d."
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr "Kan de VBI-capture-parameters voor %s (%s) niet activeren: %d, %s."
 
-#: src/io-v4l2k.c:1063
+#: src/io-v4l2k.c:1064
 #, c-format
 msgid ""
 "A known bug in driver %s %u.%u.%u impedes VBI capturing in NTSC mode. Please "
-"upgrade."
+"upgrade the driver."
 msgstr ""
 
-#: src/io-v4l2k.c:1378
+#: src/io-v4l2k.c:1379
 #, c-format
 msgid "Cannot identify '%s': %d, %s."
 msgstr "Kan apparaat '%s' niet openen: %d, %s."
 
-#: src/io-v4l2k.c:1380
+#: src/io-v4l2k.c:1381
 msgid "Probably not a v4l2 device."
 msgstr "Waarschijnlijk geen v4l2 device."
 
-#: src/io-v4l2k.c:1434
+#: src/io-v4l2k.c:1435
 #, c-format
 msgid ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "

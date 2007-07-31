@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Zapping 0.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-27 21:47+0200\n"
+"POT-Creation-Date: 2007-07-01 20:21+0200\n"
 "PO-Revision-Date: 2004-10-25 12:24+0200\n"
 "Last-Translator: Pawe³ Sakowski <pawel@sakowski.eu.org>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -313,8 +313,8 @@ msgstr ""
 
 #: src/io-bktr.c:202 src/io-bktr.c:283 src/io-bktr.c:301 src/io-v4l.c:162
 #: src/io-v4l.c:1131 src/io-v4l.c:1169 src/io-v4l.c:1197 src/io-v4l2.c:105
-#: src/io-v4l2k.c:221 src/io-v4l2k.c:591 src/io-v4l2k.c:1179
-#: src/io-v4l2k.c:1313 src/io-v4l2k.c:1341 src/proxy-client.c:200
+#: src/io-v4l2k.c:221 src/io-v4l2k.c:591 src/io-v4l2k.c:1180
+#: src/io-v4l2k.c:1314 src/io-v4l2k.c:1342 src/proxy-client.c:200
 #: src/proxy-client.c:1566
 msgid "Virtual memory exhausted."
 msgstr "Pamiêæ wirtualna wyczerpana."
@@ -324,7 +324,7 @@ msgstr "Pamiêæ wirtualna wyczerpana."
 msgid "Cannot open '%s': %s."
 msgstr "Nie mogê otworzyæ '%s': %s."
 
-#: src/io-bktr.c:271 src/io-v4l.c:756 src/io-v4l.c:1116 src/io-v4l2k.c:1166
+#: src/io-bktr.c:271 src/io-v4l.c:756 src/io-v4l.c:1116 src/io-v4l2k.c:1167
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr ""
@@ -350,7 +350,7 @@ msgstr "%s (%s) jest ju¿ u¿ywany."
 msgid "Could not set the vbi capture parameters for %s (%s): %s."
 msgstr "Nie mogê ustawiæ parametrów przechwytywania vbi dla %s (%s): %s."
 
-#: src/io-v4l.c:959 src/io-v4l2k.c:1115
+#: src/io-v4l.c:959 src/io-v4l2k.c:1116
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -379,7 +379,7 @@ msgstr ""
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr "Nie mogê ustawiæ ani okre¶liæ aktualnego standardu wideo %s (%s)."
 
-#: src/io-v4l.c:1088 src/io-v4l2k.c:1130
+#: src/io-v4l.c:1088 src/io-v4l2k.c:1131
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -388,7 +388,7 @@ msgstr ""
 "Nie mogê przechwytywaæ ¿±danych us³ug danych u¿ywaj±c %s (%s), czêstotliwo¶æ "
 "próbkowania %.2f MHz jest za niska."
 
-#: src/io-v4l.c:1205 src/io-v4l2.c:120 src/io-v4l2k.c:1358
+#: src/io-v4l.c:1205 src/io-v4l2.c:120 src/io-v4l2k.c:1359
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Nie mogê otworzyæ '%s': %d, %s."
@@ -397,7 +397,7 @@ msgstr "Nie mogê otworzyæ '%s': %d, %s."
 msgid "driver unknown"
 msgstr "sterownik nieznany"
 
-#: src/io-v4l.c:1237 src/io-v4l2k.c:1385
+#: src/io-v4l.c:1237 src/io-v4l2k.c:1386
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) nie jest surowym urz±dzeniem VBI."
@@ -412,7 +412,7 @@ msgstr "%s (%s) nie obs³uguje funkcji select()."
 msgid "V4L driver interface not compiled."
 msgstr "Interfejs BKTR nie wkompilowany."
 
-#: src/io-v4l2.c:212 src/io-v4l2k.c:1527
+#: src/io-v4l2.c:212 src/io-v4l2k.c:1528
 #, fuzzy
 msgid "V4L2 driver interface not compiled."
 msgstr "Interfejs V4L2 nie wkompilowany."
@@ -478,23 +478,23 @@ msgstr ""
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr "Nie mogê ustawiæ parametrów przechwytywania vbi dla %s (%s): %d, %s."
 
-#: src/io-v4l2k.c:1063
+#: src/io-v4l2k.c:1064
 #, c-format
 msgid ""
 "A known bug in driver %s %u.%u.%u impedes VBI capturing in NTSC mode. Please "
-"upgrade."
+"upgrade the driver."
 msgstr ""
 
-#: src/io-v4l2k.c:1378
+#: src/io-v4l2k.c:1379
 #, c-format
 msgid "Cannot identify '%s': %d, %s."
 msgstr "Nie mogê otworzyæ '%s': %d, %s."
 
-#: src/io-v4l2k.c:1380
+#: src/io-v4l2k.c:1381
 msgid "Probably not a v4l2 device."
 msgstr "Prawdopodobnie nie jest urz±dzeniem V4L2."
 
-#: src/io-v4l2k.c:1434
+#: src/io-v4l2k.c:1435
 #, c-format
 msgid ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "
