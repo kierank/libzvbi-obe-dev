@@ -119,6 +119,17 @@ elif $CC -v 2>&1 | grep -q -e '^gcc version [3-9]\.' ; then
 fi # GCC >= 3.x
 
 export CFLAGS
+export CXXFLAGS=`echo $CFLAGS | sed \
+ -e s/-Wbad-function-cast// \
+ -e s/-Wdeclaration-after-statement// \
+ -e s/-Wimplicit-function-declaration// \
+ -e s/-Wimplicit-int// \
+ -e s/-Wmain// \
+ -e s/-Wmissing-declarations// \
+ -e s/-Wmissing-prototypes// \
+ -e s/-Wnested-externs// \
+ -e s/-Wnonnull// \
+`
 
 ./autogen.sh $@ \
   $AUTOGENOPTS \
