@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.26 2006/10/08 06:19:48 mschimek Exp $ */
+/* $Id: capture.c,v 1.27 2007/08/27 06:43:34 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -310,7 +310,7 @@ binary_sliced(vbi_sliced *s, double time, int lines)
 }
 
 static vbi_bool
-binary_ts_pes			(vbi_dvb_mux *		mx,
+ts_pes_cb			(vbi_dvb_mux *		mx,
 				 void *			user_data,
 				 const uint8_t *	packet,
 				 unsigned int		packet_size)
@@ -396,8 +396,11 @@ mainloop(void)
 		if (bin_pes || bin_ts) {
 			/* XXX shouldn't use system time. */
 			pts = (int64_t)(timestamp * 90000.0);
-			_vbi_dvb_mux_feed (mx, pts, sliced, lines,
-					   /* service_set: all */ -1);
+			vbi_dvb_mux_feed (mx, sliced, lines,
+					  /* service_mask */ -1,
+					  /* raw */ NULL,
+					  /* sp */ NULL,
+					  pts);
 		}
 	}
 }
@@ -624,19 +627,13 @@ Run  ./capture --sliced | ./decode --ttx --cc --xds  instead.\n");
 	src_h = par->count[0] + par->count[1];
 
 	if (bin_pes) {
-		mx = _vbi_dvb_mux_pes_new (/* data_identifier */ 0x10,
-					   /* packet_size */ 8 * 184,
-					   VBI_VIDEOSTD_SET_625_50,
-					   binary_ts_pes,
-					   /* user_data */ NULL);
+		mx = vbi_dvb_pes_mux_new (ts_pes_cb,
+					  /* user_data */ NULL);
 		assert (NULL != mx);
 	} else if (bin_ts) {
-		mx = _vbi_dvb_mux_ts_new (/* pid */ 999,
-					  /* data_identifier */ 0x10,
-					  /* packet_size */ 8 * 184,
-					  VBI_VIDEOSTD_SET_625_50,
-					  binary_ts_pes,
-					  /* user_data */ NULL);
+		mx = vbi_dvb_ts_mux_new (/* pid */ 999,
+					 ts_pes_cb,
+					 /* user_data */ NULL);
 		assert (NULL != mx);
 	}
 
