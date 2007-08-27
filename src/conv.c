@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: conv.c,v 1.5 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: conv.c,v 1.6 2007/08/27 06:43:07 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -28,11 +28,12 @@
 #include <langinfo.h>
 
 #include "misc.h"
-#include "version.h"
-#include "intl-priv.h"
 #include "conv.h"
-
-extern const char _zvbi_intl_domainname[];
+#ifdef ZAPPING8
+#  include "common/intl-priv.h"
+#else
+#  include "intl-priv.h"
+#endif
 
 #ifdef HAVE_ICONV
 
@@ -132,11 +133,6 @@ _vbi_iconv_ucs2			(vbi_iconv_t *		cd,
 				 const uint16_t *	src,
 				 long			src_length)
 {
-	const char *s;
-	size_t d_left;
-	size_t s_left;
-	size_t r;
-
 	assert (NULL != cd);
 	assert (NULL != dst);
 	assert (NULL != *dst);
@@ -145,18 +141,27 @@ _vbi_iconv_ucs2			(vbi_iconv_t *		cd,
 		return TRUE;
 
 #ifdef HAVE_ICONV
-	if (src_length < 0)
-		src_length = vbi_strlen_ucs2 (src) + 1;
+	{
+		const char *s;
+		size_t d_left;
+		size_t s_left;
+		size_t r;
 
-	s = (const char *) src;
-	s_left = src_length * 2;
+		if (src_length < 0)
+			src_length = vbi_strlen_ucs2 (src) + 1;
 
-	d_left = dst_size;
+		s = (const char *) src;
+		s_left = src_length * 2;
 
-	r = iconv_ucs2 (cd, dst, &d_left, &s, &s_left);
+		d_left = dst_size;
+		
+		r = iconv_ucs2 (cd, dst, &d_left, &s, &s_left);
 
-	return ((size_t) -1 != r && 0 == s_left);
+		return ((size_t) -1 != r && 0 == s_left);
+	}
 #else
+	dst_size = dst_size; /* unused */
+
 	return FALSE;
 #endif
 }
@@ -213,7 +218,6 @@ _vbi_iconv_open			(const char *		dst_codeset,
 				 unsigned long		dst_size,
 				 int			repl_char)
 {
-#ifdef HAVE_ICONV
 	vbi_iconv_t *cd;
 
 	if (NULL == dst_codeset)
@@ -222,6 +226,7 @@ _vbi_iconv_open			(const char *		dst_codeset,
 	if (NULL == src_codeset)
 		src_codeset = "UCS-2";
 
+#ifdef HAVE_ICONV
 	cd = malloc (sizeof (*cd));
 	if (NULL == cd)
 		return NULL;
@@ -250,11 +255,14 @@ _vbi_iconv_open			(const char *		dst_codeset,
 		}
 	}
 
-	return cd;
-
 #else /* !HAVE_ICONV */
-	return NULL;
+	dst = dst; /* unused */
+	dst_size = dst_size;
+	repl_char = repl_char;
+
+	cd = NULL;
 #endif
+	return cd;
 }
 
 /** @internal */
@@ -452,8 +460,6 @@ strndup_iconv_from_ucs2		(unsigned long *	out_size,
 				 long			src_length,
 				 int			repl_char)
 {
-	char *d;
-	uint32_t *d32;
 	char *buffer;
 	unsigned long buffer_size;
 
@@ -474,69 +480,77 @@ strndup_iconv_from_ucs2		(unsigned long *	out_size,
 	buffer_size = 0;
 
 #ifdef HAVE_ICONV
-
-	if (unlikely (src_length < 0))
+	if (unlikely (src_length < 0)) {
 		src_length = vbi_strlen_ucs2 (src);
+	}
 
-	for (;;) {
-		vbi_iconv_t *cd;
-		const char *s;
-		size_t d_left;
-		size_t s_left;
-		size_t r;
+	{
+		char *d;
+		uint32_t *d32;
 
-		d_left = src_length * 4;
-		if (buffer_size > 0)
-			d_left = buffer_size * 2;
+		for (;;) {
+			vbi_iconv_t *cd;
+			const char *s;
+			size_t d_left;
+			size_t s_left;
+			size_t r;
 
-		d = vbi_malloc (d_left);
-		if (unlikely (NULL == d)) {
-			errno = ENOMEM;
-			return NULL;
-		}
+			d_left = src_length * 4;
+			if (buffer_size > 0)
+				d_left = buffer_size * 2;
 
-		buffer = d;
-		buffer_size = d_left;
+			d = vbi_malloc (d_left);
+			if (unlikely (NULL == d)) {
+				errno = ENOMEM;
+				return NULL;
+			}
 
-		cd = _vbi_iconv_open (dst_codeset, "UCS-2",
-				      &d, d_left, repl_char);
-		if (NULL == cd) {
+			buffer = d;
+			buffer_size = d_left;
+
+			cd = _vbi_iconv_open (dst_codeset, "UCS-2",
+					       &d, d_left, repl_char);
+			if (NULL == cd) {
+				free (buffer);
+				buffer = NULL;
+
+				return NULL;
+			}
+
+			d_left = buffer_size - (d - buffer)
+				- 4 /* room for a UCS-4 NUL */;
+
+			s = (const char *) src;
+			s_left = src_length * 2;
+
+			r = iconv_ucs2 (cd, &d, &d_left, &s, &s_left);
+
+			_vbi_iconv_close (cd);
+			cd = NULL;
+
+			if (likely ((size_t) -1 != r))
+				break;
+
 			free (buffer);
 			buffer = NULL;
 
-			return NULL;
+			if (E2BIG != errno)
+				return NULL;
+
+			/* Buffer was too small, try again. */
 		}
 
-		d_left = buffer_size - (d - buffer)
-			- 4 /* room for a UCS-4 NUL */;
+		if (NULL != out_size)
+			*out_size = d - buffer;
 
-		s = (const char *) src;
-		s_left = src_length * 2;
-
-		r = iconv_ucs2 (cd, &d, &d_left, &s, &s_left);
-
-		_vbi_iconv_close (cd);
-		cd = NULL;
-
-		if (likely ((size_t) -1 != r))
-			break;
-
-		free (buffer);
-		buffer = NULL;
-
-		if (E2BIG != errno)
-			return NULL;
-
-		/* Buffer was too small, try again. */
+		d32 = (uint32_t *) d;
+		*d32 = 0;
 	}
 
-	if (NULL != out_size)
-		*out_size = d - buffer;
+#else /* !HAVE_ICONV */
+	repl_char = repl_char; /* unused */
 
-	d32 = (uint32_t *) d;
-	*d32 = 0;
-
-#endif /* HAVE_ICONV */
+#endif
 
 	return buffer;
 }
@@ -708,8 +722,6 @@ strndup_iconv_to_ucs2		(unsigned long *	out_size,
 				 const char *		src,
 				 unsigned long		src_size)
 {
-	char *d;
-	uint16_t *d16;
 	char *buffer;
 	unsigned long buffer_size;
 
@@ -731,69 +743,74 @@ strndup_iconv_to_ucs2		(unsigned long *	out_size,
 	buffer_size = 0;
 
 #ifdef HAVE_ICONV
+	{
+		char *d;
+		uint16_t *d16;
 
-	for (;;) {
-		vbi_iconv_t *cd;
-		const char *s;
-		size_t d_left;
-		size_t s_left;
-		size_t r;
+		for (;;) {
+			vbi_iconv_t *cd;
+			const char *s;
+			size_t d_left;
+			size_t s_left;
+			size_t r;
 
-		d_left = 16384;
-		if (buffer_size > 0)
-			d_left = buffer_size * 2;
+			d_left = 16384;
+			if (buffer_size > 0)
+				d_left = buffer_size * 2;
 
-		d = vbi_malloc (d_left);
-		if (NULL == d) {
-			errno = ENOMEM;
-			return NULL;
-		}
+			d = vbi_malloc (d_left);
+			if (NULL == d) {
+				errno = ENOMEM;
+				return NULL;
+			}
 
-		buffer = d;
-		buffer_size = d_left;
+			buffer = d;
+			buffer_size = d_left;
 
-		cd = _vbi_iconv_open ("UCS-2", src_codeset,
-				      &d, d_left,
-				      /* repl_char */ 0);
-		if (NULL == cd) {
+			cd = _vbi_iconv_open ("UCS-2", src_codeset,
+					       &d, d_left,
+					       /* repl_char */ 0);
+			if (NULL == cd) {
+				free (buffer);
+				buffer = NULL;
+
+				return NULL;
+			}
+
+			d_left = buffer_size - (d - buffer)
+				- 2 /* room for a UCS-2 NUL */;
+
+			s = src;
+			s_left = src_size;
+
+			/* Ignore compiler warnings if second argument
+			   is declared as char** instead of const char**. */
+			r = iconv (cd->icd, &s, &s_left, &d, &d_left);
+
+			_vbi_iconv_close (cd);
+			cd = NULL;
+
+			if ((size_t) -1 != r)
+				break;
+
 			free (buffer);
 			buffer = NULL;
 
-			return NULL;
+			if (E2BIG != errno)
+				return NULL;
+
+			/* Buffer was too small, try again. */
 		}
 
-		d_left = buffer_size - (d - buffer)
-			- 2 /* room for a UCS-2 NUL */;
+		if (NULL != out_size)
+			*out_size = d - buffer;
 
-		s = src;
-		s_left = src_size;
-
-		/* Ignore compiler warnings if second argument
-		   is declared as char** instead of const char**. */
-		r = iconv (cd->icd, (void *) &s, &s_left, &d, &d_left);
-
-		_vbi_iconv_close (cd);
-		cd = NULL;
-
-		if ((size_t) -1 != r)
-			break;
-
-		free (buffer);
-		buffer = NULL;
-
-		if (E2BIG != errno)
-			return NULL;
-
-		/* Buffer was too small, try again. */
+		d16 = (uint16_t *) d;
+		*d16 = 0;
 	}
 
-	if (NULL != out_size)
-		*out_size = d - buffer;
-
-	d16 = (uint16_t *) d;
-	*d16 = 0;
-
-#endif /* !HAVE_ICONV */
+#else /* !HAVE_ICONV */
+#endif
 
 	return buffer;
 }
@@ -970,7 +987,7 @@ vbi_strndup_iconv_caption	(const char *		dst_codeset,
 				  src, src_length, repl_char);
 }
 
-#if 3 == VBI_VERSION_MINOR
+#if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
 
 /**
  * @internal
@@ -996,12 +1013,12 @@ vbi_strndup_iconv_caption	(const char *		dst_codeset,
 static char *
 strndup_ucs2_teletext		(unsigned long *	out_size,
 				 const vbi_ttx_charset *cs,
-				 const char *		src,
-				 unsigned long		src_length)
+				 const uint8_t *	src,
+				 long			src_length)
 {
 	uint16_t *d16;
 	char *buffer;
-	unsigned long i;
+	long i;
 
 	assert (NULL != cs);
 
@@ -1048,7 +1065,7 @@ strndup_ucs2_teletext		(unsigned long *	out_size,
  *   representable in @a dst_codeset. When zero the function will
  *   fail if the source buffer contains unrepresentable characters.
  *
- * Converts a string of Teletext characters to @d dst_codeset and
+ * Converts a string of Teletext characters to @a dst_codeset and
  * stores the result with a terminating NUL in a newly allocated buffer.
  * The function ignores parity bits and control codes (0x00 ... 0x1F).
  *
@@ -1215,7 +1232,7 @@ vbi_locale_codeset		(void)
 {
 	const char *dst_format;
 
-	dst_format = bind_textdomain_codeset (vbi3_intl_domainname, NULL);
+	dst_format = bind_textdomain_codeset (vbi_intl_domainname, NULL);
 
 	if (NULL == dst_format)
 		dst_format = nl_langinfo (CODESET);
