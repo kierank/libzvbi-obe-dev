@@ -37,6 +37,13 @@
  *
  *
  *  $Log: proxyd.c,v $
+ *  Revision 1.17  2007/08/27 06:45:24  mschimek
+ *  vbi_proxyd_take_service_req, vbi_proxyd_take_message,
+ *  vbi_proxyd_take_message: Replaced strncpy() by the faster a safer
+ *  strlcpy().
+ *  vbi_proxyd_signal_handler, vbi_proxyd_parse_argv: Replaced sprintf() by
+ *  the safer snprintf().
+ *
  *  Revision 1.16  2006/05/22 09:01:53  mschimek
  *  s/vbi_asprintf/asprintf.
  *
@@ -62,7 +69,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxyd.c,v 1.16 2006/05/22 09:01:53 mschimek Exp $";
+static const char rcsid[] = "$Id: proxyd.c,v 1.17 2007/08/27 06:45:24 mschimek Exp $";
 
 #include "config.h"
 
@@ -1160,19 +1167,19 @@ static vbi_bool vbi_proxyd_take_service_req( PROXY_CLNT * req,
    {
       if (p_errorstr != NULL)
       {
-         strncpy(errormsg, p_errorstr, VBIPROXY_ERROR_STR_MAX_LENGTH);
+         strlcpy(errormsg, p_errorstr, VBIPROXY_ERROR_STR_MAX_LENGTH);
          errormsg[VBIPROXY_ERROR_STR_MAX_LENGTH - 1] = 0;
       }
       else if ( ((*VBI_GET_SERVICE_P(req, new_strict) & new_services) == 0) &&
                 (new_services != 0) )
       {
-         strncpy(errormsg, "Sorry, proxy cannot capture any of the requested data services.",
+         strlcpy(errormsg, "Sorry, proxy cannot capture any of the requested data services.",
                  VBIPROXY_ERROR_STR_MAX_LENGTH);
          errormsg[VBIPROXY_ERROR_STR_MAX_LENGTH - 1] = 0;
       }
       else
       {
-         strncpy(errormsg, "Internal error in service update.", VBIPROXY_ERROR_STR_MAX_LENGTH);
+         strlcpy(errormsg, "Internal error in service update.", VBIPROXY_ERROR_STR_MAX_LENGTH);
          errormsg[VBIPROXY_ERROR_STR_MAX_LENGTH - 1] = 0;
       }
       result = FALSE;
@@ -2039,7 +2046,7 @@ static vbi_bool vbi_proxyd_take_message( PROXY_CLNT *req, VBIPROXY_MSG * pMsg )
                { 
                   /* open & service initialization succeeded -> reply with confirm */
                   vbi_proxy_msg_fill_magics(&req->msg_buf.body.connect_cnf.magics);
-                  strncpy((char *) req->msg_buf.body.connect_cnf.dev_vbi_name,
+                  strlcpy((char *) req->msg_buf.body.connect_cnf.dev_vbi_name,
                           proxy.dev[req->dev_idx].p_dev_name, VBIPROXY_DEV_NAME_MAX_LENGTH);
                   req->msg_buf.body.connect_cnf.dev_vbi_name[VBIPROXY_DEV_NAME_MAX_LENGTH - 1] = 0;
                   req->msg_buf.body.connect_cnf.pid = getpid();
@@ -2080,7 +2087,7 @@ static vbi_bool vbi_proxyd_take_message( PROXY_CLNT *req, VBIPROXY_MSG * pMsg )
             else
             {  /* client uses incompatible protocol version */
                vbi_proxy_msg_fill_magics(&req->msg_buf.body.connect_rej.magics);
-               strncpy((char *) req->msg_buf.body.connect_rej.errorstr,
+               strlcpy((char *) req->msg_buf.body.connect_rej.errorstr,
                        "Incompatible proxy protocol version", VBIPROXY_ERROR_STR_MAX_LENGTH);
                req->msg_buf.body.connect_rej.errorstr[VBIPROXY_ERROR_STR_MAX_LENGTH - 1] = 0;
                vbi_proxy_msg_write(&req->io, MSG_TYPE_CONNECT_REJ,
@@ -2665,7 +2672,7 @@ static void vbi_proxyd_signal_handler( int sigval )
 {
    char str_buf[10];
 
-   sprintf(str_buf, "%d", sigval);
+   snprintf(str_buf, sizeof (str_buf), "%d", sigval);
    vbi_proxy_msg_logger(LOG_NOTICE, -1, 0, "terminated by signal", str_buf, NULL);
 
    proxy.should_exit = TRUE;
@@ -3087,7 +3094,7 @@ static void vbi_proxyd_parse_argv( int argc, char * argv[] )
       else if (strcasecmp(argv[arg_idx], "-help") == 0)
       {
          char versbuf[50];
-         sprintf(versbuf, "(version %d.%d.%d)", VBIPROXY_VERSION>>16, (VBIPROXY_VERSION>>8)&0xff, VBIPROXY_VERSION&0xff);
+         snprintf(versbuf, sizeof (versbuf), "(version %d.%d.%d)", VBIPROXY_VERSION>>16, (VBIPROXY_VERSION>>8)&0xff, VBIPROXY_VERSION&0xff);
          proxy_usage_exit(argv[0], versbuf, "the following options are available");
       }
       else
