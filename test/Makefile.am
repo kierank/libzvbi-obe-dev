@@ -5,15 +5,18 @@ TESTS = \
 	exoptest \
 	hamm \
 	raw_decoder \
+	test-dvb_mux \
 	test-vps
 
 check_PROGRAMS = \
 	cpptest \
 	explist \
 	hamm \
-	raw_decoder
+	raw_decoder \
+	test-dvb_mux
 
 cpptest_SOURCES = cpptest.cc
+test_dvb_mux_SOURCES = test-dvb_mux.cc
 
 check_SCRIPTS = \
 	exoptest
