@@ -17,10 +17,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-client.c,v 1.13 2007/07/23 20:01:18 mschimek Exp $
+ *  $Id: proxy-client.c,v 1.14 2007/08/27 06:45:37 mschimek Exp $
  */
 
-static const char rcsid[] = "$Id: proxy-client.c,v 1.13 2007/07/23 20:01:18 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-client.c,v 1.14 2007/08/27 06:45:37 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -723,7 +723,7 @@ static vbi_bool proxy_client_start_acq( vbi_proxy_client * vpc )
    p_req_msg = &vpc->p_client_msg->body.connect_req;
    vbi_proxy_msg_fill_magics(&p_req_msg->magics);
 
-   strncpy((char *) p_req_msg->client_name, vpc->p_client_name, VBIPROXY_CLIENT_NAME_MAX_LENGTH);
+   strlcpy((char *) p_req_msg->client_name, vpc->p_client_name, VBIPROXY_CLIENT_NAME_MAX_LENGTH);
    p_req_msg->client_name[VBIPROXY_CLIENT_NAME_MAX_LENGTH - 1] = 0;
    p_req_msg->pid = getpid();
 
