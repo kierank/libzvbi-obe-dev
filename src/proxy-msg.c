@@ -29,9 +29,12 @@
  *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
  *    the latter ones are currently not officially supported.
  *
- *  $Id: proxy-msg.c,v 1.17 2007/08/27 06:44:40 mschimek Exp $
+ *  $Id: proxy-msg.c,v 1.18 2007/08/27 10:17:50 mschimek Exp $
  *
  *  $Log: proxy-msg.c,v $
+ *  Revision 1.18  2007/08/27 10:17:50  mschimek
+ *  *** empty log message ***
+ *
  *  Revision 1.17  2007/08/27 06:44:40  mschimek
  *  vbi_proxy_msg_get_local_socket_addr, vbi_proxy_msg_accept_connection,
  *  vbi_proxy_msg_resolve_symlinks: Replaced strncpy() by the faster a
@@ -552,7 +555,8 @@ vbi_bool vbi_proxy_msg_handle_read( VBIPROXY_MSG_STATE * pIO,
          }
          else if ((len < 0) && (errno != EAGAIN) && (errno != EINTR))
          {  /* network error -> close the connection */
-            dprintf1("handle_io: read error on fd %d: len=%d, %s\n", pIO->sock_fd, len, strerror(errno));
+   	    dprintf1("handle_io: read error on fd %d: len=%ld, %s\n",
+		     pIO->sock_fd, (long) len, strerror(errno));
             result = FALSE;
          }
          else if (errno == EAGAIN)

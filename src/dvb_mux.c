@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_mux.c,v 1.9 2007/08/27 06:43:59 mschimek Exp $ */
+/* $Id: dvb_mux.c,v 1.10 2007/08/27 10:17:50 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -151,12 +151,13 @@ encode_stuffing			(uint8_t *		p,
 			assert (last_du_size >= 2);
 
 			if (257 == last_du_size) {
-				p[1 - 257] = 256 - 2;
-				p[1 - 1] = 2 - 2;
+				p[(long) 1 - 257] = 256 - 2;
+				p[(long) 1 - 1] = 2 - 2;
 			} else {
 				/* Append a stuffing byte 0xFF to the
 				   previous data unit. */
-				p[1 - last_du_size] = last_du_size - 1;
+				p[(long) 1 - last_du_size] =
+					last_du_size - 1;
 			}
 		}
 	}

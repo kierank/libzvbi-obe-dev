@@ -1,5 +1,9 @@
 2007-08-27    <mschimek@users.sf.net>
 
+	* src/proxy-msg.c (vbi_proxy_msg_handle_read): printf size_t fix.
+
+	* src/dvb_mux.c (encode_stuffing): Fixed 64 bit pointer addition.
+
 	* src/misc.c, src/misc.h, src/intl-priv.h, src/conv.c:
 	  Compile fixes.
 
