@@ -18,7 +18,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.c,v 1.6 2007/07/09 23:40:24 mschimek Exp $ */
+/* $Id: sliced.c,v 1.7 2007/08/27 06:43:25 mschimek Exp $ */
+
+/* For libzvbi version 0.2.x / 0.3.x. */
 
 #undef NDEBUG
 
@@ -28,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <assert.h>
 
@@ -210,125 +213,599 @@ open_sliced_write		(FILE *			fp,
 	return TRUE;
 }
 
-/* Reader for old test/capture --sliced output.
-   ATTN this code is not reentrant. */
+/* Misc. helper functions. */
 
-static FILE *			read_file;
-static double			read_elapsed;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <locale.h>
+#include <assert.h>
+#include <unistd.h>
+#include <errno.h>
 
-int
-read_sliced			(vbi_sliced *		sliced,
-				 double *		timestamp,
-				 unsigned int		max_lines)
+#include "src/dvb_demux.h"
+
+#undef _
+#define _(x) x /* later */
+
+typedef vbi_bool
+read_loop_fn			(struct stream *	st);
+
+struct stream {
+	uint8_t			buffer[4096];
+
+	vbi_sliced		sliced[64];
+
+	const uint8_t *		bp;
+	const uint8_t *		end;
+
+	stream_callback_fn *	callback;
+
+	read_loop_fn *		read_loop;
+
+	vbi_dvb_demux *		dx;
+
+	double			sample_time;
+	int64_t			stream_time;
+
+	int			fd;
+};
+
+#ifndef HAVE_PROGRAM_INVOCATION_NAME
+char *				program_invocation_name;
+char *				program_invocation_short_name;
+#endif
+
+vbi_bool			option_quiet;
+unsigned int			option_ts_pid;
+unsigned int			option_log_mask;
+
+void
+vprint_error			(const char *		template,
+				 va_list		ap)
 {
-	char buf[256];
-	double dt;
-	int n_lines;
-	int n;
-	vbi_sliced *s;
+	if (option_quiet)
+		return;
 
-	assert (NULL != sliced);
-	assert (NULL != timestamp);
+	fprintf (stderr, "%s: ", program_invocation_short_name);
 
-	if (ferror (read_file))
-		goto read_error;
+	vfprintf (stderr, template, ap);
 
-	if (feof (read_file) || !fgets (buf, 255, read_file))
-		goto eof;
+	fputc ('\n', stderr);
+}
 
-	/* Time in seconds since last frame. */
-	dt = strtod (buf, NULL);
-	if (dt < 0.0) {
-		dt = -dt;
-	}
+void
+error_msg			(const char *		template,
+				 ...)
+{
+	va_list ap;
 
-	*timestamp = read_elapsed;
-	read_elapsed += dt;
+	va_start (ap, template);
+	vprint_error (template, ap);
+	va_end (ap);
+}
 
-	n_lines = fgetc (read_file);
+void
+error_exit			(const char *		template,
+				 ...)
+{
+	va_list ap;
 
-	if (n_lines < 0)
-		goto read_error;
+	va_start (ap, template);
+	vprint_error (template, ap);
+	va_end (ap);
 
-	assert ((unsigned int) n_lines <= max_lines);
-
-	s = sliced;
-
-	for (n = n_lines; n > 0; --n) {
-		int index;
-
-		index = fgetc (read_file);
-		if (index < 0)
-			goto eof;
-
-		s->line = (fgetc (read_file)
-			   + 256 * fgetc (read_file)) & 0xFFF;
-
-		if (feof (read_file) || ferror (read_file))
-			goto read_error;
-
-		switch (index) {
-		case 0:
-			s->id = VBI_SLICED_TELETEXT_B;
-			fread (s->data, 1, 42, read_file);
-			break;
-
-		case 1:
-			s->id = VBI_SLICED_CAPTION_625; 
-			fread (s->data, 1, 2, read_file);
-			break; 
-
-		case 2:
-			s->id = VBI_SLICED_VPS;
-			fread (s->data, 1, 13, read_file);
-			break;
-
-		case 3:
-			s->id = VBI_SLICED_WSS_625; 
-			fread (s->data, 1, 2, read_file);
-			break;
-
-		case 4:
-			s->id = VBI_SLICED_WSS_CPR1204; 
-			fread (s->data, 1, 3, read_file);
-			break;
-
-		case 7:
-			s->id = VBI_SLICED_CAPTION_525; 
-			fread(s->data, 1, 2, read_file);
-			break;
-
-		default:
-			fprintf (stderr,
-				 "\nOops! Unknown data type %d "
-				 "in sliced VBI file\n", index);
-			exit (EXIT_FAILURE);
-		}
-
-		if (ferror (read_file))
-			goto read_error;
-
-		++s;
-	}
-
-	return n_lines;
-
- eof:
-	return -1;
-
- read_error:
-	perror ("Read error in sliced VBI file");
 	exit (EXIT_FAILURE);
 }
 
-vbi_bool
-open_sliced_read		(FILE *			fp)
+void
+no_mem_exit			(void)
 {
-	assert (NULL != fp);
+	error_exit (_("Out of memory."));
+}
 
-	read_file = fp;
+static void
+premature_exit			(void)
+{
+	error_exit (_("Premature end of input file."));
+}
 
-	read_elapsed = 0.0;
+static void
+bad_format_exit			(void)
+{
+	error_exit (_("Invalid data in input file."));
+}
+
+static vbi_bool
+read_more			(struct stream *	st)
+{
+	unsigned int retry;
+	uint8_t *s;
+	uint8_t *e;
+
+	s = /* const cast */ st->end;
+	e = st->buffer + sizeof (st->buffer);
+
+	if (s >= e)
+		s = st->buffer;
+
+	retry = 100;
+
+        do {
+                ssize_t actual;
+		int saved_errno;
+
+                actual = read (st->fd, s, e - s);
+                if (0 == actual)
+			return FALSE; /* EOF */
+
+		if (actual > 0) {
+			st->bp = s;
+			st->end = s + actual;
+			return TRUE;
+		}
+
+		saved_errno = errno;
+
+		if (EINTR != saved_errno) {
+			error_exit (_("Read error: %s."),
+				    strerror (errno));
+		}
+        } while (--retry > 0);
+
+	error_exit (_("Read error."));
+
+	return FALSE;
+}
+
+static vbi_bool
+pes_ts_read_loop		(struct stream *	st)
+{
+	for (;;) {
+		double sample_time;
+		int64_t pts;
+		unsigned int left;
+		unsigned int n_lines;
+
+		if (st->bp >= st->end) {
+			if (!read_more (st))
+				break; /* EOF */
+		}
+
+		left = st->end - st->bp;
+
+		n_lines = vbi_dvb_demux_cor (st->dx,
+					     st->sliced,
+					     N_ELEMENTS (st->sliced),
+					     &pts,
+					     &st->bp,
+					     &left);
+
+		if (0 == n_lines)
+			continue;
+
+		if (pts < 0) {
+			/* XXX WTF? */
+			continue;
+		}
+
+		sample_time = pts * (1 / 90000.0);
+
+		if (!st->callback (st->sliced, n_lines,
+				   sample_time, pts))
+			return FALSE;
+	}
+
+	error_msg (_("End of stream."));
 
 	return TRUE;
+}
+
+static vbi_bool
+next_byte			(struct stream *	st,
+				 int *			c)
+{
+	do {
+		if (st->bp < st->end) {
+			*c = *st->bp++;
+			return TRUE;
+		}
+	} while (read_more (st));
+
+	return FALSE; /* EOF */
+}
+
+static void
+next_block			(struct stream *	st,
+				 uint8_t *		buffer,
+				 unsigned int		buffer_size)
+{
+	do {
+		unsigned int available;
+
+		available = st->end - st->bp;
+
+		if (buffer_size <= available) {
+			memcpy (buffer, st->bp, buffer_size);
+			st->bp += buffer_size;
+			return;
+		}
+
+		memcpy (buffer, st->bp, available);
+
+		st->bp += available;
+
+		buffer += available;
+		buffer_size -= available;
+
+	} while (read_more (st));
+
+	premature_exit ();
+}
+
+static vbi_bool
+next_time_delta			(struct stream *	st,
+				 double *		dt)
+{
+	char buffer[32];
+	unsigned int i;
+
+	for (i = 0; i < N_ELEMENTS (buffer); ++i) {
+		int c;
+
+		if (!next_byte (st, &c)) {
+			if (i > 0)
+				premature_exit ();
+			else
+				return FALSE;
+		}
+
+		if ('\n' == c) {
+			if (0 == i) {
+				bad_format_exit ();
+			} else {
+				buffer[i] = 0;
+				*dt = strtod (buffer, NULL);
+				return TRUE;
+			}
+		}
+
+		if ('-' != c && '.' != c && !isdigit (c))
+			bad_format_exit ();
+
+		buffer[i] = c;
+	}
+
+	return FALSE;
+}
+
+static vbi_bool
+old_sliced_read_loop		(struct stream *	st)
+{
+	for (;;) {
+		vbi_sliced *s;
+		double sample_time;
+		double dt;
+		int64_t stream_time;
+		int n_lines;
+		int count;
+
+		if (!next_time_delta (st, &dt))
+			break; /* EOF */
+
+		/* Time in seconds since last frame. */
+		if (dt < 0.0)
+			dt = -dt;
+
+		sample_time = st->sample_time;
+		st->sample_time += dt;
+
+		if (!next_byte (st, &n_lines))
+			bad_format_exit ();
+
+		if ((unsigned int) n_lines > N_ELEMENTS (st->sliced))
+			bad_format_exit ();
+
+		s = st->sliced;
+
+		for (count = n_lines; count > 0; --count) {
+			int index;
+			int line;
+
+			if (!next_byte (st, &index))
+				premature_exit ();
+
+			if (!next_byte (st, &line))
+				premature_exit ();
+			s->line = line;
+
+			if (!next_byte (st, &line))
+				premature_exit ();
+			s->line += (line & 15) * 256;
+
+			switch (index) {
+			case 0:
+				s->id = VBI_SLICED_TELETEXT_B;
+				next_block (st, s->data, 42);
+				break;
+
+			case 1:
+				s->id = VBI_SLICED_CAPTION_625;
+				next_block (st, s->data, 2);
+				break; 
+
+			case 2:
+				s->id = VBI_SLICED_VPS;
+				next_block (st, s->data, 13);
+				break;
+
+			case 3:
+				s->id = VBI_SLICED_WSS_625;
+				next_block (st, s->data, 2);
+				break;
+
+			case 4:
+				s->id = VBI_SLICED_WSS_CPR1204;
+				next_block (st, s->data, 3);
+				break;
+
+			case 7:
+				s->id = VBI_SLICED_CAPTION_525;
+				next_block (st, s->data, 2);
+				break;
+
+			default:
+				bad_format_exit ();
+				break;
+			}
+
+			++s;
+		}
+
+		stream_time = sample_time * 90000;
+
+		if (!st->callback (st->sliced, n_lines,
+				   sample_time, stream_time))
+			return FALSE;
+	}
+
+	error_msg (_("End of stream."));
+
+	return TRUE;
+}
+
+vbi_bool
+read_stream_loop		(struct stream *	st)
+{
+	return st->read_loop (st);
+}
+
+static vbi_bool
+look_ahead			(struct stream *	st,
+				 unsigned int		n_bytes)
+{
+	assert (n_bytes <= sizeof (st->buffer));
+
+	do {
+		unsigned int available;
+		const uint8_t *end;
+
+		available = st->end - st->bp;
+		if (available >= n_bytes)
+			return TRUE;
+
+		end = st->buffer + sizeof (st->buffer);
+
+		if (n_bytes > (unsigned int)(end - st->bp)) {
+			memmove (st->buffer, st->bp, available);
+
+			st->bp = st->buffer;
+			st->end = st->buffer + available;
+		}
+	} while (read_more (st));
+
+	return FALSE; /* EOF */
+}
+
+static vbi_bool
+is_old_sliced_format		(const uint8_t		s[8])
+{
+	unsigned int i;
+
+	if ('0' != s[0] || '.' != s[1])
+		return FALSE;
+
+	for (i = 2; i < 8; ++i) {
+		if (!isdigit (s[i]))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static vbi_bool
+is_xml_format			(const uint8_t		s[6])
+{
+	unsigned int i;
+
+	if ('<' != s[0])
+		return FALSE;
+
+	for (i = 1; i < 6; ++i) {
+		if (!isalpha (s[i]))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static vbi_bool
+is_pes_format			(const uint8_t		s[4])
+{
+	return (0x00 == s[0] &&
+		0x00 == s[1] &&
+		0x01 == s[2] &&
+		0xBD == s[3]);
+}
+
+static vbi_bool
+is_ts_format			(const uint8_t		s[1])
+{
+	return (0x47 == s[0]);
+}
+
+static enum file_format
+detect_file_format		(struct stream *	st)
+{
+	if (!look_ahead (st, 8))
+		return 0; /* unknown format */
+
+	if (is_old_sliced_format (st->bp))
+		return FILE_FORMAT_SLICED;
+
+	if (is_xml_format (st->buffer))
+		return FILE_FORMAT_XML;
+
+	/* Can/shall we guess a PID? */
+	if (0) {
+		/* Somewhat unreliable and works only if the
+		   packets are aligned. */
+		if (is_ts_format (st->buffer))
+			return FILE_FORMAT_DVB_TS;
+	}
+
+	/* Works only if the packets are aligned. */
+	if (is_pes_format (st->buffer))
+		return FILE_FORMAT_DVB_PES;
+
+	return 0; /* unknown format */
+}
+
+void
+read_stream_delete		(struct stream *	st)
+{
+	if (NULL == st)
+		return;
+
+	CLEAR (*st);
+
+	free (st);
+}
+
+struct stream *
+read_stream_new			(enum file_format	file_format,
+				 stream_callback_fn *	callback)
+{
+	struct stream *st;
+
+	if (isatty (STDIN_FILENO))
+		error_exit (_("No VBI data on standard input."));
+
+	st = malloc (sizeof (*st));
+	if (NULL == st)
+		no_mem_exit ();
+
+	st->fd = STDIN_FILENO;
+
+	if (0 == file_format)
+		file_format = detect_file_format (st);
+
+	switch (file_format) {
+	case FILE_FORMAT_SLICED:
+		st->read_loop = old_sliced_read_loop;
+		break;
+
+	case FILE_FORMAT_XML:
+		st->read_loop = NULL;
+		error_exit ("XML read function "
+			    "not implemented yet.");
+		break;
+
+	case FILE_FORMAT_DVB_PES:
+		st->read_loop = pes_ts_read_loop;
+
+		st->dx = vbi_dvb_pes_demux_new (/* callback */ NULL,
+						/* user_data */ NULL);
+		if (NULL == st->dx)
+			no_mem_exit ();
+
+		vbi_dvb_demux_set_log_fn (st->dx,
+					  option_log_mask,
+					  vbi_log_on_stderr,
+					  /* user_data */ NULL);
+		break;
+
+	case FILE_FORMAT_DVB_TS:
+		st->read_loop = pes_ts_read_loop;
+
+		st->dx = _vbi_dvb_ts_demux_new (/* callback */ NULL,
+						/* user_data */ NULL,
+						option_ts_pid);
+		if (NULL == st->dx)
+			no_mem_exit ();
+
+		vbi_dvb_demux_set_log_fn (st->dx,
+					  option_log_mask,
+					  vbi_log_on_stderr,
+					  /* user_data */ NULL);
+		break;
+
+	default:
+		error_exit (_("Unknown input file format."));
+		break;
+	}
+
+	st->callback		= callback;
+
+	st->sample_time		= 0.0;
+	st->stream_time		= 0;
+
+	st->bp			= st->buffer;
+	st->end			= st->buffer;
+
+	return st;
+}
+
+void
+parse_option_ts			(void)
+{
+	const char *s = optarg;
+	char *end;
+
+	assert (NULL != optarg);
+
+	option_ts_pid = strtoul (s, &end, 0);
+
+	if (option_ts_pid <= 0x000F ||
+	    option_ts_pid >= 0x1FFF) {
+		error_exit (_("Invalid PID %u."),
+			    option_ts_pid);
+	}
+}
+
+void
+init_helpers			(int			argc,
+				 char **		argv)
+{
+	argc = argc;
+	argv = argv;
+
+#ifndef HAVE_PROGRAM_INVOCATION_NAME
+
+	{
+		unsigned int i;
+
+		for (i = strlen (argv[0]); i > 0; --i) {
+			if ('/' == argv[0][i - 1])
+				break;
+		}
+
+		program_invocation_name = argv[0];
+		program_invocation_short_name = &argv[0][i];
+	}
+
+#endif
+
+	setlocale (LC_ALL, "");
 }
