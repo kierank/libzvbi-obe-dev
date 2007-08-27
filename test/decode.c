@@ -1,6 +1,6 @@
 /*
- *  zvbi-decode -- decode sliced VBI data using low-level
- *		   libzvbi functions
+ *  zvbi-decode -- Decode sliced VBI data using low-level
+ *		   libzvbi functions.
  *
  *  Copyright (C) 2004, 2006, 2007 Michael H. Schimek
  *
@@ -19,7 +19,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.22 2007/04/05 05:06:32 mschimek Exp $ */
+/* $Id: decode.c,v 1.23 2007/08/27 06:43:17 mschimek Exp $ */
+
+/* For libzvbi version 0.2.x / 0.3.x. */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -49,23 +51,18 @@
 #  include "src/vps.h"
 #  include "src/hamm.h"
 #  include "src/lang.h"
-#  include "sliced.h"		/* sliced data from file */
 #else /* 0.3 */
 #  include "src/zvbi.h"
 #  include "src/misc.h"		/* _vbi_to_ascii() */
 #endif
 
+#include "sliced.h"
+
+#undef _
 #define _(x) x /* i18n TODO */
 
 /* Will be installed one day. */
 #define PROGRAM_NAME "zvbi-decode"
-
-#ifndef HAVE_PROGRAM_INVOCATION_NAME
-static char *			program_invocation_name;
-static char *			program_invocation_short_name;
-#endif
-
-static vbi_bool			source_is_pes; /* ATSC/DVB */
 
 static vbi_pgno			option_pfc_pgno;
 static unsigned int		option_pfc_stream;
@@ -95,7 +92,6 @@ static unsigned int		option_idl_address = 0;
 /* Demultiplexers. */
 
 static vbi_pfc_demux *		pfc;
-static vbi_dvb_demux *		dvb;
 static vbi_idl_demux *		idl;
 static vbi_xds_demux *		xds;
 
@@ -103,29 +99,6 @@ extern void
 _vbi_pfc_block_dump		(const vbi_pfc_block *	pb,
 				 FILE *			fp,
 				 vbi_bool		binary);
-
-static void
-error_exit			(const char *		template,
-				 ...)
-{
-	va_list ap;
-
-	fprintf (stderr, "%s: ", program_invocation_short_name);
-
-	va_start (ap, template);
-	vfprintf (stderr, template, ap);
-	va_end (ap);         
-
-	fputc ('\n', stderr);
-
-	exit (EXIT_FAILURE);
-}
-
-static void
-no_mem_exit			(void)
-{
-	error_exit (_("Out of memory."));
-}
 
 static void
 put_cc_char			(unsigned int		c1,
@@ -331,6 +304,7 @@ caption				(const uint8_t		buffer[2],
 
 			/* Error ignored. */
 			vbi_fputs_iconv (stdout,
+					 /* dst_codeset */
 					 vbi_locale_codeset (),
 					 /* src_codeset */ "EIA-608",
 					 text, 2, /* repl_char */ '?');
@@ -801,8 +775,8 @@ wss_625				(const uint8_t		buffer[2])
 
 #endif /* 3 == VBI_VERSION_MINOR */
 
-static void
-decode				(const vbi_sliced *	s,
+static vbi_bool
+decode_frame			(const vbi_sliced *	s,
 				 unsigned int		n_lines,
 				 double			sample_time,
 				 int64_t		stream_time)
@@ -814,10 +788,10 @@ decode				(const vbi_sliced *	s,
 	if (option_dump_time || option_metronome_tick > 0.0) {
 		/* Sample time: When we captured the data, in
 		   		seconds since 1970-01-01 (gettimeofday()).
-		   Stream time: For ATSC/DVB the Presentation TimeStamp.
+		   Stream time: For ATSC/DVB the Presentation Time Stamp.
 				For analog the frame number multiplied by
 				the nominal frame period (1/25 or
-				1001/30000 s). Both given in 90000 kHz units.
+				1001/30000 s). Both given in 90 kHz units.
 		   Note this isn't fully implemented yet. */
 
 		if (option_metronome_tick > 0.0) {
@@ -874,153 +848,9 @@ decode				(const vbi_sliced *	s,
 		++s;
 		--n_lines;
 	}
+
+	return TRUE;
 }
-
-static void
-pes_mainloop			(void)
-{
-	uint8_t buffer[2048];
-
-	while (1 == fread (buffer, sizeof (buffer), 1, stdin)) {
-		const uint8_t *bp;
-		unsigned int left;
-
-		bp = buffer;
-		left = sizeof (buffer);
-
-		while (left > 0) {
-			vbi_sliced sliced[64];
-			unsigned int n_lines;
-			int64_t pts;
-
-			n_lines = vbi_dvb_demux_cor (dvb, sliced, 64,
-						     &pts, &bp, &left);
-			if (n_lines > 0)
-				decode (sliced, n_lines,
-					/* sample_time */ 0,
-					/* stream_time */ pts);
-		}
-	}
-
-	fprintf (stderr, _("\rEnd of stream\n"));
-}
-
-#if 3 == VBI_VERSION_MINOR /* XXX replace me, I'm redundant */
-
-static void
-old_mainloop			(void)
-{
-	double time;
-
-	time = 0.0;
-
-	for (;;) {
-		char buf[256];
-		double dt;
-		unsigned int n_items;
-		vbi_sliced sliced[40];
-		vbi_sliced *s;
-
-		if (ferror (stdin) || !fgets (buf, 255, stdin))
-			goto abort;
-
-		dt = strtod (buf, NULL);
-		n_items = fgetc (stdin);
-
-		assert (n_items < 40);
-
-		s = sliced;
-
-		while (n_items-- > 0) {
-			int index;
-
-			index = fgetc (stdin);
-
-			s->line = (fgetc (stdin)
-				   + 256 * fgetc (stdin)) & 0xFFF;
-
-			if (index < 0)
-				goto abort;
-
-			switch (index) {
-			case 0:
-				s->id = VBI_SLICED_TELETEXT_B;
-				fread (s->data, 1, 42, stdin);
-				break;
-
-			case 1:
-				s->id = VBI_SLICED_CAPTION_625; 
-				fread (s->data, 1, 2, stdin);
-				break; 
-
-			case 2:
-				s->id = VBI_SLICED_VPS;
-				fread (s->data, 1, 13, stdin);
-				break;
-
-			case 3:
-				s->id = VBI_SLICED_WSS_625; 
-				fread (s->data, 1, 2, stdin);
-				break;
-
-			case 4:
-				s->id = VBI_SLICED_WSS_CPR1204; 
-				fread (s->data, 1, 3, stdin);
-				break;
-
-			case 7:
-				s->id = VBI_SLICED_CAPTION_525; 
-				fread(s->data, 1, 2, stdin);
-				break;
-
-			default:
-				fprintf (stderr,
-					 "\nOops! Unknown data type %d "
-					 "in sample file\n", index);
-				exit (EXIT_FAILURE);
-			}
-
-			++s;
-		}
-
-		decode (sliced, s - sliced, time, 0);
-
-		if (feof (stdin) || ferror (stdin))
-			goto abort;
-
-		time += dt;
-	}
-
-	return;
-
-abort:
-	fprintf (stderr, "\rEnd of stream\n");
-}
-
-#else /* 2 == VBI_VERSION_MINOR */
-
-static void
-old_mainloop			(void)
-{
-	for (;;) {
-		vbi_sliced sliced[40];
-		double timestamp;
-		int n_lines;
-
-		n_lines = read_sliced (sliced, &timestamp,
-				       /* max_lines */ 40);
-		if (n_lines < 0)
-			break;
-
-		decode (sliced, n_lines,
-			/* sample_time */ timestamp,
-			/* stream_time */ 0);
-	}
-
-	fprintf (stderr, "\rEnd of stream\n");
-}
-
-#endif /* 2 == VBI_VERSION_MINOR */
 
 static void
 usage				(FILE *			fp)
@@ -1028,12 +858,14 @@ usage				(FILE *			fp)
 	fprintf (fp, "\
 %s %s -- low-level VBI decoder\n\n\
 Copyright (C) 2004, 2006, 2007 Michael H. Schimek\n\
-This program is licensed under GPL 2 or later. NO WARRANTIES.\n\n\
+This program is licensed under GPLv2 or later. NO WARRANTIES.\n\n\
 Usage: %s [options] < sliced VBI data\n\n\
 -h | --help | --usage  Print this message and exit\n\
+-q | --quiet           Suppress progress and error messages\n\
 -V | --version         Print the program version and exit\n\
 Input options:\n\
--P | --pes             Source is a DVB PES stream [auto-detected]\n\
+-P | --pes             Source is a DVB PES stream\n\
+-T | --ts pid          Source is a DVB TS stream\n\
 Decoding options:\n"
 #if 3 == VBI_VERSION_MINOR /* XXX port me back */
 "-1 | --8301            Teletext packet 8/30 format 1 (local time)\n\
@@ -1066,15 +898,15 @@ Modifying options:\n\
                          available information about the network\n\
 -b | --bin             With -t, -p, -v dump data in binary format\n\
                          instead of ASCII\n\
--T | --time            Dump capture timestamps\n\
--m | --metronome tick  Compare timestamps against a metronome advancing\n\
+-m | --time            Dump capture timestamps\n\
+-M | --metronome tick  Compare timestamps against a metronome advancing\n\
                        by tick seconds per frame\n\
 ",
 		 PROGRAM_NAME, VERSION, program_invocation_name);
 }
 
 static const char
-short_options [] = "12abcd:ehil:m:np:rs:tvwxPTV";
+short_options [] = "12abcd:ehil:m:np:qrs:tvwxMPT:V";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -1090,17 +922,19 @@ long_options [] = {
 	{ "usage",	no_argument,		NULL,		'h' },
 	{ "idl",	no_argument,		NULL,		'i' },
 	{ "idl-ch",	required_argument,	NULL,		'l' },
-	{ "metronome",	required_argument,	NULL,		'm' },
+	{ "time",	no_argument,		NULL,		'm' },
 	{ "network",	no_argument,		NULL,		'n' },
 	{ "pfc-pgno",	required_argument,	NULL,		'p' },
+	{ "quiet",	no_argument,		NULL,		'q' },
 	{ "vps-other",	no_argument,		NULL,		'r' },
 	{ "pfc-stream",	required_argument,	NULL,		's' },
 	{ "ttx",	no_argument,		NULL,		't' },
 	{ "vps",	no_argument,		NULL,		'v' },
 	{ "wss",	no_argument,		NULL,		'w' },
 	{ "xds",	no_argument,		NULL,		'x' },
+	{ "metronome",	required_argument,	NULL,		'M' },
 	{ "pes",	no_argument,		NULL,		'P' },
-	{ "time",	no_argument,		NULL,		'T' },
+	{ "ts",		required_argument,	NULL,		'T' },
 	{ "version",	no_argument,		NULL,		'V' },
 	{ NULL, 0, 0, 0 }
 };
@@ -1114,22 +948,11 @@ int
 main				(int			argc,
 				 char **		argv)
 {
-	int c;
+	enum file_format file_format;
 
-#ifndef HAVE_PROGRAM_INVOCATION_NAME
-	{
-		unsigned int i;
+	init_helpers (argc, argv);
 
-		for (i = strlen (argv[0]); i > 0; --i) {
-			if ('/' == argv[0][i - 1])
-				break;
-		}
-
-		program_invocation_short_name = &argv[0][i];
-	}
-#endif
-
-	setlocale (LC_ALL, "");
+	file_format = FILE_FORMAT_SLICED;
 
 	for (;;) {
 		int c;
@@ -1194,8 +1017,7 @@ main				(int			argc,
 			break;
 
 		case 'm':
-			assert (NULL != optarg);
-			option_metronome_tick = strtod (optarg, NULL);
+			option_dump_time ^= TRUE;
 			break;
 
 		case 'n':
@@ -1205,6 +1027,10 @@ main				(int			argc,
 		case 'p':
 			assert (NULL != optarg);
 			option_pfc_pgno = strtol (optarg, NULL, 16);
+			break;
+
+		case 'q':
+			option_quiet ^= TRUE;
 			break;
 
 		case 'r':
@@ -1232,12 +1058,18 @@ main				(int			argc,
 			option_decode_xds ^= TRUE;
 			break;
 
+		case 'M':
+			assert (NULL != optarg);
+			option_metronome_tick = strtod (optarg, NULL);
+			break;
+
 		case 'P':
-			source_is_pes ^= TRUE;
+			file_format = FILE_FORMAT_DVB_PES;
 			break;
 
 		case 'T':
-			option_dump_time ^= TRUE;
+			parse_option_ts ();
+			file_format = FILE_FORMAT_DVB_TS;
 			break;
 
 		case 'V':
@@ -1249,9 +1081,6 @@ main				(int			argc,
 			exit (EXIT_FAILURE);
 		}
 	}
-
-	if (isatty (STDIN_FILENO))
-		error_exit (_("No VBI data on standard input."));
 
 	if (0 != option_pfc_pgno) {
 		pfc = vbi_pfc_demux_new (option_pfc_pgno,
@@ -1278,27 +1107,25 @@ main				(int			argc,
 			no_mem_exit ();
 	}
 
-	c = getchar ();
-	ungetc (c, stdin);
+	{
+		struct stream *st;
 
-	if (0 == c || source_is_pes) {
-		dvb = vbi_dvb_pes_demux_new (/* callback */ NULL,
-					     /* user_data */ NULL);
-		if (NULL == dvb)
-			no_mem_exit ();
+		st = read_stream_new (file_format, decode_frame);
 
-		pes_mainloop ();
-	} else {
-#if 2 == VBI_VERSION_MINOR /* XXX port me */
-		open_sliced_read (stdin);
-#endif
-		old_mainloop ();
+		read_stream_loop (st);
+
+		read_stream_delete (st);
+		st = NULL;
 	}
 
-	vbi_dvb_demux_delete (dvb);
-	vbi_idl_demux_delete (idl);
-	vbi_pfc_demux_delete (pfc);
 	vbi_xds_demux_delete (xds);
+	xds = NULL;
+
+	vbi_idl_demux_delete (idl);
+	idl = NULL;
+
+	vbi_pfc_demux_delete (pfc);
+	pfc = NULL;
 
 	exit (EXIT_SUCCESS);
 
