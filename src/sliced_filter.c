@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced_filter.c,v 1.1 2007/07/23 19:59:52 mschimek Exp $ */
+/* $Id: sliced_filter.c,v 1.2 2007/08/27 06:44:35 mschimek Exp $ */
 
 /* XXX UNTESTED */
 
@@ -33,6 +33,7 @@
 #include "hamm.h"		/* vbi_unham16p() */
 #include "event.h"		/* VBI_SERIAL */
 #include "sliced_filter.h"
+#include "page_table.h"
 
 #ifndef VBI_SERIAL
 #  define VBI_SERIAL 0x100000
@@ -50,48 +51,27 @@ enum {
 #undef _
 #define _(x) (x)
 
-#define MAX_SUBNO 0x3F7F
-
-struct subpage_range {
-	vbi_pgno		pgno;
-	vbi_subno		first;
-	vbi_subno		last;
-};
+/* 0 ... (VBI_ANY_SUBNO = 0x3F7F) - 1. */
+#define MAX_SUBNO 0x3F7E
 
 struct _vbi_sliced_filter {
-	/* One bit for each page. 0x100 -> keep_ttx_pages[0] & 1. */
-	uint32_t		keep_ttx_pages[(0x900 - 0x100) / 32];
+	vbi_page_table *	keep_ttx_pages;
 
-	/* A vector of subpages to keep, current size and capacity
-	   (counting struct subpage_range). */
-	struct subpage_range *	keep_ttx_subpages;
-	unsigned int		keep_ttx_subpages_size;
-	unsigned int		keep_ttx_subpages_capacity;
-
-	/* Pages with non-BCD page numbers (page inventories, DRCS etc). */
 	vbi_bool		keep_ttx_system_pages;
 
-	/* See vbi_sliced_filter_feed(). */
 	vbi_sliced *		output_buffer;
 	unsigned int		output_max_lines;
 
-	/* See decode_teletext_packet_0(). */
 	unsigned int		keep_mag_set_next;
 
-	/* VPS, WSS, all CC data, all TTX data. */
-	vbi_service_set		keep_services;
+	vbi_service_set	keep_services;
 
-	/* On error a description of the problem for users will be
-	   stored here. Can be NULL if no error occurred yet or we're
-	   out of memory. */
 	char *			errstr;
 
-	/* Callback for the vbi_sliced_filter_feed() function.*/
+	_vbi_log_hook		log;
+
 	vbi_sliced_filter_cb *	callback;
 	void *			user_data;
-
-	/* Log level and callback for debugging et al. */
-	_vbi_log_hook		log;
 };
 
 static void
@@ -106,12 +86,8 @@ set_errstr			(vbi_sliced_filter *	sf,
 
 	va_start (ap, templ);
 
-	/* Log the error if that was requested. */
-	_vbi_vlog (&sf->log, VBI_LOG_ERROR, templ, ap);
-
 	/* Error ignored. */
-	if (vasprintf (&sf->errstr, templ, ap) < 0)
-		sf->errstr = NULL;
+	vasprintf (&sf->errstr, templ, ap);
 
 	va_end (ap);
 }
@@ -119,7 +95,10 @@ set_errstr			(vbi_sliced_filter *	sf,
 static void
 no_mem_error			(vbi_sliced_filter *	sf)
 {
-	set_errstr (sf, _("Out of memory."));
+	free (sf->errstr);
+
+	/* Error ignored. */
+	sf->errstr = strdup (_("Out of memory."));
 
 	errno = ENOMEM;
 }
@@ -140,22 +119,7 @@ vbi_sliced_filter_keep_cc_channel
 {
 }
 
-/* Also to do: XDS. */
-
 #endif
-
-static vbi_bool
-keeping_page			(vbi_sliced_filter *	sf,
-				 vbi_pgno		pgno)
-{
-	uint32_t mask;
-	unsigned int offset;
-
-	mask = 1 << (pgno & 31);
-	offset = (pgno - 0x100) >> 5;
-
-	return (0 != (sf->keep_ttx_pages[offset] & mask));
-}
 
 void
 vbi_sliced_filter_keep_ttx_system_pages
@@ -167,62 +131,10 @@ vbi_sliced_filter_keep_ttx_system_pages
 	sf->keep_ttx_system_pages = !!keep;
 }
 
-static vbi_bool
-extend_vector			(vbi_sliced_filter *	sf,
-				 void **		vector,
-				 unsigned int *		capacity,
-				 unsigned int		min_capacity,
-				 unsigned int		element_size)
+static __inline__ vbi_bool
+valid_ttx_page			(vbi_pgno		pgno)
 {
-	void *new_vec;
-	unsigned int new_capacity;
-	unsigned int max_capacity;
-
-	assert (min_capacity > 0);
-	assert (element_size > 0);
-
-	/* This looks a bit odd to prevent overflows. */
-
-	max_capacity = UINT_MAX / element_size;
-
-	if (unlikely (min_capacity > max_capacity)) {
-		no_mem_error (sf);
-		return FALSE;
-	}
-
-	new_capacity = *capacity;
-
-	if (unlikely (new_capacity > (max_capacity / 2))) {
-		new_capacity = max_capacity;
-	} else {
-		new_capacity = MIN (min_capacity, new_capacity * 2);
-	}
-
-	new_vec = realloc (*vector, new_capacity * element_size);
-	if (unlikely (NULL == new_vec)) {
-		/* XXX we should try less new_capacity before giving up. */
-		no_mem_error (sf);
-		return FALSE;
-	}
-
-	*vector = new_vec;
-	*capacity = new_capacity;
-
-	return TRUE;
-}
-
-static vbi_bool
-extend_ttx_subpages_vector	(vbi_sliced_filter *	sf,
-				 unsigned int		min_capacity)
-{
-	if (min_capacity <= sf->keep_ttx_subpages_capacity)
-		return TRUE;
-
-	return extend_vector (sf,
-			      (void **) &sf->keep_ttx_subpages,
-			      &sf->keep_ttx_subpages_capacity,
-			      min_capacity,
-			      sizeof (*sf->keep_ttx_subpages));
+	return ((unsigned int) pgno - 0x100 < 0x800);
 }
 
 static vbi_bool
@@ -231,7 +143,7 @@ valid_ttx_subpage_range		(vbi_sliced_filter *	sf,
 				 vbi_subno		first_subno,
 				 vbi_subno		last_subno)
 {
-	if (unlikely ((unsigned int) pgno - 0x100 >= 0x800)) {
+	if (unlikely (!valid_ttx_page (pgno))) {
 		set_errstr (sf, _("Invalid Teletext page number %x."),
 			    pgno);
 		errno = VBI_ERR_INVALID_PGNO;
@@ -262,84 +174,26 @@ vbi_sliced_filter_drop_ttx_subpages
 				 vbi_subno		first_subno,
 				 vbi_subno		last_subno)
 {
-	uint32_t mask;
-	unsigned int offset;
-	unsigned int i;
-
 	assert (NULL != sf);
 
-	errno = 0;
+	if (VBI_ANY_SUBNO == first_subno
+	    && VBI_ANY_SUBNO == last_subno)
+		return vbi_sliced_filter_drop_ttx_pages (sf, pgno, pgno);
 
 	if (unlikely (!valid_ttx_subpage_range (sf, pgno,
 						first_subno,
 						last_subno)))
 		return FALSE;
 
-	if (first_subno > last_subno)
-		SWAP (first_subno, last_subno);
-
 	if (sf->keep_services & VBI_SLICED_TELETEXT_B_625) {
+		vbi_page_table_add_all_pages (sf->keep_ttx_pages);
 		sf->keep_services &= ~VBI_SLICED_TELETEXT_B_625;
-		memset (sf->keep_ttx_pages, 0xFF,
-			sizeof (sf->keep_ttx_pages));
 	}
 
-	mask = 1 << (pgno & 31);
-	offset = (pgno - 0x100) >> 5;
-
-	if (0 != (sf->keep_ttx_pages[offset] & mask)) {
-		i = sf->keep_ttx_subpages_size;
-
-		if (!extend_ttx_subpages_vector (sf, i + 2))
-			return FALSE;
-
-		sf->keep_ttx_pages[offset] &= ~mask;
-
-		if (first_subno > 0) {
-			sf->keep_ttx_subpages[i].pgno = pgno;
-			sf->keep_ttx_subpages[i].first = 0;
-			sf->keep_ttx_subpages[i++].last = first_subno - 1;
-		}
-
-		if (last_subno < MAX_SUBNO) {
-			sf->keep_ttx_subpages[i].pgno = pgno;
-			sf->keep_ttx_subpages[i].first = last_subno + 1;
-			sf->keep_ttx_subpages[i++].last = MAX_SUBNO;
-		}
-
-		sf->keep_ttx_subpages_size = i;
-
-		return TRUE;
-	}
-
-	for (i = 0; i < sf->keep_ttx_subpages_size; ++i) {
-		if (pgno != sf->keep_ttx_subpages[i].pgno)
-			continue;
-
-		if (first_subno > sf->keep_ttx_subpages[i].last)
-			continue;
-
-		if (last_subno < sf->keep_ttx_subpages[i].first)
-			continue;
-
-		if (first_subno > sf->keep_ttx_subpages[i].first)
-			sf->keep_ttx_subpages[i].first = first_subno;
-
-		if (last_subno < sf->keep_ttx_subpages[i].last)
-			sf->keep_ttx_subpages[i].last = last_subno;
-
-		if (sf->keep_ttx_subpages[i].first
-		    > sf->keep_ttx_subpages[i].last) {
-			memmove (&sf->keep_ttx_subpages[i],
-				 &sf->keep_ttx_subpages[i + 1],
-				 (sf->keep_ttx_subpages_size - i)
-				 * sizeof (*sf->keep_ttx_subpages));
-			--sf->keep_ttx_subpages_size;
-			--i;
-		}
-	}
-
-	return TRUE;
+	return vbi_page_table_remove_subpages (sf->keep_ttx_pages,
+						pgno,
+						first_subno,
+						last_subno);
 }
 
 vbi_bool
@@ -349,11 +203,11 @@ vbi_sliced_filter_keep_ttx_subpages
 				 vbi_subno		first_subno,
 				 vbi_subno		last_subno)
 {
-	unsigned int i;
-
 	assert (NULL != sf);
 
-	errno = 0;
+	if (VBI_ANY_SUBNO == first_subno
+	    && VBI_ANY_SUBNO == last_subno)
+		return vbi_sliced_filter_keep_ttx_pages (sf, pgno, pgno);
 
 	if (unlikely (!valid_ttx_subpage_range (sf, pgno,
 						first_subno,
@@ -363,35 +217,8 @@ vbi_sliced_filter_keep_ttx_subpages
 	if (sf->keep_services & VBI_SLICED_TELETEXT_B_625)
 		return TRUE;
 
-	if (keeping_page (sf, pgno))
-		return TRUE;
-
-	if (first_subno > last_subno)
-		SWAP (first_subno, last_subno);
-
-	for (i = 0; i < sf->keep_ttx_subpages_size; ++i) {
-		if (pgno == sf->keep_ttx_subpages[i].pgno
-		    && last_subno >= sf->keep_ttx_subpages[i].first
-		    && first_subno <= sf->keep_ttx_subpages[i].last) {
-			if (first_subno < sf->keep_ttx_subpages[i].first)
-				sf->keep_ttx_subpages[i].first = first_subno;
-			if (last_subno > sf->keep_ttx_subpages[i].last)
-				sf->keep_ttx_subpages[i].last = last_subno;
-
-			return TRUE;
-		}
-	}
-
-	if (!extend_ttx_subpages_vector (sf, i + 1))
-		return FALSE;
-
-	sf->keep_ttx_subpages[i].pgno = pgno;
-	sf->keep_ttx_subpages[i].first = first_subno;
-	sf->keep_ttx_subpages[i].last = last_subno;
-
-	sf->keep_ttx_subpages_size = i + 1;
-
-	return TRUE;
+	return vbi_page_table_add_subpages (sf->keep_ttx_pages,
+					     pgno, first_subno, last_subno);
 }
 
 static vbi_bool
@@ -399,8 +226,8 @@ valid_ttx_page_range		(vbi_sliced_filter *	sf,
 				 vbi_pgno		first_pgno,
 				 vbi_pgno		last_pgno)
 {
-	if (likely ((unsigned int) first_pgno - 0x100 < 0x800
-		    && (unsigned int) last_pgno - 0x100 < 0x800))
+	if (likely (valid_ttx_page (first_pgno)
+		    && valid_ttx_page (last_pgno)))
 		return TRUE;
 
 	if (first_pgno == last_pgno) {
@@ -416,75 +243,24 @@ valid_ttx_page_range		(vbi_sliced_filter *	sf,
 	return FALSE;
 }
 
-static void
-drop_all_subpages		(vbi_sliced_filter *	sf,
-				 vbi_pgno		first_pgno,
-				 vbi_pgno		last_pgno)
-{
-	unsigned int i;
-
-	for (i = 0; i < sf->keep_ttx_subpages_size; ++i) {
-		if (sf->keep_ttx_subpages[i].pgno >= first_pgno
-		    && sf->keep_ttx_subpages[i].pgno <= last_pgno) {
-			memmove (&sf->keep_ttx_subpages[i],
-				 &sf->keep_ttx_subpages[i + 1],
-				 (sf->keep_ttx_subpages_size - i)
-				 * sizeof (*sf->keep_ttx_subpages));
-			--sf->keep_ttx_subpages_size;
-			--i;
-		}
-	}
-}
-
 vbi_bool
 vbi_sliced_filter_drop_ttx_pages
 				(vbi_sliced_filter *	sf,
 				 vbi_pgno		first_pgno,
 				 vbi_pgno		last_pgno)
 {
-	uint32_t first_mask;
-	uint32_t last_mask;
-	unsigned int first_offset;
-	unsigned int last_offset;
-
 	assert (NULL != sf);
-
-	errno = 0;
 
 	if (unlikely (!valid_ttx_page_range (sf, first_pgno, last_pgno)))
 		return FALSE;
 
-	if (first_pgno > last_pgno)
-		SWAP (first_pgno, last_pgno);
-
 	if (sf->keep_services & VBI_SLICED_TELETEXT_B_625) {
+		vbi_page_table_add_all_pages (sf->keep_ttx_pages);
 		sf->keep_services &= ~VBI_SLICED_TELETEXT_B_625;
-		memset (sf->keep_ttx_pages, 0xFF,
-			sizeof (sf->keep_ttx_pages));
-	} else {
-		drop_all_subpages (sf, first_pgno, last_pgno);
 	}
 
-	/* 0 -> 0x00, 1 -> 0x01, 31 -> 0x7FFF FFFF. */
-	first_mask = ~(-1 << (first_pgno & 31));
-	first_offset = (first_pgno - 0x100) >> 5;
-
-	/* 0 -> 0xFFFF FFFE, 1 -> 0xFFFF FFFC, 31 -> 0. */
-	last_mask = -2 << (last_pgno & 31);
-	last_offset = (last_pgno - 0x100) >> 5;
-
-	if (first_offset == last_offset) {
-		sf->keep_ttx_pages[first_offset] &= first_mask | last_mask;
-	} else {
-		sf->keep_ttx_pages[first_offset] &= first_mask;
-
-		while (++first_offset < last_offset)
-			sf->keep_ttx_pages[first_offset] = 0;
-
-		sf->keep_ttx_pages[last_offset] &= last_mask;
-	}
-
-	return TRUE;
+	return vbi_page_table_remove_pages (sf->keep_ttx_pages,
+					     first_pgno, last_pgno);
 }
 
 vbi_bool
@@ -493,14 +269,7 @@ vbi_sliced_filter_keep_ttx_pages
 				 vbi_pgno		first_pgno,
 				 vbi_pgno		last_pgno)
 {
-	uint32_t first_mask;
-	uint32_t last_mask;
-	unsigned int first_offset;
-	unsigned int last_offset;
-
 	assert (NULL != sf);
-
-	errno = 0;
 
 	if (unlikely (!valid_ttx_page_range (sf, first_pgno, last_pgno)))
 		return FALSE;
@@ -508,32 +277,8 @@ vbi_sliced_filter_keep_ttx_pages
 	if (sf->keep_services & VBI_SLICED_TELETEXT_B_625)
 		return TRUE;
 
-	if (first_pgno > last_pgno)
-		SWAP (first_pgno, last_pgno);
-
-	/* Remove duplicates of keep_ttx_pages in keep_ttx_subpages. */
-	drop_all_subpages (sf, first_pgno, last_pgno);
-
-	/* 0 -> 0xFFFF FFFF, 1 -> 0xFFFF FFFE, 31 -> 0x8000 0000. */
-	first_mask = -1 << (first_pgno & 31);
-	first_offset = (first_pgno - 0x100) >> 5;
-
-	/* 0 -> 0x01, 1 -> 0x03, 31 -> 0xFFFF FFFF. */
-	last_mask = ~(-2 << (last_pgno & 31));
-	last_offset = (last_pgno - 0x100) >> 5;
-
-	if (first_offset == last_offset) {
-		sf->keep_ttx_pages[first_offset] |= first_mask & last_mask;
-	} else {
-		sf->keep_ttx_pages[first_offset] |= first_mask;
-
-		while (++first_offset < last_offset)
-			sf->keep_ttx_pages[first_offset] = -1;
-
-		sf->keep_ttx_pages[last_offset] |= last_mask;
-	}
-
-	return TRUE;
+	return vbi_page_table_add_pages (sf->keep_ttx_pages,
+					  first_pgno, last_pgno);
 }
 
 vbi_service_set
@@ -543,11 +288,8 @@ vbi_sliced_filter_drop_services
 {
 	assert (NULL != sf);
 
-	if (services & VBI_SLICED_TELETEXT_B_625) {
-		memset (sf->keep_ttx_pages, 0,
-			sizeof (sf->keep_ttx_pages));
-		sf->keep_ttx_subpages_size = 0;
-	}
+	if (services & VBI_SLICED_TELETEXT_B_625)
+		vbi_page_table_remove_all_pages (sf->keep_ttx_pages);
 
 	return sf->keep_services &= ~services;
 }
@@ -559,11 +301,8 @@ vbi_sliced_filter_keep_services
 {
 	assert (NULL != sf);
 
-	if (services & VBI_SLICED_TELETEXT_B_625) {
-		memset (sf->keep_ttx_pages, 0,
-			sizeof (sf->keep_ttx_pages));
-		sf->keep_ttx_subpages_size = 0;
-	}
+	if (services & VBI_SLICED_TELETEXT_B_625)
+		vbi_page_table_remove_all_pages (sf->keep_ttx_pages);
 
 	return sf->keep_services |= services;
 }
@@ -596,7 +335,7 @@ decode_teletext_packet_0	(vbi_sliced_filter *	sf,
 	}
 
 	if (0xFF == page) {
-		debug2 (&sf->log, "Discard filler packet.");
+		/* Filler, discard. */
 		*keep_mag_set = 0;
 		return TRUE;
 	}
@@ -612,9 +351,6 @@ decode_teletext_packet_0	(vbi_sliced_filter *	sf,
 		errno = VBI_ERR_PARITY;
 		return FALSE;
 	}
-
-	debug2 (&sf->log, "Teletext pgno=%03x flags/subno=0x%06x.",
-		pgno, flags);
 
 	/* Blank lines are not transmitted and there's no page end mark,
 	   so Teletext decoders wait for another page before displaying
@@ -633,31 +369,22 @@ decode_teletext_packet_0	(vbi_sliced_filter *	sf,
 			goto match;
 	} else {
 		vbi_subno subno;
-		unsigned int i;
-
-		if (keeping_page (sf, pgno))
-			goto match;
 
 		subno = flags & 0x3F7F;
 
-		for (i = 0; i < sf->keep_ttx_subpages_size; ++i) {
-			if (pgno == sf->keep_ttx_subpages[i].pgno
-			    && subno >= sf->keep_ttx_subpages[i].first
-			    && subno <= sf->keep_ttx_subpages[i].last)
-				goto match;
-		}
+		if (vbi_page_table_contains_subpage (sf->keep_ttx_pages,
+						      pgno, subno))
+			goto match;
 	}
 
 	if (*keep_mag_set & mag_set) {
 		/* To terminate the previous page we keep the header
 		   packet of this page (keep_mag_set) but discard all
 		   following packets (keep_mag_set_next). */
-		debug2 (&sf->log, "Keeping page header.");
 		sf->keep_mag_set_next = *keep_mag_set & ~mag_set;
 	} else {
 		/* Discard this and following packets until we
 		   find another header packet. */
-		debug2 (&sf->log, "Dropping page.");
 		*keep_mag_set &= ~mag_set;
 		sf->keep_mag_set_next = *keep_mag_set;
 	}
@@ -666,7 +393,6 @@ decode_teletext_packet_0	(vbi_sliced_filter *	sf,
 
  match:
 	/* Keep this and following packets. */
-	debug2 (&sf->log, "Keeping page.");
 	*keep_mag_set |= mag_set;
 	sf->keep_mag_set_next = *keep_mag_set;
 
@@ -706,7 +432,7 @@ decode_teletext			(vbi_sliced_filter *	sf,
 	case 0: /* page header */
 		if (!decode_teletext_packet_0 (sf, &keep_mag_set,
 					       buffer, magazine))
-			return FALSE; /* parity error */
+			return FALSE;
 		break;
 
 	case 1 ... 25: /* page body */
@@ -720,12 +446,7 @@ decode_teletext			(vbi_sliced_filter *	sf,
 
 	case 30:
 	case 31: /* IDL packet (ETS 300 708). */
-		/* XXX make this optional. */
-		debug3 (&sf->log, "Dropping Teletext IDL packet %u.",
-			packet);
-
 		*keep = FALSE;
-
 		return TRUE;
 
 	default:
@@ -733,9 +454,6 @@ decode_teletext			(vbi_sliced_filter *	sf,
 	}
 
 	*keep = !!(keep_mag_set & (1 << magazine));
-
-	debug3 (&sf->log, "%sing Teletext packet %u.",
-		*keep ? "Keep" : "Dropp", packet);
 
 	return TRUE;
 }
@@ -794,13 +512,7 @@ vbi_sliced_filter_cor		(vbi_sliced_filter *	sf,
 
 		pass_through = FALSE;
 
-		debug2 (&sf->log, "sliced[%u]: line=%u service='%s'.",
-			in,
-			sliced_in[in].line,
-			vbi_sliced_name (sliced_in[in].id));
-
 		if (sliced_in[in].id & sf->keep_services) {
-			debug2 (&sf->log, "Keeping service.");
 			pass_through = TRUE;
 		} else {
 			switch (sliced_in[in].id) {
@@ -815,7 +527,6 @@ vbi_sliced_filter_cor		(vbi_sliced_filter *	sf,
 				break;
 
 			default:
-				debug2 (&sf->log, "Dropping service.");
 				break;
 			}
 		}
@@ -839,7 +550,7 @@ vbi_sliced_filter_cor		(vbi_sliced_filter *	sf,
 	return TRUE;
 
  failed:
-	*n_lines_in = in + 1;
+	*n_lines_in = in;
 	*n_lines_out = out;
 
 	return FALSE;
@@ -877,8 +588,7 @@ vbi_sliced_filter_feed		(vbi_sliced_filter *	sf,
 	assert (NULL != sf);
 	assert (NULL != sliced);
 	assert (NULL != n_lines);
-
-	assert (*n_lines <= UINT_MAX / sizeof (vbi_sliced));
+	assert (*n_lines <= UINT_MAX / sizeof (*sf->output_buffer));
 
 	if (unlikely (sf->output_max_lines < *n_lines)) {
 		vbi_sliced *s;
@@ -897,11 +607,11 @@ vbi_sliced_filter_feed		(vbi_sliced_filter *	sf,
 	}
 
 	if (!vbi_sliced_filter_cor (sf,
-				    sf->output_buffer,
-				    &n_lines_out,
-				    sf->output_max_lines,
-				    sliced,
-				    n_lines)) {
+				     sf->output_buffer,
+				     &n_lines_out,
+				     sf->output_max_lines,
+				     sliced,
+				     n_lines)) {
 		return FALSE;
 	}
 
@@ -924,7 +634,7 @@ vbi_sliced_filter_errstr	(vbi_sliced_filter *	sf)
 }
 
 void
-vbi_sliced_filter_set_log_fn	(vbi_sliced_filter *	sf,
+vbi_sliced_filter_set_log_fn	(vbi_sliced_filter *    sf,
 				 vbi_log_mask		mask,
 				 vbi_log_fn *		log_fn,
 				 void *			user_data)
@@ -945,7 +655,7 @@ vbi_sliced_filter_delete	(vbi_sliced_filter *	sf)
 	if (NULL == sf)
 		return;
 
-	free (sf->keep_ttx_subpages);
+	vbi_page_table_delete (sf->keep_ttx_pages);
 
 	free (sf->output_buffer);
 
@@ -957,7 +667,7 @@ vbi_sliced_filter_delete	(vbi_sliced_filter *	sf)
 }
 
 vbi_sliced_filter *
-vbi_sliced_filter_new		(vbi_sliced_filter_cb *	callback,
+vbi_sliced_filter_new		(vbi_sliced_filter_cb *callback,
 				 void *			user_data)
 {
 	vbi_sliced_filter *sf;
@@ -968,6 +678,12 @@ vbi_sliced_filter_new		(vbi_sliced_filter_cb *	callback,
 	}
 
 	CLEAR (*sf);
+
+	sf->keep_ttx_pages = vbi_page_table_new ();
+	if (NULL == sf->keep_ttx_pages) {
+		free (sf);
+		return NULL;
+	}
 
 	sf->callback = callback;
 	sf->user_data = user_data;
