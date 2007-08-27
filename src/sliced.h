@@ -17,10 +17,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.h,v 1.7 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: sliced.h,v 1.8 2007/08/27 06:43:48 mschimek Exp $ */
 
 #ifndef SLICED_H
 #define SLICED_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Public */
 
@@ -346,6 +350,10 @@ vbi_sliced_payload_bits		(vbi_service_set	service)
 /** @} */
 
 /* Private */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SLICED_H */
 
