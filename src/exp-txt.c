@@ -21,7 +21,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: exp-txt.c,v 1.19 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.20 2007/08/27 06:45:17 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -562,12 +562,13 @@ print_char(text_instance *text, int endian, vbi_page *pg, vbi_char old, vbi_char
 			p = _stpcpy(p, "5;"); /* flash */
 		}
 
+		/* FIXME what is the real buffer size? */
 		if (chg.foreground)
-			p += sprintf(p, "3%c;", '0'
+			p += snprintf(p, 4, "3%c;", '0'
 				     + match_color8(pg->color_map[this.foreground]));
 
 		if (chg.background)
-			p += sprintf(p, "4%c;", '0'
+			p += snprintf(p, 4, "4%c;", '0'
 				     + match_color8(pg->color_map[this.background]));
 
 		if (p[-1] == '[')
