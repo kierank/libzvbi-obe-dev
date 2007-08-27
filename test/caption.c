@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.14 2006/05/22 08:57:05 mschimek Exp $ */
+/* $Id: caption.c,v 1.15 2007/08/27 06:43:21 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -427,59 +427,19 @@ init_window			(int			ac,
 	return TRUE;
 }
 
-/*
- *  Feed caption from a sample stream
- */
-
-static void
-pes_mainloop			(void)
+static vbi_bool
+decode_frame			(const vbi_sliced *	sliced,
+				 unsigned int		n_lines,
+				 double			sample_time,
+				 int64_t		stream_time)
 {
-	uint8_t buffer[2048];
+	stream_time = stream_time; /* unused */
 
-	while (1 == fread (buffer, sizeof (buffer), 1, stdin)) {
-		const uint8_t *bp;
-		unsigned int bytes_left;
+	vbi_decode (vbi, sliced, n_lines, sample_time);
 
-		bp = buffer;
-		bytes_left = sizeof (buffer);
+	/* xevent (1e6 / 30); */
 
-		while (bytes_left > 0) {
-			vbi_sliced sliced[64];
-			unsigned int n_lines;
-			int64_t pts;
-
-			n_lines = vbi_dvb_demux_cor (dx, sliced, 64,
-						     &pts, &bp, &bytes_left);
-			if (n_lines > 0) {
-				vbi_decode (vbi, sliced, n_lines,
-					    pts / 90000.0);
-			}
-
-			/* xevent (1e6 / 30); */
-		}
-	}
-
-	fprintf (stderr, "\rEnd of stream\n");
-}
-
-static void
-old_mainloop			(void)
-{
-	for (;;) {
-		vbi_sliced sliced[40];
-		double timestamp;
-		int n_lines;
-
-		n_lines = read_sliced (sliced, &timestamp, /* max_lines */ 40);
-		if (n_lines < 0)
-			break;
-
-		vbi_decode (vbi, sliced, n_lines, timestamp);
-
-		/* xevent (1e6 / 30); */
-	}
-
-	fprintf (stderr, "\rEnd of stream\n");
+	return TRUE;
 }
 
 /*
@@ -699,26 +659,11 @@ main				 (int			argc,
 	if (isatty (STDIN_FILENO)) {
 		hello_world ();
 	} else {
-		int c;
+		struct stream *st;
 
-		pgno = 1;
-
-		c = getchar ();
-		ungetc (c, stdin);
-
-		if (0 == c) {
-			dx = vbi_dvb_pes_demux_new (/* callback */ NULL,
-						    /* user_data */ NULL);
-			assert (NULL != dx);
-
-			pes_mainloop ();
-
-			vbi_dvb_demux_delete (dx);
-		} else {
-			open_sliced_read (stdin);
-
-			old_mainloop ();
-		}
+		st = read_stream_new (FILE_FORMAT_SLICED, decode_frame);
+		read_stream_loop (st);
+		read_stream_delete (st);
 	}
 
 	printf ("Done.\n");
