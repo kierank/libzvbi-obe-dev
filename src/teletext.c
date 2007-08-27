@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.24 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: teletext.c,v 1.25 2007/08/27 06:45:13 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -2280,7 +2280,8 @@ vbi_format_vt_page(vbi_decoder *vbi,
 
 	/* Current page number in header */
 
-	sprintf(buf, "\2%x.%02x\7", vtp->pgno, vtp->subno & 0xff);
+	snprintf (buf, sizeof (buf),
+		  "\2%x.%02x\7", vtp->pgno, vtp->subno & 0xff);
 
 	/* Level 1 formatting */
 
