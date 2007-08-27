@@ -18,7 +18,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.9 2007/07/23 20:00:01 mschimek Exp $ */
+/* $Id: ttxfilter.c,v 1.10 2007/08/27 06:46:10 mschimek Exp $ */
+
+/* For libzvbi version 0.2.x / 0.3.x. */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -48,76 +50,26 @@
 
 #define _(x) x /* TODO */
 
-#define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
-
 #define DEBUG 0
 
-#ifndef HAVE_PROGRAM_INVOCATION_NAME
-#  define HAVE_PROGRAM_INVOCATION_NAME 0
-static char *			program_invocation_name;
-static char *			program_invocation_short_name;
-#endif
+static vbi_bool			option_abort_on_error;
+static vbi_bool			option_experimental_output;
+static vbi_bool			option_keep_ttx_system_pages;
+static double			option_start_time;
+static double			option_end_time;
 
-static vbi_bool			option_abort_on_error		= FALSE;
-static vbi_bool			option_experimental_output	= FALSE;
-static vbi_bool			option_keep_ttx_system_pages	= FALSE;
-static vbi_bool			option_quiet			= FALSE;
-static vbi_bool			option_source_is_pes		= FALSE;
-static double			option_start_time		= 0.0;
-static double			option_end_time			= 1e30;
-
-static vbi_dvb_demux *		dx;
 static vbi_sliced_filter *	sf;
 
 /* Data is all zero, hopefully ignored due to hamming and parity error. */
 static vbi_sliced		sliced_blank;
 
-static void
-vprint_error			(const char *		template,
-				 va_list		ap)
-{
-	if (option_quiet)
-		return;
+static vbi_bool			started;
 
-	fprintf (stderr, "%s: ", program_invocation_short_name);
-	vfprintf (stderr, template, ap);
-	fputc ('\n', stderr);
-}
-
-static void
-error_msg			(const char *		template,
-				 ...)
-{
-	va_list ap;
-
-	va_start (ap, template);
-	vprint_error (template, ap);
-	va_end (ap);
-}
-
-static void
-error_exit			(const char *		template,
-				 ...)
-{
-	va_list ap;
-
-	va_start (ap, template);
-	vprint_error (template, ap);
-	va_end (ap);
-
-	exit (EXIT_FAILURE);
-}
-
-static void
-no_mem_exit			(void)
-{
-	error_exit ("%s.", strerror (ENOMEM));
-}
-
-static void
+static vbi_bool
 filter_frame			(const vbi_sliced *	sliced_in,
 				 unsigned int		n_lines,
-				 double			timestamp)
+				 double			sample_time,
+				 int64_t		stream_time)
 {
 	vbi_sliced sliced_out[64];
 	vbi_sliced *s;
@@ -127,20 +79,35 @@ filter_frame			(const vbi_sliced *	sliced_in,
 	unsigned int n_lines_out;
 	vbi_bool success;
 
+	stream_time = stream_time; /* unused */
+
+	if (!started) {
+		option_start_time += sample_time;
+		option_end_time += sample_time;
+
+		started = TRUE;
+	}
+
+	if (sample_time < option_start_time
+	    || sample_time >= option_end_time)
+		return TRUE;
+
 	if (0 == n_lines)
-		return;
+		return TRUE;
 
 	n_lines_prev_in = 0;
 	n_lines_prev_out = 0;
 
 	do {
+		const unsigned int max_lines_out = N_ELEMENTS (sliced_out);
+
 		n_lines_in = n_lines - n_lines_prev_in;
 
 		success = vbi_sliced_filter_cor
 			(sf,
 			 sliced_out + n_lines_prev_out,
 			 &n_lines_out,
-			 /* max_lines_out */ 64 - n_lines_prev_out,
+			 max_lines_out - n_lines_prev_out,
 			 sliced_in + n_lines_prev_in,
 			 &n_lines_in);
 
@@ -172,7 +139,7 @@ filter_frame			(const vbi_sliced *	sliced_in,
 			s = &sliced_blank;
 			n_lines_out = 1;
 		} else {
-			return;
+			return TRUE;
 		}
 	}
 
@@ -181,102 +148,24 @@ filter_frame			(const vbi_sliced *	sliced_in,
 		struct timeval capture_time;
 		double intpart;
 
-		stream_time = timestamp * 90000;
+		stream_time = sample_time * 90000;
 
 		capture_time.tv_usec =
-			(int)(1e6 * modf (timestamp, &intpart));
+			(int)(1e6 * modf (sample_time, &intpart));
 		capture_time.tv_sec = (int) intpart;
 
 		success = write_sliced_xml (s, n_lines_out, 625,
 					    stream_time, capture_time);
 	} else {
-		success = write_sliced (s, n_lines_out, timestamp);
+		success = write_sliced (s, n_lines_out, sample_time);
 	}
 
 	if (!success)
 		error_exit ("Write error.");
 
 	fflush (stdout);
-}
 
-static void
-pes_mainloop			(void)
-{
-	uint8_t buffer[2048];
-	int64_t min_pts;
-	double c_start_time;
-	double c_end_time;
-
-	min_pts = ((int64_t) 1) << 62;
-
-	while (1 == fread (buffer, sizeof (buffer), 1, stdin)) {
-		const uint8_t *bp;
-		unsigned int left;
-
-		bp = buffer;
-		left = sizeof (buffer);
-
-		while (left > 0) {
-			vbi_sliced sliced[64];
-			unsigned int n_lines;
-			int64_t pts;
-
-			n_lines = vbi_dvb_demux_cor (dx,
-						     sliced, 64,
-						     &pts,
-						     &bp, &left);
-			if (pts < 0) {
-				/* WTF? */
-				continue;
-			}
-
-			if (pts < min_pts) {
-				c_start_time = option_start_time * 90000 + pts;
-				c_end_time = option_end_time * 90000 + pts;
-				min_pts = pts;
-			}
-			
-			if (pts >= c_start_time
-			    && pts < c_end_time) {
-				double timestamp;
-
-				timestamp = (pts - c_start_time) / 90000.0;
-
-				filter_frame (sliced, n_lines, timestamp);
-			}
-		}
-	}
-
-	error_msg (_("End of stream."));
-}
-
-static void
-old_mainloop			(void)
-{
-	vbi_bool start = TRUE;
-
-	for (;;) {
-		vbi_sliced sliced[64];
-		double timestamp;
-		unsigned int n_lines;
-
-		n_lines = read_sliced (sliced, &timestamp, /* max_lines */ 64);
-		if ((int) n_lines < 0)
-			break; /* eof */
-
-		if (start) {
-			option_start_time += timestamp;
-			option_end_time += timestamp;
-			start = FALSE;
-		}
-
-		if (timestamp >= option_start_time
-		    && timestamp < option_end_time) {
-			filter_frame (sliced, n_lines, timestamp);
-		}
-	}
-
-	error_msg (_("End of stream."));
+	return TRUE;
 }
 
 static void
@@ -285,14 +174,18 @@ usage				(FILE *			fp)
 	fprintf (fp, _("\
 %s %s -- Teletext filter\n\n\
 Copyright (C) 2005-2007 Michael H. Schimek\n\
-This program is licensed under GPL 2. NO WARRANTIES.\n\n\
-Usage: %s [options] [page numbers] < sliced vbi data > sliced vbi data\n\n\
+This program is licensed under GPLv2. NO WARRANTIES.\n\n\
+Usage: %s [options] [page numbers] < sliced VBI data > sliced VBI data\n\n\
 -h | --help | --usage  Print this message and exit\n\
+-q | --quiet           Suppress progress and error messages\n\
+-V | --version         Print the program version and exit\n\
+Input options:\n\
+-P | --pes             Source is a DVB PES stream\n\
+-T | --ts pid          Source is a DVB TS stream\n\
+Filter options:\n\
 -s | --system          Keep system pages (page inventories, DRCS etc)\n\
 -t | --time from-to    Keep pages in this time interval, in seconds\n\
                        since the start of the stream\n\
--P | --pes             Source is a DVB PES\n\
--V | --version         Print the program version and exit\n\n\
 Valid page numbers are 100 to 899. You can also specify a range like\n\
 150-299.\n\
 "),
@@ -300,21 +193,21 @@ Valid page numbers are 100 to 899. You can also specify a range like\n\
 }
 
 static const char
-short_options [] = "ahst:qxPV";
+short_options [] = "ahst:qxPT:V";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
 long_options [] = {
-	{ "abort-on-error",	no_argument,	NULL,	'a' },
-	{ "help",		no_argument,	NULL,	'h' },
-	{ "usage",		no_argument,	NULL,	'h' },
-	{ "system",		no_argument,	NULL,	's' },
-	{ "time",		no_argument,	NULL,	't' },
-	{ "quiet",		no_argument,	NULL,	'q' },
-	{ "experimental",	no_argument,	NULL,	'x' },
-	{ "pes",		no_argument,	NULL,	'P' },
-	/* -T --ts [pid] reserved for transport streams. */
-	{ "version",		no_argument,	NULL,	'V' },
+	{ "abort-on-error",	no_argument,		NULL,	'a' },
+	{ "help",		no_argument,		NULL,	'h' },
+	{ "usage",		no_argument,		NULL,	'h' },
+	{ "system",		no_argument,		NULL,	's' },
+	{ "time",		no_argument,		NULL,	't' },
+	{ "quiet",		no_argument,		NULL,	'q' },
+	{ "experimental",	no_argument,		NULL,	'x' },
+	{ "pes",		no_argument,		NULL,	'P' },
+	{ "ts",			required_argument,	NULL,	'T' },
+	{ "version",		no_argument,		NULL,	'V' },
 	{ NULL, 0, 0, 0 }
 };
 #else
@@ -410,7 +303,7 @@ parse_page_numbers		(unsigned int		argc,
 		}
 
 		success = vbi_sliced_filter_keep_ttx_pages
-			(sf, first_pgno, last_pgno + 1);
+			(sf, first_pgno, last_pgno);
 		if (!success)
 			no_mem_exit ();
 	}
@@ -423,21 +316,18 @@ int
 main				(int			argc,
 				 char **		argv)
 {
+	enum file_format file_format;
+	struct stream *st;
 	int c;
 
-	if (!HAVE_PROGRAM_INVOCATION_NAME) {
-		unsigned int i;
+	option_log_mask = DEBUG ? -1 : 0;
 
-		for (i = strlen (argv[0]); i > 0; --i) {
-			if ('/' == argv[0][i - 1])
-				break;
-		}
+	init_helpers (argc, argv);
 
-		program_invocation_name = argv[0];
-		program_invocation_short_name = &argv[0][i];
-	}
+	file_format = FILE_FORMAT_SLICED;
 
-	setlocale (LC_ALL, "");
+	option_start_time = 0.0;
+	option_end_time	= 1e30;
 
 	while (-1 != (c = getopt_long (argc, argv, short_options,
 				       long_options, &option_index))) {
@@ -470,7 +360,12 @@ main				(int			argc,
 			break;
 
 		case 'P':
-			option_source_is_pes ^= TRUE;
+			file_format = FILE_FORMAT_DVB_PES;
+			break;
+
+		case 'T':
+			parse_option_ts ();
+			file_format = FILE_FORMAT_DVB_TS;
 			break;
 
 		case 'V':
@@ -487,12 +382,13 @@ main				(int			argc,
 				    /* user_data */ NULL);
 	if (NULL == sf)
 		no_mem_exit ();
-
+#if 0
 	if (DEBUG) {
 		vbi_sliced_filter_set_log_fn (sf, /* mask */ -1,
 					      vbi_log_on_stderr,
 					      /* user_data */ NULL);
 	}
+#endif
 
 	vbi_sliced_filter_keep_ttx_system_pages
 		(sf, option_keep_ttx_system_pages);
@@ -503,37 +399,9 @@ main				(int			argc,
 	sliced_blank.id = VBI_SLICED_TELETEXT_B_L10_625;
 	sliced_blank.line = 7;
 
-	if (isatty (STDIN_FILENO))
-		error_exit (_("No VBI data on standard input."));
+	st = read_stream_new (file_format, filter_frame);
 
-	c = getchar ();
-	ungetc (c, stdin);
-
-	if (0 == c)
-		option_source_is_pes = TRUE;
-
-	if (option_source_is_pes) {
-		vbi_bool success;
-
-		dx = vbi_dvb_pes_demux_new (/* callback */ NULL,
-					    /* user_data */ NULL);
-		if (NULL == dx)
-			no_mem_exit ();
-
-		if (DEBUG) {
-			vbi_dvb_demux_set_log_fn (dx, /* mask */ -1,
-						  vbi_log_on_stderr,
-						  /* user_data */ NULL);
-		}
-
-		success = open_sliced_write (stdout, 0);
-		if (!success) {
-			error_exit (_("Cannot open output stream: %s."),
-				    strerror (errno));
-		}
-
-		pes_mainloop ();
-	} else {
+	{
 		struct timeval tv;
 		double timestamp;
 		vbi_bool success;
@@ -547,20 +415,18 @@ main				(int			argc,
 
 		timestamp = tv.tv_sec + tv.tv_usec * (1 / 1e6);
 
-		success = open_sliced_read (stdin);
-		if (!success) {
-			error_exit (_("Cannot open input stream: %s."),
-				    strerror (errno));
-		}
-
 		success = open_sliced_write (stdout, timestamp);
 		if (!success) {
 			error_exit (_("Cannot open output stream: %s."),
 				    strerror (errno));
 		}
-
-		old_mainloop ();
 	}
 
+	read_stream_loop (st);
+
+	read_stream_delete (st);
+
 	exit (EXIT_SUCCESS);
+
+	return 0;
 }

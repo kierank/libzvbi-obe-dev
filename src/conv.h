@@ -18,14 +18,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: conv.h,v 1.4 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: conv.h,v 1.5 2007/08/27 06:46:10 mschimek Exp $ */
 
 #ifndef __ZVBI_CONV_H__
 #define __ZVBI_CONV_H__
 
 #include "macros.h"
 #include "lang.h"		/* vbi_ttx_charset */
-#include "version.h"
+#ifndef ZAPPING8
+#  include "version.h"
+#endif
 
 VBI_BEGIN_DECLS
 
@@ -65,7 +67,7 @@ vbi_strndup_iconv_caption	(const char *		dst_codeset,
 				 long			src_length,
 				 int			repl_char)
   __attribute__ ((_vbi_alloc));
-#if 3 == VBI_VERSION_MINOR
+#if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
 extern char *
 vbi_strndup_iconv_teletext	(const char *		dst_codeset,
 				 const vbi_ttx_charset *cs,

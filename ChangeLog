@@ -1,3 +1,77 @@
+2007-08-27    <mschimek@users.sf.net>
+
+	* src/misc.c, src/misc.h, src/intl-priv.h, src/conv.c:
+	  Compile fixes.
+
+	* test/export.c: Replaced read loop etc by new read_stream helper
+	  functions. Added support for DVB PES & TS streams and the
+	  standard options -h -q -V.
+	* test/decode.c: Replaced read loop etc by new read_stream helper
+	  functions. Added support for DVB TS streams. Replaced some other
+	  functions by helpers. Added -q (quiet) switch. Renamed -m
+	  (metronome) switch to -M, -T (time) to -m because -T is --ts
+	  everywhere else.
+	* test/caption.c: Replaced read loop etc by new read_stream helper
+	  functions. 
+	* test/sliced.c, test/sliced.h: Added new helper functions.
+	  Improved the sliced VBI file reading functions.
+
+	* test/capture.c (main): vbi_dvb_mux interface changed.
+	* test/test-dvb_mux.cc: New unit test for the vbi_dvb_mux
+	  module. Phew!
+	* test/Makefile.am (TESTS, check_PROGRAMS): Added test-dvb_mux.
+	* src/sliced.h: Added extern C brackets for inclusion into
+	  test-dvb_mux.cc.
+	* src/raw_decoder.c (vbi_sliced_name, vbi_sliced_payload_bits):
+	  Returned nothing for VBI_SLICED_TELETEXT_B_L25_625.
+	* src/dvb_mux.c, src/dvb_mux.c: Rewrote this code and improved
+	  the interface. Added better support for raw VBI data. Added a
+	  minimum and maximum instead of one target PES packet size.
+	* src/dvb_demux.c, src/dvb_demux.h: Added _vbi_dvb_skip_data_unit(),
+	  _vbi_dvb_demultiplex_sliced(), _vbi_dvb_ts_demux_new()
+	  (experimental).
+	* src/Makefile.am (LIBZVBI_HDRS): Added dvb_mux.h.
+	* doc/Doxyfile.in (FILE_PATTERNS): Added dvb_mux.h.
+
+	* src/page_table.c, src/page_table.h: New module.
+	* src/misc.c, src/misc.h: Added _vbi_popcnt() for page_table.c.
+	* src/sliced_filter.c: Moved the Teletext page table into a new
+	  module page_table.c because the code is useful for other
+	  purposes.
+	* src/Makefile.am (libzvbi_la_SOURCES): Added page_table.c,
+	  page_table.h.
+
+	* src/proxy-msg.c (vbi_proxy_msg_logger) 
+	(vbi_proxy_msg_accept_connection):
+	  Replaced sprintf() by the safer snprintf().
+	* test/osc.c (decode_ttx, dump_pil, decode_vps):
+	  Replaced sprintf() by the safer snprintf().
+	* src/teletext.c (vbi_format_vt_page):
+	  Replaced sprintf() by the safer snprintf().
+	* src/exp-txt.c (print_char):
+	  Replaced sprintf() by the safer snprintf().
+	* daemon/proxyd.c (vbi_proxyd_signal_handler)
+	(vbi_proxyd_parse_argv):
+	  Replaced sprintf() by the safer snprintf().
+	* src/trigger.c (parse_eacem, parse_atvef):
+	  Replaced strncpy() by the faster a safer strlcpy(). 
+	* src/proxy-msg.c (vbi_proxy_msg_get_local_socket_addr)
+	(vbi_proxy_msg_accept_connection, vbi_proxy_msg_resolve_symlinks): 
+	  Replaced strncpy() by the faster a safer strlcpy(). 
+	* src/proxy-client.c (proxy_client_start_acq):
+	  Replaced strncpy() by the faster a safer strlcpy(). 
+	* src/packet.c (vbi_decode_vps, parse_bsd):
+	  Replaced strncpy() by the faster a safer strlcpy(). 
+	* src/io-v4l.c (v4l_new):
+	  Replaced strncpy() by the faster a safer strlcpy(). 
+	* daemon/proxyd.c (vbi_proxyd_take_service_req)
+	(vbi_proxyd_take_message, vbi_proxyd_take_message):
+	  Replaced strncpy() by the faster a safer strlcpy(). 
+	* src/misc.h: Undefined strncpy() and sprintf().
+
+	* autogen-maint.sh (CXXFLAGS): Same warnings as in CFLAGS,
+	  except those which are not supported in C++.
+
 2007-07-23    <mschimek@users.sf.net>
 
 	* src/sliced_filter.c, src/sliced_filter.h: Move the Teletext
@@ -1003,7 +1077,7 @@
 2004-05-12    <mschimek@users.sf.net>
 
 	* m4/autogen.sh: Fixed non-Posix-ness of head args,
-	  reported by St�phane Loeuillet.
+	  reported by Stéphane Loeuillet.
 
 2004-05-12    <mschimek@users.sf.net>
 
@@ -1011,8 +1085,8 @@
 	
 2004-04-25    <mschimek@users.sf.net>
 
-	* src/tables.c: Updated CNI table, with Arte/La Cinqui�me
-	  fix by St�phane Loeuillet.
+	* src/tables.c: Updated CNI table, with Arte/La Cinquième
+	  fix by Stéphane Loeuillet.
 
 2004-04-09    <mschimek@users.sf.net>
 

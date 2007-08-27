@@ -244,7 +244,7 @@ EXTRACT_STATIC         = NO
 # defined locally in source files will be included in the documentation. 
 # If set to NO only classes defined in header files are included.
 
-EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_LOCAL_CLASSES  = NO
 
 # This flag is only useful for Objective-C code. When set to YES local 
 # methods, which are defined in the implementation section but not in 
@@ -475,6 +475,7 @@ FILE_PATTERNS          = *.c \
 			 conv.h \
                          decoder.h \
                          dvb_demux.h \
+                         dvb_mux.h \
                          idl_demux.h \
                          event.h \
                          exp-gfx.h \

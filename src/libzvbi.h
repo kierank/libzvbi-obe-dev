@@ -31,6 +31,13 @@
 #define VBI_VERSION_MINOR 2
 #define VBI_VERSION_MICRO 26
 
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -200,7 +207,7 @@ vbi_strndup_iconv_caption	(const char *		dst_codeset,
 				 long			src_length,
 				 int			repl_char)
   __attribute__ ((_vbi_alloc));
-#if 3 == VBI_VERSION_MINOR
+#if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
 extern char *
 vbi_strndup_iconv_teletext	(const char *		dst_codeset,
 				 const vbi_ttx_charset *cs,
@@ -988,6 +995,7 @@ vbi_dvb_pes_demux_new		(vbi_dvb_demux_cb *	callback,
 
 
 
+/* dvb_mux.h */
 /* idl_demux.h */
 
 
@@ -1684,10 +1692,3 @@ vbi_set_log_fn			(vbi_log_mask		mask,
 #endif
 
 #endif /* __LIBZVBI_H__ */
-
-/*
-Local variables:
-c-set-style: K&R
-c-basic-offset: 8
-End:
-*/

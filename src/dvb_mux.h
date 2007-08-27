@@ -1,7 +1,7 @@
 /*
- *  libzvbi
+ *  libzvbi - DVB VBI multiplexer
  *
- *  Copyright (C) 2004 Michael H. Schimek
+ *  Copyright (C) 2004, 2007 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -15,39 +15,61 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *  WARNING this code is experimental, the API will change.
  */
 
-/* $Id: dvb_mux.h,v 1.5 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: dvb_mux.h,v 1.6 2007/08/27 06:46:10 mschimek Exp $ */
 
 #ifndef __ZVBI_DVB_MUX_H__
 #define __ZVBI_DVB_MUX_H__
 
 #include <inttypes.h>		/* uint8_t */
-
-#include "bcd.h"		/* vbi_bool */
+#include "macros.h"
 #include "sliced.h"		/* vbi_sliced, vbi_service_set */
 #include "sampling_par.h"	/* vbi_videostd_set */
 
-extern void
-_vbi_dvb_multiplex_sliced	(uint8_t **		packet,
+VBI_BEGIN_DECLS
+
+/**
+ * @addtogroup DVBMux
+ * @{
+ */
+
+extern vbi_bool
+vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 				 unsigned int *		packet_left,
 				 const vbi_sliced **	sliced,
 				 unsigned int *		sliced_left,
+				 vbi_service_set	service_mask,
 				 unsigned int		data_identifier,
-				 vbi_service_set	service_set);
-extern void
-_vbi_dvb_multiplex_samples	(uint8_t **		packet,
+				 vbi_bool		stuffing)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  __attribute__ ((_vbi_nonnull (1, 2, 3, 4)))
+#endif
+  ;
+extern vbi_bool
+vbi_dvb_multiplex_raw		(uint8_t **		packet,
 				 unsigned int *		packet_left,
-				 const uint8_t **	samples,
-				 unsigned int *		samples_left,
-				 unsigned int		samples_size,
+				 const uint8_t **	raw,
+				 unsigned int *		raw_left,
 				 unsigned int		data_identifier,
 				 vbi_videostd_set	videostd_set,
 				 unsigned int		line,
-				 unsigned int		offset);
+				 unsigned int		first_pixel_position,
+				 unsigned int		n_pixels_total,
+				 vbi_bool		stuffing)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  __attribute__ ((_vbi_nonnull (1, 2, 3, 4)))
+#endif
+  ;
 
+/**
+ * @brief DVB VBI multiplexer context.
+ *
+ * The contents of this structure are private.
+ *
+ * Call vbi_dvb_pes_mux_new() or vbi_dvb_ts_mux_new() to allocate
+ * a DVB VBI multiplexer context.
+ */
 typedef struct _vbi_dvb_mux vbi_dvb_mux;
 
 typedef vbi_bool
@@ -57,28 +79,66 @@ vbi_dvb_mux_cb			(vbi_dvb_mux *		mx,
 				 unsigned int		packet_size);
 
 extern void
-_vbi_dvb_mux_reset		(vbi_dvb_mux *		mx);
+vbi_dvb_mux_reset		(vbi_dvb_mux *		mx)
+  __attribute__ ((_vbi_nonnull (1)));
 extern vbi_bool
-_vbi_dvb_mux_feed		(vbi_dvb_mux *		mx,
-				 int64_t		pts,
+vbi_dvb_mux_cor		(vbi_dvb_mux *		mx,
+				 uint8_t **		buffer,
+				 unsigned int *		buffer_left,
+				 const vbi_sliced **	sliced,
+				 unsigned int *		sliced_lines,
+				 vbi_service_set	service_mask,
+				 const uint8_t *	raw,
+				 const vbi_sampling_par *sampling_par,	 
+				 int64_t		pts)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  __attribute__ ((_vbi_nonnull (1, 2, 3, 4, 5)))
+#endif
+  ;
+extern vbi_bool
+vbi_dvb_mux_feed		(vbi_dvb_mux *		mx,
 				 const vbi_sliced *	sliced,
-				 unsigned int		sliced_size,
-				 vbi_service_set	service_set);
+				 unsigned int		sliced_lines,
+				 vbi_service_set	service_mask,
+				 const uint8_t *	raw,
+				 const vbi_sampling_par *sampling_par,
+				 int64_t		pts)
+  __attribute__ ((_vbi_nonnull (1)));
+extern unsigned int
+vbi_dvb_mux_get_data_identifier (const vbi_dvb_mux *	mx)
+  __attribute__ ((_vbi_nonnull (1)));
+extern vbi_bool
+vbi_dvb_mux_set_data_identifier (vbi_dvb_mux *	mx,
+				  unsigned int		data_identifier)
+  __attribute__ ((_vbi_nonnull (1)));
+extern unsigned int
+vbi_dvb_mux_get_pes_packet_min_size
+				(vbi_dvb_mux *		mx)
+  __attribute__ ((_vbi_nonnull (1)));
+extern unsigned int
+vbi_dvb_mux_get_pes_packet_max_size
+				(vbi_dvb_mux *		mx)
+  __attribute__ ((_vbi_nonnull (1)));
+extern vbi_bool
+vbi_dvb_mux_set_pes_packet_size (vbi_dvb_mux *	mx,
+				  unsigned int		min_size,
+				  unsigned int		max_size)
+  __attribute__ ((_vbi_nonnull (1)));
 extern void
-_vbi_dvb_mux_delete		(vbi_dvb_mux *		mx);
+vbi_dvb_mux_delete		(vbi_dvb_mux *		mx);
 extern vbi_dvb_mux *
-_vbi_dvb_mux_pes_new		(unsigned int		data_identifier,
-				 unsigned int		packet_size,
-				 vbi_videostd_set	videostd_set,
-				 vbi_dvb_mux_cb *	callback,
-				 void *			user_data);
+vbi_dvb_pes_mux_new		(vbi_dvb_mux_cb *	callback,
+				 void *			user_data)
+  __attribute__ ((_vbi_alloc));
 extern vbi_dvb_mux *
-_vbi_dvb_mux_ts_new		(unsigned int		pid,
-				 unsigned int		data_identifier,
-				 unsigned int		packet_size,
-				 vbi_videostd_set	videostd_set,
+vbi_dvb_ts_mux_new		(unsigned int		pid,
 				 vbi_dvb_mux_cb *	callback,
-				 void *			user_data);
+				 void *			user_data)
+  __attribute__ ((_vbi_alloc));
+
+/** @} */
+
+VBI_END_DECLS
 
 #endif /* __ZVBI_DVB_MUX_H__ */
 

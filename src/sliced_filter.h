@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced_filter.h,v 1.1 2007/07/23 19:59:56 mschimek Exp $ */
+/* $Id: sliced_filter.h,v 1.2 2007/08/27 06:46:10 mschimek Exp $ */
 
 #ifndef __ZVBI_SLICED_FILTER_H__
 #define __ZVBI_SLICED_FILTER_H__
@@ -101,7 +101,6 @@ vbi_sliced_filter_drop_ttx_subpage
 {
 	return vbi_sliced_filter_drop_ttx_subpages (sf, pgno, subno, subno);
 }
-/* This_function_name_is_way_too_long. */
 extern void
 vbi_sliced_filter_keep_ttx_system_pages
 				(vbi_sliced_filter *	sf,
@@ -123,6 +122,7 @@ vbi_sliced_filter_feed		(vbi_sliced_filter *	sf,
 				 const vbi_sliced *	sliced,
 				 unsigned int *		n_lines)
   __attribute__ ((_vbi_nonnull (1, 2, 3)));
+
 extern const char *
 vbi_sliced_filter_errstr	(vbi_sliced_filter *	sf)
   __attribute__ ((_vbi_nonnull (1)));
@@ -135,7 +135,7 @@ vbi_sliced_filter_set_log_fn	(vbi_sliced_filter *	sf,
 extern void
 vbi_sliced_filter_delete	(vbi_sliced_filter *	sf);
 extern vbi_sliced_filter *
-vbi_sliced_filter_new		(vbi_sliced_filter_cb *	callback,
+vbi_sliced_filter_new		(vbi_sliced_filter_cb *callback,
 				 void *			user_data)
   __attribute__ ((_vbi_alloc));
 

@@ -1325,10 +1325,3 @@ static __inline__ void IOCTL_ARG_TYPE_CHECK_VIDIOC_DBG_S_REGISTER (const struct 
 static __inline__ void IOCTL_ARG_TYPE_CHECK_VIDIOC_DBG_G_REGISTER (struct v4l2_register *arg __attribute__ ((unused))) {}
 static __inline__ void IOCTL_ARG_TYPE_CHECK_VIDIOC_G_CHIP_IDENT (struct v4l2_chip_ident *arg __attribute__ ((unused))) {}
 
-
-/*
-Local variables:
-c-set-style: K&R
-c-basic-offset: 8
-End:
-*/

@@ -1,7 +1,7 @@
 /*
  *  libzvbi test
  *
- *  Copyright (C) 2004-2005 Michael H. Schimek
+ *  Copyright (C) 2004 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced2pes.c,v 1.5 2006/09/29 09:30:16 mschimek Exp $ */
+/* $Id: sliced2pes.c,v 1.6 2007/08/27 06:46:10 mschimek Exp $ */
+
+/* For libzvbi version 0.2.x / 0.3.x. */
 
 #undef NDEBUG
 
@@ -27,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <assert.h>
 #include <unistd.h>
 #include <time.h>
@@ -34,49 +37,58 @@
 #include <getopt.h>
 #endif
 
-#include "src/dvb_mux.h"
+#include "src/version.h"
+#if 2 == VBI_VERSION_MINOR
+#  include "src/dvb_mux.h"
+#else
+#  include "src/zvbi.h"
+#endif
+
 #include "sliced.h"
 
 static vbi_dvb_mux *		mx;
 
 static vbi_bool
-binary_ts_pes			(vbi_dvb_mux *		mx,
+ts_pes_cb			(vbi_dvb_mux *		mx,
 				 void *			user_data,
 				 const uint8_t *	packet,
 				 unsigned int		packet_size)
 {
-	mx = mx; /* unused, no warning. */
+	mx = mx; /* unused */
 	user_data = user_data;
 
-	if (packet_size != fwrite (packet, 1, packet_size, stdout)) {
-		perror ("Write error");
-		exit (EXIT_FAILURE);
-	}
+	fwrite (packet, 1, packet_size, stdout);
 
-	fflush (stdout);
+	return TRUE;
+}
+
+static vbi_bool
+decode_frame			(const vbi_sliced *	sliced,
+				 unsigned int		n_lines,
+				 double			sample_time,
+				 int64_t		stream_time)
+{
+	vbi_bool success;
+
+	sample_time = sample_time; /* unused */
+
+	success = vbi_dvb_mux_feed (mx,
+				    sliced, n_lines,
+				    /* service_mask */ -1,
+				    /* raw */ NULL,
+				    /* sp */ NULL,
+				    /* pts */ stream_time);
 
 	return TRUE;
 }
 
 static void
-mainloop			(void)
+usage				(FILE *			fp,
+				 char **		argv)
 {
-	for (;;) {
-		vbi_sliced sliced[40];
-		double timestamp;
-		int n_lines;
-
-		n_lines = read_sliced (sliced, &timestamp, /* max_lines */ 40);
-		if (n_lines < 0)
-			break;
-
-		if (!_vbi_dvb_mux_feed (mx, timestamp * 90000,
-					sliced, n_lines,
-					/* service_set: encode all */ -1))
-			break;
-	}
-
-	fprintf (stderr, "\rEnd of stream\n");
+	fprintf (fp,
+		 "Usage: %s < sliced vbi data > pes stream\n",
+		 argv[0]);
 }
 
 static const char
@@ -86,26 +98,11 @@ short_options [] = "h";
 static const struct option
 long_options [] = {
 	{ "help",	no_argument,		NULL,		'h' },
-	{ 0, 0, 0, 0 }
+	{ NULL, 0, 0, 0 }
 };
 #else
 #define getopt_long(ac, av, s, l, i) getopt(ac, av, s)
 #endif
-
-static void
-usage				(FILE *			fp,
-				 char **		argv)
-{
-	fprintf (fp,
- "Libzvbi test/sliced2pes version " VERSION "\n"
- "Copyright (C) 2004-2005 Michael H. Schimek\n"
- "This program is licensed under GPL 2. NO WARRANTIES.\n\n"
- "Converts old test/capture --sliced output to DVB PES format.\n\n"
- "Usage: %s < old file > PES file\n"
- "Options:\n"
- "-h | --help    Print this message\n",
-		 argv[0]);
-}
 
 int
 main				(int			argc,
@@ -113,6 +110,8 @@ main				(int			argc,
 {
 	int index;
 	int c;
+
+	init_helpers (argc, argv);
 
 	while (-1 != (c = getopt_long (argc, argv, short_options,
 				       long_options, &index))) {
@@ -130,21 +129,18 @@ main				(int			argc,
 		}
 	}
 
-	if (isatty (STDIN_FILENO)) {
-		fprintf (stderr, "No vbi data on stdin.\n");
-		exit (EXIT_FAILURE);
-	}
-
-	mx = _vbi_dvb_mux_pes_new (/* data_identifier */ 0x10,
-				   /* packet_size */ 8 * 184,
-				   VBI_VIDEOSTD_SET_625_50,
-				   binary_ts_pes,
-				   /* user_data */ NULL);
+	mx = vbi_dvb_pes_mux_new (ts_pes_cb,
+				  /* user_data */ NULL);
 	assert (NULL != mx);
 
-	open_sliced_read (stdin);
+	{
+		struct stream *st;
 
-	mainloop ();
+		st = read_stream_new (FILE_FORMAT_SLICED,
+				      decode_frame);
+		read_stream_loop (st);
+		read_stream_delete (st);
+	}
 
 	exit (EXIT_SUCCESS);
 }
