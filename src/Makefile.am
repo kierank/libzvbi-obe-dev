@@ -85,6 +85,7 @@ libzvbi_la_SOURCES = \
 	macros.h \
 	misc.c misc.h \
 	packet.c teletext.c vt.h \
+	page_table.c page_table.h \
 	pfc_demux.c pfc_demux.h \
 	proxy-client.c proxy-client.h \
 	raw_decoder.c raw_decoder.h \
@@ -137,6 +138,7 @@ LIBZVBI_HDRS = \
 	sliced.h \
 	decoder.h \
 	dvb_demux.h \
+	dvb_mux.h \
 	idl_demux.h \
 	pfc_demux.h \
 	xds_demux.h \
@@ -171,7 +173,8 @@ libzvbi.h: version.h $(LIBZVBI_HDRS)
 	echo -e "\n#endif /* __LIBZVBI_H__ */" >> $@
 
 network-table.h: network-table.pl Makefile.am
-	wget -q -O- http://zapping.sourceforge.net/zvbi-0.3/networks.xml | \
+	wget -q -O- --proxy=off \
+	  http://zapping.sourceforge.net/zvbi-0.3/networks.xml | \
 	  $(srcdir)/network-table.pl > $@
 
 _videodev.h: Makefile.am $(structpr) videodev.h
