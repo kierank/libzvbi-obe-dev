@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.29 2006/10/08 06:19:48 mschimek Exp $ */
+/* $Id: osc.c,v 1.30 2007/08/27 06:44:47 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -104,7 +104,8 @@ decode_ttx(uint8_t *buf, int line)
 	magazine = packet_address & 7;
 	packet = packet_address >> 3;
 
-        text += sprintf(text, "pg %x%02d ln %03d >", magazine, packet, line);
+        text += snprintf(text, 255,
+			 "pg %x%02d ln %03d >", magazine, packet, line);
 
         for (j = 0; j < 42; j++) {
 	   char c = _vbi_to_ascii (buf[j]);
@@ -133,17 +134,17 @@ dump_pil(int pil)
 	min = pil & 0x3F;
 
 	if (pil == PIL(0, 15, 31, 63))
-		sprintf(text, " PDC: Timer-control (no PDC)\n");
+		snprintf(text, 255, " PDC: Timer-control (no PDC)\n");
 	else if (pil == PIL(0, 15, 30, 63))
-		sprintf(text, " PDC: Recording inhibit/terminate\n");
+		snprintf(text, 255, " PDC: Recording inhibit/terminate\n");
 	else if (pil == PIL(0, 15, 29, 63))
-		sprintf(text, " PDC: Interruption\n");
+		snprintf(text, 255, " PDC: Interruption\n");
 	else if (pil == PIL(0, 15, 28, 63))
-		sprintf(text, " PDC: Continue\n");
+		snprintf(text, 255, " PDC: Continue\n");
 	else if (pil == PIL(31, 15, 31, 63))
-		sprintf(text, " PDC: No time\n");
+		snprintf(text, 255, " PDC: No time\n");
 	else
-		sprintf(text, " PDC: %05x, 200X-%02d-%02d %02d:%02d\n",
+		snprintf(text, 255, " PDC: %05x, 200X-%02d-%02d %02d:%02d\n",
 			pil, mon, day, hour, min);
         return text;
 }
@@ -161,7 +162,7 @@ decode_vps(uint8_t *buf)
         text_start=text=malloc(255);
         memset(text, 0, 255);
         
-	text += sprintf(text, "VPS: ");
+	text += snprintf(text, 255, "VPS: ");
 
 	c = vbi_rev8 (buf[1]);
 
@@ -177,7 +178,7 @@ decode_vps(uint8_t *buf)
 
 	l = (l + 1) % 16;
 
-	text += sprintf(text, " 3-10: %02x %02x %02x %02x %02x %02x %02x %02x (\"%s\")\n",
+	text += snprintf(text, 250, " 3-10: %02x %02x %02x %02x %02x %02x %02x %02x (\"%s\")\n",
 		buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], pr_label);
 
 	pcs = buf[2] >> 6;
@@ -191,9 +192,10 @@ decode_vps(uint8_t *buf)
 
 	pty = buf[12];
 
-	text += sprintf(text, " CNI: %04x PCS: %d PTY: %d ", cni, pcs, pty);
+#warning this sucks
+	text += snprintf(text, 100, " CNI: %04x PCS: %d PTY: %d ", cni, pcs, pty);
 
-	text += sprintf(text, " %s", dump_pil(pil));
+	text += snprintf(text, 50, " %s", dump_pil(pil));
    
         return(text_start);
 }
