@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l.c,v 1.34 2007/07/23 20:01:17 mschimek Exp $";
+"$Id: io-v4l.c,v 1.35 2007/08/27 06:45:48 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1219,7 +1219,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		 *  v4l ioctls, let's see if we can guess the beast.
 		 */
 		printv("Driver doesn't support VIDIOCGCAP\n");
-		strncpy(v->vcap.name, _("driver unknown"), sizeof(v->vcap.name) - 1);
+		strlcpy(v->vcap.name, _("driver unknown"), sizeof(v->vcap.name) - 1);
 		v->vcap.name[sizeof(v->vcap.name) - 1] = 0;
 
 		if (!guess_bttv_v4l(v, &strict, given_fd, scanning))
@@ -1228,7 +1228,7 @@ v4l_new(const char *dev_name, int given_fd, int scanning,
 		if (v->vcap.name[0] != 0) {
 			printv("Driver name '%s'\n", v->vcap.name);
 		} else {
-			strncpy(v->vcap.name, _("driver unknown"), sizeof(v->vcap.name) - 1);
+			strlcpy(v->vcap.name, _("driver unknown"), sizeof(v->vcap.name) - 1);
 			v->vcap.name[sizeof(v->vcap.name) - 1] = 0;
 		}
 
