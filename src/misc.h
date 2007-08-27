@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.h,v 1.16 2007/07/23 20:00:06 mschimek Exp $ */
+/* $Id: misc.h,v 1.17 2007/08/27 06:42:52 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -196,6 +196,15 @@ do {									\
 	 + (((m) & 0xFF00) << 8)					\
 	 + (((m) & 0xFF) << 24))
 
+#ifdef HAVE_BUILTIN_POPCOUNT
+#  define popcnt(x) __builtin_popcount ((uint32_t)(x))
+#else
+#  define popcnt(x) _vbi_popcnt (x)
+#endif
+
+extern unsigned int
+_vbi_popcnt			(uint32_t		x);
+
 /* NB GCC inlines and optimizes these functions when size is const. */
 #define SET(var) memset (&(var), ~0, sizeof (var))
 
@@ -204,8 +213,14 @@ do {									\
 #define COPY(d, s) /* useful to copy arrays, otherwise use assignment */ \
 	(assert (sizeof (d) == sizeof (s)), memcpy (d, s, sizeof (d)))
 
-/* Copy a string const, returns FALSE if not NUL terminated. */
-#define STRCOPY(d, s) (strlcpy (d, s, sizeof (d)) < sizeof (d))
+/* Copy string const into char array. */
+#define STRACPY(array, s)						\
+do {									\
+	/* Complain if s is no string const or won't fit. */		\
+	const char t_[sizeof (array) - 1] __attribute__ ((unused)) = s; \
+									\
+	memcpy (array, s, sizeof (s));					\
+} while (0)
 
 /* Copy bits through mask. */
 #define COPY_SET_MASK(dest, from, mask)					\
@@ -281,7 +296,7 @@ do {									\
 									\
 	if ((NULL != _h && 0 != (_h->mask & level))			\
 	    || (_h = &_vbi_global_log, 0 != (_h->mask & level)))	\
-		_vbi_log_printf (_h->fn, _h->user_data,			\
+		_vbi_log_printf (_h->fn, _h->user_data,		\
 				  level, __FILE__, __FUNCTION__,	\
 				  templ , ##args);			\
 } while (0)
@@ -329,6 +344,8 @@ do {									\
 #ifndef HAVE_STRLCPY
 #  define strlcpy _vbi_strlcpy
 #endif
+#undef strncpy
+#define strncpy use_strlcpy_instead
 
 extern size_t
 _vbi_strlcpy			(char *			dst,
@@ -363,6 +380,9 @@ extern int
 _vbi_asprintf			(char **		dstp,
 				 const char *		templ,
 				 ...);
+
+#undef sprintf
+#define sprintf use_snprintf_or_asprintf_instead
 
 #endif /* MISC_H */
 
