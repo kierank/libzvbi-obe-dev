@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: trigger.c,v 1.11 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: trigger.c,v 1.12 2007/08/27 06:45:29 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -304,7 +304,7 @@ parse_eacem(vbi_trigger *t, char *s1, unsigned int nuid, double now)
 				break;
 
 			case 4: /* name */
-				strncpy((char *) t->link.name, text,
+				strlcpy((char *) t->link.name, text,
 					sizeof(t->link.name) - 1);
 				t->link.name[sizeof(t->link.name) - 1] = 0;
 				break;
@@ -316,7 +316,7 @@ parse_eacem(vbi_trigger *t, char *s1, unsigned int nuid, double now)
 				break;
 
 			case 6: /* script */
-				strncpy((char *) t->link.script, text,
+				strlcpy((char *) t->link.script, text,
 					sizeof(t->link.script) - 1);
 				t->link.script[sizeof(t->link.script) - 1] = 0;
 				break;
@@ -504,13 +504,13 @@ parse_atvef(vbi_trigger *t, char *s1, double now)
 				break;
 
 			case 2: /* name */
-				strncpy((char *) t->link.name, text,
+				strlcpy((char *) t->link.name, text,
 					sizeof(t->link.name) - 1);
 				t->link.name[sizeof(t->link.name) - 1] = 0;
 				break;
 
 			case 3: /* script */
-				strncpy((char *) t->link.script, text,
+				strlcpy((char *) t->link.script, text,
 					sizeof(t->link.script));
 				t->link.script[sizeof(t->link.script) - 1] = 0;
 				break;
