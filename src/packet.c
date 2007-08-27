@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: packet.c,v 1.26 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: packet.c,v 1.27 2007/08/27 06:45:42 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -1090,7 +1090,7 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 			n->name[0] = 0;
 			unknown_cni(vbi, "VPS", cni);
 		} else {
-			strncpy((char *) n->name, name, sizeof(n->name) - 1);
+			strlcpy((char *) n->name, name, sizeof(n->name) - 1);
 			n->name[sizeof(n->name) - 1] = 0;
 		}
 
@@ -1146,7 +1146,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 					n->name[0] = 0;
 					unknown_cni(vbi, "8/30/1", cni);
 				} else {
-					strncpy((char *) n->name, name,
+					strlcpy((char *) n->name, name,
 						sizeof(n->name) - 1);
 					n->name[sizeof(n->name) - 1] = 0;
 				}
@@ -1236,7 +1236,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 					n->name[0] = 0;
 					unknown_cni(vbi, "8/30/2", cni);
 				} else {
-					strncpy((char *) n->name, name,
+					strlcpy((char *) n->name, name,
 						sizeof(n->name) - 1);
 					n->name[sizeof(n->name) - 1] = 0;
 				}
