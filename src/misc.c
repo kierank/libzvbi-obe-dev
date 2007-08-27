@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.c,v 1.7 2007/07/23 20:00:11 mschimek Exp $ */
+/* $Id: misc.c,v 1.8 2007/08/27 06:42:47 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -27,18 +27,37 @@
 #include <errno.h>
 
 #include "misc.h"
-#include "version.h"
 
-#if 2 == VBI_VERSION_MINOR
+#ifdef ZAPPING8
+const char vbi_intl_domainname[] = PACKAGE;
+#else
+#  include "version.h"
+#  if 2 == VBI_VERSION_MINOR
 const char _zvbi_intl_domainname[] = PACKAGE;
+#  else
+const char vbi_intl_domainname[] = PACKAGE;
+#  endif
 #endif
 
 _vbi_log_hook		_vbi_global_log;
 
 /**
  * @internal
- * strlcpy() is a BSD/GNU extension.
- * Don't call this function directly, we #define strlcpy if necessary.
+ * Number of set bits.
+ */
+unsigned int
+_vbi_popcnt			(uint32_t		x)
+{
+	x -= ((x >> 1) & 0x55555555);
+	x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
+	x = (x + (x >> 4)) & 0x0F0F0F0F;
+	return ((uint32_t)(x * 0x01010101)) >> 24;
+}
+
+/**
+ * @internal
+ * strlcpy() is a BSD/GNU extension. Don't call this function
+ * directly, we #define strlcpy if necessary.
  */
 size_t
 _vbi_strlcpy			(char *			dst,
@@ -67,8 +86,8 @@ _vbi_strlcpy			(char *			dst,
 
 /**
  * @internal
- * strndup() is a BSD/GNU extension.
- * Don't call this function directly, we #define strndup if necessary.
+ * strndup() is a BSD/GNU extension. Don't call this function
+ * directly, we #define strndup if necessary.
  */
 char *
 _vbi_strndup			(const char *		s,
@@ -95,8 +114,8 @@ _vbi_strndup			(const char *		s,
 
 /**
  * @internal
- * vasprintf() is a GNU extension.
- * Don't call this function directly, we #define vasprintf if necessary.
+ * vasprintf() is a GNU extension. Don't call this function
+ * directly, we #define vasprintf if necessary.
  */
 int
 _vbi_vasprintf			(char **		dstp,
@@ -143,11 +162,10 @@ _vbi_vasprintf			(char **		dstp,
 	free (buf);
 	buf = NULL;
 
-	/* According to man 3 asprintf GNU's version leaves *dstp
+	/* According to "man 3 asprintf" GNU's version leaves *dstp
 	   undefined on error, so don't count on it. FreeBSD's
 	   asprintf NULLs *dstp, which is safer. */
 	*dstp = NULL;
-
 	errno = temp;
 
 	return -1;
@@ -155,8 +173,8 @@ _vbi_vasprintf			(char **		dstp,
 
 /**
  * @internal
- * asprintf() is a GNU extension.
- * Don't call this function directly, we #define asprintf if necessary.
+ * asprintf() is a GNU extension. Don't call this function
+ * directly, we #define asprintf if necessary.
  */
 int
 _vbi_asprintf			(char **		dstp,
@@ -241,11 +259,11 @@ vbi_log_on_stderr		(vbi_log_mask		level,
 	vbi_log_mask max_level;
 
 	/* This function exists in libzvbi 0.2 with vbi_ prefix and
-	   in libzvbi 0.3 and Zapping with vbi3_ prefix (so I can
+	   in libzvbi 0.3 and Zapping with vbi_ prefix (so I can
 	   use both versions in Zapping until 0.3 is finished). */
 	if (0 == strncmp (context, "vbi_", 4)) {
 		context += 4;
-	/* Not "vbi3_" to prevent an accidental s/vbi3_/vbi_. */
+	/* Not "vbi_" to prevent an accidental s/vbi_/vbi_. */
 	} else if (0 == strncmp (context, "vbi" "3_", 5)) {
 		context += 5;
 	}
