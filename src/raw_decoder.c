@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.17 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.18 2007/08/27 06:43:53 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -279,6 +279,8 @@ vbi_sliced_name			(vbi_service_set	service)
 		return "Closed Caption 625";
 	if (service == (VBI_SLICED_VPS | VBI_SLICED_VPS_F2))
 		return "Video Program System";
+	if (service == VBI_SLICED_TELETEXT_B_L25_625)
+		return "Teletext System B 625 Level 2.5";
 
 	/* Incorrect, no longer in table */
 	if (service == VBI_SLICED_TELETEXT_BD_525)
@@ -310,6 +312,8 @@ vbi_sliced_payload_bits		(unsigned int		service)
 		return 16;
 	if (service == (VBI_SLICED_VPS | VBI_SLICED_VPS_F2))
 		return 13 * 8;
+	if (service == VBI_SLICED_TELETEXT_B_L25_625)
+		return 42 * 8;
 
 	/* Incorrect, no longer in table */
 	if (service == VBI_SLICED_TELETEXT_BD_525)
