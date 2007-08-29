@@ -260,6 +260,9 @@ else
 fi
 AM_CONDITIONAL(HAVE_DOXYGEN, [test "x$HAVE_DOXYGEN" = xyes])
 
+dnl Helps debugging, see test/Makefile.am.
+AM_CONDITIONAL(BUILD_STATIC_LIB, [test "x$enable_static" = xyes])
+
 AC_OUTPUT([
   Makefile
   contrib/Makefile
