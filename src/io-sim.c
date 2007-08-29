@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.c,v 1.12 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: io-sim.c,v 1.13 2007/08/29 15:39:45 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -67,7 +67,7 @@ do {									\
 	if (_vbi_global_log.mask & VBI_LOG_WARNING)			\
 		_vbi_log_printf (_vbi_global_log.fn,			\
 				  _vbi_global_log.user_data,		\
-				  VBI_LOG_WARNING, function,		\
+				  VBI_LOG_WARNING, __FILE__, function,	\
 				  templ , ##args);			\
 } while (0)
 
