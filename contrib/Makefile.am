@@ -3,17 +3,8 @@
 bin_PROGRAMS = zvbi-ntsc-cc
 
 zvbi_ntsc_cc_SOURCES = ntsc-cc.c
-zvbi_ntsc_cc_LDADD = \
-	$(top_builddir)/src/libzvbi.la \
-	$(LIBS) \
-	$(X_LIBS)
 
 noinst_PROGRAMS = x11font
-
-x11font_LDADD = \
-	$(top_builddir)/src/.libs/libzvbi.a \
-	$(LIBS) \
-	$(X_LIBS)
 
 man_MANS = \
 	zvbi-ntsc-cc.1
@@ -27,3 +18,14 @@ AM_CPPFLAGS = \
 	$(X_CFLAGS) \
 	-D_REENTRANT \
 	-D_GNU_SOURCE
+
+# For easier debugging.
+if BUILD_STATIC_LIB
+LDADD = $(top_builddir)/src/.libs/libzvbi.a
+else
+LDADD = $(top_builddir)/src/libzvbi.la
+endif
+
+LDADD += \
+	$(LIBS) \
+	$(X_LIBS)

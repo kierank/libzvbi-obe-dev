@@ -84,7 +84,15 @@ AM_CFLAGS = \
 
 AM_CPPFLAGS = $(AM_CFLAGS)
 
-LDADD = \
-	$(top_builddir)/src/.libs/libzvbi.a \
+# Libtool creates a wrapper script around the application until the
+# library is installed, which is a major annoyance for debugging with
+# gdb and valgrind. So we link these apps statically if possible.
+if BUILD_STATIC_LIB
+LDADD = $(top_builddir)/src/.libs/libzvbi.a
+else
+LDADD = $(top_builddir)/src/libzvbi.la
+endif
+
+LDADD += \
 	$(LIBS) \
 	$(X_LIBS)
