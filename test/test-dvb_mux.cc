@@ -2,9 +2,23 @@
  *  libzvbi - vbi_dvb_mux unit test
  *
  *  Copyright (C) 2007 Michael H. Schimek
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-dvb_mux.cc,v 1.1 2007/08/27 06:43:39 mschimek Exp $ */
+/* $Id: test-dvb_mux.cc,v 1.2 2007/08/31 15:32:29 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -2397,8 +2411,8 @@ dvb_mux_pes_cb			(vbi_dvb_mux *		mx,
 	assert (mx == cb_multiplexer);
 	assert (user_data == &cb_multiplexer);
 
-	min = vbi_dvb_mux_get_pes_packet_min_size (mx);
-	max = vbi_dvb_mux_get_pes_packet_max_size (mx);
+	min = vbi_dvb_mux_get_min_pes_packet_size (mx);
+	max = vbi_dvb_mux_get_max_pes_packet_size (mx);
 
 	assert (0 == packet_size % 184);
 	assert (packet_size >= min);
@@ -2514,8 +2528,8 @@ assert_dvb_mux_cor		(vbi_dvb_mux *		mx,
 	vbi_bool success;
 
 	data_identifier = vbi_dvb_mux_get_data_identifier (mx);
-	min_size = vbi_dvb_mux_get_pes_packet_min_size (mx);
-	max_size = vbi_dvb_mux_get_pes_packet_max_size (mx);
+	min_size = vbi_dvb_mux_get_min_pes_packet_size (mx);
+	max_size = vbi_dvb_mux_get_max_pes_packet_size (mx);
 
 	if (NULL != p1) {
 		rand_buffer = xralloc (p1_size);
@@ -3679,7 +3693,7 @@ test_dvb_mux_cor_packet_overflow_checks (void)
 	assert (NULL != mx);
 
 	vbi_dvb_mux_set_pes_packet_size (mx, 0, UINT_MAX);
-	max_size = vbi_dvb_mux_get_pes_packet_max_size (mx);
+	max_size = vbi_dvb_mux_get_max_pes_packet_size (mx);
 
 	// Cannot fit because the header takes another 46 bytes.
 	n_lines = max_size / 46;
@@ -3986,8 +4000,8 @@ test_dvb_mux_packet_size_accessors (void)
 				   /* user_data */ NULL);
 	assert (NULL != mx);
 
-	min = vbi_dvb_mux_get_pes_packet_min_size (mx);
-	max = vbi_dvb_mux_get_pes_packet_max_size (mx);
+	min = vbi_dvb_mux_get_min_pes_packet_size (mx);
+	max = vbi_dvb_mux_get_max_pes_packet_size (mx);
 
 	// Defaults.
 	assert (184 == min);
@@ -4006,8 +4020,8 @@ test_dvb_mux_packet_size_accessors (void)
 
 			assert (TRUE == success);
 
-			min = vbi_dvb_mux_get_pes_packet_min_size (mx);
-			max = vbi_dvb_mux_get_pes_packet_max_size (mx);
+			min = vbi_dvb_mux_get_min_pes_packet_size (mx);
+			max = vbi_dvb_mux_get_max_pes_packet_size (mx);
 
 			assert (0 == min % 184);
 			assert (0 == max % 184);
