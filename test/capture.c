@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.27 2007/08/27 06:43:34 mschimek Exp $ */
+/* $Id: capture.c,v 1.28 2007/08/31 15:32:39 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -42,6 +42,7 @@
 #include "src/io.h"
 #include "src/io-sim.h"
 #include "src/hamm.h"
+#include <sliced.h>
 
 vbi_capture *		cap;
 vbi_raw_decoder *	par;
@@ -422,7 +423,7 @@ long_options[] = {
 	{ "dump-sliced",no_argument,		&dump_sliced,	TRUE },
 	{ "pes",	no_argument,		NULL,		'P' },
 	{ "sliced",	no_argument,		NULL,		'l' },
-	{ "ts",		no_argument,		NULL,		'T' },
+	{ "ts",		required_argument,	NULL,		'T' },
 	{ "read",	no_argument,		&do_read,	TRUE },
 	{ "pull",	no_argument,		&do_read,	FALSE },
 	{ "strict",	required_argument,	NULL,		'r' },
@@ -508,7 +509,8 @@ main(int argc, char **argv)
 			dump_ttx ^= TRUE;
 			break;
 		case 'T':
-			bin_ts ^= TRUE;
+			parse_option_ts ();
+			bin_ts = TRUE;
 			break;
 		case 'v':
 			++verbose;
@@ -631,7 +633,7 @@ Run  ./capture --sliced | ./decode --ttx --cc --xds  instead.\n");
 					  /* user_data */ NULL);
 		assert (NULL != mx);
 	} else if (bin_ts) {
-		mx = vbi_dvb_ts_mux_new (/* pid */ 999,
+		mx = vbi_dvb_ts_mux_new (option_ts_pid,
 					 ts_pes_cb,
 					 /* user_data */ NULL);
 		assert (NULL != mx);
