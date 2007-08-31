@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_mux.c,v 1.10 2007/08/27 10:17:50 mschimek Exp $ */
+/* $Id: dvb_mux.c,v 1.11 2007/08/31 15:33:22 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -2078,7 +2078,7 @@ vbi_dvb_mux_set_data_identifier (vbi_dvb_mux *	mx,
  * @since 0.2.26
  */
 unsigned int
-vbi_dvb_mux_get_pes_packet_min_size
+vbi_dvb_mux_get_min_pes_packet_size
 				(vbi_dvb_mux *		mx)
 {
 	assert (NULL != mx);
@@ -2094,7 +2094,7 @@ vbi_dvb_mux_get_pes_packet_min_size
  * @since 0.2.26
  */
 unsigned int
-vbi_dvb_mux_get_pes_packet_max_size
+vbi_dvb_mux_get_max_pes_packet_size
 				(vbi_dvb_mux *		mx)
 {
 	assert (NULL != mx);

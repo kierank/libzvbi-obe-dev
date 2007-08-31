@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_mux.h,v 1.6 2007/08/27 06:46:10 mschimek Exp $ */
+/* $Id: dvb_mux.h,v 1.7 2007/08/31 15:33:26 mschimek Exp $ */
 
 #ifndef __ZVBI_DVB_MUX_H__
 #define __ZVBI_DVB_MUX_H__
@@ -112,11 +112,11 @@ vbi_dvb_mux_set_data_identifier (vbi_dvb_mux *	mx,
 				  unsigned int		data_identifier)
   __attribute__ ((_vbi_nonnull (1)));
 extern unsigned int
-vbi_dvb_mux_get_pes_packet_min_size
+vbi_dvb_mux_get_min_pes_packet_size
 				(vbi_dvb_mux *		mx)
   __attribute__ ((_vbi_nonnull (1)));
 extern unsigned int
-vbi_dvb_mux_get_pes_packet_max_size
+vbi_dvb_mux_get_max_pes_packet_size
 				(vbi_dvb_mux *		mx)
   __attribute__ ((_vbi_nonnull (1)));
 extern vbi_bool
