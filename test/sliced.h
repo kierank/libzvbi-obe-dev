@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.h,v 1.6 2007/08/27 06:43:29 mschimek Exp $ */
+/* $Id: sliced.h,v 1.7 2007/08/31 15:32:49 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -85,7 +85,7 @@ extern char *			program_invocation_short_name;
 #endif
 
 extern vbi_bool			option_quiet;
-extern unsigned int		option_ts_pid;
+extern unsigned long		option_ts_pid;
 extern unsigned int		option_log_mask;
 
 extern void

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.c,v 1.7 2007/08/27 06:43:25 mschimek Exp $ */
+/* $Id: sliced.c,v 1.8 2007/08/31 15:32:56 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -258,7 +258,7 @@ char *				program_invocation_short_name;
 #endif
 
 vbi_bool			option_quiet;
-unsigned int			option_ts_pid;
+unsigned long			option_ts_pid;
 unsigned int			option_log_mask;
 
 void
