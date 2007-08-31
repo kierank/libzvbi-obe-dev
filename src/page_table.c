@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: page_table.c,v 1.1 2007/08/27 06:44:27 mschimek Exp $ */
+/* $Id: page_table.c,v 1.2 2007/08/31 15:33:16 mschimek Exp $ */
 
 /* XXX UNTESTED */
 
@@ -30,6 +30,21 @@
 
 #include "misc.h"
 #include "page_table.h"
+
+/**
+ * addtogroup PageTable Teletext Page Number Table
+ * ingroup LowDec
+ * brief A set of Teletext page numbers.
+ *
+ * Sometimes application want to operate on multiple Teletext
+ * pages or subpages. The vbi_page_table structure can simply and
+ * efficiently remember the page numbers for you. It is used for
+ * example by the vbi_sliced_filter to remember the Teletext pages
+ * the caller wishes to keep or drop.
+ *
+ * The vbi_page_table is optimized for fast queries, while adding or
+ * removing pages and especially subpages may take longer.
+ */
 
 /* 0 ... 0x3F7E; 0x3F7F == VBI_ANY_SUBNO. */
 #define MAX_SUBNO 0x3F7E
@@ -86,6 +101,14 @@ contains_all_subpages		(const vbi_page_table *pt,
 	return (0 != (pt->pages[offset] & mask));
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ * @param pgno The page number in question. Need not be a valid
+ *   Teletext page number.
+ *
+ * The function returns @c TRUE if the page @a pgno and all its
+ * subpages have been added to the page table. 
+ */
 vbi_bool
 vbi_page_table_contains_all_subpages
 				(const vbi_page_table *pt,
@@ -99,6 +122,16 @@ vbi_page_table_contains_all_subpages
 	return contains_all_subpages (pt, pgno);
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ * @param pgno The page number in question. Need not be a valid
+ *   Teletext page number.
+ * @param subno The subpage number in question. Need not be a valid
+ *   Teletext subpage number. Can be @c VBI_ANY_SUBNO.
+ *
+ * The function returns @c TRUE if subpage @a subno of page @a pgno
+ * has been added to the page table.
+ */
 vbi_bool
 vbi_page_table_contains_subpage	(const vbi_page_table *pt,
 				 vbi_pgno		pgno,
@@ -131,6 +164,46 @@ vbi_page_table_contains_subpage	(const vbi_page_table *pt,
 	return FALSE;
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ * @param pgno Pointer to a page number. The function stores here the
+ *   next higher page number which has been added to the page table.
+ * @param subno Pointer to a subpage number. The function stores here the
+ *   next higher subpage number which has been added to the page table.
+ *
+ * This function can be used to iterate over the page and subpage
+ * numbers which have been added to the page table.
+ *
+ * When @a *pgno is less than 0x100 it will return the lowest
+ * page and subpage number in the page table.
+ *
+ * Otherwise it will return the next subpage of this page, or if no
+ * higher subpages of this page have been added the first subpage of
+ * the next higher page number in the table. A @a *subno value of
+ * @c VBI_ANY_SUBNO stands for the highest subpage number in the
+ * table, so the function will also return the first subpage of the
+ * next higher page.
+ *
+ * When all subpages of the returned @a *pgno are in the table, the
+ * returned @a *subno will be @c VBI_ANY_SUBNO. (This is the common
+ * case and there is no point in iterating through all the subpages.)
+ *
+ * When no page numbers higher than @a *pgno are in the table, or
+ * when this is the highest page and @a *subno is VBI_ANY_SUBNO or
+ * there are no subpage numbers higher than @a *subno, the function
+ * returns @c FALSE.
+ *
+ * @example
+ * vbi_pgno pgno = 0;
+ * vbi_subno subno;
+ *
+ * // Iterate over the subpages of all pages.
+ * while (!vbi_page_table_next_subpage (pt, &pgno, &subno) {
+ *     // Do things on page pgno, subno.
+ *     // subno is in range 0 to 0x3F7E inclusive, or VBI_ANY_SUBNO. 
+ * }
+ * @endexample
+ */
 vbi_bool
 vbi_page_table_next_subpage	(const vbi_page_table *pt,
 				 vbi_pgno *		pgno,
@@ -227,6 +300,29 @@ vbi_page_table_next_subpage	(const vbi_page_table *pt,
 	return TRUE;
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ * @param pgno Pointer to a page number. The function stores here the
+ *   next higher page number which has been added to the page table.
+ *
+ * This function can be used to iterate over the page numbers
+ * which have been added to the page table. If multiple subpages
+ * of a page have been added, the function returns this page
+ * number only once.
+ *
+ * When @a *pgno is less than 0x100 it returns the lowest page number
+ * in the page table, otherwise the next higher page number which has
+ * been added. When there are no higher page numbers it returns @c FALSE.
+ *
+ * @example
+ * vbi_pgno pgno = 0;
+ *
+ * // Iterate over all pages.
+ * while (!vbi_page_table_next_page (pt, &pgno) {
+ *     // Do things on page pgno.
+ * }
+ * @endexample
+ */
 vbi_bool
 vbi_page_table_next_page	(const vbi_page_table *pt,
 				 vbi_pgno *		pgno)
@@ -236,6 +332,15 @@ vbi_page_table_next_page	(const vbi_page_table *pt,
 	return vbi_page_table_next_subpage (pt, pgno, &subno);
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ *
+ * This function returns the number of pages which have been added
+ * to the page table. Multiple subpages of a page count as one page.
+ *
+ * This is a fast function. It just returns the value of a counter
+ * maintained by the add and remove functions.
+ */
 unsigned int
 vbi_page_table_num_pages	(const vbi_page_table *pt)
 {
@@ -353,6 +458,23 @@ valid_subpage_range		(vbi_pgno		pgno,
 	return TRUE;
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ * @param pgno The page in question. Must be in range 0x100 to 0x8FF
+ *   inclusive.
+ * @param first_subno First subpage number to remove.
+ * @param last_subno Last subpage number to remove. Both @a first_subno
+ *   and @a last_subno must be in range 0 to 0x3F7E inclusive, or
+ *   both must be @c VBI_ANY_SUBNO.
+ *
+ * This function removes the Teletext subpages of page @a pgno from
+ * @a first_subno to @a last_subno inclusive. When @a first_subno
+ * and @a last_subno is @c VBI_ANY_SUBNO, it removes the page and
+ * all its subpages as vbi_page_table_remove_page() does.
+ *
+ * @a returns
+ * @c FALSE on failure (invalid page or subpage numbers or out of memory).
+ */
 vbi_bool
 vbi_page_table_remove_subpages	(vbi_page_table *	pt,
 				 vbi_pgno		pgno,
@@ -456,6 +578,23 @@ vbi_page_table_remove_subpages	(vbi_page_table *	pt,
 	return TRUE;
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ * @param pgno The page in question. Must be in range 0x100 to 0x8FF
+ *   inclusive.
+ * @param first_subno First subpage number to add.
+ * @param last_subno Last subpage number to add. Both @a first_subno
+ *   and @a last_subno must be in range 0 to 0x3F7E inclusive, or
+ *   both must be @c VBI_ANY_SUBNO.
+ *
+ * This function adds the Teletext subpages of page @a pgno from
+ * from @a first_subno to @a last_subno inclusive. When @a first_subno
+ * and @a last_subno is @c VBI_ANY_SUBNO, it adds all subpages as
+ * vbi_page_table_add_page() does.
+ *
+ * @a returns
+ * @c FALSE on failure (invalid page or subpage numbers or out of memory).
+ */
 vbi_bool
 vbi_page_table_add_subpages	(vbi_page_table *	pt,
 				 vbi_pgno		pgno,
@@ -544,6 +683,20 @@ valid_pgno_range		(vbi_pgno		first_pgno,
 	return FALSE;
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ * @param first_pgno First page number to remove.
+ * @param last_pgno Last page number to remove. Both @a first_pgno and
+ *   @a last_pgno must be in range 0x100 to 0x8FF inclusive.
+ *
+ * This function removes all Teletext pages from @a first_pgno to
+ * @a last_pgno inclusive, also non-displayable system pages with
+ * hex digits in the page number, and all their subpages from the
+ * page table.
+ *
+ * @a returns
+ * @c FALSE on failure (invalid page numbers or out of memory).
+ */
 vbi_bool
 vbi_page_table_remove_pages	(vbi_page_table *	pt,
 				 vbi_pgno		first_pgno,
@@ -562,6 +715,17 @@ vbi_page_table_remove_pages	(vbi_page_table *	pt,
 
 	if (first_pgno > last_pgno)
 		SWAP (first_pgno, last_pgno);
+
+	if (0x8FF == last_pgno && 0x100 == first_pgno) {
+		pt->subpages_size = 0;
+
+		shrink_subpages_vector (pt);
+
+		memset (pt->pages, 0, sizeof (pt->pages));
+		pt->pages_popcnt = 0;
+
+		return TRUE;
+	}
 
 	remove_subpages_in_page_range (pt, first_pgno, last_pgno);
 
@@ -594,6 +758,20 @@ vbi_page_table_remove_pages	(vbi_page_table *	pt,
 	return TRUE;
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ * @param first_pgno First page number to add.
+ * @param last_pgno Last page number to add. Both @a first_pgno and
+ *   @a last_pgno must be in range 0x100 to 0x8FF inclusive.
+ *
+ * This function adds all Teletext pages from @a first_pgno to
+ * @a last_pgno inclusive, also non-displayable system pages with
+ * hex digits in the page number, and all their subpages to the page
+ * table.
+ *
+ * @a returns
+ * @c FALSE on failure (invalid page numbers or out of memory).
+ */
 vbi_bool
 vbi_page_table_add_pages	(vbi_page_table *	pt,
 				 vbi_pgno		first_pgno,
@@ -612,6 +790,17 @@ vbi_page_table_add_pages	(vbi_page_table *	pt,
 
 	if (first_pgno > last_pgno)
 		SWAP (first_pgno, last_pgno);
+
+	if (0x8FF == last_pgno && 0x100 == first_pgno) {
+		pt->subpages_size = 0;
+
+		shrink_subpages_vector (pt);
+
+		memset (pt->pages, -1, sizeof (pt->pages));
+		pt->pages_popcnt = 0x800;
+
+		return TRUE;
+	}
 
 	/* Remove duplicates of pages[] in subpages. */
 	remove_subpages_in_page_range (pt, first_pgno, last_pgno);
@@ -645,19 +834,25 @@ vbi_page_table_add_pages	(vbi_page_table *	pt,
 	return TRUE;
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ *
+ * This function removes all Teletext pages from 0x100 to 0x8FF
+ * inclusive and all their subpages from the page table.
+ */
 void
 vbi_page_table_remove_all_pages	(vbi_page_table *	pt)
 {
-	assert (NULL != pt);
-
-	pt->subpages_size = 0;
-
-	shrink_subpages_vector (pt);
-
-	memset (pt->pages, 0, sizeof (pt->pages));
-	pt->pages_popcnt = 0;
+	vbi_page_table_remove_pages (pt, 0x100, 0x8FF);
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ *
+ * This function adds all displayable Teletext pages from 0x100 to
+ * 0x899 (i.e. all page numbers which are valid BCD numbers) and all
+ * their subpages to the page table.
+ */
 void
 vbi_page_table_add_all_displayable_pages
 				(vbi_page_table *	pt)
@@ -694,18 +889,24 @@ vbi_page_table_add_all_displayable_pages
 	}
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new().
+ *
+ * This function adds all Teletext pages from 0x100 to 0x8FF inclusive
+ * and all their subpages to the page table.
+ */
 void
 vbi_page_table_add_all_pages	(vbi_page_table *	pt)
 {
-	assert (NULL != pt);
-
-	pt->subpages_size = 0;
-
-	shrink_subpages_vector (pt);
-
-	memset (pt->pages, -1, sizeof (pt->pages));
+	vbi_page_table_add_pages (pt, 0x100, 0x8FF);
 }
 
+/**
+ * @param pt Teletext page table allocated with vbi_page_table_new(),
+ *   can be @c NULL.
+ *
+ * Frees all resources associated with @a pt.
+ */
 void
 vbi_page_table_delete		(vbi_page_table *	pt)
 {
@@ -719,6 +920,13 @@ vbi_page_table_delete		(vbi_page_table *	pt)
 	vbi_free (pt);		
 }
 
+/**
+ * Allocates a new Teletext page number table. Initially no page numbers
+ * are in the table.
+ *
+ * @returns
+ * @c NULL on failure (out of memory).
+ */
 vbi_page_table *
 vbi_page_table_new		(void)
 {
