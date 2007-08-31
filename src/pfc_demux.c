@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pfc_demux.c,v 1.5 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: pfc_demux.c,v 1.6 2007/08/31 15:33:05 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -362,7 +362,7 @@ vbi_pfc_demux_delete		(vbi_pfc_demux *	dx)
 /**
  * @param pgno Page to take PFC data from.
  * @param stream PFC stream to be demultiplexed.
- * @param cb Function to be called by vbi_pfc_demux_demux() when
+ * @param callback Function to be called by vbi_pfc_demux_demux() when
  *   a new data block is available.
  * @param user_data User pointer passed through to @a cb function.
  *
