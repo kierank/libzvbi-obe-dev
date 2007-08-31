@@ -76,7 +76,7 @@ elif $CC -v 2>&1 | grep -q -e '^gcc version [3-9]\.' ; then
   CFLAGS="$CFLAGS -Wunused-variable"	# declared but not used
   CFLAGS="$CFLAGS -Wunused-value"	# return x, 0;
   CFLAGS="$CFLAGS -Wunknown-pragmas"    # #pragma whatever
-  CFLAGS="$CFLAGS -Wfloat-equal"	# M_PI == 3
+  CFLAGS="$CFLAGS -Wfloat-equal"	# x == 1.000
   CFLAGS="$CFLAGS -Wundef"		# #undef X, #if X == 3
   CFLAGS="$CFLAGS -Wendif-labels"	# #endif BLAH
   #CFLAGS="$CFLAGS -Wshadow"		# int foo; bar () { int foo; ... }

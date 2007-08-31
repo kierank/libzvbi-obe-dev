@@ -1,7 +1,30 @@
+2007-08-31    <mschimek@users.sf.net>
+
+	* test/test-vps.c, test/test-dvb_mux.cc: Added GPLv2+ blurb.
+
+	* test/sliced2pes.c: Use the new helper functions. Added support
+	  for DVB PES & TS input streams and the standard options -h -q -V.
+          Added data identifier and min/max PES packet size options.
+	  Added an option to generate a TS stream.
+
+	* test/capture.c: Use the new helper functions. Added PID
+	  argument to -t (ts) option.
+	* test/Makefile.am (capture_SOURCES): Use helper functions.
+
+	* test/sliced.h, test/sliced.c: Fixed option_ts_pid to handle
+	  64 bit result of strtoul().
+
+	* src/pfc_demux.c (vbi_pfc_demux_new): Dox fixed.
+
+	* src/page_table.h, src/page_table.c: Added doxumentation.
+
+	* test/test-dvb_mux.cc, src/dvb_mux.c, src/dvb_mux.h: On a second
+	  though vbi_dvb_mux_get_min/max_pes_packet_size sounds better.
+
 2007-08-29    <mschimek@users.sf.net>
 
-	* test/Makefile.am (LDADD), contrib/Makefile.am (LDADD): Don't
-	  require libzvbi.a (bug #1692015).
+	* test/Makefile.am (LDADD), contrib/Makefile.am (LDADD),
+	  configure.in: Don't require libzvbi.a (bug #1692015).
 
 	* src/io-sim.c (warning): Missing __FILE__ parameter.
 

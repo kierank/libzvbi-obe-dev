@@ -1,5 +1,5 @@
 /*
- *  libzvbi -- Teletext filter
+ *  zvbi-ttxfilter -- Teletext filter
  *
  *  Copyright (C) 2005-2007 Michael H. Schimek
  *
@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.10 2007/08/27 06:46:10 mschimek Exp $ */
+/* $Id: ttxfilter.c,v 1.11 2007/08/31 15:33:40 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -248,7 +248,7 @@ option_time			(void)
 }
 
 static vbi_bool
-is_valid_pgno			(vbi_pgno		pgno)
+valid_pgno			(vbi_pgno		pgno)
 {
 	return (vbi_is_bcd (pgno)
 		&& pgno >= 0x100
@@ -279,7 +279,7 @@ parse_page_numbers		(unsigned int		argc,
 		first_pgno = strtoul (s, &end, 16);
 		s = end;
 
-		if (!is_valid_pgno (first_pgno))
+		if (!valid_pgno (first_pgno))
 			invalid_pgno_exit (argv[i]);
 
 		last_pgno = first_pgno;
@@ -296,7 +296,7 @@ parse_page_numbers		(unsigned int		argc,
 			last_pgno = strtoul (s, &end, 16);
 			s = end;
 
-			if (!is_valid_pgno (last_pgno))
+			if (!valid_pgno (last_pgno))
 				invalid_pgno_exit (argv[i]);
 		} else if (0 != *s) {
 			invalid_pgno_exit (argv[i]);
@@ -382,6 +382,7 @@ main				(int			argc,
 				    /* user_data */ NULL);
 	if (NULL == sf)
 		no_mem_exit ();
+
 #if 0
 	if (DEBUG) {
 		vbi_sliced_filter_set_log_fn (sf, /* mask */ -1,
