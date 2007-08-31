@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_mux.h,v 1.7 2007/08/31 15:33:26 mschimek Exp $ */
+/* $Id: dvb_mux.h,v 1.8 2007/08/31 16:00:51 mschimek Exp $ */
 
 #ifndef __ZVBI_DVB_MUX_H__
 #define __ZVBI_DVB_MUX_H__
@@ -28,6 +28,8 @@
 #include "sampling_par.h"	/* vbi_videostd_set */
 
 VBI_BEGIN_DECLS
+
+/* Public */
 
 /**
  * @addtogroup DVBMux
@@ -137,6 +139,8 @@ vbi_dvb_ts_mux_new		(unsigned int		pid,
   __attribute__ ((_vbi_alloc));
 
 /** @} */
+
+/* Private */
 
 VBI_END_DECLS
 

@@ -1,5 +1,7 @@
 2007-08-31    <mschimek@users.sf.net>
 
+	* src/dvb_mux.h: Missing markers for inclusion in libzvbi.h.
+
 	* test/test-vps.c, test/test-dvb_mux.cc: Added GPLv2+ blurb.
 
 	* test/sliced2pes.c: Use the new helper functions. Added support
@@ -19,7 +21,7 @@
 	* src/page_table.h, src/page_table.c: Added doxumentation.
 
 	* test/test-dvb_mux.cc, src/dvb_mux.c, src/dvb_mux.h: On a second
-	  though vbi_dvb_mux_get_min/max_pes_packet_size sounds better.
+	  thought vbi_dvb_mux_get_min/max_pes_packet_size sounds better.
 
 2007-08-29    <mschimek@users.sf.net>
 
