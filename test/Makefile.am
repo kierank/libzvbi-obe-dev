@@ -46,6 +46,10 @@ noinst_PROGRAMS = \
 	$(proxy_programs) \
 	$(x_programs)
 
+capture_SOURCES = \
+	capture.c \
+	sliced.c sliced.h
+
 caption_SOURCES = \
 	caption.c \
 	sliced.c sliced.h
