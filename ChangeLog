@@ -1,3 +1,10 @@
+2007-09-01    <mschimek@users.sf.net>
+
+	* src/Makefile.am, src/sampling_par.h: Make vbi_videostd_set
+	  public for dvb_mux. 
+
+	* test/sliced2pes.c: Fixes.
+
 2007-08-31    <mschimek@users.sf.net>
 
 	* src/dvb_mux.h: Missing markers for inclusion in libzvbi.h.

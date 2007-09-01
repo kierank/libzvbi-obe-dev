@@ -950,6 +950,17 @@ extern unsigned int	vbi_raw_decoder_parameters(vbi_raw_decoder *rd, unsigned int
 extern int		vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out);
 
 
+/* sampling_par.h */
+
+typedef vbi_raw_decoder vbi_sampling_par;
+
+#define VBI_VIDEOSTD_SET_EMPTY 0
+#define VBI_VIDEOSTD_SET_PAL_BG 1
+#define VBI_VIDEOSTD_SET_625_50 1
+#define VBI_VIDEOSTD_SET_525_60 2
+#define VBI_VIDEOSTD_SET_ALL 3
+typedef uint64_t vbi_videostd_set;
+
 /* dvb_demux.h */
 
 
@@ -1272,10 +1283,6 @@ extern vbi_xds_demux *
 vbi_xds_demux_new		(vbi_xds_demux_cb *	callback,
 				 void *			user_data)
   __attribute__ ((_vbi_alloc));
-
-/* sampling_par.h */
-
-typedef vbi_raw_decoder vbi_sampling_par;
 
 /* io.h */
 
