@@ -1,11 +1,23 @@
-2007-09-01    <mschimek@users.sf.net>
+2007-09-01	<mschimek@users.sf.net>
+
+	* test/wss.c: Removed. This code went into examples/.
+	* test/README: Updated.
+	* test/ttxfilter.c (filter_frame), test/sliced2pes.c,
+	  test/sliced.c: Added write_error_exit helper function.
+	* test/ttxfilter.c (main), test/sliced2pes.c (main), test/sliced.h,
+	  test/sliced.c, test/decode.c (main): Moved the End of stream
+	  messages back to the tools to allow a customized message in
+	  test/export.
+	* test/export.c: Consolidated with its 0.3 counterpart.
+
+	* test/unicode.c, test/glyph.c: Replaced extern decls by includes.
 
 	* src/Makefile.am, src/sampling_par.h: Make vbi_videostd_set
 	  public for dvb_mux. 
 
 	* test/sliced2pes.c: Fixes.
 
-2007-08-31    <mschimek@users.sf.net>
+2007-08-31	<mschimek@users.sf.net>
 
 	* src/dvb_mux.h: Missing markers for inclusion in libzvbi.h.
 
@@ -30,14 +42,14 @@
 	* test/test-dvb_mux.cc, src/dvb_mux.c, src/dvb_mux.h: On a second
 	  thought vbi_dvb_mux_get_min/max_pes_packet_size sounds better.
 
-2007-08-29    <mschimek@users.sf.net>
+2007-08-29	<mschimek@users.sf.net>
 
 	* test/Makefile.am (LDADD), contrib/Makefile.am (LDADD),
 	  configure.in: Don't require libzvbi.a (bug #1692015).
 
 	* src/io-sim.c (warning): Missing __FILE__ parameter.
 
-2007-08-27    <mschimek@users.sf.net>
+2007-08-27	<mschimek@users.sf.net>
 
 	* src/proxy-msg.c (vbi_proxy_msg_handle_read): printf size_t fix.
 
@@ -115,7 +127,7 @@
 	* autogen-maint.sh (CXXFLAGS): Same warnings as in CFLAGS,
 	  except those which are not supported in C++.
 
-2007-07-23    <mschimek@users.sf.net>
+2007-07-23	<mschimek@users.sf.net>
 
 	* src/sliced_filter.c, src/sliced_filter.h: Move the Teletext
 	  filter code from test/ttxfilter.c here and improved it
@@ -136,7 +148,7 @@
 
 	* autogen-maint.sh: CFLAGS -Ox fixes.
 
-2007-07-04    <mschimek@users.sf.net>
+2007-07-04	<mschimek@users.sf.net>
 
 	* test/ttxfilter.c: Added time option and a few other
 	  improvements.

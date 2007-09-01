@@ -122,19 +122,17 @@ capture
 
 	--long options are only available on GNU & compatible systems.
 
-wss
-	Test/demo app capturing a WSS signal from video images (V4L2
-	only). Type ./wss -h for options.
-
 decode
 	Decodes sliced VBI data on stdin, e. g.
 	./capture --sliced | ./decode --ttx
+	Also a test of the libzvbi low-level decoders.
 	Type ./decode -h for options.
 
 sliced2pes
 	Converts ./capture --sliced format to DVB PES.  For example
 	"./capture --sliced | ./sliced2pes >file" is equivalent to
-	"./capture --pes >file". No options.
+	"./capture --pes >file".
+	Type ./sliced2pes -h for options.
 
 ttxfilter
 	Filters Teletext pages out of a VBI stream. Useful mostly

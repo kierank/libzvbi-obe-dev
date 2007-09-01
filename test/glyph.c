@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: glyph.c,v 1.7 2006/10/06 19:23:55 mschimek Exp $ */
+/* $Id: glyph.c,v 1.8 2007/09/01 15:06:55 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -27,10 +27,8 @@
 #include <string.h>
 #include <assert.h>
 
-#include "src/libzvbi.h"
-
-extern unsigned int	vbi_teletext_unicode(int, int, int);
-extern unsigned int	vbi_teletext_composed_unicode(unsigned int a, unsigned int c);
+#include "src/lang.h"
+#include "src/export.h"
 
 static vbi_page *pg;
 static vbi_char ac;

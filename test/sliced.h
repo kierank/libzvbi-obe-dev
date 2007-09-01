@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.h,v 1.7 2007/08/31 15:32:49 mschimek Exp $ */
+/* $Id: sliced.h,v 1.8 2007/09/01 15:06:55 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -97,6 +97,8 @@ error_msg			(const char *		template,
 extern void
 error_exit			(const char *		template,
 				 ...);
+extern void
+write_error_exit		(const char *		msg);
 extern void
 no_mem_exit			(void);
 extern vbi_bool

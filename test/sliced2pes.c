@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced2pes.c,v 1.8 2007/09/01 01:45:42 mschimek Exp $ */
+/* $Id: sliced2pes.c,v 1.9 2007/09/01 15:06:55 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -58,12 +58,6 @@ static unsigned long		option_max_pes_packet_size;
 
 static vbi_dvb_mux *		mx;
 
-static void
-write_error_exit		(void)
-{
-	error_exit (_("Write error: %s."), strerror (errno));
-}
-
 static vbi_bool
 ts_pes_cb			(vbi_dvb_mux *		mx,
 				 void *			user_data,
@@ -77,7 +71,7 @@ ts_pes_cb			(vbi_dvb_mux *		mx,
 
 	actual = fwrite (packet, 1, packet_size, stdout);
 	if (actual < 1)
-		write_error_exit ();
+		write_error_exit (/* msg: errno */ NULL);
 
 	return TRUE;
 }
@@ -340,8 +334,10 @@ main				(int			argc,
 		read_stream_delete (st);
 	}
 
+	error_msg (_("End of stream."));
+
 	if (0 != fflush (stdout))
-		write_error_exit ();
+		write_error_exit (/* msg: errno */ NULL);
 
 	exit (EXIT_SUCCESS);
 }
