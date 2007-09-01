@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced2pes.c,v 1.7 2007/08/31 15:32:34 mschimek Exp $ */
+/* $Id: sliced2pes.c,v 1.8 2007/09/01 01:45:42 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <locale.h>
 #include <limits.h>
 #include <assert.h>
@@ -57,20 +58,29 @@ static unsigned long		option_max_pes_packet_size;
 
 static vbi_dvb_mux *		mx;
 
+static void
+write_error_exit		(void)
+{
+	error_exit (_("Write error: %s."), strerror (errno));
+}
+
 static vbi_bool
 ts_pes_cb			(vbi_dvb_mux *		mx,
 				 void *			user_data,
 				 const uint8_t *	packet,
 				 unsigned int		packet_size)
 {
+	size_t actual;
+
 	mx = mx; /* unused */
 	user_data = user_data;
 
-	fwrite (packet, 1, packet_size, stdout);
+	actual = fwrite (packet, 1, packet_size, stdout);
+	if (actual < 1)
+		write_error_exit ();
 
 	return TRUE;
 }
-
 
 static vbi_bool
 decode_frame			(const vbi_sliced *	sliced,
@@ -92,7 +102,8 @@ decode_frame			(const vbi_sliced *	sliced,
 				     /* sp */ NULL,
 				     /* pts */ stream_time);
 	if (!success) {
-		error_exit (_("Maximum PES packet size %lu bytes is too small."),
+		error_exit (_("Maximum PES packet size %lu bytes "
+			      "is too small for this input stream."),
 			    option_max_pes_packet_size);
 	}
 
@@ -324,11 +335,13 @@ main				(int			argc,
 	{
 		struct stream *st;
 
-		st = read_stream_new (FILE_FORMAT_SLICED,
-				      decode_frame);
+		st = read_stream_new (in_file_format, decode_frame);
 		read_stream_loop (st);
 		read_stream_delete (st);
 	}
+
+	if (0 != fflush (stdout))
+		write_error_exit ();
 
 	exit (EXIT_SUCCESS);
 }
