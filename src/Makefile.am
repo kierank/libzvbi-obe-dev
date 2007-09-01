@@ -137,12 +137,12 @@ LIBZVBI_HDRS = \
 	search.h \
 	sliced.h \
 	decoder.h \
+	sampling_par.h \
 	dvb_demux.h \
 	dvb_mux.h \
 	idl_demux.h \
 	pfc_demux.h \
 	xds_demux.h \
-	sampling_par.h \
 	io.h \
 	io-sim.h \
 	proxy-msg.h \
