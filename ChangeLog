@@ -1,3 +1,52 @@
+2007-09-12	<mschimek@users.sf.net>
+
+	* test/sliced2pes.c: Moved the output functions into sliced.c.
+	  Added --verbose option.
+	* test/sliced.c, test/sliced.h: Integrated capture and file output
+	  functions, added support for raw capturing and raw VBI files.
+	  More helper functions.
+	* test/export.c: Added --verbose option. 
+	* test/capture.c: File helpers changed. Removed VPS decoder, which
+	  is now part of the decode tool. Added raw capturing. Added a CC test
+	  for Rich. Added, changed and removed a few options, added some
+	  standard options. Moved the capture and output functions into
+	  sliced.c.
+	* test/export.c, test/decode.c, test/caption.c: File helpers changed.
+
+	* src/sliced_filter.c, src/pfc_demux.c, src/page_table.c, src/misc.c,
+	  src/idl_demux.c, src/dvb_mux.c, src/conv.c: Replaced malloc()
+	  and free() calls by macros for memory allocation tests.
+	* src/dvb_mux.c (insert_sliced_data_units): Removed the unused
+	  strict option to pass the unit test coverage test.
+	* test/test-dvb_mux.cc: Moved some helper functions into
+	  test-common.cc, tried C++ to simplify things. Added a memory
+	  allocation test.
+	* test/test-common.cc, test/test-common.h: New unit test helper
+	  functions.
+	* test/Makefile.am (test_dvb_mux_SOURCES): Added test-common.cc,
+	  test-common.h.
+
+	* src/sampling_par.c (_vbi_sampling_par_valid_log)
+	(_vbi_sampling_par_permit_service): Changed log
+	  level from notice to info.
+
+	* src/bit_slicer.c: Commented out unused BIT_SLICER RGB8 code.
+
+2007-09-07	<mschimek@users.sf.net>
+
+	* test/sliced.c (write_sliced), test/ttxfilter.c (filter_frame),
+	  test/capture.c (binary_sliced): Produced wrong timestamps if a
+	  frame did not contain data.
+
+2007-09-02	<mschimek@users.sf.net>
+
+	* src/dvb_mux.c: Fixed typos in doxumentation.
+	* src/dvb_mux.c, src/dvb_demux.c: Added reference to
+	  vbi_decode_dvb_pdc_descriptor(),
+	  vbi_encode_dvb_pdc_descriptor().
+	* src/vps.h, src/vps.c: Added vbi_decode_dvb_pdc_descriptor(),
+	  vbi_encode_dvb_pdc_descriptor() (not part of the API yet).
+
 2007-09-01	<mschimek@users.sf.net>
 
 	* test/wss.c: Removed. This code went into examples/.

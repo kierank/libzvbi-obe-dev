@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.30 2007/08/27 06:44:47 mschimek Exp $ */
+/* $Id: osc.c,v 1.31 2007/09/12 15:55:05 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -192,7 +192,7 @@ decode_vps(uint8_t *buf)
 
 	pty = buf[12];
 
-#warning this sucks
+	/* FIXME use real buffer size. */
 	text += snprintf(text, 100, " CNI: %04x PCS: %d PTY: %d ", cni, pcs, pty);
 
 	text += snprintf(text, 50, " %s", dump_pil(pil));

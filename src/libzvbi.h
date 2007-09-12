@@ -1745,10 +1745,15 @@ extern const char *	vbi_prog_type_string(vbi_prog_classf classf, int id);
 
 extern vbi_bool
 vbi_decode_vps_cni		(unsigned int *		cni,
-				 const uint8_t		buffer[13]);
+				 const uint8_t		buffer[13])
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  __attribute__ ((_vbi_nonnull (1, 2)))
+#endif
+  ;
 extern vbi_bool
 vbi_encode_vps_cni		(uint8_t		buffer[13],
-				 unsigned int		cni);
+				 unsigned int		cni)
+  __attribute__ ((_vbi_nonnull (1)));
 
 /* vbi.h */
 

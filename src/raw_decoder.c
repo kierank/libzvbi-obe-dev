@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.18 2007/08/27 06:43:53 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.19 2007/09/12 15:55:05 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -851,7 +851,7 @@ lines_containing_data		(unsigned int		start[2],
 }
 
 /**
- * $param rd Pointer to vbi_raw_decoder object allocated with
+ * $param rd Pointer to vbi3_raw_decoder object allocated with
  *   vbi3_raw_decoder_new().
  * $param services Set of data services.
  * $param strict A value of 0, 1 or 2 requests loose, reliable or strict
@@ -1196,7 +1196,7 @@ vbi3_raw_decoder_delete		(vbi3_raw_decoder *	rd)
  *
  * $returns
  * NULL when out of memory or the sampling parameters are invalid,
- * Otherwise a pointer to an opaque vbi_raw_decoder object which must
+ * Otherwise a pointer to an opaque vbi3_raw_decoder object which must
  * be deleted with vbi3_raw_decoder_delete() when done.
  */
 vbi3_raw_decoder *
