@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.c,v 1.10 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: bit_slicer.c,v 1.11 2007/09/12 15:54:13 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -283,7 +283,9 @@ BIT_SLICER (RGB24_LE, 4, 9)	/* 2 bytes */
 BIT_SLICER (RGBA24_LE, 4, 9)	/* 3 bytes */
 BIT_SLICER (RGB16_LE, 4, bs->thresh_frac)
 BIT_SLICER (RGB16_BE, 4, bs->thresh_frac)
+#if 3 == VBI_VERSION_MINOR
 BIT_SLICER (RGB8, 8, bs->thresh_frac)
+#endif
 
 static vbi_bool
 null_function			(vbi3_bit_slicer *	bs,
@@ -474,7 +476,7 @@ vbi3_bit_slicer_slice		(vbi3_bit_slicer *	bs,
  *   bits transmitted per second.
  * @param modulation Modulation of the payload, see vbi3_modulation.
  * 
- * Initializes a vbi3_bit_slicer object for use with
+ * Initializes a vbi_bit_slicer object for use with
  * vbi3_bit_slicer_slice(). This is a low level function, see also
  * vbi3_raw_decoder_new().
  *
