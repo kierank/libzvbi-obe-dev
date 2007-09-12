@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_mux.c,v 1.11 2007/08/31 15:33:22 mschimek Exp $ */
+/* $Id: dvb_mux.c,v 1.12 2007/09/12 15:53:35 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -34,8 +34,20 @@
 /**
  * @addtogroup DVBMux DVB VBI multiplexer
  * @ingroup LowDec
- * @brief Converting raw and/or sliced VBI data to a DVB PES or TS stream
- *   (ETS 301 472, EN 301 775).
+ * @brief Converting VBI data to a DVB PES or TS stream.
+ *
+ * These functions convert raw and/or sliced VBI data to a DVB Packetized
+ * Elementary Stream or Transport Stream as defined in EN 300 472 "Digital
+ * Video Broadcasting (DVB); Specification for conveying ITU-R System B
+ * Teletext in DVB bitstreams" and EN 301 775 "Digital Video Broadcasting
+ * (DVB); Specification for the carriage of Vertical Blanking Information
+ * (VBI) data in DVB bitstreams".
+ *
+ * Note EN 300 468 "Digital Video Broadcasting (DVB); Specification for
+ * Service Information (SI) in DVB systems" defines another method to
+ * transmit VPS data in DVB streams. Libzvbi does not provide functions
+ * to generate SI tables but the vbi_encode_dvb_pdc_descriptor() function
+ * is available to convert a VPS PIL to a PDC descriptor.
  */
 
 #if 3 == VBI_VERSION_MINOR
@@ -87,7 +99,7 @@ static const unsigned int BT601_625_OFFSET = 864 - 12 - 720;
 
    When the data_identifier is in range 0x10 to 0x1F inclusive, each
    data unit must have a size of 46 bytes ("data_unit_length = 0x2C")
-   for compatibility with ETS 300 472. So the data units also end
+   for compatibility with EN 300 472. So the data units also end
    at a PES and TS packet boundary. */
 
 /* packet_start_code_prefix [24],
@@ -189,12 +201,9 @@ encode_stuffing			(uint8_t *		p,
  *   @c VBI_SLICED_ values.
  * @param fixed_length If @c TRUE, all data units will have a size
  *   of 46 bytes.
- * @param strict If @c TRUE, the function will only accept data
- *   services and line numbers which are permitted by ETS 300 472
- *   and EN 301 775.
  *
  * Converts the sliced VBI data in the @a sliced array to VBI data
- * units as defined in ETS 300 472 and EN 301 775 and stores them
+ * units as defined in EN 300 472 and EN 301 775 and stores them
  * in the @a packet buffer. The function will not fill up the
  * buffer with stuffing bytes. Call the encode_stuffing() function
  * for this purpose.
@@ -214,16 +223,6 @@ encode_stuffing			(uint8_t *		p,
  *   - @c VBI_SLICED_VPS on line 16.
  *   - @c VBI_SLICED_CAPTION_625 on line 22.
  *   - @c VBI_SLICED_WSS_625 on line 23.
- *   If @a strict is @c FALSE the function accepts line numbers in
- *   the range 1 to 31 and 314 to 344 inclusive for all services, however
- *   decoders will likely discard these data units.
- *   Further the function accepts these services:
- *   - @c VBI_SLICED_VPS_F2 (with data_unit_id 0xB4)
- *   - @c VBI_SLICED_CAPTION_525 (0xB5).
- *   - @c VBI_SLICED_WSS_CPR1204 (0xB6).
- *   This is a libzvbi extension, only the libzvbi DVB demultiplexer
- *   will decode these data units. Other standard compliant decoders
- *   will likely discard them.
  * - @c VBI_ERR_LINE_NUMBER
  *   A vbi_sliced structure contains a line number outside the valid
  *   range specified above.
@@ -242,9 +241,9 @@ insert_sliced_data_units	(uint8_t **		packet,
 				 const vbi_sliced **	sliced,
 				 unsigned int		s_left,
 				 vbi_service_set	service_mask,
-				 vbi_bool		fixed_length,
-				 vbi_bool		strict)
+				 vbi_bool		fixed_length)
 {
+	static const vbi_bool strict = TRUE;
 	uint8_t *p;
 	const vbi_sliced *s;
 	unsigned int last_line;
@@ -323,14 +322,6 @@ insert_sliced_data_units	(uint8_t **		packet,
 			}
 			break;
 
-		case VBI_SLICED_VPS | VBI_SLICED_VPS_F2:
-		case VBI_SLICED_VPS_F2:
-			/* Libzvbi extension. */
-			du_size = 2 + 1 + 13;
-			if (strict || 0 == line)
-				goto bad_service;
-			break;
-
 		case VBI_SLICED_WSS_625:
 			du_size = 2 + 1 + 2;
 			/* EN 301 775 section 4.7.2: Must be
@@ -351,7 +342,16 @@ insert_sliced_data_units	(uint8_t **		packet,
 					goto bad_line;
 			}
 			break;
-			
+
+#if 0 /* unused, untested */
+		case VBI_SLICED_VPS | VBI_SLICED_VPS_F2:
+		case VBI_SLICED_VPS_F2:
+			/* Libzvbi extension. */
+			du_size = 2 + 1 + 13;
+			if (strict || 0 == line)
+				goto bad_service;
+			break;
+
 		case VBI_SLICED_CAPTION_625_F2:
 			du_size = 2 + 1 + 2;
 			if (strict || 0 == line)
@@ -374,8 +374,10 @@ insert_sliced_data_units	(uint8_t **		packet,
 				goto bad_service;
 			/* FIXME line = ? */
 			break;
-			
+#endif /* 0 */
 		default:
+			goto bad_service;
+
 		bad_service:
 			*packet = p;
 			*sliced = s;
@@ -473,6 +475,8 @@ insert_sliced_data_units	(uint8_t **		packet,
 			p[0] = DATA_UNIT_CLOSED_CAPTION;
 			p[3] = vbi_rev8 (s->data[0]);
 			p[4] = vbi_rev8 (s->data[1]);
+
+#if 0 /* unused, untested */
 		} else if (s->id & VBI_SLICED_CAPTION_525) {
 			/* data_unit_id [8], data_unit_length [8],
 			   reserved [2], field_parity, line_offset [5],
@@ -489,6 +493,7 @@ insert_sliced_data_units	(uint8_t **		packet,
 			p[3] = s->data[0];
 			p[4] = s->data[1];
 			p[5] = s->data[2] | 0xF;
+#endif /* 0 */
 		} else {
 			assert (0);
 		}
@@ -510,7 +515,7 @@ fixed_length_format		(unsigned int		data_identifier)
 {
 	/* EN 301 775 section 4.4.2: If the data_identifier has a
 	   value between 0x10 and 0x1F inclusive, [data_unit_length]
-	   shall always be set to 0x2C. (Compatibility with ETS 301 472.) */
+	   shall always be set to 0x2C. (Compatibility with EN 300 472.) */
 	return (0x10 == (data_identifier & ~0xF));
 }
 
@@ -538,7 +543,7 @@ fixed_length_format		(unsigned int		data_identifier)
  *   @c VBI_SLICED_ values.
  * @param data_identifier When the @a data_indentifier lies in range
  *   0x10 to 0x1F inclusive, the encoded data units will be padded to
- *   data_unit_length 0x2C for compatibility with ETS 300 472
+ *   data_unit_length 0x2C for compatibility with EN 300 472
  *   compliant decoders. The @a data_identifier itself will NOT be
  *   stored in the output buffer.
  * @param stuffing If TRUE, and space remains in the output buffer
@@ -547,7 +552,7 @@ fixed_length_format		(unsigned int		data_identifier)
  *   the buffer up with stuffing data units.
  *
  * Converts the sliced VBI data in the @a sliced array to VBI data
- * units as defined in ETS 300 472 and EN 301 775 and stores them
+ * units as defined in EN 300 472 and EN 301 775 and stores them
  * in the @a packet buffer.
  *
  * @returns
@@ -577,7 +582,7 @@ fixed_length_format		(unsigned int		data_identifier)
  * of 46) in each call.
  *
  * @note
- * According to ETS 300 472 and EN 301 775 all lines stored in one PES
+ * According to EN 300 472 and EN 301 775 all lines stored in one PES
  * packet must belong to the same video frame (but the data of one frame
  * may be transmitted in several successive PES packets). They must be
  * encoded in the same order as they would be transmitted in the VBI, no
@@ -633,8 +638,7 @@ vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 					&last_du_size,
 					sliced, s_left,
 					service_mask,
-					fixed_length,
-					/* strict */ TRUE);
+					fixed_length);
 
 	*packet_left -= *packet - p;
 	*sliced_left -= *sliced - s;
@@ -921,7 +925,7 @@ insert_raw_data_units		(uint8_t **		packet,
  *   be decremented by the number of successfully converted samples.
  * @param data_identifier When the @a data_indentifier lies in range
  *   0x10 to 0x1F inclusive, the encoded data units will be padded to
- *   data_unit_length 0x2C for compatibility with ETS 300 472
+ *   data_unit_length 0x2C for compatibility with EN 300 472
  *   compliant decoders. The @a data_identifier itself will NOT be
  *   stored in the output buffer.
  * @param videostd_set The @a line parameter will be interpreted
@@ -1339,7 +1343,7 @@ init_pes_packet_header		(vbi_dvb_mux *		mx)
  *   PES packet. Bits 33 ... 63 are discarded.
  *
  * This function converts sliced and/or raw VBI data to a VBI PES
- * packet as defined in ETS 300 472 and EN 301 775, and stores it
+ * packet as defined in EN 300 472 and EN 301 775, and stores it
  * at @a mx->packet + 4.
  *
  * @returns
@@ -1477,8 +1481,7 @@ generate_pes_packet		(vbi_dvb_mux *		mx,
 						&s_begin,
 						s - s_begin,
 						service_mask,
-						fixed_length,
-						/* strict */ TRUE);
+						fixed_length);
 		if (unlikely (0 != err)) {
 			s = s_begin;
 			goto failed;
@@ -1627,7 +1630,7 @@ generate_ts_packet_header	(vbi_dvb_mux *		mx,
 	/* PID [8 lsb of 13] */
 	p[2] = mx->pid;
 
-	/* ETS 300 472 section 4.1: "adaptation_field_control:
+	/* EN 300 472 section 4.1: "adaptation_field_control:
 	   only the values '01' and '10' are permitted." */
 
 	/* transport_scrambling_control [2] = '00' (not scrambled),
@@ -1683,7 +1686,7 @@ generate_ts_packet_header	(vbi_dvb_mux *		mx,
  *   PES packet. Bits 33 ... 63 are discarded.
  *
  * This function converts raw and/or sliced VBI data to one DVB VBI PES
- * packet or one or more TS packets as defined in ETS 300 472 and
+ * packet or one or more TS packets as defined in EN 300 472 and
  * EN 301 775, and stores them in the output buffer.
  *
  * If the returned @a *buffer_left value is zero and the returned
@@ -1713,7 +1716,7 @@ generate_ts_packet_header	(vbi_dvb_mux *		mx,
  *   - @c VBI_SLICED_WSS_625 on line 23.
  *   - Raw VBI data with id @c VBI_SLICED_VBI_625 can be encoded
  *     on lines 7 to 23 and 320 to 336 inclusive. Note for compliance
- *     with the Teletext buffer model defined in ETS 300 472,
+ *     with the Teletext buffer model defined in EN 300 472,
  *     EN 301 775 recommends to encode at most one raw and one
  *     sliced, or two raw VBI lines per frame.
  * - A vbi_sliced structure contains a line number outside the
@@ -1894,7 +1897,7 @@ vbi_dvb_mux_cor		(vbi_dvb_mux *		mx,
  *   PES packet. Bits 33 ... 63 are discarded.
  *
  * This function converts raw and/or sliced VBI data to one DVB VBI PES
- * packet or one or more TS packets as defined in ETS 300 472 and
+ * packet or one or more TS packets as defined in EN 300 472 and
  * EN 301 775. For output it calls the callback function passed to
  * vbi_dvb_pes_mux_new() or vbi_dvb_ts_mux_new() once for each
  * PES or TS packet.
@@ -2040,7 +2043,7 @@ vbi_dvb_mux_get_data_identifier (const vbi_dvb_mux *	mx)
  *   PES packets.
  *
  * Determines the data_identifier byte to be stored in PES packets.
- * For compatibility with decoders compliant to ETS 300 472 this should
+ * For compatibility with decoders compliant to EN 300 472 this should
  * be a value in the range 0x10 to 0x1F inclusive. The values 0x99
  * to 0x9B inclusive as defined in EN 301 775 are also permitted.
  *
@@ -2122,7 +2125,7 @@ vbi_dvb_mux_get_max_pes_packet_size
  *
  * The default minimum size is 184, the default maximum 65504 bytes. For
  * compatibility with decoders compliant to the Teletext buffer model
- * defined in ETS 300 472 the maximum should not exceed 1472 bytes.
+ * defined in EN 300 472 the maximum should not exceed 1472 bytes.
  *
  * @returns
  * @c FALSE on failure (out of memory).
@@ -2175,7 +2178,7 @@ vbi_dvb_mux_delete		(vbi_dvb_mux *		mx)
 	if (NULL == mx)
 		return;
 
-	free (mx->packet);
+	vbi_free (mx->packet);
 
 	CLEAR (*mx);
 
@@ -2190,7 +2193,7 @@ vbi_dvb_mux_delete		(vbi_dvb_mux *		mx)
  *
  * Allocates a new DVB VBI multiplexer converting raw and/or sliced VBI data
  * to MPEG-2 Packetized Elementary Stream (PES) packets as defined in the
- * standards ETS 301 472 and EN 301 775.
+ * standards EN 300 472 and EN 301 775.
  *
  * @returns
  * Pointer to newly allocated DVB VBI multiplexer context, which must be
@@ -2250,7 +2253,7 @@ vbi_dvb_pes_mux_new		(vbi_dvb_mux_cb *	callback,
  *
  * Allocates a new DVB VBI multiplexer converting raw and/or sliced VBI data
  * to MPEG-2 Transport Stream (TS) packets as defined in the standards
- * ETS 301 472 and EN 301 775.
+ * EN 300 472 and EN 301 775.
  *
  * @returns
  * Pointer to newly allocated DVB VBI multiplexer context, which must be
