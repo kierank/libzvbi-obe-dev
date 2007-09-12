@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.15 2007/08/27 06:44:06 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.16 2007/09/12 15:54:24 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -26,7 +26,7 @@
 #include <errno.h>
 
 #include "misc.h"		/* CLEAR() */
-#include "hamm.h"		/* vbi3_rev8() */
+#include "hamm.h"		/* vbi_rev8() */
 #include "dvb.h"
 #include "dvb_demux.h"
 
@@ -34,7 +34,7 @@
  * @addtogroup DVBDemux DVB VBI demultiplexer
  * @ingroup LowDec
  * @brief Separating VBI data from a DVB PES stream
- *   (ETS 301 472, EN 301 775).
+ *   (EN 301 472, EN 301 775).
  */
 
 /* XXX Preliminary. */
@@ -1268,7 +1268,7 @@ _vbi_dvb_skip_data_unit		(const uint8_t **	buffer,
  *   equal to @a max_lines. Remedy: call this function again to
  *   convert the remaining data units.
  * - The data unit crosses the end of the buffer. Remedy: discard
- *   the PES packet (ETS 301 472 and EN 301 775 do not permit data
+ *   the PES packet (EN 301 472 and EN 301 775 do not permit data
  *   units to cross a PES packet boundary), or ignore this error, or
  *   call this function again with more data.
  * - The data_unit_length is too small for the data this unit is
