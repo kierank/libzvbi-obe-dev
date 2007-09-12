@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.24 2007/09/01 15:06:55 mschimek Exp $ */
+/* $Id: decode.c,v 1.25 2007/09/12 15:52:59 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -64,32 +64,35 @@
 /* Will be installed one day. */
 #define PROGRAM_NAME "zvbi-decode"
 
-static vbi_pgno			option_pfc_pgno;
+static enum file_format		option_in_file_format;
+static unsigned int		option_in_ts_pid;
+
+static vbi_pgno		option_pfc_pgno;
 static unsigned int		option_pfc_stream;
 
-static vbi_bool			option_decode_ttx;
-static vbi_bool			option_decode_8301;
-static vbi_bool			option_decode_8302;
-static vbi_bool			option_decode_caption;
-static vbi_bool			option_decode_xds;
-static vbi_bool			option_decode_idl;
-static vbi_bool			option_decode_vps;
-static vbi_bool			option_decode_vps_other;
-static vbi_bool			option_decode_wss;
+static vbi_bool		option_decode_ttx;
+static vbi_bool		option_decode_8301;
+static vbi_bool		option_decode_8302;
+static vbi_bool		option_decode_caption;
+static vbi_bool		option_decode_xds;
+static vbi_bool		option_decode_idl;
+static vbi_bool		option_decode_vps;
+static vbi_bool		option_decode_vps_other;
+static vbi_bool		option_decode_wss;
 
-static vbi_bool			option_dump_network;
-static vbi_bool			option_dump_hex;
-static vbi_bool			option_dump_bin;
-static vbi_bool			option_dump_time;
+static vbi_bool		option_dump_network;
+static vbi_bool		option_dump_hex;
+static vbi_bool		option_dump_bin;
+static vbi_bool		option_dump_time;
 static double			option_metronome_tick;
 
-static vbi_pgno			option_pfc_pgno	= 0;
+static vbi_pgno		option_pfc_pgno	= 0;
 static unsigned int		option_pfc_stream = 0;
 
 static unsigned int		option_idl_channel = 0;
 static unsigned int		option_idl_address = 0;
 
-/* Demultiplexers. */
+static struct stream *		rst;
 
 static vbi_pfc_demux *		pfc;
 static vbi_idl_demux *		idl;
@@ -109,7 +112,7 @@ put_cc_char			(unsigned int		c1,
 	/* All caption characters are representable
 	   in UTF-8, but not necessarily in ASCII. */
 	ucs2_str[0] = vbi_caption_unicode ((c1 * 256 + c2) & 0x777F,
-					   /* to_upper */ FALSE);
+					    /* to_upper */ FALSE);
 
 	vbi_fputs_iconv_ucs2 (stdout,
 			       vbi_locale_codeset (),
@@ -161,10 +164,10 @@ caption_command			(unsigned int		line,
 		rrrr = a7 * 2 + ((c2 >> 5) & 1);
 
 		if (c2 & 0x10)
-			printf ("PAC ch=%u row=%u column=%u u=%u\n",
+			printf ("PAC ch=%u row=%d column=%u u=%u\n",
 				ch, row[rrrr], b7 * 4, u);
 		else
-			printf ("PAC ch=%u row=%u color=%u u=%u\n",
+			printf ("PAC ch=%u row=%d color=%u u=%u\n",
 				ch, row[rrrr], b7, u);
 		return;
 	}
@@ -222,8 +225,9 @@ caption_command			(unsigned int		line,
 
 		break;
 
-	case 6: /* reserved */
-		break;
+	case 6:
+		printf ("reserved\n");
+		return;
 
 	case 7:
 		switch (c2) {
@@ -258,7 +262,7 @@ xds_cb				(vbi_xds_demux *	xd,
 				 const vbi_xds_packet *	xp,
 				 void *			user_data)
 {
-	xd = xd;
+	xd = xd; /* unused */
 	user_data = user_data;
 
 	_vbi_xds_packet_dump (xp, stdout);
@@ -272,13 +276,13 @@ caption				(const uint8_t		buffer[2],
 {
 	if (option_decode_xds && 284 == line) {
 		if (!vbi_xds_demux_feed (xds, buffer)) {
-			printf (_("Parity error in XDS data.\n"));
+			printf ("Parity error in XDS data.\n");
 		}
 	}
 
 	if (option_decode_caption
 	    && (21 == line || 284 == line /* NTSC */
-		|| 22 == line /* PAL */)) {
+		|| 22 == line /* PAL? */)) {
 		int c1;
 		int c2;
 
@@ -286,8 +290,8 @@ caption				(const uint8_t		buffer[2],
 		c2 = vbi_unpar8 (buffer[1]);
 
 		if ((c1 | c2) < 0) {
-			printf (_("Parity error in CC line=%u "
-				  " %s0x%02x %s0x%02x.\n"),
+			printf ("Parity error in CC line=%u "
+				" %s0x%02x %s0x%02x.\n",
 				line,
 				(c1 < 0) ? ">" : "", buffer[0] & 0xFF,
 				(c2 < 0) ? ">" : "", buffer[1] & 0xFF);
@@ -304,10 +308,11 @@ caption				(const uint8_t		buffer[2],
 
 			/* Error ignored. */
 			vbi_fputs_iconv (stdout,
-					 /* dst_codeset */
-					 vbi_locale_codeset (),
-					 /* src_codeset */ "EIA-608",
-					 text, 2, /* repl_char */ '?');
+					  /* dst_codeset */
+					  vbi_locale_codeset (),
+					  /* src_codeset */ "EIA-608",
+					  text, 2,
+					  /* repl_char */ '?');
 
 			puts ("'");
 		} else if (0 == c1 || c1 >= 0x10) {
@@ -370,7 +375,7 @@ dump_bytes			(const uint8_t *	buffer,
 	putchar ('>');
 
 	for (j = 0; j < n_bytes; ++j) {
-		/* For Teletext: Not all characters are representable
+		/* Not all Teletext characters are representable
 		   in ASCII or even UTF-8, but at this stage we don't
 		   know the Teletext code page for a proper conversion. */
 		char c = _vbi_to_ascii (buffer[j]);
@@ -396,14 +401,14 @@ packet_8301			(const uint8_t		buffer[42],
 		return;
 
 	if (!vbi_decode_teletext_8301_cni (&cni, buffer)) {
-		printf (_("Error in Teletext "
-			  "packet 8/30 format 1 CNI.\n"));
+		printf ("Error in Teletext "
+			"packet 8/30 format 1 CNI.\n");
 		return;
 	}
 
 	if (!vbi_decode_teletext_8301_local_time (&time, &gmtoff, buffer)) {
-		printf (_("Error in Teletext "
-			  "packet 8/30 format 1 local time.\n"));
+		printf ("Error in Teletext "
+			"packet 8/30 format 1 local time.\n");
 		return;
 	}
 
@@ -431,14 +436,14 @@ packet_8302			(const uint8_t		buffer[42],
 		return;
 
 	if (!vbi_decode_teletext_8302_cni (&cni, buffer)) {
-		printf (_("Error in Teletext "
-			  "packet 8/30 format 2 CNI.\n"));
+		printf ("Error in Teletext "
+			"packet 8/30 format 2 CNI.\n");
 		return;
 	}
 
 	if (!vbi_decode_teletext_8302_pdc (&pi, buffer)) {
-		printf (_("Error in Teletext "
-			  "packet 8/30 format 2 PDC data.\n"));
+		printf ("Error in Teletext "
+			"packet 8/30 format 2 PDC data.\n");
 		return;
 	}
 
@@ -503,7 +508,7 @@ packet_idl			(const uint8_t		buffer[42],
 
 	case 4:
 	case 12:
-		printf (_("(Low bit rate audio) "));
+		printf ("(Low bit rate audio) ");
 
 		dump_bytes (buffer, 42);
 
@@ -518,8 +523,8 @@ packet_idl			(const uint8_t		buffer[42],
 		pa |= vbi_unham8 (buffer[5]) << 8;
 
 		if (pa < 0) {
-			printf (_("Hamming error in Datavideo "
-				  "packet-address byte.\n"));
+			printf ("Hamming error in Datavideo "
+				"packet-address byte.\n");
 			return;
 		}
 
@@ -534,9 +539,10 @@ packet_idl			(const uint8_t		buffer[42],
 	case 10:
 	case 11:
 	case 15:
-		if ((ft = vbi_unham8 (buffer[2])) < 0) {
-			printf (_("Hamming error in IDL format "
-				  "A or B format-type byte.\n"));
+		ft = vbi_unham8 (buffer[2]);
+		if (ft < 0) {
+			printf ("Hamming error in IDL format "
+				"A or B format-type byte.\n");
 			return;
 		}
 
@@ -546,10 +552,11 @@ packet_idl			(const uint8_t		buffer[42],
 			int spa; /* service packet address */
 			unsigned int i;
 
-			if ((ial = vbi_unham8 (buffer[3])) < 0) {
-				printf (_("Hamming error in IDL format "
-					  "A interpretation-and-address-"
-					  "length byte.\n"));
+			ial = vbi_unham8 (buffer[3]);
+			if (ial < 0) {
+				printf ("Hamming error in IDL format "
+					"A interpretation-and-address-"
+					"length byte.\n");
 				return;
 			}
 
@@ -566,8 +573,8 @@ packet_idl			(const uint8_t		buffer[42],
 				spa |= vbi_unham8 (buffer[4 + i]) << (4 * i);
 
 			if (spa < 0) {
-				printf (_("Hamming error in IDL format "
-					  "A service-packet-address byte.\n"));
+				printf ("Hamming error in IDL format "
+					"A service-packet-address byte.\n");
 				return;
 			}
 
@@ -578,9 +585,10 @@ packet_idl			(const uint8_t		buffer[42],
 
 			an = (ft >> 2);
 
-			if ((ai = vbi_unham8 (buffer[3])) < 0) {
-				printf (_("Hamming error in IDL format "
-					  "B application-number byte.\n"));
+			ai = vbi_unham8 (buffer[3]);
+			if (ai < 0) {
+				printf ("Hamming error in IDL format "
+					"B application-number byte.\n");
 				return;
 			}
 
@@ -608,8 +616,8 @@ teletext			(const uint8_t		buffer[42],
 
 	if (NULL != pfc) {
 		if (!vbi_pfc_demux_feed (pfc, buffer)) {
-			printf (_("Error in Teletext "
-				  "PFC packet.\n"));
+			printf ("Error in Teletext "
+				"PFC packet.\n");
 			return;
 		}
 	}
@@ -622,8 +630,8 @@ teletext			(const uint8_t		buffer[42],
 
 	pmag = vbi_unham16p (buffer);
 	if (pmag < 0) {
-		printf (_("Hamming error in Teletext "
-			  "packet number.\n"));
+		printf ("Hamming error in Teletext "
+			"packet number.\n");
 		return;
 	}
 
@@ -638,8 +646,8 @@ teletext			(const uint8_t		buffer[42],
 
 		designation = vbi_unham8 (buffer[2]);
 		if (designation < 0 ) {
-			printf (_("Hamming error in Teletext "
-				  "packet 8/30 designation byte.\n"));
+			printf ("Hamming error in Teletext "
+				"packet 8/30 designation byte.\n");
 			return;
 		}
 
@@ -696,13 +704,13 @@ vps				(const uint8_t		buffer[13],
 		}
 
 		if (!vbi_decode_vps_cni (&cni, buffer)) {
-			printf (_("Error in VPS packet CNI.\n"));
+			printf ("Error in VPS packet CNI.\n");
 			return;
 		}
 
 #if 3 == VBI_VERSION_MINOR
 		if (!vbi_decode_vps_pdc (&pi, buffer)) {
-			printf (_("Error in VPS packet PDC data.\n"));
+			printf ("Error in VPS packet PDC data.\n");
 			return;
 		}
 		
@@ -761,7 +769,7 @@ wss_625				(const uint8_t		buffer[2])
 		vbi_aspect_ratio ar;
 
 		if (!vbi_decode_wss_625 (&ar, buffer)) {
-			printf (_("Error in WSS packet.\n"));
+			printf ("Error in WSS packet.\n");
 			return;
 		}
 
@@ -778,12 +786,17 @@ wss_625				(const uint8_t		buffer[2])
 static vbi_bool
 decode_frame			(const vbi_sliced *	s,
 				 unsigned int		n_lines,
+				 const uint8_t *	raw,
+				 const vbi_sampling_par *sp,
 				 double			sample_time,
 				 int64_t		stream_time)
 {
 	static double metronome = 0.0;
 	static double last_sample_time = 0.0;
 	static int64_t last_stream_time = 0;
+
+	raw = raw; /* unused */
+	sp = sp;
 
 	if (option_dump_time || option_metronome_tick > 0.0) {
 		/* Sample time: When we captured the data, in
@@ -855,11 +868,11 @@ decode_frame			(const vbi_sliced *	s,
 static void
 usage				(FILE *			fp)
 {
-	fprintf (fp, "\
-%s %s -- low-level VBI decoder\n\n\
+	fprintf (fp, _("\
+%s %s -- Low-level VBI decoder\n\n\
 Copyright (C) 2004, 2006, 2007 Michael H. Schimek\n\
 This program is licensed under GPLv2 or later. NO WARRANTIES.\n\n\
-Usage: %s [options] < sliced VBI data\n\n\
+Usage: %s [options] < sliced VBI data\n\
 -h | --help | --usage  Print this message and exit\n\
 -q | --quiet           Suppress progress and error messages\n\
 -V | --version         Print the program version and exit\n\
@@ -884,13 +897,13 @@ Decoding options:\n"
                        -a     decode everything\n\
                        -a -i  everything except IDL\n\
 -c | --idl-ch N\n\
--d | --idl-addr NNN\n\
-                       Decode Teletext IDL format A data from channel N,\n\
-                       service packet address NNN [0]\n\
+-d | --idl-addr NNN    Decode Teletext IDL format A data from channel N,\n\
+                       service packet address NNN (default 0)\n\
 -r | --vps-other       Decode VPS data unrelated to PDC\n\
 -p | --pfc-pgno NNN\n\
 -s | --pfc-stream NN   Decode Teletext Page Function Clear data\n\
-                         from page NNN (for example 1DF), stream NN [0]\n\
+                       from page NNN (for example 1DF), stream NN\n\
+                       (default 0)\n\
 Modifying options:\n\
 -e | --hex             With -t dump packets in hex and ASCII,\n\
                          otherwise only ASCII\n\
@@ -901,12 +914,12 @@ Modifying options:\n\
 -m | --time            Dump capture timestamps\n\
 -M | --metronome tick  Compare timestamps against a metronome advancing\n\
                        by tick seconds per frame\n\
-",
+"),
 		 PROGRAM_NAME, VERSION, program_invocation_name);
 }
 
 static const char
-short_options [] = "12abcd:ehil:m:np:qrs:tvwxMPT:V";
+short_options [] = "12abcd:ehil:mnp:qrs:tvwxM:PT:V";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -948,11 +961,9 @@ int
 main				(int			argc,
 				 char **		argv)
 {
-	enum file_format file_format;
-
 	init_helpers (argc, argv);
 
-	file_format = FILE_FORMAT_SLICED;
+	option_in_file_format = FILE_FORMAT_SLICED;
 
 	for (;;) {
 		int c;
@@ -1030,7 +1041,7 @@ main				(int			argc,
 			break;
 
 		case 'q':
-			option_quiet ^= TRUE;
+			parse_option_quiet ();
 			break;
 
 		case 'r':
@@ -1064,12 +1075,12 @@ main				(int			argc,
 			break;
 
 		case 'P':
-			file_format = FILE_FORMAT_DVB_PES;
+			option_in_file_format = FILE_FORMAT_DVB_PES;
 			break;
 
 		case 'T':
-			parse_option_ts ();
-			file_format = FILE_FORMAT_DVB_TS;
+			option_in_ts_pid = parse_option_ts ();
+			option_in_file_format = FILE_FORMAT_DVB_TS;
 			break;
 
 		case 'V':
@@ -1107,16 +1118,14 @@ main				(int			argc,
 			no_mem_exit ();
 	}
 
-	{
-		struct stream *st;
+	rst = read_stream_new (option_in_file_format,
+			       option_in_ts_pid,
+			       decode_frame);
 
-		st = read_stream_new (file_format, decode_frame);
+	stream_loop (rst);
 
-		read_stream_loop (st);
-
-		read_stream_delete (st);
-		st = NULL;
-	}
+	stream_delete (rst);
+	rst = NULL;
 
 	error_msg (_("End of stream."));
 
@@ -1130,6 +1139,4 @@ main				(int			argc,
 	pfc = NULL;
 
 	exit (EXIT_SUCCESS);
-
-	return 0;
 }
