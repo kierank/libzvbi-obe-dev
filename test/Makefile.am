@@ -16,7 +16,10 @@ check_PROGRAMS = \
 	test-dvb_mux
 
 cpptest_SOURCES = cpptest.cc
-test_dvb_mux_SOURCES = test-dvb_mux.cc
+
+test_dvb_mux_SOURCES = \
+	test-dvb_mux.cc \
+	test-common.cc test-common.h
 
 check_SCRIPTS = \
 	exoptest
@@ -100,3 +103,14 @@ endif
 LDADD += \
 	$(LIBS) \
 	$(X_LIBS)
+
+unrename:
+	for file in *.cc *.c *.h ; do \
+	  case "$$file" in \
+	  raw_decoder.c|osc.c) continue ; ;; \
+	  esac ; \
+	  if grep -q -i vbi3_ $$file ; then \
+	    sed 's/vbi3_/vbi_/g;s/VBI3_/VBI_/g' <$$file >tmp ; \
+	    mv tmp $$file ; \
+	  fi ; \
+	done
