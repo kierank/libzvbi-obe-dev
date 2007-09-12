@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sampling_par.c,v 1.6 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: sampling_par.c,v 1.7 2007/09/12 15:54:06 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -146,7 +146,7 @@ _vbi_sampling_par_valid_log	(const vbi_sampling_par *sp,
 			goto bad_range;
 	} else {
 	ambiguous:
-		notice (log,
+		info (log,
 			"Ambiguous videostd_set 0x%x.",
 			videostd_set);
 		return FALSE;
@@ -155,7 +155,7 @@ _vbi_sampling_par_valid_log	(const vbi_sampling_par *sp,
 	if (sp->interlaced
 	    && (sp->count[0] != sp->count[1]
 		|| 0 == sp->count[0])) {
-		notice (log,
+		info (log,
 			"Line counts %u, %u must be equal and "
 			"non-zero when raw VBI data is interlaced.",
 			sp->count[0], sp->count[1]);
@@ -166,7 +166,7 @@ _vbi_sampling_par_valid_log	(const vbi_sampling_par *sp,
 
  bad_samples:
 	/* XXX permit sp->samples_per_line * bpp < sp->bytes_per_line. */
-	notice (log,
+	info (log,
 		"bytes_per_line value %u is no multiple of "
 		"the sample size %u.",
 		sp->bytes_per_line,
@@ -174,7 +174,7 @@ _vbi_sampling_par_valid_log	(const vbi_sampling_par *sp,
 	return FALSE;
 
  bad_range:
-	notice (log,
+	info (log,
 		"Invalid VBI scan range %u-%u (%u lines), "
 		"%u-%u (%u lines).",
 		sp->start[0], sp->start[0] + sp->count[0] - 1,
@@ -206,7 +206,7 @@ _vbi_sampling_par_permit_service
 	videostd_set = sp->videostd_set;
 #endif
 	if (0 == (par->videostd_set & videostd_set)) {
-		notice (log,
+		info (log,
 			"Service 0x%08x (%s) requires "
 			"videostd_set 0x%x, "
 			"have 0x%x.",
@@ -218,7 +218,7 @@ _vbi_sampling_par_permit_service
 	if (par->flags & _VBI_SP_LINE_NUM) {
                 if ((par->first[0] > 0 && unknown == sp->start[0])
                     || (par->first[1] > 0 && unknown == sp->start[1])) {
-			notice (log,
+			info (log,
 				"Service 0x%08x (%s) requires known "
 				"line numbers.",
 				par->id, par->label);
@@ -243,7 +243,7 @@ _vbi_sampling_par_permit_service
 		}
 
 		if (rate > (unsigned int) sp->sampling_rate) {
-			notice (log,
+			info (log,
 				"Sampling rate %f MHz too low "
 				"for service 0x%08x (%s).",
 				sp->sampling_rate / 1e6,
@@ -273,7 +273,7 @@ _vbi_sampling_par_permit_service
 		end = (sp->offset + samples_per_line) / sampling_rate;
 
 		if (offset > (par->offset / 1e3 - 0.5e-6)) {
-			notice (log,
+			info (log,
 				"Sampling starts at 0H + %f us, too "
 				"late for service 0x%08x (%s) at "
 				"%f us.",
@@ -284,7 +284,7 @@ _vbi_sampling_par_permit_service
 		}
 
 		if (end < (par->offset / 1e9 + signal + 0.5e-6)) {
-			notice (log,
+			info (log,
 				"Sampling ends too early at 0H + "
 				"%f us for service 0x%08x (%s) "
 				"which ends at %f us",
@@ -303,7 +303,7 @@ _vbi_sampling_par_permit_service
 			samples -= 1e-6; /* headroom */
 
 		if (samples < signal) {
-			notice (log,
+			info (log,
 				"Service 0x%08x (%s) signal length "
 				"%f us exceeds %f us sampling length.",
 				par->id, par->label,
@@ -314,7 +314,7 @@ _vbi_sampling_par_permit_service
 
 	if ((par->flags & _VBI_SP_FIELD_NUM)
 	    && !sp->synchronous) {
-		notice (log,
+		info (log,
 			"Service 0x%08x (%s) requires "
 			"synchronous field order.",
 			par->id, par->label);
@@ -335,7 +335,7 @@ _vbi_sampling_par_permit_service
 		}
 
 		if (0 == sp->count[field]) {
-			notice (log,
+			info (log,
 				"Service 0x%08x (%s) requires "
 				"data from field %u",
 				par->id, par->label, field + 1);
@@ -354,7 +354,7 @@ _vbi_sampling_par_permit_service
 		
 		if (start > par->first[field]
 		    || end < par->last[field]) {
-			notice (log,
+			info (log,
 				"Service 0x%08x (%s) requires "
 				"lines %u-%u, have %u-%u.",
 				par->id, par->label,
@@ -470,7 +470,7 @@ _vbi_sampling_par_from_services_log
 			margin = 2.0e-6;
 
 		if (0 == (par->videostd_set & videostd_set)) {
-			notice (log,
+			info (log,
 				"Service 0x%08x (%s) requires "
 				"videostd_set 0x%x, "
 				"have 0x%x.",
