@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.16 2007/09/01 15:06:55 mschimek Exp $ */
+/* $Id: export.c,v 1.17 2007/09/12 15:52:47 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -54,16 +54,10 @@
 
 #define PROGRAM_NAME "zvbi-export"
 
-static vbi_export *		ex;
-static vbi_page_table *		pt;
-static vbi_pgno			cc_chan;
-static char *			filename_prefix;
-static char *			filename_suffix;
-static vbi_decoder *		vbi;
-static int			cr;
-static vbi_bool			quit;
+static enum file_format		option_in_file_format;
+static unsigned int		option_in_ts_pid;
 
-static vbi_bool			option_dcc;
+static vbi_bool		option_dcc;
 static unsigned int		option_delay;
 #if 2 == VBI_VERSION_MINOR
 static unsigned int		option_default_cs;
@@ -72,19 +66,33 @@ static unsigned int		option_override_cs;
 static vbi_ttx_charset_code	option_default_cs;
 static vbi_ttx_charset_code	option_override_cs;
 #endif
-static vbi_bool			option_dump_pg;
-static vbi_bool			option_fast;
-static vbi_bool			option_header_only;
-static vbi_bool			option_hyperlinks;
-static vbi_bool			option_navigation;
-static vbi_bool			option_padding;
-static vbi_bool			option_panels;
-static vbi_bool			option_pdc_enum;
-static vbi_bool			option_pdc_links;
-static vbi_bool			option_row_update;
-static vbi_bool			option_subtitles;
-static vbi_rgba			option_default_bg;
-static vbi_rgba			option_default_fg;
+static vbi_bool		option_dump_pg;
+static vbi_bool		option_fast;
+static vbi_bool		option_header_only;
+static vbi_bool		option_hyperlinks;
+static vbi_bool		option_navigation;
+static vbi_bool		option_padding;
+static vbi_bool		option_panels;
+static vbi_bool		option_pdc_enum;
+static vbi_bool		option_pdc_links;
+static vbi_bool		option_row_update;
+static vbi_bool		option_subtitles;
+static vbi_rgba		option_default_bg;
+static vbi_rgba		option_default_fg;
+
+static struct stream *		rst;
+static vbi_decoder *		vbi;
+static vbi_export *		ex;
+
+static vbi_page_table *	pt;
+static vbi_pgno		cc_chan;
+
+static char *			filename_prefix;
+static char *			filename_suffix;
+
+static int			cr;
+
+static vbi_bool		quit;
 
 static void
 close_output_file		(FILE *			fp)
@@ -215,8 +223,9 @@ event_handler			(vbi_event *		ev,
 		pgno = ev->ev.ttx_page.pgno;
 		subno = ev->ev.ttx_page.subno;
 
-		if (0) {
-			fprintf (stderr, "Teletext page %03x.%02x %c",
+		if (option_log_mask & VBI_LOG_INFO) {
+			fprintf (stderr,
+				 "Teletext page %03x.%02x   %c",
 				 pgno, subno, cr);
 		}
 
@@ -319,8 +328,8 @@ export_pdc			(vbi_export *		export,
 
 	end = pl->at1_hour * 60 + pl->at1_minute + pl->length;
 
-	/* XXX pl->title uses locale encoding but the html page may not
-	   (export charset parameter). */
+	/* XXX pl->title uses locale encoding but the html page may not.
+	   (export charset parameter) */
 	fprintf (fp, "<acronym title=\"%04u-%02u-%02u "
 		 "%02u:%02u-%02u:%02u "
 		 "VPS/PDC: %02u%02u TTX: %x Title: %s"
@@ -465,8 +474,9 @@ event_handler			(const vbi_event *	ev,
 		pgno = ev->ev.ttx_page.pgno;
 		subno = ev->ev.ttx_page.subno;
 
-		if (0) {
-			fprintf (stderr, "Teletext page %03x.%02x %c",
+		if (option_log_mask & VBI_LOG_INFO) {
+			fprintf (stderr,
+				 "Teletext page %03x.%02x   %c",
 				 pgno, subno, cr);
 		}
 
@@ -491,8 +501,9 @@ event_handler			(const vbi_event *	ev,
 
 		pgno = ev->ev.caption.channel;
 
-		if (0) {
-			fprintf (stderr, "Caption channel %u %c",
+		if (option_log_mask & VBI_LOG_INFO) {
+			fprintf (stderr,
+				 "Caption channel %u   %c",
 				 pgno, cr);
 		}
 
@@ -519,10 +530,14 @@ event_handler			(const vbi_event *	ev,
 static vbi_bool
 decode_frame			(const vbi_sliced *	sliced,
 				 unsigned int		n_lines,
+				 const uint8_t *	raw,
+				 const vbi_sampling_par *sp,
 				 double			sample_time,
 				 int64_t		stream_time)
 {
-	stream_time = stream_time; /* unused */
+	raw = raw; /* unused */
+	sp = sp;
+	stream_time = stream_time;
 
 #if 2 == VBI_VERSION_MINOR
 	vbi_decode (vbi, sliced, n_lines, sample_time);
@@ -729,13 +744,14 @@ list_modules			(void)
 static void
 usage				(FILE *			fp)
 {
-	fprintf (fp, "\
+	fprintf (fp, _("\
 %s %s -- Teletext and Closed Caption export utility\n\n\
 Copyright (C) 2004, 2005, 2007 Michael H. Schimek\n\
 This program is licensed under GPLv2. NO WARRANTIES.\n\n\
-Usage: %s [options] format [page number(s)] < sliced vbi data > file\n\n\
+Usage: %s [options] format [page number(s)] < sliced vbi data > file\n\
 -h | --help | --usage  Print this message and exit\n\
 -q | --quiet           Suppress progress and error messages\n\
+-v | --verbose         Increase verbosity\n\
 -V | --version         Print the program version and exit\n\
 Input options:\n\
 -P | --pes             Source is a DVB PES stream\n\
@@ -790,7 +806,7 @@ Valid page numbers are:\n"
                        Teletext pages: 100 110 200-299. If no page\n\
                        numbers are given the program will export all\n\
                        received Teletext pages until it is terminated\n\
-",
+"),
 		 PROGRAM_NAME, VERSION, program_invocation_name);
 }
 
@@ -952,24 +968,28 @@ main				(int			argc,
 				 char **		argv)
 {
 	const char *module_name;
-	enum file_format file_format;
 	unsigned int n_pages;
 	vbi_bool all_pages;
-	int c;
 
 	init_helpers (argc, argv);
 
-	file_format = FILE_FORMAT_SLICED;
+	option_in_file_format = FILE_FORMAT_SLICED;
 
 	option_default_fg = (vbi_rgba) 0xFFFFFF;
 	option_default_bg = (vbi_rgba) 0x000000;
 
 	all_pages = FALSE;
 
-	while (-1 != (c = getopt_long (argc, argv, short_options,
-				       long_options, &option_index))) {
+	for (;;) {
+		int c;
+
+		c = getopt_long (argc, argv, short_options,
+				 long_options, &option_index);
+		if (-1 == c)
+			break;
+
 		switch (c) {
-		case 0:
+		case 0: /* getopt_long() flag */
 			break;
 
 		case '1':
@@ -978,23 +998,23 @@ main				(int			argc,
 			break;
 
 		case 'c':
-			option_dcc ^= TRUE;
+			option_dcc = TRUE;
 			break;
 
 		case 'd':
-			option_padding ^= TRUE;
+			option_padding = TRUE;
 			break;
 
 		case 'e':
-			option_pdc_enum ^= TRUE;
+			option_pdc_enum = TRUE;
 			break;
 
 		case 'f':
-			option_fast ^= TRUE;
+			option_fast = TRUE;
 			break;
 
 		case 'g':
-			option_dump_pg ^= TRUE;
+			option_dump_pg = TRUE;
 			break;
 
 		case 'h':
@@ -1006,11 +1026,11 @@ main				(int			argc,
 			exit (EXIT_SUCCESS);
 
 		case 'l':
-			option_hyperlinks ^= TRUE;
+			option_hyperlinks = TRUE;
 			break;
 
 		case 'n':
-			option_navigation ^= TRUE;
+			option_navigation = TRUE;
 			break;
 
 		case 'o':
@@ -1018,19 +1038,23 @@ main				(int			argc,
 			break;
 
 		case 'p':
-			option_pdc_links ^= TRUE;
+			option_pdc_links = TRUE;
 			break;
 
 		case 'q':
-			option_quiet ^= TRUE;
+			parse_option_quiet ();
 			break;
 
 		case 'r':
-			option_row_update ^= TRUE;
+			option_row_update = TRUE;
 			break;
 
 		case 's':
-			option_subtitles ^= TRUE;
+			option_subtitles = TRUE;
+			break;
+
+		case 'v':
+			parse_option_verbose ();
 			break;
 
 		case 'w':
@@ -1066,12 +1090,12 @@ main				(int			argc,
 			break;
 
 		case 'P':
-			file_format = FILE_FORMAT_DVB_PES;
+			option_in_file_format = FILE_FORMAT_DVB_PES;
 			break;
 
 		case 'T':
-			parse_option_ts ();
-			file_format = FILE_FORMAT_DVB_TS;
+			option_in_ts_pid = parse_option_ts ();
+			option_in_file_format = FILE_FORMAT_DVB_TS;
 			break;
 
 		case 'V':
@@ -1122,16 +1146,16 @@ main				(int			argc,
 
 	init_vbi_decoder ();
 
-	{
-		struct stream *st;
+	cr = isatty (STDERR_FILENO) ? '\r' : '\n';
 
-		st = read_stream_new (file_format, decode_frame);
+	rst = read_stream_new (option_in_file_format,
+			       option_in_ts_pid,
+			       decode_frame);
 
-		read_stream_loop (st);
+	stream_loop (rst);
 
-		read_stream_delete (st);
-		st = NULL;
-	}
+	stream_delete (rst);
+	rst = NULL;
 
 	vbi_decoder_delete (vbi);
 	vbi = NULL;
@@ -1166,6 +1190,4 @@ main				(int			argc,
 	ex = NULL;
 
 	exit (EXIT_SUCCESS);
-
-	return 0;
 }
