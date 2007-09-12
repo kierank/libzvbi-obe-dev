@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced2pes.c,v 1.9 2007/09/01 15:06:55 mschimek Exp $ */
+/* $Id: sliced2pes.c,v 1.10 2007/09/12 15:52:34 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -51,61 +51,39 @@
 /* Will be installed one day. */
 #define PROGRAM_NAME "sliced2pes"
 
-static unsigned long		option_ts_output_pid;
+static enum file_format		option_in_file_format;
+static unsigned int		option_in_ts_pid;
+
+static enum file_format		option_out_file_format;
+static unsigned int		option_out_ts_pid;
+
 static unsigned long		option_data_identifier;
 static unsigned long		option_min_pes_packet_size;
 static unsigned long		option_max_pes_packet_size;
 
-static vbi_dvb_mux *		mx;
+static struct stream *		rst;
+static struct stream *		wst;
 
 static vbi_bool
-ts_pes_cb			(vbi_dvb_mux *		mx,
-				 void *			user_data,
-				 const uint8_t *	packet,
-				 unsigned int		packet_size)
-{
-	size_t actual;
-
-	mx = mx; /* unused */
-	user_data = user_data;
-
-	actual = fwrite (packet, 1, packet_size, stdout);
-	if (actual < 1)
-		write_error_exit (/* msg: errno */ NULL);
-
-	return TRUE;
-}
-
-static vbi_bool
-decode_frame			(const vbi_sliced *	sliced,
+output_frame			(const vbi_sliced *	sliced,
 				 unsigned int		n_lines,
+				 const uint8_t *	raw,
+				 const vbi_sampling_par *sp,
 				 double			sample_time,
 				 int64_t		stream_time)
 {
-	vbi_bool success;
+	raw = raw; /* unused */
+	sp = sp;
 
-	sample_time = sample_time; /* unused */
-
-	success = vbi_dvb_mux_feed (mx,
-				     sliced, n_lines,
-				     (VBI_SLICED_CAPTION_625 |
-				      VBI_SLICED_TELETEXT_B_625 |
-				      VBI_SLICED_VPS |
-				      VBI_SLICED_WSS_625),
-				     /* raw */ NULL,
-				     /* sp */ NULL,
-				     /* pts */ stream_time);
-	if (!success) {
-		error_exit (_("Maximum PES packet size %lu bytes "
-			      "is too small for this input stream."),
-			    option_max_pes_packet_size);
-	}
-
+	write_stream_sliced (wst, sliced, n_lines,
+			     /* raw */ NULL,
+			     /* sp */ NULL,
+			     sample_time, stream_time);
 	return TRUE;
 }
 
 static void
-usage				(FILE *			fp)
+get_mux_defaults		(void)
 {
 	vbi_dvb_mux *mx;
 
@@ -114,36 +92,53 @@ usage				(FILE *			fp)
 	if (NULL == mx)
 		no_mem_exit ();
 
-	fprintf (fp, "\
+	option_data_identifier =
+		vbi_dvb_mux_get_data_identifier (mx);
+
+	option_min_pes_packet_size =
+		vbi_dvb_mux_get_min_pes_packet_size (mx);
+
+	option_max_pes_packet_size =
+		vbi_dvb_mux_get_max_pes_packet_size (mx);
+
+	vbi_dvb_mux_delete (mx);
+}
+
+static void
+usage				(FILE *			fp)
+{
+	get_mux_defaults ();
+
+	fprintf (fp, _("\
 %s %s -- VBI stream converter\n\n\
 Copyright (C) 2004, 2007 Michael H. Schimek\n\
 This program is licensed under GPLv2 or later. NO WARRANTIES.\n\n\
-Usage: %s [options] < sliced VBI data > PES or TS stream\n\n\
+Usage: %s [options] < sliced VBI data > PES or TS stream\n\
+-h | --help | --usage             Print this message and exit\n\
+-q | --quiet                      Suppress progress and error messages\n\
+-v | --verbose                    Increase verbosity\n\
+-V | --version                    Print the program version and exit\n\
+Input options:\n\
+-P | --pes | --pes-input          Source is a DVB PES stream\n\
+-T | --ts | --ts-input pid        Source is a DVB TS stream\n\
+Output options:\n\
 -d | --data-identifier n          0x10 ... 0x1F for compatibility with\n\
                                   ETS 300 472 compliant decoders, or\n\
                                   0x99 ... 0x9B as defined in EN 301 775\n\
-                                  (default 0x%02x)\n\
--h | --help | --usage             Print this message and exit\n\
--m | --max | --max-packet-size n  Maximum PES packet size (%u bytes)\n\
--n | --min | --min-packet-size n  Minimum PES packet size (%u bytes)\n\
+                                  (default 0x%02lx)\n\
+-m | --max | --max-packet-size n  Maximum PES packet size (%lu bytes)\n\
+-n | --min | --min-packet-size n  Minimum PES packet size (%lu bytes)\n\
 -p | --pes-output                 Generate a DVB PES stream\n\
--q | --quiet                      Suppress progress and error messages\n\
 -t | --ts-output pid              Generate a DVB TS stream with this PID\n\
--P | --pes | --pes-input          Source is a DVB PES stream\n\
--T | --ts | --ts-input pid        Source is a DVB TS stream\n\
--V | --version                    Print the program version and exit\n\
-",
+"),
 		 PROGRAM_NAME, VERSION, program_invocation_name,
-		 vbi_dvb_mux_get_data_identifier (mx),
-		 vbi_dvb_mux_get_max_pes_packet_size (mx),
-		 vbi_dvb_mux_get_min_pes_packet_size (mx));
-
-	vbi_dvb_mux_delete (mx);
-	mx = NULL;
+		 option_data_identifier,
+		 option_max_pes_packet_size,
+		 option_min_pes_packet_size);
 }
 
 static const char
-short_options [] = "d:hm:n:pqt:PT:V";
+short_options [] = "d:hm:n:pqt:vPT:V";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -156,6 +151,7 @@ long_options [] = {
 	{ "pes-output",		no_argument,		NULL,	'p' },
 	{ "quiet",		no_argument,		NULL,	'q' },
 	{ "ts-output",		required_argument,	NULL,	't' },
+	{ "verbose",		no_argument,		NULL,	'v' },
 	{ "pes-input",		no_argument,		NULL,	'P' },
 	{ "ts-input",		required_argument,	NULL,	'T' },
 	{ "version",		no_argument,		NULL,	'V' },
@@ -166,23 +162,6 @@ long_options [] = {
 #endif
 
 static int			option_index;
-
-static void
-parse_option_ts_output		(void)
-{
-	const char *s = optarg;
-	char *end;
-
-	assert (NULL != optarg);
-
-	option_ts_output_pid = strtoul (s, &end, 0);
-
-	if (option_ts_output_pid <= 0x000F ||
-	    option_ts_output_pid >= 0x1FFF) {
-		error_exit (_("Invalid PID %u."),
-			    option_ts_output_pid);
-	}
-}
 
 static void
 parse_option_data_identifier	(void)
@@ -204,30 +183,12 @@ int
 main				(int			argc,
 				 char **		argv)
 {
-	enum file_format in_file_format;
-	enum file_format out_file_format;
-
 	init_helpers (argc, argv);
 
-	mx = vbi_dvb_pes_mux_new (ts_pes_cb,
-				   /* user_data */ NULL);
-	if (NULL == mx)
-		no_mem_exit ();
+	get_mux_defaults ();
 
-	option_data_identifier =
-		vbi_dvb_mux_get_data_identifier (mx);
-
-	option_min_pes_packet_size =
-		vbi_dvb_mux_get_min_pes_packet_size (mx);
-
-	option_max_pes_packet_size =
-		vbi_dvb_mux_get_max_pes_packet_size (mx);
-
-	vbi_dvb_mux_delete (mx);
-	mx = NULL;
-
-	in_file_format = FILE_FORMAT_SLICED;
-	out_file_format = FILE_FORMAT_DVB_PES;
+	option_in_file_format = FILE_FORMAT_SLICED;
+	option_out_file_format = FILE_FORMAT_DVB_PES;
 
 	for (;;) {
 		int c;
@@ -266,25 +227,29 @@ main				(int			argc,
 			break;
 
 		case 'p':
-			out_file_format = FILE_FORMAT_DVB_PES;
+			option_out_file_format = FILE_FORMAT_DVB_PES;
 			break;
 
 		case 'q':
-			option_quiet ^= TRUE;
+			parse_option_quiet ();
 			break;
 
 		case 't':
-			parse_option_ts_output ();
-			out_file_format = FILE_FORMAT_DVB_TS;
+			option_out_ts_pid = parse_option_ts ();
+			option_out_file_format = FILE_FORMAT_DVB_TS;
+			break;
+
+		case 'v':
+			parse_option_verbose ();
 			break;
 
 		case 'P':
-			in_file_format = FILE_FORMAT_DVB_PES;
+			option_in_file_format = FILE_FORMAT_DVB_PES;
 			break;
 
 		case 'T':
-			parse_option_ts ();
-			in_file_format = FILE_FORMAT_DVB_TS;
+			option_in_ts_pid = parse_option_ts ();
+			option_in_file_format = FILE_FORMAT_DVB_TS;
 			break;
 
 		case 'V':
@@ -297,47 +262,28 @@ main				(int			argc,
 		}
 	}
 
-	switch (out_file_format) {
-	case FILE_FORMAT_DVB_PES:
-		mx = vbi_dvb_pes_mux_new (ts_pes_cb,
-					   /* user_data */ NULL);
-		break;
+	wst = write_stream_new (option_out_file_format,
+				option_out_ts_pid,
+				/* system */ 625);
 
-	case FILE_FORMAT_DVB_TS:
-		mx = vbi_dvb_ts_mux_new (option_ts_output_pid,
-					  ts_pes_cb,
-					  /* user_data */ NULL);
-		break;
+	write_stream_set_data_identifier (wst, option_data_identifier);
+	write_stream_set_pes_packet_size (wst,
+					  option_min_pes_packet_size,
+					  option_max_pes_packet_size);
 
-	default:
-		assert (0);
-	}
+	rst = read_stream_new (option_in_file_format,
+			       option_in_ts_pid,
+			       output_frame);
 
-	if (NULL == mx)
-		no_mem_exit ();
+	stream_loop (rst);
 
-	if (!vbi_dvb_mux_set_data_identifier (mx, option_data_identifier)) {
-		error_exit (_("Invalid data identifier 0x%02lx."),
-			    option_data_identifier);
-	}
+	stream_delete (rst);
+	rst = NULL;
 
-	if (!vbi_dvb_mux_set_pes_packet_size (mx,
-					       option_min_pes_packet_size,
-					       option_max_pes_packet_size))
-		no_mem_exit ();
-
-	{
-		struct stream *st;
-
-		st = read_stream_new (in_file_format, decode_frame);
-		read_stream_loop (st);
-		read_stream_delete (st);
-	}
+	stream_delete (wst);
+	wst = NULL;
 
 	error_msg (_("End of stream."));
-
-	if (0 != fflush (stdout))
-		write_error_exit (/* msg: errno */ NULL);
 
 	exit (EXIT_SUCCESS);
 }
