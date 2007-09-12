@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-dvb_mux.cc,v 1.2 2007/08/31 15:32:29 mschimek Exp $ */
+/* $Id: test-dvb_mux.cc,v 1.3 2007/09/12 15:53:48 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <errno.h>		/* XXX -> dvb_mux.h */
 
 #include "src/misc.h"
 #include "src/dvb.h"
@@ -33,19 +34,14 @@
 #include "src/dvb_demux.h"
 #include "src/version.h"
 
+#include "test-common.h"
+
 #if 3 == VBI_VERSION_MINOR
 #  define sp_samples_per_line samples_per_line
 #else
    /* Has no samples_per_line field yet. */
 #  define sp_samples_per_line bytes_per_line
 #endif
-
-static uint8_t *		cb_pes_bp;
-static uint8_t *		cb_ts_bp;
-static vbi_dvb_mux *		cb_multiplexer;
-static vbi_bool		cb_pes_cmp;
-static vbi_bool		cb_ts_cmp;
-static int			cb_next_continuity_counter;
 
 // XXX Later.
 enum {
@@ -70,6 +66,7 @@ enum {
 	FIXED = TRUE
 };
 
+// Add stuffing data units.
 enum {
 	NO_STUFFING = FALSE,
 	STUFFING = TRUE,
@@ -207,57 +204,6 @@ border_uints [] = {
 	UINT_MAX
 };
 
-#define RAND(var) memset_rand (&(var), sizeof (var))
-
-static void *
-memset_rand			(void *			d1,
-				 size_t			n)
-{
-	uint8_t *d = (uint8_t *) d1;
-
-	while (n-- > 0)
-		*d++ = rand ();
-
-	return d1;
-}
-
-static void *
-xmalloc				(size_t			n_bytes)
-{
-	void *p;
-
-	p = malloc (n_bytes);
-	assert (NULL != p);
-
-	return p;
-}
-
-static uint8_t *
-xralloc				(size_t			n_bytes)
-{
-	uint8_t *p_begin;
-	uint8_t *p_end;
-	uint8_t *p;
-	unsigned int x;
-
-	p_begin = (uint8_t *) xmalloc (n_bytes);
-
-	p_end = p_begin + (n_bytes & ~3);
-
-	for (p = p_begin; p < p_end; p += 4)
-		* (uint32_t *) p = mrand48 ();
-
-	p_end = p + (n_bytes & 3);
-	x = mrand48 ();
-
-	while (p < p_end) {
-		*p++ = x;
-		x >>= 8;
-	}
-
-	return p_begin;
-}
-
 static vbi_sliced *
 alloc_sliced			(unsigned int		n_lines)
 {
@@ -284,7 +230,9 @@ alloc_raw_frame			(const vbi_sampling_par *sp)
 	size = (n_lines - 1) * sp->bytes_per_line;
 	size += sp->sp_samples_per_line;
 
-	return xralloc (size);
+	assert (size < (10 << 20));
+
+	return (uint8_t *) xralloc (size);
 }
 
 static void
@@ -831,6 +779,7 @@ assert_pes_conversion_ok	(const uint8_t *	packet,
 	pts_valid_bits = ((int64_t) 1 << 33) - 1;
 
 	assert (0 == ((pts_in ^ pts_out) & pts_valid_bits));
+	assert (0 == (pts_out & ~pts_valid_bits));
 
 	free (sliced_out);
 }
@@ -911,7 +860,7 @@ assert_multiplex_sliced		(uint8_t * const	p1,
 	}
 
 	if (NULL != p1) {
-		rand_buffer = xralloc (p1_size);
+		rand_buffer = (uint8_t *) xralloc (p1_size);
 		memcpy (p1, rand_buffer, p1_size);
 	} else {
 		rand_buffer = NULL;
@@ -1143,7 +1092,7 @@ test_ms_line			(vbi_service_set	service,
 }
 
 static vbi_bool
-correct_line_number		(vbi_service_set	service,
+is_correct_line			(vbi_service_set	service,
 				 unsigned int		field,
 				 unsigned int		line_offset)
 {
@@ -1231,15 +1180,13 @@ test_multiplex_sliced_line_number_checks (void)
 		unsigned int j;
 
 		for (j = 0; j < N_ELEMENTS (good_services); ++j) {
-			vbi_bool correct;
-
 			service = good_services[j];
 
-			correct = correct_line_number (service, 0, i);
-			test_ms_line (service, /* line */ i, correct);
+			test_ms_line (service, /* line */ i,
+				      is_correct_line (service, 0, i));
 
-			correct = correct_line_number (service, 1, i);
-			test_ms_line (service, /* line */ i + 313, correct);
+			test_ms_line (service, /* line */ i + 313,
+				      is_correct_line (service, 1, i));
 		}
 	}
 
@@ -1815,7 +1762,7 @@ assert_multiplex_raw		(uint8_t * const 	p1,
 	}
 
 	if (NULL != p1) {
-		rand_buffer = xralloc (p1_size);
+		rand_buffer = (uint8_t *) xralloc (p1_size);
 		memcpy (p1, rand_buffer, p1_size);
 	} else {
 		rand_buffer = NULL;
@@ -1927,7 +1874,7 @@ test_mr_size_offset		(unsigned int		raw_left,
 	unsigned int buffer_size;
 	vbi_bool exp_success;
 
-	raw = xralloc (720);
+	raw = (uint8_t *) xralloc (720);
 	buffer = (uint8_t *) xmalloc (buffer_size = 20 * 46);
 
 	if (0 == raw_left) {
@@ -2012,7 +1959,7 @@ test_mr_line			(unsigned int		line,
 	unsigned int raw_size;
 
 	buffer = (uint8_t *) xmalloc (buffer_size = 20 * 46);
-	raw = xralloc (raw_size = 720);
+	raw = (uint8_t *) xralloc (raw_size = 720);
 
 	assert_multiplex_raw (buffer, buffer_size,
 			      raw, raw_size,
@@ -2128,7 +2075,7 @@ test_multiplex_raw_data_identifier
 	unsigned int raw_size;
 	vbi_bool fixed_length;
 
-	raw = xralloc (raw_size = 720);
+	raw = (uint8_t *) xralloc (raw_size = 720);
 
 	// EN 301 775 section 4.4.2.
 	fixed_length = (data_identifier >= 0x10
@@ -2169,7 +2116,7 @@ test_multiplex_raw_unaligned_raw (void)
 	unsigned int i;
 
 	buffer = (uint8_t *) xmalloc (buffer_size = 20 * 46);
-	raw = xralloc (15 + (raw_size = 720));
+	raw = (uint8_t *) xralloc (15 + (raw_size = 720));
 
 	for (i = 1; i < 16; ++i) {
 		assert_multiplex_raw (buffer, buffer_size,
@@ -2221,7 +2168,7 @@ test_mr_packet_size		(unsigned int		buffer_size,
 	unsigned int raw_size;
 
 	buffer = (uint8_t *) xmalloc (buffer_size);
-	raw = xralloc (raw_size = 720);
+	raw = (uint8_t *) xralloc (raw_size = 720);
 
 	assert_multiplex_raw (buffer, buffer_size,
 			      raw, raw_size,
@@ -2278,7 +2225,7 @@ test_multiplex_raw_unaligned_packet (void)
 	unsigned int raw_size;
 	unsigned int i;
 
-	raw = xralloc (raw_size = 720);
+	raw = (uint8_t *) xralloc (raw_size = 720);
 
 	for (i = 1; i < 16; ++i) {
 		uint8_t *buffer;
@@ -2400,400 +2347,74 @@ packet_sizes [] = {
 	UINT_MAX,
 };
 
-static vbi_bool
-dvb_mux_pes_cb			(vbi_dvb_mux *		mx,
-				 void *			user_data,
-				 const uint8_t *	packet,
-				 unsigned int		packet_size)
-{
-	unsigned int min, max;
-
-	assert (mx == cb_multiplexer);
-	assert (user_data == &cb_multiplexer);
-
-	min = vbi_dvb_mux_get_min_pes_packet_size (mx);
-	max = vbi_dvb_mux_get_max_pes_packet_size (mx);
-
-	assert (0 == packet_size % 184);
-	assert (packet_size >= min);
-	assert (packet_size <= max);
-
-	if (cb_pes_cmp) {
-		// Compare against the output of the PES mux coroutine.
-		assert (0 == memcmp (cb_pes_bp, packet, packet_size));
-	} else {
-		memcpy (cb_pes_bp, packet, packet_size);
-	}
-
-	cb_pes_bp += packet_size;
-
-	return TRUE;
-}
-
-static vbi_bool
-dvb_mux_ts_cb			(vbi_dvb_mux *		mx,
-				 void *			user_data,
-				 const uint8_t *	packet,
-				 unsigned int		packet_size)
-{
-	unsigned int payload_unit_start_indicator;
-	unsigned int continuity_counter;
-
-	assert (mx == cb_multiplexer);
-	assert (user_data == &cb_multiplexer);
-
-	assert (188 == packet_size);
-
-	/* sync_byte [8],
-	   transport_error_indicator,
-	   payload_unit_start_indicator,
-	   transport_priority,
-	   PID [13] == 0x1234,
-	   transport_scrambling_control [2] == '00' (not scrambled),
-	   adaptation_field_control [2] == '01'
-	     (payload only, no adaption field),
-	   continuity_counter [4] */
-	assert (0x47 == packet[0]);
-	assert (0x12 == (packet[1] & ~0x40));
-	assert (0x34 == packet[2]);
-	assert (0x10 == (packet[3] & ~0x0F));
-
-	payload_unit_start_indicator = !!(packet[1] & 0x40);
-
-	assert ((0x00 == packet[4] &&
-		 0x00 == packet[5] &&
-		 0x01 == packet[6] &&
-		 0xBD == packet[7]) == payload_unit_start_indicator);
-
-	continuity_counter = packet[3] & 0x0F;
-
-	if (-1 != cb_next_continuity_counter)
-		assert ((unsigned int) cb_next_continuity_counter
-			== continuity_counter);
-
-	cb_next_continuity_counter = (continuity_counter + 1) & 0xF;
-
-	if (cb_pes_cmp) {
-		// Compare against the output of the PES mux coroutine.
-		assert (0 == memcmp (cb_pes_bp, packet + 4, 184));
-	} else {
-		memcpy (cb_pes_bp, packet + 4, 184);
-	}
-
-	cb_pes_bp += 184;
-
-	if (cb_ts_cmp) {
-		// Compare against the output of the TS mux coroutine.
-		assert (0 == memcmp (cb_ts_bp, packet, 188));
-	} else {
-		memcpy (cb_ts_bp, packet, 188);
-	}
-
-	cb_ts_bp += 188;
-
-	return TRUE;
-}
-
-static void
-assert_dvb_mux_cor		(vbi_dvb_mux *		mx,
-				 uint8_t * const	p1,
-				 const unsigned int	p1_size,
-				 const vbi_sliced * const s1,
-				 const unsigned int	s1_lines,
-				 const vbi_service_set	service_mask,
-				 const uint8_t * const	raw,
-				 const vbi_sampling_par * const sp,
-				 const int64_t		pts,
-				 const vbi_bool 	exp_success,
-				 const int		exp_errno,
-				 const unsigned int	exp_consumed_lines)
-{
-	vbi_sampling_par sampling_par;
-	vbi_dvb_mux *mx2;
-	vbi_dvb_mux *mx3;
-	vbi_dvb_mux *mx4;
-	uint8_t *p;
-	uint8_t *rand_buffer;
-	uint8_t *ts_buffer;
-	uint8_t *ts_rand_buffer;
-	const vbi_sliced *s;
-	unsigned int p_left;
-	unsigned int s_left;
-	unsigned int pes_bytes_out;
-	unsigned int ts_bytes_out;
-	unsigned int ts_buffer_size;
-	unsigned int data_identifier;
-	unsigned int min_size;
-	unsigned int max_size;
-	vbi_bool success;
-
-	data_identifier = vbi_dvb_mux_get_data_identifier (mx);
-	min_size = vbi_dvb_mux_get_min_pes_packet_size (mx);
-	max_size = vbi_dvb_mux_get_max_pes_packet_size (mx);
-
-	if (NULL != p1) {
-		rand_buffer = xralloc (p1_size);
-		memcpy (p1, rand_buffer, p1_size);
-
-		ts_buffer_size = p1_size * 188 / 184;
-		ts_buffer = (uint8_t *) xmalloc (ts_buffer_size);
-
-		ts_rand_buffer = (uint8_t *) xralloc (ts_buffer_size);
-		memcpy (ts_buffer, ts_rand_buffer, ts_buffer_size);
-	} else {
-		rand_buffer = NULL;
-		ts_buffer_size = 0;
-		ts_buffer = NULL;
-		ts_rand_buffer = NULL;
-	}
-
-	if (NULL != sp)
-		sampling_par = *sp;
-	else
-		memset (&sampling_par, -1, sizeof (sampling_par));
-
-	p = p1;
-	p_left = p1_size;
-
-	s = s1;
-	s_left = s1_lines;
-
-	success = vbi_dvb_mux_cor (mx,
-				    &p, &p_left,
-				    &s, &s_left,
-				    service_mask,
-				    raw, sp,
-				    pts);
-
-	if (NULL == s1 || 0 == s1_lines)
-		assert (FALSE == success);
-	else
-		assert (exp_success == success);
-
-	pes_bytes_out = p1_size - p_left;
-
-	if (success) {
-		unsigned int n_sliced_dus;
-		unsigned int n_raw_dus;
-		unsigned int n_stuffing_dus;
-
-		assert (p1 + pes_bytes_out == p);
-
-		assert (s1 + exp_consumed_lines == s);
-		assert (s1_lines - exp_consumed_lines == s_left);
-
-		assert_pes_packet_ok (&n_sliced_dus,
-				      &n_raw_dus,
-				      &n_stuffing_dus,
-				      p1,
-				      pes_bytes_out,
-				      data_identifier,
-				      min_size,
-				      max_size);
-
-		assert (s1_lines >= n_sliced_dus);
-
-		if (0 == service_mask) {
-			assert (0 == n_sliced_dus);
-			assert (0 == n_raw_dus);
-		}
-
-		if (NULL == raw || NULL == sp)
-			assert (0 == n_raw_dus);
-
-		assert_pes_conversion_ok (p1,
-					  pes_bytes_out,
-					  s1,
-					  s1_lines,
-					  service_mask,
-					  pts);
-	} else {
-		(void) exp_errno;
-		// assert (exp_errno == errno);
-
-		assert (p1 == p);
-		assert (p1_size == p_left);
-
-		assert (s1 + exp_consumed_lines == s);
-		assert (s1_lines - exp_consumed_lines == s_left);
-	}
-
-	if (NULL != p1) {
-		assert (0 == memcmp (p, rand_buffer + pes_bytes_out,
-				     p1_size - pes_bytes_out));
-	}
-
-	mx = (vbi_dvb_mux *) -1;
-
-	/* Verify that the PES callback gives exactly the same result. */
-
-	mx2 = vbi_dvb_pes_mux_new (/* callback */ dvb_mux_pes_cb,
-				    /* user_data */ &cb_multiplexer);
-	assert (NULL != mx2);
-
-	success = vbi_dvb_mux_set_data_identifier (mx2, data_identifier);
-	assert (TRUE == success);
-
-	success = vbi_dvb_mux_set_pes_packet_size (mx2, min_size, max_size);
-	assert (TRUE == success);
-
-	cb_pes_bp = p1;
-	cb_ts_bp = NULL;
-	cb_pes_cmp = TRUE;
-	cb_ts_cmp = TRUE;
-	cb_multiplexer = mx2;
-
-	if (NULL == s1 || 0 == s1_lines)
-		cb_pes_cmp = FALSE;
-
-	success = vbi_dvb_mux_feed (mx2,
-				     s1, s1_lines,
-				     service_mask,
-				     raw, sp,
-				     pts);
-
-	assert (exp_success == success);
-
-	if (NULL == s1 || 0 == s1_lines) {
-		pes_bytes_out = cb_pes_bp - p1;
-	} else {
-		assert ((unsigned int)(cb_pes_bp - p1) == pes_bytes_out);
-	}
-
-	if (success) {
-		unsigned int n_sliced_dus;
-		unsigned int n_raw_dus;
-		unsigned int n_stuffing_dus;
-
-		assert_pes_packet_ok (&n_sliced_dus,
-				      &n_raw_dus,
-				      &n_stuffing_dus,
-				      p1,
-				      pes_bytes_out,
-				      data_identifier,
-				      min_size,
-				      max_size);
-
-		assert (s1_lines >= n_sliced_dus);
-
-		if (NULL == raw || NULL == sp)
-			assert (0 == n_raw_dus);
-	} else {
-		(void) exp_errno;
-		// assert (exp_errno == errno);
-	}
-
-	vbi_dvb_mux_delete (mx2);
-	mx2 = (vbi_dvb_mux *) -1;
-
-	/* Test the TS coroutine. */
-
-	mx3 = vbi_dvb_ts_mux_new (/* pid */ 0x1234,
-				   /* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx3);
-
-	success = vbi_dvb_mux_set_data_identifier (mx3, data_identifier);
-	assert (TRUE == success);
-
-	success = vbi_dvb_mux_set_pes_packet_size (mx3, min_size, max_size);
-	assert (TRUE == success);
-
-	p = ts_buffer;
-	p_left = ts_buffer_size;
-
-	s = s1;
-	s_left = s1_lines;
-
-	success = vbi_dvb_mux_cor (mx3,
-				    &p, &p_left,
-				    &s, &s_left,
-				    service_mask,
-				    raw, sp,
-				    pts);
-
-	if (NULL == s1 || 0 == s1_lines) {
-		assert (FALSE == success);
-	} else {
-		assert (exp_success == success);
-	}
-
-	ts_bytes_out = ts_buffer_size - p_left;
-
-	if (success) {
-		assert (ts_buffer + ts_bytes_out == p);
-
-		assert (s1 + exp_consumed_lines == s);
-		assert (s1_lines - exp_consumed_lines == s_left);
-	} else {
-		(void) exp_errno;
-		// assert (exp_errno == errno);
-
-		assert (ts_buffer == p);
-		assert (ts_buffer_size == p_left);
-
-		assert (s1 + exp_consumed_lines == s);
-		assert (s1_lines - exp_consumed_lines == s_left);
-	}
-
-	assert (0 == memcmp (p, ts_rand_buffer + ts_bytes_out,
-			     ts_buffer_size - ts_bytes_out));
-
-	vbi_dvb_mux_delete (mx3);
-	mx3 = (vbi_dvb_mux *) -1;
-
-	/* Verify that the TS callback and the TS coroutine give
-	   exactly the same result as the PES coroutine. */
-	
-	mx4 = vbi_dvb_ts_mux_new (/* pid */ 0x1234,
-				   /* callback */ dvb_mux_ts_cb,
-				   /* user_data */ &cb_multiplexer);
-	assert (NULL != mx4);
-
-	success = vbi_dvb_mux_set_data_identifier (mx4, data_identifier);
-	assert (TRUE == success);
-
-	success = vbi_dvb_mux_set_pes_packet_size (mx4, min_size, max_size);
-	assert (TRUE == success);
-
-	cb_pes_bp = p1;
-	cb_ts_bp = ts_buffer;
-	cb_pes_cmp = TRUE;
-	cb_ts_cmp = TRUE;
-	cb_multiplexer = mx4;
-	cb_next_continuity_counter = -1;
-
-	if (NULL == s1 || 0 == s1_lines)
-		cb_ts_cmp = FALSE;
-
-	success = vbi_dvb_mux_feed (mx4,
-				     s1, s1_lines,
-				     service_mask,
-				     raw, sp,
-				     pts);
-
-	assert (exp_success == success);
-
-	assert ((unsigned int)(cb_pes_bp - p1) == pes_bytes_out);
-
-	if (NULL == s1 || 0 == s1_lines) {
-		ts_bytes_out = cb_ts_bp - ts_buffer;
-	} else {
-		assert ((unsigned int)(cb_ts_bp - ts_buffer) == ts_bytes_out);
-	}
-
-	if (!success) {
-		(void) exp_errno;
-		// assert (exp_errno == errno);
-	}
-
-	vbi_dvb_mux_delete (mx4);
-	mx4 = (vbi_dvb_mux *) -1;
-
-	free (ts_rand_buffer);
-	free (ts_buffer);
-	free (rand_buffer);
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class DVBMux {
+protected:
+	vbi_dvb_mux *		_mx;
+
+public:
+	DVBMux () {
+		_mx = NULL;
+	};
+
+	~DVBMux () {
+		vbi_dvb_mux_delete (_mx);
+	};
+
+	operator vbi_dvb_mux* () const {
+		return _mx;
+	};
+
+	unsigned int get_min_pes_packet_size () {
+		assert (NULL != _mx);
+		return vbi_dvb_mux_get_min_pes_packet_size (_mx);
+	};
+
+	unsigned int get_max_pes_packet_size () {
+		assert (NULL != _mx);
+		return vbi_dvb_mux_get_max_pes_packet_size (_mx);
+	};
+
+	bool set_pes_packet_size (unsigned int min_size,
+				  unsigned int max_size) {
+		assert (NULL != _mx);
+		return vbi_dvb_mux_set_pes_packet_size (_mx,
+							 min_size,
+							 max_size);
+	};
+
+	unsigned int get_data_identifier () {
+		assert (NULL != _mx);
+		return vbi_dvb_mux_get_data_identifier (_mx);
+	};
+
+	bool set_data_identifier (unsigned int di) {
+		assert (NULL != _mx);
+		return vbi_dvb_mux_set_data_identifier (_mx, di);
+	};
+};
+
+class DVBPESMux : public DVBMux {
+public:
+	DVBPESMux (vbi_dvb_mux_cb *		callback = NULL,
+		   void *			user_data = NULL) {
+		_mx = vbi_dvb_pes_mux_new (callback, user_data);
+		assert (NULL != _mx);
+	};
+};
 
 static void
 alloc_init_sliced		(vbi_sliced **		sliced_p,
@@ -2860,6 +2481,589 @@ alloc_init_sliced		(vbi_sliced **		sliced_p,
 	*n_lines_p = n_lines;
 }
 
+class DVBPESMuxTest : public DVBPESMux {
+	/* vbi_dvb_mux_cor() parameters. */
+
+	uint8_t *		_buffer;
+	unsigned int		_buffer_size;
+	bool			_have_buffer;
+	bool			_free_buffer;
+
+	vbi_sliced *		_sliced;
+	unsigned int		_sliced_lines;
+	bool			_have_sliced;
+	bool			_free_sliced;
+
+	uint8_t *		_raw;
+	const vbi_sampling_par *_sp;
+	bool			_have_raw;
+	bool			_free_raw;
+
+	vbi_service_set	_service_mask;
+
+	int64_t			_pts;
+
+	/* Test status. */
+
+	bool			_cb_cmp;
+
+	uint8_t *		_cb_bp;
+	uint8_t *		_cb_ts_bp;
+
+	int			_cb_next_continuity_counter;
+
+	void cmp_ts_feed (const vbi_bool exp_success,
+			  const int exp_errno,
+			  const unsigned int exp_consumed_lines);
+
+	void cmp_ts_cor (const vbi_bool exp_success,
+			 const int exp_errno,
+			 const unsigned int exp_consumed_lines);
+
+	void cmp_pes_feed (const vbi_bool exp_success,
+			   const int exp_errno,
+			   const unsigned int exp_consumed_lines);
+
+	void copy_props (vbi_dvb_mux *mx) {
+		vbi_bool success;
+
+		assert (NULL != mx);
+	
+		success = vbi_dvb_mux_set_data_identifier
+			(mx, get_data_identifier ());
+		assert (TRUE == success);
+
+		success = vbi_dvb_mux_set_pes_packet_size
+			(mx, get_min_pes_packet_size (),
+			 get_max_pes_packet_size ());
+		assert (TRUE == success);
+	};
+
+public:
+	DVBPESMuxTest () {
+		_have_buffer = false;
+		_free_buffer = false;
+
+		_have_sliced = false;
+		_free_sliced = false;
+
+		_have_raw = false;
+		_free_raw = false;
+
+		_service_mask = ALL_SERVICES;
+
+		_pts = 0x1234567;
+	};
+
+	~DVBPESMuxTest () {
+		if (_free_raw)
+			free (_raw);
+
+		if (_free_sliced)
+			free (_sliced);
+
+		if (_free_buffer)
+			free (_buffer);
+	};
+
+	bool ts_cb (const uint8_t *packet,
+		    unsigned int packet_size);
+
+	bool pes_cb (const uint8_t *packet,
+		     unsigned int packet_size);
+
+	void set_buffer (uint8_t *buffer,
+			 unsigned int n_bytes) {
+		if (_free_buffer)
+			free (_buffer);
+
+		_buffer = buffer;
+		_buffer_size = n_bytes;
+		_have_buffer = true;
+		_free_buffer = false;
+	};
+
+	void set_buffer_size (unsigned int n_bytes) {
+		if (_free_buffer)
+			free (_buffer);
+
+		if (n_bytes > 0)
+			_buffer = (uint8_t *) xmalloc (n_bytes);
+		else
+			_buffer = NULL;
+
+		_buffer_size = n_bytes;
+		_have_buffer = true;
+		_free_buffer = true;
+	};
+
+	void set_sliced (vbi_sliced* sliced,
+			 unsigned int n_lines) {
+		if (_free_sliced)
+			free (_sliced);
+
+		_sliced = sliced;
+		_sliced_lines = n_lines;
+		_have_sliced = true;
+		_free_sliced = false;
+	};
+
+	void set_raw (uint8_t *raw,
+		      const vbi_sampling_par *sp) {
+		if (_free_raw)
+			free (_raw);
+
+		_raw = raw;
+		_sp = sp;
+		_have_raw = true;
+		_free_raw = false;
+	};
+
+	void set_sampling_par (const vbi_sampling_par *sp) {
+		if (_free_raw)
+			free (_raw);
+
+		_raw = alloc_raw_frame (sp);
+		_sp = sp;
+		_have_raw = true;
+		_free_raw = true;
+	};
+
+	void set_service_mask (vbi_service_set mask) {
+		_service_mask = mask;
+	};
+
+	void set_pts (int64_t pts) {
+		_pts = pts;
+	};
+
+	void test (const vbi_bool exp_success,
+		   const int exp_errno,
+		   const unsigned int exp_consumed_lines);
+
+	void test_line (const vbi_sampling_par *sp,
+			const vbi_service_set service,
+			const unsigned int line,
+			const vbi_bool exp_success);
+
+	void test_fail (const int exp_errno,
+			const unsigned int exp_consumed_lines) {
+		test (/* exp_success */ FALSE,
+		      exp_errno,
+		      exp_consumed_lines);
+	};
+
+	void test_pass () {
+		if (!_have_sliced) {
+			alloc_init_sliced (&_sliced,
+					   &_sliced_lines);
+			_have_sliced = true;
+			_free_sliced = true;
+		}
+
+		test (/* exp_success */ TRUE,
+		      /* exp_errno */ 0,
+		      /* exp_consumed_lines */ _sliced_lines);
+	};
+};
+
+bool
+DVBPESMuxTest::pes_cb		(const uint8_t *	packet,
+				 unsigned int		packet_size)
+{
+	assert (0 == packet_size % 184);
+	assert (packet_size >= get_min_pes_packet_size ());
+	assert (packet_size <= get_max_pes_packet_size ());
+
+	if (_cb_cmp) {
+		// Compare against the output of the PES mux coroutine.
+		assert (0 == memcmp (_cb_bp, packet, packet_size));
+	} else {
+		unsigned int n_sliced_dus;
+		unsigned int n_raw_dus;
+		unsigned int n_stuffing_dus;
+
+		// For the TS feed test.
+		memcpy (_cb_bp, packet, packet_size);
+
+		assert_pes_packet_ok (&n_sliced_dus,
+				      &n_raw_dus,
+				      &n_stuffing_dus,
+				      packet,
+				      packet_size,
+				      get_data_identifier (),
+				      get_min_pes_packet_size (),
+				      get_max_pes_packet_size ());
+
+		assert (0 == n_sliced_dus);
+		assert (0 == n_raw_dus);
+		assert (n_stuffing_dus > 0);
+	}
+
+	_cb_bp += packet_size;
+
+	return true;
+}
+
+static vbi_bool
+dvb_mux_pes_cb			(vbi_dvb_mux *		mx,
+				 void *			user_data,
+				 const uint8_t *	packet,
+				 unsigned int		packet_size)
+{
+	DVBPESMuxTest *tmx = (DVBPESMuxTest *) user_data;
+
+	mx = mx; /* unused */
+
+	return tmx->pes_cb (packet, packet_size);
+}
+
+bool
+DVBPESMuxTest::ts_cb		(const uint8_t *	packet,
+				 unsigned int		packet_size)
+{
+	unsigned int payload_unit_start_indicator;
+	unsigned int continuity_counter;
+
+	assert (188 == packet_size);
+
+	/* sync_byte [8],
+	   transport_error_indicator,
+	   payload_unit_start_indicator,
+	   transport_priority,
+	   PID [13] == 0x1234,
+	   transport_scrambling_control [2] == '00' (not scrambled),
+	   adaptation_field_control [2] == '01'
+	     (payload only, no adaption field),
+	   continuity_counter [4] */
+	assert (0x47 == packet[0]);
+	assert (0x12 == (packet[1] & ~0x40));
+	assert (0x34 == packet[2]);
+	assert (0x10 == (packet[3] & ~0x0F));
+
+	payload_unit_start_indicator = !!(packet[1] & 0x40);
+
+	assert ((0x00 == packet[4] &&
+		 0x00 == packet[5] &&
+		 0x01 == packet[6] &&
+		 0xBD == packet[7]) == payload_unit_start_indicator);
+
+	continuity_counter = packet[3] & 0x0F;
+
+	if (-1 != _cb_next_continuity_counter) {
+		assert ((unsigned int) _cb_next_continuity_counter
+			== continuity_counter);
+	}
+
+	_cb_next_continuity_counter = (continuity_counter + 1) & 0xF;
+
+	if (_cb_cmp) {
+		// Compare against the output of the PES mux coroutine.
+		assert (0 == memcmp (_cb_bp, packet + 4, 184));
+		_cb_bp += 184;
+
+		// Compare against the output of the TS mux coroutine.
+		assert (0 == memcmp (_cb_ts_bp, packet, 188));
+		_cb_ts_bp += 188;
+	}
+
+	return true;
+}
+
+static vbi_bool
+dvb_mux_ts_cb			(vbi_dvb_mux *		mx,
+				 void *			user_data,
+				 const uint8_t *	packet,
+				 unsigned int		packet_size)
+{
+	DVBPESMuxTest *tmx = (DVBPESMuxTest *) user_data;
+
+	mx = mx; /* unused */
+
+	return tmx->ts_cb (packet, packet_size);
+}
+
+void
+DVBPESMuxTest::test		(const vbi_bool 	exp_success,
+				 const int		exp_errno,
+				 const unsigned int	exp_consumed_lines)
+{
+	uint8_t *rand_buffer;
+	uint8_t *ts_buffer;
+	uint8_t *ts_rand_buffer;
+	unsigned int ts_buffer_size;
+
+	if (!_have_buffer)
+		set_buffer_size (4 << 10);
+
+	if (!_have_sliced) {
+		alloc_init_sliced (&_sliced, &_sliced_lines);
+		_have_sliced = true;
+		_free_sliced = true;
+	}
+
+	if (!_have_raw)
+		set_sampling_par (&good_par_625);
+
+	if (NULL != _buffer) {
+		rand_buffer = (uint8_t *) xralloc (_buffer_size);
+		memcpy (_buffer, rand_buffer, _buffer_size);
+
+		ts_buffer_size = _buffer_size * 188 / 184;
+		ts_buffer = (uint8_t *) xmalloc (ts_buffer_size);
+
+		ts_rand_buffer = (uint8_t *) xralloc (ts_buffer_size);
+		memcpy (ts_buffer, ts_rand_buffer, ts_buffer_size);
+	} else {
+		rand_buffer = NULL;
+
+		ts_buffer = NULL;
+		ts_rand_buffer = NULL;
+		ts_buffer_size = 0;
+	}
+
+	uint8_t *p = _buffer;
+	unsigned int p_left = _buffer_size;
+
+	const vbi_sliced *s = _sliced;
+	unsigned int s_left = _sliced_lines;
+
+	vbi_bool success = vbi_dvb_mux_cor (*this,
+					      &p, &p_left,
+					      &s, &s_left,
+					      _service_mask,
+					      _raw, _sp,
+					      _pts);
+
+	if (NULL == _buffer || 0 == _buffer_size
+	    || NULL == _sliced || 0 == _sliced_lines)
+		assert (FALSE == success);
+	else
+		assert (exp_success == success);
+
+	unsigned int pes_bytes_out = _buffer_size - p_left;
+
+	assert (_buffer + pes_bytes_out == p);
+
+	assert (_sliced + exp_consumed_lines == s);
+	assert (_sliced_lines - exp_consumed_lines == s_left);
+
+	if (success) {
+		unsigned int n_sliced_dus;
+		unsigned int n_raw_dus;
+		unsigned int n_stuffing_dus;
+
+		assert_pes_packet_ok (&n_sliced_dus,
+				      &n_raw_dus,
+				      &n_stuffing_dus,
+				      _buffer,
+				      pes_bytes_out,
+				      get_data_identifier (),
+				      get_min_pes_packet_size (),
+				      get_max_pes_packet_size ());
+
+		assert (_sliced_lines >= n_sliced_dus);
+
+		if (0 == _service_mask) {
+			assert (0 == n_sliced_dus);
+			assert (0 == n_raw_dus);
+		}
+
+		if (NULL == _raw || NULL == _sp)
+			assert (0 == n_raw_dus);
+
+		assert_pes_conversion_ok (_buffer,
+					  pes_bytes_out,
+					  _sliced,
+					  _sliced_lines,
+					  _service_mask,
+					  _pts);
+	} else {
+		(void) exp_errno;
+		// assert (exp_errno == errno);
+
+		assert (0 == pes_bytes_out);
+	}
+
+	if (NULL != _buffer) {
+		assert (0 == memcmp (p, rand_buffer + pes_bytes_out,
+				     _buffer_size - pes_bytes_out));
+	}
+
+	if (NULL != _buffer && _buffer_size > 0) {
+		vbi_dvb_mux *mx;
+		unsigned int exp_bytes_out;
+
+		// Verify that the PES callback gives the same result.
+
+		mx = vbi_dvb_pes_mux_new (/* callback */ dvb_mux_pes_cb,
+					   /* user_data */ this);
+		assert (NULL != mx);
+
+		copy_props (mx);
+
+		_cb_bp = _buffer;
+		_cb_cmp = (NULL != _sliced && _sliced_lines > 0);
+
+		success = vbi_dvb_mux_feed (mx,
+					     _sliced, _sliced_lines,
+					     _service_mask,
+					     _raw, _sp,
+					     _pts);
+
+		assert (exp_success == success);
+
+		if (_cb_cmp) {
+			exp_bytes_out = pes_bytes_out;
+		} else if (success) {
+			// Stuffing.
+			exp_bytes_out = get_min_pes_packet_size ();
+		} else {
+			exp_bytes_out = 0;
+		}
+
+		assert (_cb_bp == _buffer + exp_bytes_out);
+
+		if (!success) {
+			(void) exp_errno;
+			// assert (exp_errno == errno);
+		}
+
+		vbi_dvb_mux_delete (mx);
+	}
+
+	{
+		vbi_dvb_mux *mx;
+
+		// Test the TS coroutine.
+
+		mx = vbi_dvb_ts_mux_new (/* pid */ 0x1234,
+					  /* callback */ NULL,
+					  /* user_data */ NULL);
+		assert (NULL != mx);
+
+		copy_props (mx);
+
+		p = ts_buffer;
+		p_left = ts_buffer_size;
+
+		s = _sliced;
+		s_left = _sliced_lines;
+
+		success = vbi_dvb_mux_cor (mx,
+					    &p, &p_left,
+					    &s, &s_left,
+					    _service_mask,
+					    _raw, _sp,
+					    _pts);
+
+		if (NULL == ts_buffer || 0 == ts_buffer_size
+		    || NULL == _sliced || 0 == _sliced_lines)
+			assert (FALSE == success);
+		else
+			assert (exp_success == success);
+
+		unsigned int ts_bytes_out = ts_buffer_size - p_left;
+
+		assert (pes_bytes_out * 188 / 184 == ts_bytes_out);
+
+		assert (ts_buffer + ts_bytes_out == p);
+
+		assert (_sliced + exp_consumed_lines == s);
+		assert (_sliced_lines - exp_consumed_lines == s_left);
+
+		if (!success) {
+			(void) exp_errno;
+			// assert (exp_errno == errno);
+
+			assert (0 == ts_bytes_out);
+		}
+
+		if (NULL != ts_buffer) {
+			assert (0 == memcmp (p, ts_rand_buffer + ts_bytes_out,
+					     ts_buffer_size - ts_bytes_out));
+		}
+
+		vbi_dvb_mux_delete (mx);
+	}
+
+	if (NULL != _buffer && _buffer_size > 0) {
+		vbi_dvb_mux *mx;
+		unsigned int exp_bytes_out;
+
+		/* Verify that the TS callback and the TS coroutine give
+		   the same result as the PES coroutine. */
+	
+		mx = vbi_dvb_ts_mux_new (/* pid */ 0x1234,
+					  /* callback */ dvb_mux_ts_cb,
+					  /* user_data */ this);
+		assert (NULL != mx);
+
+		copy_props (mx);
+
+		_cb_bp = _buffer;
+		_cb_cmp = (NULL != _sliced && _sliced_lines > 0);
+
+		_cb_ts_bp = ts_buffer;
+
+		_cb_next_continuity_counter = -1;
+
+		success = vbi_dvb_mux_feed (mx,
+					     _sliced, _sliced_lines,
+					     _service_mask,
+					     _raw, _sp,
+					     _pts);
+
+		assert (exp_success == success);
+
+		if (_cb_cmp) {
+			exp_bytes_out = pes_bytes_out;
+		} else if (success) {
+			// Stuffing.
+			exp_bytes_out = get_min_pes_packet_size ();
+		} else {
+			exp_bytes_out = 0;
+		}
+
+		assert (_cb_bp == _buffer + pes_bytes_out);
+		assert (_cb_ts_bp == ts_buffer + pes_bytes_out * 188 / 184);
+
+		if (!success) {
+			(void) exp_errno;
+			// assert (exp_errno == errno);
+		}
+
+		vbi_dvb_mux_delete (mx);
+	}
+
+	free (ts_rand_buffer);
+	free (ts_buffer);
+	free (rand_buffer);
+}
+
+void
+DVBPESMuxTest::test_line	(const vbi_sampling_par *sp,
+				 const vbi_service_set	service,
+				 const unsigned int	line,
+				 const vbi_bool	exp_success)
+{
+	if (!_free_sliced) {
+		_sliced = alloc_sliced (1);
+		_sliced_lines = 1;
+		_have_sliced = true;
+		_free_sliced = true;
+	}
+
+	_sliced[0].id = service;
+	_sliced[0].line = line;
+
+	set_sampling_par (sp);
+
+	test (exp_success,
+	      VBI_ERR_LINE_NUMBER,
+	      /* exp_consumed_lines */ exp_success ? 1 : 0);
+};
+
 static void
 test_dvb_mux_cor_partial_reads_and_reset
 				(unsigned int		pid)
@@ -2868,6 +3072,7 @@ test_dvb_mux_cor_partial_reads_and_reset
 		1, 46, 184, 188, 999999, INT_MAX,
 		(unsigned int) INT_MAX + 1, UINT_MAX
 	};
+	vbi_dvb_mux *mx;
 	vbi_sliced *sliced;
 	const vbi_sliced *s;
 	uint8_t *buffer1;
@@ -2880,8 +3085,6 @@ test_dvb_mux_cor_partial_reads_and_reset
 	unsigned int s_left;
 	unsigned int i;
 	vbi_bool success;
-
-	vbi_dvb_mux *mx;
 
 	if (0 == pid) {
 		mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
@@ -2996,48 +3199,14 @@ test_dvb_mux_cor_partial_reads_and_reset
 static void
 test_dvb_mux_cor_service_mask (void)
 {
-	vbi_dvb_mux *mx;
-	vbi_sliced *sliced;
-	uint8_t *buffer;
-	uint8_t *raw;
-	unsigned int buffer_size;
-	unsigned int n_lines;
+	DVBPESMuxTest mx;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
+	mx.set_service_mask (VBI_SLICED_VPS |
+			     VBI_SLICED_WSS_625);
+	mx.test_pass ();
 
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
-	alloc_init_sliced (&sliced, &n_lines);
-	raw = alloc_raw_frame (&good_par_625);
-
-	assert_dvb_mux_cor (mx,
-			    buffer, buffer_size,
-			    sliced, n_lines,
-			    (VBI_SLICED_VPS |
-			     VBI_SLICED_WSS_625),
-			    /* raw */ NULL,
-			    &good_par_625,
-			    /* pts */ 0x1234567,
-			    EXPECT_SUCCESS,
-			    /* exp_errno */ 0,
-			    /* exp_consumed_lines */ n_lines);
-
-	assert_dvb_mux_cor (mx,
-			    buffer, buffer_size,
-			    sliced, n_lines,
-			    /* service_mask */ 0,
-			    raw, &good_par_625,
-			    /* pts */ 0x1234567,
-			    EXPECT_SUCCESS,
-			    /* exp_errno */ 0,
-			    /* exp_consumed_lines */ n_lines);
-
-	free (raw);
-	free (sliced);
-	free (buffer);
-
-	vbi_dvb_mux_delete (mx);
+	mx.set_service_mask (0);
+	mx.test_pass ();
 }
 
 static void
@@ -3046,55 +3215,22 @@ test_dvb_mux_cor_pts (void)
 	static const int64_t ptss [] = {
 		0x8000000000000000ll, -1, 0, 0x7FFFFFFFFFFFFFFFll,
 	};
-	vbi_dvb_mux *mx;
-	vbi_sliced *sliced;
-	uint8_t *buffer;
-	uint8_t *raw;
-	unsigned int buffer_size;
-	unsigned int n_lines;
+	DVBPESMuxTest mx;
 	unsigned int i;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
-	alloc_init_sliced (&sliced, &n_lines);
-	raw = alloc_raw_frame (&good_par_625);
-
 	for (i = 0; i < N_ELEMENTS (ptss); ++i) {
-		assert_dvb_mux_cor (mx,
-				    buffer, buffer_size,
-				    sliced, n_lines,
-				    ALL_SERVICES,
-				    raw, &good_par_625,
-				    ptss[i],
-				    EXPECT_SUCCESS,
-				    /* exp_errno */ 0,
-				    /* exp_consumed_lines */ n_lines);
+		mx.set_pts (ptss[i]);
+		mx.test_pass ();
 	}
-
-	free (raw);
-	free (sliced);
-	free (buffer);
-
-	vbi_dvb_mux_delete (mx);
 }
 
 static void
-test_mx_raw_offset		(vbi_dvb_mux *		mx,
-				 const vbi_sliced *	sliced,
-				 unsigned int		n_lines,
-				 const uint8_t *	raw,
-				 unsigned int		bytes_per_line,
+test_mx_raw_offset		(unsigned int		bytes_per_line,
 				 unsigned int		samples_per_line,
 				 unsigned int		offset)
 {
+	DVBPESMuxTest mx;
 	vbi_sampling_par sp;
-	uint8_t *buffer;
-	unsigned int buffer_size;
-
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
 
 	sp = good_par_625;
 	sp.bytes_per_line = bytes_per_line;
@@ -3105,110 +3241,76 @@ test_mx_raw_offset		(vbi_dvb_mux *		mx,
 	    || (uint64_t) offset + samples_per_line > 132 + 720
 	    || 0 == samples_per_line
 	    || samples_per_line > bytes_per_line) {
-		assert_dvb_mux_cor (mx,
-				    buffer, buffer_size,
-				    /* sliced */ (vbi_sliced *) -1,
-				    /* sliced_lines */ 17,
-				    ALL_SERVICES,
-				    /* raw */ (uint8_t *) -1,
-				    &sp,
-				    /* pts */ 0x1234567,
-				    EXPECT_FAILURE,
-				    VBI_ERR_SAMPLING_PAR,
-				    /* exp_consumed_lines */ 0);
+		mx.set_sliced (/* sliced */ (vbi_sliced *) -1,
+			       /* sliced_lines */ 17);
+		mx.set_raw ((uint8_t *) -1, &sp);
+		mx.test_fail (VBI_ERR_SAMPLING_PAR,
+			      /* exp_consumed_lines */ 0);
 	} else if (bytes_per_line < INT_MAX) {
-		assert_dvb_mux_cor (mx,
-				    buffer, buffer_size,
-				    sliced, n_lines,
-				    ALL_SERVICES,
-				    raw, &sp,
-				    /* pts */ 0x1234567,
-				    EXPECT_SUCCESS,
-				    /* exp_errno */ 0,
-				    /* exp_consumed_lines */ n_lines);
+		mx.set_sampling_par (&sp);
+		mx.test_pass ();
 	}
-
-	free (buffer);
-}
-
-static void
-assert_dvb_mux_cor_bad_par	(vbi_dvb_mux *		mx,
-				 vbi_sampling_par *	sp)
-{
-	uint8_t *buffer;
-	unsigned int buffer_size;
-
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
-
-	assert_dvb_mux_cor (mx,
-			    buffer, buffer_size,
-			    /* sliced */ (vbi_sliced *) -1,
-			    /* sliced_lines */ 17,
-			    ALL_SERVICES,
-			    /* raw */ (uint8_t *) -1,
-			    sp,
-			    /* pts */ 0x1234567,
-			    EXPECT_FAILURE,
-			    VBI_ERR_SAMPLING_PAR,
-			    /* exp_consumed_lines */ 0);
-	free (buffer);
 }
 
 static void
 test_dvb_mux_cor_sampling_parameter_checks (void)
 {
+	DVBPESMuxTest mx;
 	vbi_sampling_par sp;
-	vbi_dvb_mux *mx;
-	vbi_sliced *sliced;
-	uint8_t *buffer;
-	uint8_t *raw;
-	unsigned int buffer_size;
-	unsigned int n_lines;
 	unsigned int i;
-
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
 
 	// FIXME: Test vbi_valid_sampling_par_log().
 
 #if 3 == VBI_VERSION_MINOR
 	sp = good_par_625;
-	sp.videostd_set = 0,
-	assert_dvb_mux_cor_bad_par (mx, &sp);
+	sp.videostd_set = 0;
+	mx.set_sampling_par (&sp);
+	mx.test_fail (VBI_ERR_SAMPLING_PAR,
+		      /* exp_consumed_lines */ 0);
 
 	sp = good_par_625;
 	sp.videostd_set = VBI_VIDEOSTD_SET_525_60;
-	assert_dvb_mux_cor_bad_par (mx, &sp);
+	mx.set_sampling_par (&sp);
+	mx.test_fail (VBI_ERR_SAMPLING_PAR,
+		      /* exp_consumed_lines */ 0);
 
 	sp = good_par_625;
 	sp.videostd_set = (VBI_VIDEOSTD_SET (VBI_VIDEOSTD_PAL_B) |
 			   VBI_VIDEOSTD_SET (VBI_VIDEOSTD_NTSC_M));
-	assert_dvb_mux_cor_bad_par (mx, &sp);
+	mx.set_sampling_par (&sp);
+	mx.test_fail (VBI_ERR_SAMPLING_PAR,
+		      /* exp_consumed_lines */ 0);
 #else
 	sp = good_par_625;
 	sp.scanning = 0;
-	assert_dvb_mux_cor_bad_par (mx, &sp);
+	mx.set_sampling_par (&sp);
+	mx.test_fail (VBI_ERR_SAMPLING_PAR,
+		      /* exp_consumed_lines */ 0);
 
 	sp = good_par_625;
 	sp.scanning = 525;
-	assert_dvb_mux_cor_bad_par (mx, &sp);
+	mx.set_sampling_par (&sp);
+	mx.test_fail (VBI_ERR_SAMPLING_PAR,
+		      /* exp_consumed_lines */ 0);
 #endif
 
 	sp = good_par_625;
 	sp.sampling_format = VBI_PIXFMT_YUYV;
-	assert_dvb_mux_cor_bad_par (mx, &sp);
+	mx.set_sampling_par (&sp);
+	mx.test_fail (VBI_ERR_SAMPLING_PAR,
+		      /* exp_consumed_lines */ 0);
 
 	sp = good_par_625;
 	sp.sampling_rate = 27000000;
-	assert_dvb_mux_cor_bad_par (mx, &sp);
+	mx.set_sampling_par (&sp);
+	mx.test_fail (VBI_ERR_SAMPLING_PAR,
+		      /* exp_consumed_lines */ 0);
 
 	sp = good_par_625;
 	sp.synchronous = FALSE;
-	assert_dvb_mux_cor_bad_par (mx, &sp);
-
-	alloc_init_sliced (&sliced, &n_lines);
-	raw = alloc_raw_frame (&good_par_625);
+	mx.set_sampling_par (&sp);
+	mx.test_fail (VBI_ERR_SAMPLING_PAR,
+		      /* exp_consumed_lines */ 0);
 
 	for (i = 0; i < N_ELEMENTS (raw_offsets); ++i) {
 		unsigned int j;
@@ -3217,193 +3319,74 @@ test_dvb_mux_cor_sampling_parameter_checks (void)
 			unsigned int k;
 
 			for (k = 0; k < N_ELEMENTS (raw_offsets); ++k) {
-				test_mx_raw_offset (mx,
-						    sliced, n_lines,
-						    raw,
-						    raw_offsets[i],
+				test_mx_raw_offset (raw_offsets[i],
 						    raw_offsets[j],
 						    raw_offsets[k]);
 			}
 		}
 	}
 
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
-
 	sp = good_par_625;
 	sp.interlaced = TRUE;
-	assert_dvb_mux_cor (mx,
-			    buffer, buffer_size,
-			    sliced, n_lines,
-			    ALL_SERVICES,
-			    raw, &sp,
-			    /* pts */ 0x1234567,
-			    EXPECT_SUCCESS,
-			    /* exp_errno */ 0,
-			    /* exp_consumed_lines */ n_lines);
-
-	free (buffer);
-	free (raw);
-	free (sliced);
-
-	vbi_dvb_mux_delete (mx);
+	mx.set_sampling_par (&sp);
+	mx.test_pass ();
 }
 
 static void
 test_dvb_mux_cor_unaligned_raw	(void)
 {
-	vbi_dvb_mux *mx;
-	vbi_sliced *sliced;
-	uint8_t *buffer;
+	DVBPESMuxTest mx;
 	uint8_t *raw;
-	unsigned int buffer_size;
 	unsigned int n_lines;
+	unsigned int size;
 	unsigned int i;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
-	sliced = alloc_sliced (n_lines = 1);
-	raw = alloc_raw_frame (&good_par_625);
-
-	sliced[0].id = VBI_SLICED_VBI_625;
-	sliced[0].line = 7;
+	n_lines = good_par_625.count[0] + good_par_625.count[1];
+	size = 15 + n_lines * good_par_625.bytes_per_line;
+	raw = (uint8_t *) xralloc (size);
 
 	for (i = 1; i < 16; ++i) {
-		assert_dvb_mux_cor (mx,
-				    buffer, buffer_size,
-				    sliced, n_lines,
-				    ALL_SERVICES,
-				    raw + i,
-				    &good_par_625,
-				    /* pts */ 0x1234567,
-				    EXPECT_SUCCESS,
-				    /* exp_errno */ 0,
-				    /* exp_consumed_lines */ 1);
+		mx.set_raw (raw + i, &good_par_625);
+		mx.test_pass ();
 	}
 
 	free (raw);
-	free (sliced);
-	free (buffer);
-
-	vbi_dvb_mux_delete (mx);
 }
 
 static void
 test_dvb_mux_cor_null_raw_or_sp_checks (void)
 {
-	vbi_dvb_mux *mx;
-	vbi_sliced *sliced;
-	uint8_t *buffer;
+	DVBPESMuxTest mx;
 	uint8_t *raw;
-	unsigned int buffer_size;
-	unsigned int n_lines;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
+	mx.set_raw (/* raw */ NULL, &good_par_625);
+	mx.test_fail (VBI_ERR_NO_RAW_DATA,
+		      /* exp_consumed_lines */ 15 - 7);
 
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
-	alloc_init_sliced (&sliced, &n_lines);
 	raw = alloc_raw_frame (&good_par_625);
 
-	assert_dvb_mux_cor (mx,
-			    buffer, buffer_size,
-			    sliced, n_lines,
-			    ALL_SERVICES,
-			    /* raw */ NULL,
-			    &good_par_625,
-			    /* pts */ 0x1234567,
-			    EXPECT_FAILURE,
-			    VBI_ERR_NO_RAW_DATA,
-			    /* exp_consumed_lines */ 15 - 7);
-
-	assert_dvb_mux_cor (mx,
-			    buffer, buffer_size,
-			    sliced, n_lines,
-			    ALL_SERVICES,
-			    raw,
-			    /* sp */ NULL,
-			    /* pts */ 0x1234567,
-			    EXPECT_FAILURE,
-			    VBI_ERR_NO_RAW_DATA,
-			    /* exp_consumed_lines */ 15 - 7);
+	mx.set_raw (raw, /* sp */ NULL);
+	mx.test_fail (VBI_ERR_NO_RAW_DATA,
+		      /* exp_consumed_lines */ 15 - 7);
 
 	free (raw);
-	free (sliced);
-	free (buffer);
-
-	vbi_dvb_mux_delete (mx);
-}
-
-static void
-test_mx_line			(const vbi_sampling_par *sp,
-				 vbi_service_set	service,
-				 unsigned int		line,
-				 vbi_bool		correct)
-{
-	vbi_dvb_mux *mx;
-	vbi_sliced *sliced;
-	uint8_t *buffer;
-	uint8_t *raw;
-	unsigned int buffer_size;
-	unsigned int n_lines;
-
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
-	sliced = alloc_sliced (n_lines = 1);
-	raw = alloc_raw_frame (sp);
-
-	sliced[0].id = service;
-	sliced[0].line = line;
-
-	if (correct) {
-		assert_dvb_mux_cor (mx,
-				    buffer, buffer_size,
-				    sliced, n_lines,
-				    ALL_SERVICES,
-				    raw, sp,
-				    /* pts */ 0x1234567,
-				    EXPECT_SUCCESS,
-				    /* exp_errno */ 0,
-				    /* exp_consumed_lines */ 1);
-	} else {
-		assert_dvb_mux_cor (mx,
-				    buffer, buffer_size,
-				    sliced, n_lines,
-				    ALL_SERVICES,
-				    raw, sp,
-				    /* pts */ 0x1234567,
-				    EXPECT_FAILURE,
-				    VBI_ERR_LINE_NUMBER,
-				    /* exp_consumed_lines */ 0);
-	}
-
-	free (raw);
-	free (sliced);
-	free (buffer);
-
-	vbi_dvb_mux_delete (mx);
 }
 
 static void
 test_dvb_mux_cor_sp_line_number_checks (void)
 {
+	DVBPESMuxTest mx;
 	vbi_sampling_par sp;
 
 	sp = good_par_625;
 	sp.count[0] = 0;
-
-	test_mx_line (&sp, VBI_SLICED_VBI_625, 7, EXPECT_FAILURE);
+	mx.test_line (&sp, VBI_SLICED_VBI_625, 7,
+		      /* exp_success */ FALSE);
 
 	sp = good_par_625;
 	sp.count[1] = 0;
-
-	test_mx_line (&sp, VBI_SLICED_VBI_625, 320, EXPECT_FAILURE);
+	mx.test_line (&sp, VBI_SLICED_VBI_625, 320,
+		      /* exp_success */ FALSE);
 
 	sp = good_par_625;
 	sp.start[0] = 8;
@@ -3411,121 +3394,86 @@ test_dvb_mux_cor_sp_line_number_checks (void)
 	sp.start[1] = 313 + 8;
 	sp.count[1] = 22 - 8 + 1;
 
-	test_mx_line (&sp, VBI_SLICED_VBI_625, 7, EXPECT_FAILURE);
-	test_mx_line (&sp, VBI_SLICED_VBI_625, 8, EXPECT_SUCCESS);
-	test_mx_line (&sp, VBI_SLICED_VBI_625, 22, EXPECT_SUCCESS);
-	test_mx_line (&sp, VBI_SLICED_VBI_625, 23, EXPECT_FAILURE);
-	test_mx_line (&sp, VBI_SLICED_VBI_625, 313 + 7, EXPECT_FAILURE);
-	test_mx_line (&sp, VBI_SLICED_VBI_625, 313 + 8, EXPECT_SUCCESS);
-	test_mx_line (&sp, VBI_SLICED_VBI_625, 313 + 22, EXPECT_SUCCESS);
-	test_mx_line (&sp, VBI_SLICED_VBI_625, 313 + 23, EXPECT_FAILURE);
+	mx.test_line (&sp, VBI_SLICED_VBI_625, 7,
+		      /* exp_success */ FALSE);
+	mx.test_line (&sp, VBI_SLICED_VBI_625, 8,
+		      /* exp_success */ TRUE);
+	mx.test_line (&sp, VBI_SLICED_VBI_625, 22,
+		      /* exp_success */ TRUE);
+	mx.test_line (&sp, VBI_SLICED_VBI_625, 23,
+		      /* exp_success */ FALSE);
+	mx.test_line (&sp, VBI_SLICED_VBI_625, 313 + 7,
+		      /* exp_success */ FALSE);
+	mx.test_line (&sp, VBI_SLICED_VBI_625, 313 + 8,
+		      /* exp_success */ TRUE);
+	mx.test_line (&sp, VBI_SLICED_VBI_625, 313 + 22,
+		      /* exp_success */ TRUE);
+	mx.test_line (&sp, VBI_SLICED_VBI_625, 313 + 23,
+		      /* exp_success */ FALSE);
 }
 
 static void
 test_dvb_mux_cor_line_number_checks (void)
 {
-	vbi_dvb_mux *mx;
-	vbi_sliced *sliced;
-	uint8_t *buffer;
-	vbi_service_set service;
-	unsigned int buffer_size;
-	unsigned int n_lines;
+	DVBPESMuxTest mx;
 	unsigned int i;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
-	sliced = alloc_sliced (n_lines = 1);
-
-	sliced[0].id = 0;
-	sliced[0].line = 100;
-
-	assert_dvb_mux_cor (mx,
-			    buffer, buffer_size,
-			    sliced, n_lines,
-			    ALL_SERVICES,
-			    /* raw */ NULL,
-			    /* sp */ NULL,
-			    /* pts */ 0x1234567,
-			    EXPECT_SUCCESS,
-			    /* exp_errno */ 0,
-			    /* exp_consumed_lines */ 1);
-
-	free (sliced);
-	sliced = (vbi_sliced *) -1;
-
-	free (buffer);
-	buffer = (uint8_t *) -1;
-
-	vbi_dvb_mux_delete (mx);
-	mx = (vbi_dvb_mux *) -1;
+	mx.test_line (&good_par_625,
+		      /* service */ 0,
+		      /* line (bad) */ 100,
+		      /* exp_success */ TRUE);
 
 	for (i = 0; i <= 31; ++i) {
-		vbi_bool correct;
 		unsigned int j;
 
 		for (j = 0; j < N_ELEMENTS (good_services); ++j) {
-			service = good_services[j];
+			vbi_service_set service = good_services[j];
 
-			correct = correct_line_number (service, 0, i);
-			test_mx_line (&good_par_625, service,
-				      /* line */ i, correct);
-
-			correct = correct_line_number (service, 1, i);
-			test_mx_line (&good_par_625, service,
-				      /* line */ i + 313, correct);
+			mx.test_line (&good_par_625, service,
+				      /* line */ i,
+				      is_correct_line (service, 0, i));
+			mx.test_line (&good_par_625, service,
+				      /* line */ i + 313,
+				      is_correct_line (service, 1, i));
 		}
 
-		service = VBI_SLICED_VBI_625;
+		vbi_service_set service = VBI_SLICED_VBI_625;
 
-		correct = correct_line_number (service, 0, i);
-		test_mx_line (&good_par_625, service,
-			      /* line */ i, correct);
-
-		correct = correct_line_number (service, 0, i);
-		test_mx_line (&good_par_625, service,
-			      /* line */ i + 313, correct);
+		mx.test_line (&good_par_625, service,
+			      /* line */ i,
+			      is_correct_line (service, 0, i));
+		mx.test_line (&good_par_625, service,
+			      /* line */ i + 313,
+			      is_correct_line (service, 1, i));
 	}
 
 	for (i = 0; i < N_ELEMENTS (bad_line_numbers); ++i) {
 		unsigned int j;
 
 		for (j = 0; j < N_ELEMENTS (good_services); ++j) {
-			service = good_services[j];
+			vbi_service_set service = good_services[j];
 
-			test_mx_line (&good_par_625,
-				      service,
-				      /* line */ bad_line_numbers[i],
+			mx.test_line (&good_par_625, service,
+				      bad_line_numbers[i],
 				      /* correct */ 0 == service);
 		}
 
-		test_mx_line (&good_par_625,
+		mx.test_line (&good_par_625,
 			      VBI_SLICED_VBI_625,
-			      /* line */ bad_line_numbers[i],
-			      /* correct */ FALSE);
+			      bad_line_numbers[i],
+			      /* correct */ false);
 	}
 }
 
 static void
 test_dvb_mux_cor_service_checks (void)
 {
-	vbi_dvb_mux *mx;
+	DVBPESMuxTest mx;
 	vbi_sliced *sliced;
-	uint8_t *buffer;
-	uint8_t *raw;
-	unsigned int buffer_size;
 	unsigned int n_lines;
 	unsigned int i;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
 	sliced = alloc_sliced (n_lines = 8);
-	raw = alloc_raw_frame (&good_par_625);
 
 	for (i = 0; i < 6; ++i) {
 		sliced[i].id = VBI_SLICED_TELETEXT_B_625;
@@ -3553,74 +3501,24 @@ test_dvb_mux_cor_service_checks (void)
 		sliced[6].id = service;
 		sliced[6].line = line;
 
+		mx.set_sliced (sliced, n_lines);
+
 		if (VBI_SLICED_VBI_625 == service
 		    || is_good_service (service)) {
-			assert_dvb_mux_cor (mx,
-					    buffer, buffer_size,
-					    sliced, n_lines,
-					    ALL_SERVICES,
-					    raw, &good_par_625,
-					    /* pts */ 0x1234567,
-					    EXPECT_SUCCESS,
-					    /* exp_errno */ 0,
-					    /* exp_consumed_lines */ n_lines);
+			mx.test_pass ();
 		} else {
-			assert_dvb_mux_cor (mx,
-					    buffer, buffer_size,
-					    sliced, n_lines,
-					    ALL_SERVICES,
-					    raw, &good_par_625,
-					    /* pts */ 0x1234567,
-					    EXPECT_FAILURE,
-					    VBI_ERR_INVALID_SERVICE,
-					    /* exp_consumed_lines */ 6);
+			mx.test_fail (VBI_ERR_INVALID_SERVICE,
+				      /* exp_consumed_lines */ 6);
 		}
 	}
 
-	free (raw);
 	free (sliced);
-	free (buffer);
-
-	vbi_dvb_mux_delete (mx);
-}
-
-static void
-test_mx_line_order		(vbi_sliced *		sliced,
-				 unsigned int		n_lines,
-				 vbi_bool		exp_success,
-				 unsigned int		exp_consumed_lines)
-{
-	vbi_dvb_mux *mx;
-	uint8_t *buffer;
-	uint8_t *raw;
-	unsigned int buffer_size;
-
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
-	raw = alloc_raw_frame (&good_par_625);
-
-	assert_dvb_mux_cor (mx,
-			    buffer, buffer_size,
-			    sliced, n_lines,
-			    ALL_SERVICES,
-			    raw, &good_par_625,
-			    /* pts */ 0x1234567,
-			    exp_success,
-			    VBI_ERR_LINE_ORDER,
-			    exp_consumed_lines);
-
-	free (raw);
-	free (buffer);
-
-	vbi_dvb_mux_delete (mx);
 }
 
 static void
 test_dvb_mux_cor_line_order_checks (void)
 {
+	DVBPESMuxTest mx;
 	vbi_sliced *sliced;
 	unsigned int n_lines;
 
@@ -3635,31 +3533,37 @@ test_dvb_mux_cor_line_order_checks (void)
 
 	sliced[1].line = 0;
 	sliced[2].line = 0;
-	test_mx_line_order (sliced, n_lines, EXPECT_SUCCESS, n_lines);
+	mx.set_sliced (sliced, n_lines);
+	mx.test_pass ();
 
 	sliced[1].line = 10;
 	sliced[2].line = 0;
-	test_mx_line_order (sliced, n_lines, EXPECT_FAILURE, 3);
+	mx.set_sliced (sliced, n_lines);
+	mx.test_fail (VBI_ERR_LINE_ORDER, 3);
 
 	sliced[1].line = 8;
 	sliced[2].line = 8;
-	test_mx_line_order (sliced, n_lines, EXPECT_FAILURE, 2);
+	mx.set_sliced (sliced, n_lines);
+	mx.test_fail (VBI_ERR_LINE_ORDER, 2);
 
 	sliced[1].line = 55;
 	sliced[2].line = 9;
-	test_mx_line_order (sliced, n_lines, EXPECT_FAILURE, 2);
+	mx.set_sliced (sliced, n_lines);
+	mx.test_fail (VBI_ERR_LINE_ORDER, 2);
 
 	sliced[1].id = VBI_SLICED_TELETEXT_B_625;
 	sliced[1].line = 11;
 	sliced[2].id = VBI_SLICED_VBI_625;
 	sliced[2].line = 9;
-	test_mx_line_order (sliced, n_lines, EXPECT_FAILURE, 2);
+	mx.set_sliced (sliced, n_lines);
+	mx.test_fail (VBI_ERR_LINE_ORDER, 2);
 
 	sliced[1].id = VBI_SLICED_VBI_625;
 	sliced[1].line = 11;
 	sliced[2].id = VBI_SLICED_TELETEXT_B_625;
 	sliced[2].line = 9;
-	test_mx_line_order (sliced, n_lines, EXPECT_FAILURE, 2);
+	mx.set_sliced (sliced, n_lines);
+	mx.test_fail (VBI_ERR_LINE_ORDER, 2);
 
 	sliced[1].id = VBI_SLICED_TELETEXT_B_625;
 	sliced[1].line = 8;
@@ -3672,7 +3576,8 @@ test_dvb_mux_cor_line_order_checks (void)
 	assert (313 + 9 == sliced[17 + 2].line);
 
 	sliced[17 + 1].line = 313 + 10;
-	test_mx_line_order (sliced, n_lines, EXPECT_FAILURE, 17 + 2);
+	mx.set_sliced (sliced, n_lines);
+	mx.test_fail (VBI_ERR_LINE_ORDER, 17 + 2);
 
 	free (sliced);
 }
@@ -3680,20 +3585,14 @@ test_dvb_mux_cor_line_order_checks (void)
 static void
 test_dvb_mux_cor_packet_overflow_checks (void)
 {
-	vbi_dvb_mux *mx;
+	DVBPESMuxTest mx;
 	vbi_sliced *sliced;
-	uint8_t *buffer;
-	unsigned int buffer_size;
 	unsigned int max_size;
 	unsigned int n_lines;
 	unsigned int i;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
-	vbi_dvb_mux_set_pes_packet_size (mx, 0, UINT_MAX);
-	max_size = vbi_dvb_mux_get_max_pes_packet_size (mx);
+	mx.set_pes_packet_size (0, UINT_MAX);
+	max_size = mx.get_max_pes_packet_size ();
 
 	// Cannot fit because the header takes another 46 bytes.
 	n_lines = max_size / 46;
@@ -3704,137 +3603,61 @@ test_dvb_mux_cor_packet_overflow_checks (void)
 		sliced[i].line = 0;
 	}
 
-	buffer_size = (n_lines + 1) * 46;
-	buffer = (uint8_t *) xmalloc (buffer_size);
+	mx.set_buffer_size ((n_lines + 1) * 46);
+	mx.set_sliced (sliced, n_lines);
+	mx.test_fail (VBI_ERR_BUFFER_OVERFLOW,
+		      /* exp_consumed_lines */ n_lines - 1);
 
-	assert_dvb_mux_cor (mx,
-			    buffer, buffer_size,
-			    sliced, n_lines,
-			    ALL_SERVICES,
-			    /* raw */ NULL,
-			    /* sp */ NULL,
-			    /* pts */ 0x1234567,
-			    EXPECT_FAILURE,
-			    VBI_ERR_BUFFER_OVERFLOW,
-			    /* exp_consumed_lines */ n_lines - 1);
-
-	free (buffer);
 	free (sliced);
-
-	vbi_dvb_mux_delete (mx);
 }
 
 static void
 test_dvb_mux_cor_null_sliced_checks (void)
 {
-	vbi_dvb_mux *mx;
+	DVBPESMuxTest mx;
 	vbi_sliced *sliced;
-	uint8_t *buffer;
-	uint8_t *raw;
-	unsigned int buffer_size;
 	unsigned int n_lines;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				    /* user_data */ NULL);
-	assert (NULL != mx);
-
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
 	alloc_init_sliced (&sliced, &n_lines);
-	raw = alloc_raw_frame (&good_par_625);
 
-	assert_dvb_mux_cor (mx,
-			    buffer, buffer_size,
-			    /* sliced */ NULL,
-			    n_lines,
-			    ALL_SERVICES,
-			    raw,
-			    &good_par_625,
-			    /* pts */ 0x1234567,
-			    EXPECT_SUCCESS,
-			    /* exp_errno */ 0,
-			    /* exp_consumed_lines */ 0);
+	mx.set_sliced (NULL, n_lines);
+	mx.test (/* exp_success */ TRUE,
+		 /* exp_errno */ 0,
+		 /* exp_consumed_lines */ 0);
 
-	assert_dvb_mux_cor (mx,
-			    buffer, buffer_size,
-			    sliced,
-			    /* n_lines */ 0,
-			    ALL_SERVICES,
-			    raw,
-			    &good_par_625,
-			    /* pts */ 0x1234567,
-			    EXPECT_SUCCESS,
-			    /* exp_errno */ 0,
-			    /* exp_consumed_lines */ 0);
+	mx.set_sliced (sliced, /* n_lines */ 0);
+	mx.test_pass ();
 
-	free (raw);
 	free (sliced);
-	free (buffer);
-
-	vbi_dvb_mux_delete (mx);
-
 }
 
 static void
 test_dvb_mux_cor_unaligned_packet (void)
 {
-	vbi_dvb_mux *mx;
-	vbi_sliced *sliced;
+	DVBPESMuxTest mx;
 	uint8_t *buffer;
-	uint8_t *raw;
 	unsigned int buffer_size;
-	unsigned int n_lines;
 	unsigned int i;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
-	buffer = (uint8_t *) xmalloc (15 + (buffer_size = 4 << 10));
-	alloc_init_sliced (&sliced, &n_lines);
-	raw = alloc_raw_frame (&good_par_625);
+	buffer_size = 4 << 10;
+	buffer = (uint8_t *) xmalloc (15 + buffer_size);
 
 	for (i = 1; i < 16; ++i) {
-		assert_dvb_mux_cor (mx,
-				    buffer + i, buffer_size,
-				    sliced, n_lines,
-				    ALL_SERVICES,
-				    raw, &good_par_625,
-				    /* pts */ 0x1234567,
-				    EXPECT_SUCCESS,
-				    /* exp_errno */ 0,
-				    /* exp_consumed_lines */ n_lines);
+		mx.set_buffer (buffer + i, buffer_size);
+		mx.test_pass ();
 	}
 
-	free (raw);
-	free (sliced);
 	free (buffer);
-
-	vbi_dvb_mux_delete (mx);
 }
 
 static void
 test_dvb_mux_cor_null_packet_checks (void)
 {
-	vbi_dvb_mux *mx;
+	DVBPESMuxTest mx;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
-	assert_dvb_mux_cor (mx,
-			    /* buffer */ NULL,
-			    /* buffer_size */ 4 << 10,
-			    /* sliced */ (vbi_sliced *) -1,
-			    /* sliced_lines */ 17,
-			    ALL_SERVICES,
-			    /* raw */ NULL,
-			    /* sp */ NULL,
-			    /* pts */ 0x1234567,
-			    EXPECT_FAILURE,
-			    VBI_ERR_BUFFER_OVERFLOW,
-			    /* exp_consumed_lines */ 0);
-
-	vbi_dvb_mux_delete (mx);
+	mx.set_buffer (NULL, /* buffer_size */ 4 << 10);
+	mx.test_fail (VBI_ERR_BUFFER_OVERFLOW,
+		      /* exp_consumed_lines */ 0);
 }
 
 static void
@@ -3870,21 +3693,12 @@ test_dvb_mux_feed_no_callback_checks (void)
 static void
 test_dvb_mux_data_identifier_accessors (void)
 {
-	vbi_dvb_mux *mx;
-	vbi_sliced *sliced;
-	uint8_t *buffer;
-	uint8_t *raw;
-	unsigned int buffer_size;
-	unsigned int n_lines;
+	DVBPESMuxTest mx;
 	unsigned int di_tested;
 	unsigned int i;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
 	// Default.
-	assert (0x10 == vbi_dvb_mux_get_data_identifier (mx));
+	assert (0x10 == mx.get_data_identifier ());
 
 	for (i = 0; i < 300; ++i) {
 		unsigned int old_di;
@@ -3892,15 +3706,15 @@ test_dvb_mux_data_identifier_accessors (void)
 		vbi_bool success;
 
 		old_di = 0x1F ^ (i & 0xF);
-		vbi_dvb_mux_set_data_identifier (mx, old_di); 
+		mx.set_data_identifier (old_di); 
 
-		success = vbi_dvb_mux_set_data_identifier (mx, i);
+		success = mx.set_data_identifier (i);
 
 		// EN 300 775 table 2.
 		assert (success == ((i >= 0x10 && i <= 0x1F)
 				    || (i >= 0x99 && i <= 0x9B)));
 
-		new_di = vbi_dvb_mux_get_data_identifier (mx);
+		new_di = mx.get_data_identifier ();
 
 		if (success) {
 			assert (i == new_di);
@@ -3910,98 +3724,60 @@ test_dvb_mux_data_identifier_accessors (void)
 		}
 	}
 
-	buffer = (uint8_t *) xmalloc (buffer_size = 4 << 10);
-	alloc_init_sliced (&sliced, &n_lines);
-	raw = alloc_raw_frame (&good_par_625);
-
 	di_tested = 0;
 
 	for (i = 0; i < N_ELEMENTS (data_identifiers); ++i) {
 		unsigned int di;
 
 		di = data_identifiers[i];
-		if (!vbi_dvb_mux_set_data_identifier (mx, di))
+		if (!mx.set_data_identifier (di))
 			continue;
 
 		di_tested |= 1 << (di >= 0x99);
 
-		assert_dvb_mux_cor (mx,
-				    buffer, buffer_size,
-				    sliced, n_lines,
-				    ALL_SERVICES,
-				    raw, &good_par_625,
-				    /* pts */ 0x1234567,
-				    EXPECT_SUCCESS,
-				    /* exp_errno */ 0,
-				    /* exp_consumed_lines */ n_lines);
+		mx.test_pass ();
 	}
 
 	assert (3 == di_tested);
-
-	free (raw);
-	free (sliced);
-	free (buffer);
-
-	vbi_dvb_mux_delete (mx);
 }
 
 static void
 test_mx_packet_size		(unsigned int		min_size,
 				 unsigned int		max_size)
 {
-	vbi_dvb_mux *mx;
-	vbi_sliced *sliced;
+	DVBPESMuxTest mx;
 	uint8_t *buffer;
-	uint8_t *raw;
+	vbi_sliced *sliced;
 	unsigned int n_lines;
 	vbi_bool success;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
-	success = vbi_dvb_mux_set_pes_packet_size (mx, min_size, max_size);
+	success = mx.set_pes_packet_size (min_size, max_size);
 	assert (TRUE == success);
 
 	buffer = (uint8_t *) xmalloc (max_size);
 	alloc_init_sliced (&sliced, &n_lines);
-	raw = alloc_raw_frame (&good_par_625);
 
 	if (max_size <= 184)
 		n_lines = 1;
 
-	assert_dvb_mux_cor (mx,
-			    buffer,
-			    /* buffer_size */ max_size,
-			    sliced, n_lines,
-			    ALL_SERVICES,
-			    raw, &good_par_625,
-			    /* pts */ 0x1234567,
-			    EXPECT_SUCCESS,
-			    /* exp_errno */ 0,
-			    /* exp_consumed_lines */ n_lines);
+	mx.set_buffer (buffer, max_size);
+	mx.set_sliced (sliced, n_lines);
+	mx.test_pass ();
 
-	free (raw);
 	free (sliced);
 	free (buffer);
-
-	vbi_dvb_mux_delete (mx);
 }
 
 static void
 test_dvb_mux_packet_size_accessors (void)
 {
-	vbi_dvb_mux *mx;
+	DVBPESMuxTest mx;
 	unsigned int min;
 	unsigned int max;
 	unsigned int i;
 
-	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
-				   /* user_data */ NULL);
-	assert (NULL != mx);
-
-	min = vbi_dvb_mux_get_min_pes_packet_size (mx);
-	max = vbi_dvb_mux_get_max_pes_packet_size (mx);
+	min = mx.get_min_pes_packet_size ();
+	max = mx.get_max_pes_packet_size ();
 
 	// Defaults.
 	assert (184 == min);
@@ -4013,15 +3789,12 @@ test_dvb_mux_packet_size_accessors (void)
 		for (j = 0; j < N_ELEMENTS (packet_sizes); ++j) {
 			vbi_bool success;
 
-			success = vbi_dvb_mux_set_pes_packet_size
-				(mx,
-				 packet_sizes[i],
-				 packet_sizes[j]);
-
+			success = mx.set_pes_packet_size (packet_sizes[i],
+							  packet_sizes[j]);
 			assert (TRUE == success);
 
-			min = vbi_dvb_mux_get_min_pes_packet_size (mx);
-			max = vbi_dvb_mux_get_max_pes_packet_size (mx);
+			min = mx.get_min_pes_packet_size ();
+			max = mx.get_max_pes_packet_size ();
 
 			assert (0 == min % 184);
 			assert (0 == max % 184);
@@ -4036,9 +3809,6 @@ test_dvb_mux_packet_size_accessors (void)
 				assert (max <= packet_sizes[j]);
 		}
 	}
-
-	vbi_dvb_mux_delete (mx);
-	mx = (vbi_dvb_mux *) -1;
 
 	test_mx_packet_size (184, 184);
 	test_mx_packet_size (184, 65504);
@@ -4067,9 +3837,33 @@ test_dvb_mux_new_pid_checks	(void)
 }
 
 static void
+test_dvb_ts_mux_malloc		(void)
+{
+	vbi_dvb_mux *mx;
+
+	mx = vbi_dvb_ts_mux_new (/* pid */ 0x1234,
+				  /* callback */ NULL,
+				  /* user_data */ NULL);
+	assert (ENOMEM == errno);
+	assert (NULL == mx);
+}
+
+static void
+test_dvb_pes_mux_malloc		(void)
+{
+	vbi_dvb_mux *mx;
+
+	mx = vbi_dvb_pes_mux_new (/* callback */ NULL,
+				   /* user_data */ NULL);
+	assert (ENOMEM == errno);
+	assert (NULL == mx);
+}
+
+static void
 test_dvb_mux			(void)
 {
-	vbi_dvb_mux_delete (NULL);
+	test_malloc (test_dvb_pes_mux_malloc, /* n_cycles */ 2);
+	test_malloc (test_dvb_ts_mux_malloc, /* n_cycles */ 2);
 
 	test_dvb_mux_new_pid_checks ();
 
@@ -4100,7 +3894,6 @@ main				(void)
 {
 	test_multiplex_sliced ();
 	test_multiplex_raw ();
-
 	test_dvb_mux ();
 
 	return 0;
