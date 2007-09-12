@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pfc_demux.c,v 1.6 2007/08/31 15:33:05 mschimek Exp $ */
+/* $Id: pfc_demux.c,v 1.7 2007/09/12 15:53:13 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -356,7 +356,7 @@ vbi_pfc_demux_delete		(vbi_pfc_demux *	dx)
 
 	_vbi_pfc_demux_destroy (dx);
 
-	free (dx);		
+	vbi_free (dx);		
 }
 
 /**
@@ -382,13 +382,13 @@ vbi_pfc_demux_new		(vbi_pgno		pgno,
 {
 	vbi_pfc_demux *dx;
 
-	if (!(dx = malloc (sizeof (*dx)))) {
+	if (!(dx = vbi_malloc (sizeof (*dx)))) {
 		return NULL;
 	}
 
 	if (!_vbi_pfc_demux_init (dx, pgno, stream,
 				  callback, user_data)) {
-		free (dx);
+		vbi_free (dx);
 		dx = NULL;
 	}
 

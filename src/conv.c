@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: conv.c,v 1.6 2007/08/27 06:43:07 mschimek Exp $ */
+/* $Id: conv.c,v 1.7 2007/09/12 15:53:40 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -186,7 +186,7 @@ _vbi_iconv_close		(vbi_iconv_t *		cd)
 		cd->icd = (iconv_t) -1;
 	}
 
-	free (cd);
+	vbi_free (cd);
 #endif
 }
 
@@ -227,13 +227,13 @@ _vbi_iconv_open			(const char *		dst_codeset,
 		src_codeset = "UCS-2";
 
 #ifdef HAVE_ICONV
-	cd = malloc (sizeof (*cd));
+	cd = vbi_malloc (sizeof (*cd));
 	if (NULL == cd)
 		return NULL;
 
 	cd->icd = iconv_open (dst_codeset, src_codeset);
 	if ((iconv_t) -1 == cd->icd) {
-		free (cd);
+		vbi_free (cd);
 		return NULL;
 	}
 
@@ -511,7 +511,7 @@ strndup_iconv_from_ucs2		(unsigned long *	out_size,
 			cd = _vbi_iconv_open (dst_codeset, "UCS-2",
 					       &d, d_left, repl_char);
 			if (NULL == cd) {
-				free (buffer);
+				vbi_free (buffer);
 				buffer = NULL;
 
 				return NULL;
@@ -531,7 +531,7 @@ strndup_iconv_from_ucs2		(unsigned long *	out_size,
 			if (likely ((size_t) -1 != r))
 				break;
 
-			free (buffer);
+			vbi_free (buffer);
 			buffer = NULL;
 
 			if (E2BIG != errno)
@@ -594,7 +594,7 @@ vbi_strndup_iconv_ucs2		(const char *		dst_codeset,
 	if (NULL == buffer)
 		return NULL;
 
-	result = realloc (buffer, size + 4);
+	result = vbi_realloc (buffer, size + 4);
 	if (NULL == result)
 		result = buffer;
 
@@ -686,7 +686,7 @@ strndup_ucs2_eia608		(unsigned long *	out_size,
 	return buffer;
 	
 ilseq:
-	free (buffer);
+	vbi_free (buffer);
 	buffer = NULL;
 
 	errno = EILSEQ;
@@ -771,7 +771,7 @@ strndup_iconv_to_ucs2		(unsigned long *	out_size,
 					       &d, d_left,
 					       /* repl_char */ 0);
 			if (NULL == cd) {
-				free (buffer);
+				vbi_free (buffer);
 				buffer = NULL;
 
 				return NULL;
@@ -793,7 +793,7 @@ strndup_iconv_to_ucs2		(unsigned long *	out_size,
 			if ((size_t) -1 != r)
 				break;
 
-			free (buffer);
+			vbi_free (buffer);
 			buffer = NULL;
 
 			if (E2BIG != errno)
@@ -886,7 +886,7 @@ strndup_iconv			(unsigned long *	out_size,
 						  size / 2,
 						  repl_char);
 
-		free (buffer);
+		vbi_free (buffer);
 		buffer = NULL;
 
 		return result;
@@ -936,7 +936,7 @@ vbi_strndup_iconv		(const char *		dst_codeset,
 	if (NULL == buffer)
 		return NULL;
 
-	result = realloc (buffer, size + 4);
+	result = vbi_realloc (buffer, size + 4);
 	if (NULL == result)
 		result = buffer;
 
@@ -1093,14 +1093,14 @@ vbi_strndup_iconv_teletext	(const char *		dst_codeset,
 		return NULL;
 
 	if (same_codeset (dst_codeset, "UCS2")) {
-		result = realloc (buffer, size + 2);
+		result = vbi_realloc (buffer, size + 2);
 		if (NULL == result)
 			result = buffer;
 	} else {
 		result = vbi_strndup_iconv (dst_codeset, "UCS-2",
 					    buffer, size,
 					    repl_char);
-		free (buffer);
+		vbi_free (buffer);
 		buffer = NULL;
 	}
 
@@ -1169,7 +1169,7 @@ vbi_fputs_iconv			(FILE *			fp,
 
 	actual = fwrite (buffer, 1, size, fp);
 
-	free (buffer);
+	vbi_free (buffer);
 	buffer = NULL;
 
 	return (actual == (size_t) size);

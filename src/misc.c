@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.c,v 1.8 2007/08/27 06:42:47 mschimek Exp $ */
+/* $Id: misc.c,v 1.9 2007/09/12 15:53:23 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -102,7 +102,7 @@ _vbi_strndup			(const char *		s,
 	n = strlen (s);
 	len = MIN (len, n);
 
-	r = malloc (len + 1);
+	r = vbi_malloc (len + 1);
 
 	if (r) {
 		memcpy (r, s, len);
@@ -139,7 +139,7 @@ _vbi_vasprintf			(char **		dstp,
 		char *buf2;
 		long len;
 
-		if (!(buf2 = realloc (buf, size)))
+		if (!(buf2 = vbi_realloc (buf, size)))
 			break;
 
 		buf = buf2;
@@ -159,7 +159,7 @@ _vbi_vasprintf			(char **		dstp,
 		}
 	}
 
-	free (buf);
+	vbi_free (buf);
 	buf = NULL;
 
 	/* According to "man 3 asprintf" GNU's version leaves *dstp
@@ -320,7 +320,7 @@ _vbi_log_vprintf		(vbi_log_fn		log_fn,
 	if (r > 1 && NULL != msg_buffer) {
 		log_fn (mask, ctx_buffer, msg_buffer, user_data);
 
-		free (msg_buffer);
+		vbi_free (msg_buffer);
 		msg_buffer = NULL;
 	}
 

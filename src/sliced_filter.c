@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced_filter.c,v 1.2 2007/08/27 06:44:35 mschimek Exp $ */
+/* $Id: sliced_filter.c,v 1.3 2007/09/12 15:53:08 mschimek Exp $ */
 
 /* XXX UNTESTED */
 
@@ -81,7 +81,7 @@ set_errstr			(vbi_sliced_filter *	sf,
 {
 	va_list ap;
 
-	free (sf->errstr);
+	vbi_free (sf->errstr);
 	sf->errstr = NULL;
 
 	va_start (ap, templ);
@@ -95,7 +95,7 @@ set_errstr			(vbi_sliced_filter *	sf,
 static void
 no_mem_error			(vbi_sliced_filter *	sf)
 {
-	free (sf->errstr);
+	vbi_free (sf->errstr);
 
 	/* Error ignored. */
 	sf->errstr = strdup (_("Out of memory."));
@@ -595,8 +595,8 @@ vbi_sliced_filter_feed		(vbi_sliced_filter *	sf,
 		unsigned int n;
 
 		n = MIN (*n_lines, 50U);
-		s = realloc (sf->output_buffer,
-			     n * sizeof (*sf->output_buffer));
+		s = vbi_realloc (sf->output_buffer,
+				  n * sizeof (*sf->output_buffer));
 		if (unlikely (NULL == s)) {
 			no_mem_error (sf);
 			return FALSE;
@@ -657,9 +657,8 @@ vbi_sliced_filter_delete	(vbi_sliced_filter *	sf)
 
 	vbi_page_table_delete (sf->keep_ttx_pages);
 
-	free (sf->output_buffer);
-
-	free (sf->errstr);
+	vbi_free (sf->output_buffer);
+	vbi_free (sf->errstr);
 
 	CLEAR (*sf);
 
@@ -681,7 +680,7 @@ vbi_sliced_filter_new		(vbi_sliced_filter_cb *callback,
 
 	sf->keep_ttx_pages = vbi_page_table_new ();
 	if (NULL == sf->keep_ttx_pages) {
-		free (sf);
+		vbi_free (sf);
 		return NULL;
 	}
 

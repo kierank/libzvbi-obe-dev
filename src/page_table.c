@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: page_table.c,v 1.2 2007/08/31 15:33:16 mschimek Exp $ */
+/* $Id: page_table.c,v 1.3 2007/09/12 15:53:17 mschimek Exp $ */
 
 /* XXX UNTESTED */
 
@@ -193,7 +193,7 @@ vbi_page_table_contains_subpage	(const vbi_page_table *pt,
  * there are no subpage numbers higher than @a *subno, the function
  * returns @c FALSE.
  *
- * @example
+ * @code
  * vbi_pgno pgno = 0;
  * vbi_subno subno;
  *
@@ -202,7 +202,7 @@ vbi_page_table_contains_subpage	(const vbi_page_table *pt,
  *     // Do things on page pgno, subno.
  *     // subno is in range 0 to 0x3F7E inclusive, or VBI_ANY_SUBNO. 
  * }
- * @endexample
+ * @endcode
  */
 vbi_bool
 vbi_page_table_next_subpage	(const vbi_page_table *pt,
@@ -314,14 +314,14 @@ vbi_page_table_next_subpage	(const vbi_page_table *pt,
  * in the page table, otherwise the next higher page number which has
  * been added. When there are no higher page numbers it returns @c FALSE.
  *
- * @example
+ * @code
  * vbi_pgno pgno = 0;
  *
  * // Iterate over all pages.
  * while (!vbi_page_table_next_page (pt, &pgno) {
  *     // Do things on page pgno.
  * }
- * @endexample
+ * @endcode
  */
 vbi_bool
 vbi_page_table_next_page	(const vbi_page_table *pt,
@@ -363,7 +363,7 @@ shrink_vector			(void **		vector,
 
 	new_capacity = min_capacity;
 
-	new_vec = realloc (*vector, new_capacity * element_size);
+	new_vec = vbi_realloc (*vector, new_capacity * element_size);
 	if (unlikely (NULL == new_vec))
 		return;
 
@@ -401,7 +401,7 @@ extend_vector			(void **		vector,
 		new_capacity = MIN (min_capacity, new_capacity * 2);
 	}
 
-	new_vec = realloc (*vector, new_capacity * element_size);
+	new_vec = vbi_realloc (*vector, new_capacity * element_size);
 	if (unlikely (NULL == new_vec)) {
 		/* XXX we should try less new_capacity before giving up. */
 		errno = ENOMEM;
@@ -913,7 +913,7 @@ vbi_page_table_delete		(vbi_page_table *	pt)
 	if (NULL == pt)
 		return;
 
-	free (pt->subpages);
+	vbi_free (pt->subpages);
 
 	CLEAR (*pt);
 
