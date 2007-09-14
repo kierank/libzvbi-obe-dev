@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.17 2007/09/12 15:52:47 mschimek Exp $ */
+/* $Id: export.c,v 1.18 2007/09/14 14:20:54 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -744,7 +744,9 @@ list_modules			(void)
 static void
 usage				(FILE *			fp)
 {
-	fprintf (fp, _("\
+	/* FIXME Supposed to be _(localized) but we can't use #ifs
+	   within the _() macro. */
+	fprintf (fp, "\
 %s %s -- Teletext and Closed Caption export utility\n\n\
 Copyright (C) 2004, 2005, 2007 Michael H. Schimek\n\
 This program is licensed under GPLv2. NO WARRANTIES.\n\n\
@@ -806,7 +808,7 @@ Valid page numbers are:\n"
                        Teletext pages: 100 110 200-299. If no page\n\
                        numbers are given the program will export all\n\
                        received Teletext pages until it is terminated\n\
-"),
+",
 		 PROGRAM_NAME, VERSION, program_invocation_name);
 }
 

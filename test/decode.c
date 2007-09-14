@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.25 2007/09/12 15:52:59 mschimek Exp $ */
+/* $Id: decode.c,v 1.26 2007/09/14 14:20:59 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -868,7 +868,9 @@ decode_frame			(const vbi_sliced *	s,
 static void
 usage				(FILE *			fp)
 {
-	fprintf (fp, _("\
+	/* FIXME Supposed to be localized but we can't use #ifs
+	   within the _() macro. */
+	fprintf (fp, "\
 %s %s -- Low-level VBI decoder\n\n\
 Copyright (C) 2004, 2006, 2007 Michael H. Schimek\n\
 This program is licensed under GPLv2 or later. NO WARRANTIES.\n\n\
@@ -914,7 +916,7 @@ Modifying options:\n\
 -m | --time            Dump capture timestamps\n\
 -M | --metronome tick  Compare timestamps against a metronome advancing\n\
                        by tick seconds per frame\n\
-"),
+",
 		 PROGRAM_NAME, VERSION, program_invocation_name);
 }
 

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.29 2007/09/12 15:52:52 mschimek Exp $ */
+/* $Id: capture.c,v 1.30 2007/09/14 14:21:05 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -407,9 +407,9 @@ Device options:\n\
 Output options:\n\
 -j | --dump            Sliced VBI data (text)\n\
 -l | --sliced          Sliced VBI data (binary)\n"
-#if 0 /* later */
+/* later */ /*
 "-r | --raw             Raw VBI data (binary)\n"
-#endif
+*/
 "-P | --pes             DVB PES stream\n\
 -T | --ts pid          DVB TS stream\n\
 "),
