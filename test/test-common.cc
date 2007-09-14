@@ -18,11 +18,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-common.cc,v 1.1 2007/09/12 15:53:53 mschimek Exp $ */
+/* $Id: test-common.cc,v 1.2 2007/09/14 14:20:50 mschimek Exp $ */
 
 #include <stdlib.h>
 #include "src/misc.h"
 #include "test-common.h"
+#include "src/version.h"
 
 void *
 memset_rand			(void *			dst,
