@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.19 2007/09/12 15:55:05 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.20 2007/09/14 14:21:23 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -447,7 +447,10 @@ decode_pattern			(vbi3_raw_decoder *	rd,
 			job = rd->jobs + j - 1;
 
 			if (!job->slicer.func (&job->slicer,
-					       sliced->data, raw)) {
+					       sliced->data,
+					       /* points */ NULL,
+					       /* n_points */ NULL,
+					       raw)) {
 				continue; /* no match, try next data service */
 			}
 
