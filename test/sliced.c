@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.c,v 1.10 2007/09/12 15:52:39 mschimek Exp $ */
+/* $Id: sliced.c,v 1.11 2007/09/14 14:21:18 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -70,6 +70,7 @@ struct stream {
 	uint8_t			b64_buffer[4096];
 
 	vbi_sliced		sliced[64];
+	vbi_sliced		sliced2[64];
 
 	uint8_t *		raw;
 
@@ -86,6 +87,12 @@ struct stream {
 	vbi_capture *		cap;
 	vbi_raw_decoder *	rd;
 	vbi_sampling_par	sp;
+
+	vbi_bool		raw_valid;
+	vbi_bool		decode_raw;
+	vbi_bool		collect_points;
+
+	unsigned int		sliced2_lines;
 
 	double			sample_time;
 	int64_t			stream_time;
@@ -190,7 +197,9 @@ stream_delete			(struct stream *	st)
 		return;
 
 	vbi_capture_delete (st->cap);
-
+#if 3 == VBI_VERSION_MINOR
+	vbi3_raw_decoder_delete (st->rd);
+#endif
 	free (st->raw);
 
 	CLEAR (*st);
@@ -911,6 +920,53 @@ next_raw_data			(struct stream *	st,
 
 	next_block (st, p, size);
 
+	if (0) {
+		uint8_t *q;
+		unsigned int i;
+
+		q = malloc (size);
+		if (NULL == q)
+			no_mem_exit ();
+
+		memcpy (q, p, size);
+
+		for (i = 16; i < size; ++i) {
+			int j;
+			unsigned int c = 0;
+
+			for (j = -16; j < 0; ++j) {
+				c += q[i + j];
+			}
+			p[i] = c / 16;
+		}
+
+		free (q);
+	}
+
+#if 3 == VBI_VERSION_MINOR
+
+	if (st->collect_points) {
+		if (NULL == st->rd) {
+			vbi_bool success;
+
+			st->rd = vbi_raw_decoder_new (sp);
+			if (NULL == st->rd)
+				return p;
+			vbi_raw_decoder_add_services (st->rd, -1, 1);
+			success =
+				vbi_raw_decoder_collect_points (st->rd, TRUE);
+			assert (success);
+		}
+
+		st->sliced2_lines =
+			vbi_raw_decoder_decode (st->rd,
+						 st->sliced2,
+						 N_ELEMENTS (st->sliced2),
+						 p);
+	}
+
+#endif /* 3 == VBI_VERSION_MINOR */
+
 	return p;
 }
 
@@ -982,6 +1038,7 @@ read_loop_old_sliced		(struct stream *	st)
 
 		s = st->sliced;
 		raw = NULL;
+		st->raw_valid = FALSE;
 
 		for (count = n_lines; count > 0; --count) {
 			int index;
@@ -1031,6 +1088,7 @@ read_loop_old_sliced		(struct stream *	st)
 
 			case 255:
 				raw = next_raw_data (st, &sp);
+				st->raw_valid = TRUE;
 				break;
 
 			default:
@@ -1043,9 +1101,17 @@ read_loop_old_sliced		(struct stream *	st)
 
 		stream_time = sample_time * 90000;
 
-		success = st->callback (st->sliced, n_lines,
-					raw, &sp,
-					sample_time, stream_time);
+		if (st->raw_valid && st->decode_raw) {
+			success = st->callback (st->sliced2,
+						st->sliced2_lines,
+						raw, &sp,
+						sample_time, stream_time);
+		} else {
+			success = st->callback (st->sliced, n_lines,
+						raw, &sp,
+						sample_time, stream_time);
+		}
+
 		free (raw);
 		raw = NULL;
 
@@ -1303,6 +1369,8 @@ void
 capture_stream_sim_decode_raw	(struct stream *	st,
 				 vbi_bool		enable)
 {
+	st->decode_raw = !!enable;
+
 	if (NULL == st->cap)
 		return;
 
@@ -1334,13 +1402,19 @@ capture_stream_get_point	(struct stream *	st,
 				 unsigned int		row,
 				 unsigned int		nth_bit)
 {
-	if (NULL == st->cap)
-		return FALSE;
-
 #if 2 == VBI_VERSION_MINOR
 	return FALSE;
 #else
-	return vbi_capture_get_point (st->cap, point, row, nth_bit);
+	if (NULL != st->cap) {
+		return vbi_capture_get_point (st->cap, point, row, nth_bit);
+	} else if (NULL != st->rd) {
+		if (!st->raw_valid)
+			return FALSE;
+		return vbi_raw_decoder_get_point (st->rd, point,
+						   row, nth_bit);
+	} else {
+		return FALSE;
+	}
 #endif
 }
 
@@ -1348,13 +1422,18 @@ vbi_bool
 capture_stream_collect_points	(struct stream *	st,
 				 vbi_bool		enable)
 {
-	if (NULL == st->cap)
-		return FALSE;
-
 #if 2 == VBI_VERSION_MINOR
 	return FALSE;
 #else
-	return vbi_capture_collect_points (st->cap, enable);
+	st->collect_points = TRUE;
+
+	if (NULL != st->cap) {
+		return vbi_capture_collect_points (st->cap, enable);
+	} else if (NULL != st->rd) {
+		return vbi_raw_decoder_collect_points (st->rd, enable);
+	} else {
+		return FALSE;
+	}
 #endif
 }
 
