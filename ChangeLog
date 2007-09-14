@@ -1,3 +1,20 @@
+2007-09-14	<mschimek@users.sf.net>
+
+	* test/test-common.cc: VBI_VERSION_MINOR was undefined.
+
+	* test/export.c (usage), test/decode.c (usage),
+	  test/capture.c (usage): #if VBI_VERSION within the _() macro
+	  is not portable.
+
+	* src/io-sim.c: Replaced malloc() and free() calls by macros
+	  for memory allocation tests.
+	* test/sliced.c: Extended the capture/raw_decoder analysis
+	  functions to raw VBI files.
+	* src/raw_decoder.c (decode_pattern): Internal bit slicer interface
+	  changed.
+	* src/bit_slicer.c: Added a sample averaging bit slicer for noisy
+	  low bit rate signals.
+
 2007-09-12	<mschimek@users.sf.net>
 
 	* test/sliced2pes.c: Moved the output functions into sliced.c.

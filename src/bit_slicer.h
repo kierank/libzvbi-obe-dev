@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.h,v 1.7 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: bit_slicer.h,v 1.8 2007/09/14 14:21:51 mschimek Exp $ */
 
 #ifndef __ZVBI_BIT_SLICER_H__
 #define __ZVBI_BIT_SLICER_H__
@@ -144,6 +144,8 @@ vbi3_bit_slicer_new		(void)
 typedef vbi_bool
 _vbi3_bit_slicer_fn		(vbi3_bit_slicer *	bs,
 				 uint8_t *		buffer,
+				 vbi3_bit_slicer_point *points,
+				 unsigned int *		n_points,
 				 const uint8_t *	raw);
 
 /** @internal */
@@ -165,6 +167,7 @@ struct _vbi3_bit_slicer {
 	unsigned int		total_bits;
 	unsigned int		payload;
 	unsigned int		endian;
+	unsigned int		bytes_per_sample;
 	unsigned int		skip;
 	unsigned int		green_mask;
 
