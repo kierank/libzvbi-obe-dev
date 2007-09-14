@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.c,v 1.13 2007/08/29 15:39:45 mschimek Exp $ */
+/* $Id: io-sim.c,v 1.14 2007/09/14 14:21:13 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1606,8 +1606,8 @@ vbi_capture_sim_load_caption	(vbi_capture *		cap,
 	assert (MAGIC == sim->magic);
 
 	if (!append) {
-		free (sim->caption_buffers[0].data);
-		free (sim->caption_buffers[1].data);
+		vbi_free (sim->caption_buffers[0].data);
+		vbi_free (sim->caption_buffers[1].data);
 
 		CLEAR (sim->caption_buffers);
 
@@ -2210,14 +2210,14 @@ sim_delete			(vbi_capture *		cap)
 
 	vbi3_raw_decoder_delete (sim->rd);
 
-	free (sim->desync_buffer[1]);
-	free (sim->desync_buffer[0]);
+	vbi_free (sim->desync_buffer[1]);
+	vbi_free (sim->desync_buffer[0]);
 
-	free (sim->raw_buffer.data);
+	vbi_free (sim->raw_buffer.data);
 
 	CLEAR (*sim);
 
-	free (sim);
+	vbi_free (sim);
 }
 
 /**
@@ -2298,7 +2298,7 @@ vbi_capture_sim_new		(int			scanning,
 	sim->raw_f2_size = sim->sp.bytes_per_line * sim->sp.count[1];
 
 	sim->raw_buffer.size = sim->raw_f1_size + sim->raw_f2_size;
-	sim->raw_buffer.data = malloc (sim->raw_buffer.size);
+	sim->raw_buffer.data = vbi_malloc (sim->raw_buffer.size);
 	if (NULL == sim->raw_buffer.data) {
 		goto failure;
 	}
