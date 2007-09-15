@@ -1,3 +1,8 @@
+2007-09-15	<mschimek@users.sf.net>
+
+	* src/bit_slicer.c: Reduced averaging length from 16 to 8 samples
+	  for CC sampling at 27 MHz. Bug fix in sampling point recorder.
+
 2007-09-14	<mschimek@users.sf.net>
 
 	* test/test-common.cc: VBI_VERSION_MINOR was undefined.
