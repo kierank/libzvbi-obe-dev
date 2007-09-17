@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: bit_slicer.c,v 1.13 2007/09/15 10:37:39 mschimek Exp $ */
+/* $Id: bit_slicer.c,v 1.14 2007/09/17 00:59:14 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -289,7 +289,7 @@ BIT_SLICER (RGB16_BE, 4, bs->thresh_frac)
 BIT_SLICER (RGB8, 8, bs->thresh_frac)
 #endif
 
-static const unsigned int	LP_AVG = 3;
+static const unsigned int	LP_AVG = 4;
 
 static vbi_bool
 low_pass_bit_slicer_Y8		(vbi3_bit_slicer *	bs,
@@ -755,7 +755,7 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 #endif
 		bs->bytes_per_sample = 1;
 		bs->func = bit_slicer_Y8;
-		if (min_samples_per_bit > (2U << LP_AVG)) {
+		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
 			bs->func = low_pass_bit_slicer_Y8;
 			oversampling = 1;
 			bs->thresh <<= LP_AVG - 2;
@@ -768,7 +768,7 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 	case VBI3_PIXFMT_YVUA24_LE:
 		bs->bytes_per_sample = 4;
 		bs->func = bit_slicer_RGBA24_LE;
-		if (min_samples_per_bit > (2U << LP_AVG)) {
+		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
 			bs->func = low_pass_bit_slicer_Y8;
 			oversampling = 1;
 			bs->thresh <<= LP_AVG - 2;
@@ -781,7 +781,7 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 		skip = 3;
 		bs->bytes_per_sample = 4;
 		bs->func = bit_slicer_RGBA24_LE;
-		if (min_samples_per_bit > (2U << LP_AVG)) {
+		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
 			bs->func = low_pass_bit_slicer_Y8;
 			oversampling = 1;
 			bs->thresh <<= LP_AVG - 2;
@@ -793,7 +793,7 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 	case VBI3_PIXFMT_YVU24_LE:
 		bs->bytes_per_sample = 3;
 	        bs->func = bit_slicer_RGB24_LE;
-		if (min_samples_per_bit > (2U << LP_AVG)) {
+		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
 			bs->func = low_pass_bit_slicer_Y8;
 			oversampling = 1;
 			bs->thresh <<= LP_AVG - 2;
@@ -806,7 +806,7 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 		skip = 2;
 		bs->bytes_per_sample = 3;
 	        bs->func = bit_slicer_RGB24_LE;
-		if (min_samples_per_bit > (2U << LP_AVG)) {
+		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
 			bs->func = low_pass_bit_slicer_Y8;
 			oversampling = 1;
 			bs->thresh <<= LP_AVG - 2;
@@ -819,7 +819,7 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 	case VBI_PIXFMT_YVYU:
 		bs->bytes_per_sample = 2;
 		bs->func = bit_slicer_YUYV;
-		if (min_samples_per_bit > (2U << LP_AVG)) {
+		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
 			bs->func = low_pass_bit_slicer_Y8;
 			oversampling = 1;
 			bs->thresh <<= LP_AVG - 2;
@@ -832,7 +832,7 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 		skip = 1;
 		bs->bytes_per_sample = 2;
 		bs->func = bit_slicer_YUYV;
-		if (min_samples_per_bit > (2U << LP_AVG)) {
+		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
 			bs->func = low_pass_bit_slicer_Y8;
 			oversampling = 1;
 			bs->thresh <<= LP_AVG - 2;
@@ -845,7 +845,7 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 		skip = 1;
 		bs->bytes_per_sample = 4;
 		bs->func = bit_slicer_RGBA24_LE;
-		if (min_samples_per_bit > (2U << LP_AVG)) {
+		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
 			bs->func = low_pass_bit_slicer_Y8;
 			oversampling = 1;
 			bs->thresh <<= LP_AVG - 2;
@@ -858,7 +858,7 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 		skip = 2;
 		bs->bytes_per_sample = 4;
 		bs->func = bit_slicer_RGBA24_LE;
-		if (min_samples_per_bit > (2U << LP_AVG)) {
+		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
 			bs->func = low_pass_bit_slicer_Y8;
 			oversampling = 1;
 			bs->thresh <<= LP_AVG - 2;
@@ -871,7 +871,7 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 		skip = 1;
 		bs->bytes_per_sample = 3;
 	        bs->func = bit_slicer_RGB24_LE;
-		if (min_samples_per_bit > (2U << LP_AVG)) {
+		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
 			bs->func = low_pass_bit_slicer_Y8;
 			oversampling = 1;
 			bs->thresh <<= LP_AVG - 2;
