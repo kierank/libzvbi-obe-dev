@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.30 2007/09/14 14:21:05 mschimek Exp $ */
+/* $Id: capture.c,v 1.31 2007/09/17 00:59:19 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -242,18 +242,30 @@ cc_test				(const vbi_sliced *	sliced,
 		for (i = 0; i < n_lines; ++i) {
 			if (sliced[i].id & (VBI_SLICED_CAPTION_525 |
 					    VBI_SLICED_CAPTION_625)) {
+				int b1, b2;
 				int c1, c2;
 
-				c1 = vbi_unpar8 (sliced[i].data[0]);
-				c2 = vbi_unpar8 (sliced[i].data[1]);
-			
+				b1 = sliced[i].data[0];
+				b2 = sliced[i].data[1];
 				if (option_cc_test_test
-				    && 0 == rand() % 300)
-					c2 = -1;
+				    && 0 == rand() % 300) {
+					b1 = 0;
+					b2 = 0;
+				}
 
-				if ((c1 | c2) < 0) {
+				c1 = vbi_unpar8 (b1);
+				c2 = vbi_unpar8 (b2);
+
+				if (option_cc_test_test
+				    && 0 == rand() % 300) {
+					c2 = -1;
+				}
+
+				if (0x00 == b1 && 0x00 == b2) {
+					/* Great Scott! */
+				} else if ((c1 | c2) < 0) {
 					error_msg ("Parity error...");
-					if (error2_count < 3) {
+					if (error2_count < 6) {
 						++error2_count;
 						error2 = TRUE;
 					}
@@ -267,14 +279,14 @@ cc_test				(const vbi_sliced *	sliced,
 
 	if (!error) {
 		if (error1_count >= 3
-		    && error2_count >= 3) {
+		    && error2_count >= 6) {
 			error_msg ("Done.");
 			return FALSE;
 		}
 
 		if (0 == frame_count % (5 * 30)) {
 			error_msg ("Waiting for %u more errors...",
-				   6 - error1_count - error2_count);
+				   9 - error1_count - error2_count);
 		}
 	}
 
