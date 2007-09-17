@@ -1,3 +1,8 @@
+2007-09-16	<mschimek@users.sf.net>
+
+	* src/bit_slicer.c: Kicked averaging length back up to 16.
+	* test/capture.c: Ignore zero bytes during --cc-test.
+
 2007-09-15	<mschimek@users.sf.net>
 
 	* src/bit_slicer.c: Reduced averaging length from 16 to 8 samples
