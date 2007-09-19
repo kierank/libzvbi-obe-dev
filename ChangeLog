@@ -1,3 +1,13 @@
+2007-09-19	<mschimek@users.sf.net>
+
+	* src/io-v4l2k.c (restart_stream): Didn't initialize the
+	  v4l2_buffer.memory field. Ignore VIDIOC_QBUF errors because the
+	  buffer may be already enqueued.
+	(v4l2_stream): Didn't initialize the v4l2_buffer.memory field for
+	  VIDIOC_QBUF. Just in case, also do that for VIDIOC_DQBUF.
+	(v4l2_stream_flush): Didn't initialize the v4l2_buffer.memory
+	  field for VIDIOC_QBUF.
+
 2007-09-16	<mschimek@users.sf.net>
 
 	* src/bit_slicer.c: Kicked averaging length back up to 16.
