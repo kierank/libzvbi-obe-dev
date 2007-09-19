@@ -19,7 +19,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.46 2007/07/23 20:01:18 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.47 2007/09/19 04:06:51 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -238,6 +238,7 @@ v4l2_stream_alloc(vbi_capture_v4l2 *v, char ** errstr)
 
 		vbuf.type = v->btype;
 		vbuf.index = v->num_raw_buffers;
+		vbuf.memory = V4L2_MEMORY_MMAP;
 
 		if (-1 == xioctl (v, VIDIOC_QUERYBUF, &vbuf)) {
 			asprintf (errstr,
@@ -344,9 +345,10 @@ restart_stream			(vbi_capture_v4l2 *	v)
 
 		vbuf.index = i;
 		vbuf.type = v->btype;
+		vbuf.memory = V4L2_MEMORY_MMAP;
 
-		if (-1 == xioctl (v, VIDIOC_QBUF, &vbuf))
-			return FALSE;
+		/* Error ignored. */
+		xioctl (v, VIDIOC_QBUF, &vbuf);
 	}
 
 	if (-1 == xioctl (v, VIDIOC_STREAMON, &v->btype))
@@ -381,6 +383,7 @@ v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
 	} else if (ENQUEUE_IS_UNQUEUED(v->enqueue)) {
 		v->vbuf.type = v->btype;
 		v->vbuf.index = v->enqueue;
+		v->vbuf.memory = V4L2_MEMORY_MMAP;
 
 		if (-1 == xioctl (v, VIDIOC_QBUF, &v->vbuf)) {
 			error (&v->log,
@@ -407,6 +410,7 @@ v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
 		}
 
 		v->vbuf.type = v->btype;
+		v->vbuf.memory = V4L2_MEMORY_MMAP;
 
 		/* retrieve the captured frame from the queue */
 		r = xioctl (v, VIDIOC_DQBUF, &v->vbuf);
@@ -419,10 +423,9 @@ v4l2_stream(vbi_capture *vc, vbi_capture_buffer **raw,
 			       "Failed to dequeue buffer, errno %d.",
 			       errno);
 
-			/* On EIO bttv dequeues the buffer, or it does not,
-			   or it resets the hardware (SCERR).  QBUF alone
-			   is insufficient.
-			   Actually the caller should restart on error. */
+			/* On EIO bttv dequeues the buffer, other drivers
+			   may not. Actually the caller should restart
+			   on error. */
 
 			/* Errors ignored. */
 			restart_stream (v);
@@ -510,6 +513,7 @@ v4l2_stream_flush(vbi_capture *vc)
 	if (ENQUEUE_IS_UNQUEUED(v->enqueue)) {
 		v->vbuf.type = v->btype;
 		v->vbuf.index = v->enqueue;
+		v->vbuf.memory = V4L2_MEMORY_MMAP;
 
 		if (-1 == xioctl (v, VIDIOC_QBUF, &v->vbuf)) {
 			error (&v->log,
