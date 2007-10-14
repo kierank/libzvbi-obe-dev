@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-dvb_mux.cc,v 1.3 2007/09/12 15:53:48 mschimek Exp $ */
+/* $Id: test-dvb_mux.cc,v 1.4 2007/10/14 14:53:54 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -37,8 +37,10 @@
 #include "test-common.h"
 
 #if 3 == VBI_VERSION_MINOR
+#  define sp_sample_format sample_format
 #  define sp_samples_per_line samples_per_line
 #else
+#  define sp_sample_format sampling_format
    /* Has no samples_per_line field yet. */
 #  define sp_samples_per_line bytes_per_line
 #endif
@@ -859,7 +861,7 @@ assert_multiplex_sliced		(uint8_t * const	p1,
 		}
 	}
 
-	if (NULL != p1) {
+	if (NULL != p1 && p1_size > 0) {
 		rand_buffer = (uint8_t *) xralloc (p1_size);
 		memcpy (p1, rand_buffer, p1_size);
 	} else {
@@ -1592,23 +1594,33 @@ test_multiplex_sliced_packet_size_checks (void)
 	uint8_t *buffer;
 	unsigned int buffer_size;
 
-	for (buffer_size = 0; buffer_size <= 1; ++buffer_size) {
-		buffer = (uint8_t *) xmalloc (buffer_size);
+	assert_multiplex_sliced (/* buffer */ (uint8_t *) -1,
+				 /* buffer_size */ 0,
+				 /* sliced */ (vbi_sliced *) -1,
+				 /* sliced_lines */ 1,
+				 ALL_SERVICES,
+				 ANY_DATA_IDENTIFIER,
+				 ANY_STUFFING,
+				 EXPECT_FAILURE,
+				 VBI_ERR_BUFFER_OVERFLOW,
+				 /* exp_out_lines */ 0,
+				 /* exp_out_data_size */ 0,
+				 /* exp_consumed_lines */ 0);
 
-		assert_multiplex_sliced (buffer, buffer_size,
-					 /* sliced */ (vbi_sliced *) -1,
-					 /* sliced_lines */ 1,
-					 ALL_SERVICES,
-					 ANY_DATA_IDENTIFIER,
-					 ANY_STUFFING,
-					 EXPECT_FAILURE,
-					 VBI_ERR_BUFFER_OVERFLOW,
-					 /* exp_out_lines */ 0,
-					 /* exp_out_data_size */ 0,
-					 /* exp_consumed_lines */ 0);
-		free (buffer);
-		buffer = (uint8_t *) -1;
-	}
+	buffer = (uint8_t *) xmalloc (buffer_size = 1);
+
+	assert_multiplex_sliced (buffer, buffer_size,
+				 /* sliced */ (vbi_sliced *) -1,
+				 /* sliced_lines */ 1,
+				 ALL_SERVICES,
+				 ANY_DATA_IDENTIFIER,
+				 ANY_STUFFING,
+				 EXPECT_FAILURE,
+				 VBI_ERR_BUFFER_OVERFLOW,
+				 /* exp_out_lines */ 0,
+				 /* exp_out_data_size */ 0,
+				 /* exp_consumed_lines */ 0);
+	free (buffer);
 
 	buffer = (uint8_t *) xmalloc (buffer_size = 2);
 
@@ -1761,7 +1773,7 @@ assert_multiplex_raw		(uint8_t * const 	p1,
 		videostd_set = VBI_VIDEOSTD_SET_625_50;
 	}
 
-	if (NULL != p1) {
+	if (NULL != p1 && p1_size > 0) {
 		rand_buffer = (uint8_t *) xralloc (p1_size);
 		memcpy (p1, rand_buffer, p1_size);
 	} else {
@@ -2167,7 +2179,12 @@ test_mr_packet_size		(unsigned int		buffer_size,
 	uint8_t *raw;
 	unsigned int raw_size;
 
-	buffer = (uint8_t *) xmalloc (buffer_size);
+	if (0 == buffer_size) {
+		buffer = (uint8_t *) -1;
+	} else {
+		buffer = (uint8_t *) xmalloc (buffer_size);
+	}
+
 	raw = (uint8_t *) xralloc (raw_size = 720);
 
 	assert_multiplex_raw (buffer, buffer_size,
@@ -2181,7 +2198,9 @@ test_mr_packet_size		(unsigned int		buffer_size,
 			      exp_success,
 			      VBI_ERR_BUFFER_OVERFLOW);
 	free (raw);
-	free (buffer);
+
+	if (buffer_size > 0)
+		free (buffer);
 }
 
 static void
@@ -2309,7 +2328,7 @@ static const vbi_sampling_par
 good_par_625 = {
 #if 3 == VBI_VERSION_MINOR
 	/* videostd_set */	VBI_VIDEOSTD_SET_625_50,
-	/* sampling_format */	VBI_PIXFMT_Y8,
+	/* sample_format */	VBI_PIXFMT_Y8,
 	/* sampling_rate */	13500000,
 	/* samples_per_line */	720,
 	/* bytes_per_line */	720,
@@ -3295,7 +3314,7 @@ test_dvb_mux_cor_sampling_parameter_checks (void)
 #endif
 
 	sp = good_par_625;
-	sp.sampling_format = VBI_PIXFMT_YUYV;
+	sp.sp_sample_format = VBI_PIXFMT_YUYV;
 	mx.set_sampling_par (&sp);
 	mx.test_fail (VBI_ERR_SAMPLING_PAR,
 		      /* exp_consumed_lines */ 0);
