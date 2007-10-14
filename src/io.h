@@ -17,12 +17,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io.h,v 1.21 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: io.h,v 1.22 2007/10/14 14:54:35 mschimek Exp $ */
 
 #ifndef IO_H
 #define IO_H
 
 #include "decoder.h"
+#include "bit_slicer.h"
 
 /* Public */
 
@@ -241,6 +242,14 @@ struct vbi_capture {
 					 vbi_capture_buffer **,
 					 vbi_capture_buffer **,
 					 const struct timeval *);
+	vbi_bool		(* sampling_point)
+					(vbi_capture *,
+					 vbi3_bit_slicer_point *,
+					 unsigned int row,
+					 unsigned int nth_bit);
+	vbi_bool		(* debug)
+					(vbi_capture *,
+					 vbi_bool enable);
 	vbi_raw_decoder *	(* parameters)(vbi_capture *);
         unsigned int            (* update_services)(vbi_capture *,
                                          vbi_bool, vbi_bool,
