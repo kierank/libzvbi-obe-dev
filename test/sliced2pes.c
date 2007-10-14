@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced2pes.c,v 1.10 2007/09/12 15:52:34 mschimek Exp $ */
+/* $Id: sliced2pes.c,v 1.11 2007/10/14 14:53:47 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -39,8 +39,10 @@
 #include "src/version.h"
 #if 2 == VBI_VERSION_MINOR
 #  include "src/dvb_mux.h"
-#else
+#elif 3 == VBI_VERSION_MINOR
 #  include "src/zvbi.h"
+#else
+#  error VBI_VERSION_MINOR == ?
 #endif
 
 #include "sliced.h"

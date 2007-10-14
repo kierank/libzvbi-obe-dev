@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.26 2007/09/14 14:20:59 mschimek Exp $ */
+/* $Id: decode.c,v 1.27 2007/10/14 14:53:30 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -51,9 +51,11 @@
 #  include "src/vps.h"
 #  include "src/hamm.h"
 #  include "src/lang.h"
-#else /* 0.3 */
+#elif 3 == VBI_VERSION_MINOR
 #  include "src/zvbi.h"
 #  include "src/misc.h"		/* _vbi_to_ascii() */
+#else
+#  error VBI_VERSION_MINOR == ?
 #endif
 
 #include "sliced.h"
