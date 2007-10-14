@@ -18,12 +18,13 @@ glyph
 
 explist
 	Lists all export modules and their respective options. If option
-	-c|--check given, tests the export [module] api. Use this to test
+	-c/--check given, tests the export [module] api. Use this to test
 	new modules.
 
 export
 	Exports a Teletext page from a TTX sample stream on stdin, eg.
-	./export "text;charset=ISO-8859-1,control=1" 100 <samples/s1-swr >foo.txt
+	./export "text;charset=ISO-8859-1,control=1" 100 \
+	  <samples/s1-swr >foo.txt
 	./capture --sim --pal --sliced | ./export "png" 100 >foo.png
 	./capture --pes | ./export "html" 300 >foo.html
 	Purpose: test teletext decoder and export modules. (Sample streams
@@ -38,8 +39,9 @@ caption
 
 osc
 	Raw vbi data visualization. Purpose: test vbi device interface,
-	raw vbi decoder. Works only on X11 5:6:5 LE display. (Should use
-	Gtk+, huh?) Options:
+	raw vbi decoder. Works only on X11 5:6:5 LE display.
+
+	Options:
 	-d | --device name
 			Default is /dev/vbi.
 	-s | --sim	Create artificial raw vbi data instead of
@@ -139,6 +141,9 @@ ttxfilter
 	to extract subtitles, for example
 	"./capture --sliced | ./ttxfilter 150 777 300-400 >file".
 	Type ./ttxfilter -h for options.
+
+test-*.cc
+	Unit tests (make check).
 
 The ultimate test is http://zapping.sourceforge.net, the TV viewer this
 library was written for.
