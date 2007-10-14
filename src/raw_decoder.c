@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.20 2007/09/14 14:21:23 mschimek Exp $ */
+/* $Id: raw_decoder.c,v 1.21 2007/10/14 14:53:15 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -26,24 +26,22 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+
 #include "misc.h"
 #include "raw_decoder.h"
 
 #define vbi_inline static __inline__
 
 #ifndef RAW_DECODER_PATTERN_DUMP
-#  define DECODER_PATTERN_DUMP 0
+#  define RAW_DECODER_PATTERN_DUMP 0
 #endif
 
-#ifndef RAW_DECODER_LOG
-#  define RAW_DECODER_LOG 0
+#if 2 == VBI_VERSION_MINOR
+#  define sp_sample_format sampling_format
+#else
+#  define sp_sample_format sample_format
 #endif
-
-#define sp_log(level, templ, args...)					\
-do {									\
-	_vbi_log_printf (log_fn, log_user_data,				\
-			level, __FUNCTION__, templ , ##args);		\
-} while (0)
 
 /**
  * $addtogroup RawDecoder Raw VBI decoder
@@ -55,6 +53,7 @@ do {									\
    VITC PAL 6-22 11.2us 1.8125 Mbit NRZ two start bits + CRC
    VITC NTSC 10-21 ditto
    CGMS NTSC 20 11us .450450 Mbit NRZ ?
+   MOJI
 */
 const _vbi_service_par
 _vbi_service_table [] = {
@@ -110,7 +109,8 @@ _vbi_service_table [] = {
 		{ 16, 0 },
 		{ 16, 0 },
 		12500, 5000000, 2500000, /* 160 x FH */
-		0xAAAA8A99, 0xFFFFFF, 32, 0, 13 * 8, VBI_MODULATION_BIPHASE_MSB,
+		0xAAAA8A99, 0xFFFFFF, 32, 0, 13 * 8,
+		VBI_MODULATION_BIPHASE_MSB,
 		_VBI_SP_FIELD_NUM,
 	}, {
 		VBI_SLICED_VPS_F2, "Pseudo-VPS on field 2",
@@ -118,7 +118,8 @@ _vbi_service_table [] = {
 		{ 0, 329 },
 		{ 0, 329 },
 		12500, 5000000, 2500000, /* 160 x FH */
-		0xAAAA8A99, 0xFFFFFF, 32, 0, 13 * 8, VBI_MODULATION_BIPHASE_MSB,
+		0xAAAA8A99, 0xFFFFFF, 32, 0, 13 * 8,
+		VBI_MODULATION_BIPHASE_MSB,
 		_VBI_SP_FIELD_NUM,
 	}, {
 		VBI_SLICED_WSS_625, "Wide Screen Signalling 625",
@@ -206,6 +207,7 @@ _vbi_service_table [] = {
 		   incorrect signal observed by Rich Kandel (see
 		   _VBI_RAW_SHIFT_CC_CRI). */
 		0x03, 0x0F, 4, 0, 2 * 8, VBI_MODULATION_NRZ_LSB,
+		/* 0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB, */
 		/* I've seen CC signals on other lines and there's no
 		   way to distinguish from the transmitted data. */
 		_VBI_SP_FIELD_NUM | _VBI_SP_LINE_NUM,
@@ -217,6 +219,7 @@ _vbi_service_table [] = {
 		{ 0, 284 },
 		10500, 1006976, 503488, /* 32 x FH */
 		0x03, 0x0F, 4, 0, 2 * 8, VBI_MODULATION_NRZ_LSB,
+		/* 0x00005551, 0x7FF, 14, 2, 2 * 8, VBI_MODULATION_NRZ_LSB, */
 		_VBI_SP_FIELD_NUM | _VBI_SP_LINE_NUM,
 	}, {
 		VBI_SLICED_2xCAPTION_525, /* NOT CONFIRMED */
@@ -424,6 +427,31 @@ cpr1204_crc			(const vbi_sliced *	sliced)
 	return crc;
 }
 
+static vbi_bool
+slice				(vbi3_raw_decoder *	rd,
+				 vbi_sliced *		sliced,
+				 _vbi3_raw_decoder_job *job,
+				 unsigned int		i,
+				 const uint8_t *	raw)
+{
+	if (rd->debug && NULL != rd->sp_lines) {
+		return vbi3_bit_slicer_slice_with_points
+			(&job->slicer,
+			 sliced->data,
+			 sizeof (sliced->data),
+			 rd->sp_lines[i].points,
+			 &rd->sp_lines[i].n_points,
+			 N_ELEMENTS (rd->sp_lines[i].points),
+			 raw);
+	} else {
+		return vbi3_bit_slicer_slice
+			(&job->slicer,
+			 sliced->data,
+			 sizeof (sliced->data),
+			 raw);
+	}
+}
+
 vbi_inline vbi_sliced *
 decode_pattern			(vbi3_raw_decoder *	rd,
 				 vbi_sliced *		sliced,
@@ -446,11 +474,7 @@ decode_pattern			(vbi3_raw_decoder *	rd,
 
 			job = rd->jobs + j - 1;
 
-			if (!job->slicer.func (&job->slicer,
-					       sliced->data,
-					       /* points */ NULL,
-					       /* n_points */ NULL,
-					       raw)) {
+			if (!slice (rd, sliced, job, i, raw)) {
 				continue; /* no match, try next data service */
 			}
 
@@ -544,7 +568,7 @@ decode_pattern			(vbi3_raw_decoder *	rd,
  *   vbi scan line may contain data, this should be an array of vbi_sliced
  *   with the same number of elements as scan lines in the raw image
  *   (vbi_sampling_parameters.count[0] + .count[1]).
- * $param sliced_lines Size of $a sliced data array, in lines, not bytes.
+ * $param max_lines Size of $a sliced data array, in lines, not bytes.
  * $param raw A raw vbi image as described by the vbi_sampling_par
  *   associated with $a rd.
  * 
@@ -562,7 +586,7 @@ decode_pattern			(vbi3_raw_decoder *	rd,
 unsigned int
 vbi3_raw_decoder_decode		(vbi3_raw_decoder *	rd,
 				 vbi_sliced *		sliced,
-				 unsigned int		sliced_lines,
+				 unsigned int		max_lines,
 				 const uint8_t *	raw)
 {
 	vbi_sampling_par *sp;
@@ -587,9 +611,9 @@ vbi3_raw_decoder_decode		(vbi3_raw_decoder *	rd,
 	raw1 = raw;
 
 	sliced_begin = sliced;
-	sliced_end = sliced + sliced_lines;
+	sliced_end = sliced + max_lines;
 
-	if (DECODER_PATTERN_DUMP)
+	if (RAW_DECODER_PATTERN_DUMP)
 		_vbi3_raw_decoder_dump (rd, stderr);
 
 	for (i = 0; i < scan_lines; ++i) {
@@ -622,10 +646,10 @@ vbi3_raw_decoder_reset		(vbi3_raw_decoder *	rd)
 {
 	assert (NULL != rd);
 
-	if (rd->pattern)
-		free (rd->pattern);
-
-	rd->pattern = NULL;
+	if (rd->pattern) {
+		vbi_free (rd->pattern);
+		rd->pattern = NULL;
+	}
 
 	rd->services = 0;
 	rd->n_jobs = 0;
@@ -901,13 +925,14 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 	if (!rd->pattern) {
 		unsigned int scan_lines;
 		unsigned int scan_ways;
+		unsigned int size;
 
 		scan_lines = rd->sampling.count[0] + rd->sampling.count[1];
 		scan_ways = scan_lines * _VBI3_RAW_DECODER_MAX_WAYS;
 
-		rd->pattern = (int8_t *)
-			malloc (scan_ways * sizeof (rd->pattern[0]));
-		if (!rd->pattern) {
+		size = scan_ways * sizeof (rd->pattern[0]);
+		rd->pattern = (int8_t *) vbi_malloc (size);
+		if (NULL == rd->pattern) {
 			error (&rd->log, "Out of memory.");
 			return rd->services;
 		}
@@ -915,7 +940,11 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 		memset (rd->pattern, 0, scan_ways * sizeof (rd->pattern[0]));
 	}
 
+#if 2 == VBI_VERSION_MINOR
 	if (525 == rd->sampling.scanning) {
+#else
+	if (VBI3_VIDEOSTD_SET_525_60 & rd->sampling.videostd_set) {
+#endif
 		min_offset = 7.9e-6;
 	} else {
 		min_offset = 8.0e-6;
@@ -976,8 +1005,8 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 		sample_offset = 0;
 
 		/* Skip color burst. */
-		if (0
-		    && sp->offset > 0 && strict > 0) {
+		/* Offsets aren't that reliable, sigh. */
+		if (0 && sp->offset > 0 && strict > 0) {
 			double offset;
 
 			offset = sp->offset / (double) sp->sampling_rate;
@@ -994,9 +1023,12 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 			cri_end = ~0;
 		}
 
-		/* XXX use sp->samples_per_line if available */
+#if 2 == VBI_VERSION_MINOR
 		samples_per_line = sp->bytes_per_line
-			/ VBI_PIXFMT_BPP (sp->sampling_format);
+			/ VBI_PIXFMT_BPP (sp->sp_sample_format);
+#else
+		samples_per_line = sp->samples_per_line;
+#endif
 
 		if (!_vbi3_bit_slicer_init (&job->slicer)) {
 			assert (!"bit_slicer_init");
@@ -1004,7 +1036,7 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 
 		if (!vbi3_bit_slicer_set_params
 		    (&job->slicer,
-		     sp->sampling_format,
+		     sp->sp_sample_format,
 		     sp->sampling_rate,
 		     sample_offset,
 		     samples_per_line,
@@ -1020,6 +1052,11 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 		     par->modulation)) {
 			assert (!"bit_slicer_set_params");
 		}
+
+		vbi3_bit_slicer_set_log_fn (&job->slicer,
+					    rd->log.mask,
+					    rd->log.fn,
+					    rd->log.user_data);
 
 		lines_containing_data (start, count, sp, par);
 
@@ -1040,6 +1077,88 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 	}
 
 	return rd->services;
+}
+
+vbi_bool
+vbi3_raw_decoder_sampling_point	(vbi3_raw_decoder *	rd,
+				 vbi3_bit_slicer_point *point,
+				 unsigned int		row,
+				 unsigned int		nth_bit)
+{
+	assert (NULL != rd);
+	assert (NULL != point);
+
+	if (row >= rd->n_sp_lines)
+		return FALSE;
+
+	if (nth_bit >= rd->sp_lines[row].n_points)
+		return FALSE;
+
+	*point = rd->sp_lines[row].points[nth_bit];
+
+	return TRUE;
+}
+
+vbi_bool
+vbi3_raw_decoder_debug		(vbi3_raw_decoder *	rd,
+				 vbi_bool		enable)
+{
+	_vbi3_raw_decoder_sp_line *sp_lines;
+	unsigned int n_lines;
+	vbi_bool r;
+
+	assert (NULL != rd);
+
+	sp_lines = NULL;
+	r = TRUE;
+
+	rd->debug = !!enable;
+
+	n_lines = 0;
+	if (enable) {
+		n_lines = rd->sampling.count[0] + rd->sampling.count[1];
+	}
+
+	switch (rd->sampling.sp_sample_format) {
+#if 3 == VBI_VERSION_MINOR
+	case VBI_PIXFMT_YUV444:
+	case VBI_PIXFMT_YVU444:
+	case VBI_PIXFMT_YUV422:
+	case VBI_PIXFMT_YVU422:
+	case VBI_PIXFMT_YUV411:
+	case VBI_PIXFMT_YVU411:
+	case VBI_PIXFMT_YVU420:
+	case VBI_PIXFMT_YUV410:
+	case VBI_PIXFMT_YVU410:
+	case VBI_PIXFMT_Y8:
+	case VBI_PIXFMT_UNKNOWN:
+#endif
+	case VBI_PIXFMT_YUV420:
+		break;
+
+	default:
+		/* Not implemented. */
+		n_lines = 0;
+		r = FALSE;
+		break;
+	}
+
+	if (rd->n_sp_lines == n_lines)
+		return r;
+
+	vbi_free (rd->sp_lines);
+	rd->sp_lines = NULL;
+	rd->n_sp_lines = 0;
+
+	if (n_lines > 0) {
+		rd->sp_lines = calloc (n_lines, sizeof (*rd->sp_lines));
+		if (NULL == rd->sp_lines)
+			return FALSE;
+
+		rd->n_sp_lines = n_lines;
+	}
+
+	return r;
 }
 
 vbi_service_set
@@ -1089,6 +1208,9 @@ vbi3_raw_decoder_set_sampling_par
 
 	rd->sampling = *sp;
 
+	/* Error ignored. */
+	vbi3_raw_decoder_debug (rd, rd->debug);
+
 	return vbi3_raw_decoder_add_services (rd, services, strict);
 }
 
@@ -1116,32 +1238,41 @@ vbi3_raw_decoder_set_log_fn	(vbi3_raw_decoder *	rd,
 				 void *			user_data,
 				 vbi_log_mask		mask)
 {
+	unsigned int i;
+
 	assert (NULL != rd);
 
 	if (NULL == log_fn)
 		mask = 0;
 
+	rd->log.mask = mask;
 	rd->log.fn = log_fn;
 	rd->log.user_data = user_data;
-	rd->log.mask = mask;
+
+	for (i = 0; i < _VBI3_RAW_DECODER_MAX_JOBS; ++i) {
+		vbi3_bit_slicer_set_log_fn (&rd->jobs[i].slicer,
+					    mask, log_fn, user_data);
+	}
 }
 
 /**
- * $internal
+ * @internal
  *
- * Free all resources associated with $a rd.
+ * Free all resources associated with @a rd.
  */
 void
 _vbi3_raw_decoder_destroy	(vbi3_raw_decoder *	rd)
 {
 	vbi3_raw_decoder_reset (rd);
 
+	vbi3_raw_decoder_debug (rd, FALSE);
+
 	/* Make unusable. */
 	CLEAR (*rd);
 }
 
 /**
- * $internal
+ * @internal
  * 
  * See vbi3_raw_decoder_new().
  */
@@ -1152,13 +1283,6 @@ _vbi3_raw_decoder_init		(vbi3_raw_decoder *	rd,
 	CLEAR (*rd);
 
 	vbi3_raw_decoder_reset (rd);
-
-	if (RAW_DECODER_LOG) {
-		vbi3_raw_decoder_set_log_fn (rd,
-					     vbi_log_on_stderr,
-					     /* user_data */ NULL,
-					     /* mask */ VBI_LOG_INFO * 2 - 1);
-	}
 
 	if (NULL != sp) {
 		if (!_vbi_sampling_par_valid_log (sp, &rd->log))
@@ -1184,7 +1308,7 @@ vbi3_raw_decoder_delete		(vbi3_raw_decoder *	rd)
 
 	_vbi3_raw_decoder_destroy (rd);
 
-	free (rd);
+	vbi_free (rd);
 }
 
 /**
@@ -1207,12 +1331,14 @@ vbi3_raw_decoder_new		(const vbi_sampling_par *sp)
 {
 	vbi3_raw_decoder *rd;
 
-	rd = malloc (sizeof (*rd));
-	if (NULL == rd)
+	rd = vbi_malloc (sizeof (*rd));
+	if (NULL == rd) {
+		errno = ENOMEM;
 		return NULL;
+	}
 
 	if (!_vbi3_raw_decoder_init (rd, sp)) {
-		free (rd);
+		vbi_free (rd);
 		rd = NULL;
 	}
 
