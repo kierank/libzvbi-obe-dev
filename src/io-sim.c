@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: io-sim.c,v 1.14 2007/09/14 14:21:13 mschimek Exp $ */
+/* $Id: io-sim.c,v 1.15 2007/10/14 14:53:10 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -34,10 +34,22 @@
 #include "sampling_par.h"
 #include "raw_decoder.h"
 #include "hamm.h"
-#if 3 == VBI_VERSION_MINOR
+
+#if 2 == VBI_VERSION_MINOR
+#  define sp_sample_format sampling_format
+#  define SAMPLES_PER_LINE(sp)						\
+	((sp)->bytes_per_line / VBI_PIXFMT_BPP ((sp)->sampling_format))
+#  define SYSTEM_525(sp)						\
+	(525 == (sp)->scanning)
+#else
 #  include "vps.h"
 #  include "wss.h"
+#  define sp_sample_format sample_format
+#  define SAMPLES_PER_LINE(sp) ((sp)->samples_per_line)
+#  define SYSTEM_525(sp)						\
+	(0 != (VBI_VIDEOSTD_SET_525_60 & (sp)->videostd_set))
 #endif
+
 #include "io-sim.h"
 
 /**
@@ -107,11 +119,18 @@ do {									\
 	PULSE (zero_level);						\
 } while (0)
 
-#if 3 == VBI_VERSION_MINOR
-#  define SAMPLES_PER_LINE(sp) ((sp)->samples_per_line)
-#else
-#  define SAMPLES_PER_LINE(sp)						\
-	((sp)->bytes_per_line / VBI_PIXFMT_BPP ((sp)->sampling_format))
+#ifndef HAVE_SINCOS
+
+/* This is a GNU extension. */
+vbi_inline void
+sincos				(double			x,
+				 double *		sinx,
+				 double *		cosx)
+{
+	*sinx = sin (x);
+	*cosx = cos (x);
+}
+
 #endif
 
 static void
@@ -302,9 +321,9 @@ signal_closed_caption		(uint8_t *		raw,
 	double t3 = t0 + 6.5 * D - 120e-9;
 	double q1 = PI * bit_rate * 2;
 	/* Max. rise/fall time 240 ns (EIA 608-B). */
-	double q2 = PI / 120e-9; 
-	double signal_mean = (white_level - blank_level) * .25; /* 25 IRE */
-	double signal_high = blank_level + (white_level - blank_level) * .5;
+	double q2 = PI / 120e-9;
+	double signal_mean;
+	double signal_high;
 	double sample_period = 1.0 / sp->sampling_rate;
 	unsigned int samples_per_line;
 	double t;
@@ -320,12 +339,21 @@ signal_closed_caption		(uint8_t *		raw,
 	samples_per_line = SAMPLES_PER_LINE (sp);
 
 	if (flags & _VBI_RAW_SHIFT_CC_CRI) {
-		/* Wrong signal shape found by Rich Kadel on
-		   "channel 56 The History Channel". */
+		/* Wrong signal shape found by Rich Kadel,
+		   zapping-misc@lists.sourceforge.net 2006-07-16. */
 		t0 += D / 2;
 		t1 += D / 2;
 		t2 += D / 2;
 	}
+
+	if (flags & _VBI_RAW_LOW_AMP_CC) {
+		/* Low amplitude signal found by Rich Kadel,
+		   zapping-misc@lists.sourceforge.net 2007-08-15. */
+		white_level = white_level * 6 / 10;
+	}
+
+	signal_mean = (white_level - blank_level) * .25; /* 25 IRE */
+	signal_high = blank_level + (white_level - blank_level) * .5;
 
 	for (i = 0; i < samples_per_line; ++i) {
 		if (t >= t1 && t < t2) {
@@ -381,6 +409,149 @@ clear_image			(uint8_t *		p,
 			p += bytes_per_line;
 		}
 	}
+}
+
+/**
+ * @param raw Noise will be added to this raw VBI image.
+ * @param sp Describes the raw VBI data in the buffer. @a sp->sampling_format
+ *   must be @c VBI_PIXFMT_Y8 (@c VBI_PIXFMT_YUV420 in libzvbi 0.2.x).
+ *   Note for compatibility in libzvbi 0.2.x vbi_sampling_par is a
+ *   synonym of vbi_raw_decoder, but the (private) decoder fields in
+ *   this structure are ignored.
+ * @param min_freq Minimum frequency of the noise in Hz.
+ * @param max_freq Maximum frequency of the noise in Hz. @a min_freq and
+ *   @a max_freq define the cut off frequency at the half power points
+ *   (gain -3 dB).
+ * @param amplitude Maximum amplitude of the noise, should lie in range
+ *   0 to 256.
+ * @param seed Seed for the pseudo random number generator built into
+ *   this function. Given the same @a seed value the function will add
+ *   the same noise, which can be useful for tests.
+ *
+ * This function adds white noise to a raw VBI image.
+ *
+ * To produce realistic noise @a min_freq = 0, @a max_freq = 5e6 and
+ * @a amplitude = 20 to 50 seems appropriate.
+ *
+ * @returns
+ * FALSE if the @a sp sampling parameters are invalid.
+ *
+ * @since 0.2.26
+ */
+vbi_bool
+vbi_raw_add_noise		(uint8_t *		raw,
+				 const vbi_sampling_par *sp,
+				 unsigned int		min_freq,
+				 unsigned int		max_freq,
+				 unsigned int		amplitude,
+				 unsigned int		seed)
+{
+	double f0, w0, sn, cs, bw, alpha, a0;
+	float a1, a2, b0, b1, z0, z1, z2;
+	unsigned int n_lines;
+	unsigned long samples_per_line;
+	unsigned long padding;
+	uint32_t seed32;
+
+	assert (NULL != raw);
+	assert (NULL != sp);
+
+	if (unlikely (!_vbi_sampling_par_valid_log (sp, /* log */ NULL)))
+		return FALSE;
+
+	switch (sp->sp_sample_format) {
+#if 3 == VBI_VERSION_MINOR
+	case VBI_PIXFMT_YUV444:
+	case VBI_PIXFMT_YVU444:
+	case VBI_PIXFMT_YUV422:
+	case VBI_PIXFMT_YVU422:
+	case VBI_PIXFMT_YUV411:
+	case VBI_PIXFMT_YVU411:
+	case VBI_PIXFMT_YVU420:
+	case VBI_PIXFMT_YUV410:
+	case VBI_PIXFMT_YVU410:
+	case VBI_PIXFMT_Y8:
+#endif
+	case VBI_PIXFMT_YUV420:
+		break;
+
+	default:
+		return FALSE;
+	}
+
+	if (unlikely (sp->sampling_rate <= 0))
+		return FALSE;
+
+	/* Biquad bandpass filter.
+	   http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt */
+
+	f0 = ((double) min_freq + max_freq) * 0.5;
+
+	if (f0 <= 0.0)
+		return TRUE;
+
+	w0 = 2 * M_PI * f0 / sp->sampling_rate;
+	sincos (w0, &sn, &cs);
+	bw = fabs (log2 (MAX (min_freq, max_freq) / f0));
+	alpha = sn * sinh (log (2) / 2 * bw * w0 / sn);
+	a0 = 1 + alpha;
+	a1 = 2 * cs / a0;
+	a2 = (alpha - 1) / a0;
+	b0 = sn / (2*a0);
+	b1 = 0;
+
+	if (amplitude > 256)
+		amplitude = 256;
+
+	n_lines = sp->count[0] + sp->count[1];
+
+#if 2 == VBI_VERSION_MINOR
+	if (unlikely (0 == amplitude
+		      || 0 == n_lines
+		      || 0 == sp->bytes_per_line))
+		return TRUE;
+
+	samples_per_line = sp->bytes_per_line;
+	padding = 0;
+#else
+	if (unlikely (0 == amplitude
+		      || 0 == n_lines
+		      || 0 == sp->samples_per_line))
+		return TRUE;
+
+	samples_per_line = sp->samples_per_line;
+	padding = sp->bytes_per_line - samples_per_line;
+#endif
+
+	seed32 = seed;
+
+	z1 = 0;
+	z2 = 0;
+
+	do {
+		uint8_t *raw_end = raw + samples_per_line;
+
+		do {
+			int noise;
+
+			/* We use our own simple PRNG to produce
+			   predictable results for tests. */
+			seed32 = seed32 * 1103515245u + 12345;
+			noise = ((seed32 / 65536) % (amplitude * 2 + 1))
+				- amplitude;
+
+			z0 = noise + a1 * z1 + a2 * z2;
+			noise = (int)(b0 * (z0 - z2) + b1 * z1);
+			z2 = z1;
+			z1 = z0;
+
+			*raw++ = SATURATE (*raw + noise, 0, 255);
+		} while (raw < raw_end);
+
+		raw += padding;
+	} while (--n_lines > 0);
+
+	return TRUE;
 }
 
 static vbi_bool
@@ -568,7 +739,8 @@ _vbi_raw_vbi_image		(uint8_t *		raw,
 	n_scan_lines = sp->count[0] + sp->count[1];
 	if (unlikely (n_scan_lines * sp->bytes_per_line > raw_size)) {
 		warning (__FUNCTION__,
-			 "%u + %u lines * %lu bytes_per_line > %lu raw_size.",
+			 "(%u + %u lines) * %lu bytes_per_line "
+			 "> %lu raw_size.",
 			 sp->count[0], sp->count[1],
 			 (unsigned long) sp->bytes_per_line, raw_size);
 		return FALSE;
@@ -581,11 +753,7 @@ _vbi_raw_vbi_image		(uint8_t *		raw,
 			 blank_level, white_level);
 	}
 
-#if 3 == VBI_VERSION_MINOR
-	if (VBI_VIDEOSTD_SET_525_60 & sp->videostd_set) {
-#else
-	if (525 == sp->scanning) {
-#endif
+	if (SYSTEM_525 (sp)) {
 		/* Observed value. */
 		const unsigned int peak = 200; /* 255 */
 
@@ -743,7 +911,7 @@ _vbi_raw_video_image		(uint8_t *		raw,
 			 blank_level, black_level, white_level);
 	}
 
-	switch (sp->sampling_format) {
+	switch (sp->sp_sample_format) {
 #if 3 == VBI_VERSION_MINOR
 	case VBI_PIXFMT_YVUA24_LE:	/* 0xAAUUVVYY */
 	case VBI_PIXFMT_YVU24_LE:	/* 0x00UUVVYY */
@@ -803,7 +971,7 @@ _vbi_raw_video_image		(uint8_t *		raw,
 		break;
 	}
 
-	switch (sp->sampling_format) {
+	switch (sp->sp_sample_format) {
 	case VBI_PIXFMT_RGB16_LE:
 	case VBI_PIXFMT_RGB16_BE:
 	case VBI_PIXFMT_BGR16_LE:
@@ -869,11 +1037,7 @@ _vbi_raw_video_image		(uint8_t *		raw,
 
 	/* ITU-R BT.601 sampling assumed. */
 
-#if 3 == VBI_VERSION_MINOR
-	if (VBI_VIDEOSTD_SET_525_60 & sp->videostd_set) {
-#else
-	if (525 == sp->scanning) {
-#endif
+	if (SYSTEM_525 (sp)) {
 		if (0 == white_level) {
 			/* Cutting off the bottom of the signal
 			   confuses the vbi_bit_slicer (can't adjust
@@ -897,7 +1061,7 @@ _vbi_raw_video_image		(uint8_t *		raw,
 	samples_per_line = SAMPLES_PER_LINE (sp);
 
 #if 3 == VBI_VERSION_MINOR
-	sp8.sampling_format = VBI_PIXFMT_Y8;
+	sp8.sample_format = VBI_PIXFMT_Y8;
 #else
 	sp8.sampling_format = VBI_PIXFMT_YUV420;
 #endif
@@ -927,7 +1091,7 @@ _vbi_raw_video_image		(uint8_t *		raw,
 	while (n_scan_lines-- > 0) {
 		unsigned int i;
 
-		switch (sp->sampling_format) {
+		switch (sp->sp_sample_format) {
 #if 3 == VBI_VERSION_MINOR
 		case VBI_PIXFMT_NONE:
 		case VBI_PIXFMT_RESERVED0:
@@ -1268,7 +1432,83 @@ typedef struct {
 	uint8_t			vps_buffer[13];
 
 	uint8_t			wss_buffer[2];
+
+	unsigned int		noise_min_freq;
+	unsigned int		noise_max_freq;
+	unsigned int		noise_amplitude;
+	unsigned int		noise_seed;
+
+	unsigned int		flags;
 } vbi_capture_sim;
+
+unsigned int
+_vbi_capture_sim_get_flags	(vbi_capture *		cap)
+{
+	vbi_capture_sim *sim;
+
+	assert (NULL != cap);
+
+	sim = PARENT (cap, vbi_capture_sim, cap);
+	assert (MAGIC == sim->magic);
+
+	return sim->flags;
+}
+
+void
+_vbi_capture_sim_set_flags	(vbi_capture *		cap,
+				 unsigned int		flags)
+{
+	vbi_capture_sim *sim;
+
+	assert (NULL != cap);
+
+	sim = PARENT (cap, vbi_capture_sim, cap);
+	assert (MAGIC == sim->magic);
+
+	sim->flags = flags;
+}
+
+/**
+ * @param cap Initialized vbi_capture context opened with
+ *   vbi_capture_sim_new().
+ * @param min_freq Minimum frequency of the noise in Hz.
+ * @param max_freq Maximum frequency of the noise in Hz. @a min_freq and
+ *   @a max_freq define the cut off frequency at the half power points
+ *   (gain -3 dB).
+ * @param amplitude Maximum amplitude of the noise, should lie in range
+ *   0 to 256.
+ *
+ * This function shapes the white noise to be added to simulated raw VBI
+ * data. By default no noise is added. To disable the noise set
+ * @a amplitude to zero.
+ *
+ * To produce realistic noise @a min_freq = 0, @a max_freq = 5e6 and
+ * @a amplitude = 20 to 50 seems appropriate.
+ *
+ * @since 0.2.26
+ */
+void
+vbi_capture_sim_add_noise	(vbi_capture *		cap,
+				 unsigned int		min_freq,
+				 unsigned int		max_freq,
+				 unsigned int		amplitude)
+{
+	vbi_capture_sim *sim;
+
+	assert (NULL != cap);
+
+	sim = PARENT (cap, vbi_capture_sim, cap);
+	assert (MAGIC == sim->magic);
+
+	if (0 == max_freq)
+		amplitude = 0;
+
+	sim->noise_min_freq = min_freq;
+	sim->noise_max_freq = max_freq;
+	sim->noise_amplitude = amplitude;
+
+	sim->noise_seed = 123456789;
+}
 
 static vbi_bool
 extend_buffer			(struct buffer *	b,
@@ -2092,11 +2332,7 @@ sim_read			(vbi_capture *		cap,
 
 	if (NULL != raw
 	    || NULL != sliced) {
-#if 3 == VBI_VERSION_MINOR
-		if (VBI_VIDEOSTD_SET_525_60 & sim->sp.videostd_set) {
-#else
-		if (525 == sim->sp.scanning) {
-#endif
+		if (SYSTEM_525 (&sim->sp)) {
 			n_lines = gen_sliced_525 (sim);
 		} else {
 			n_lines = gen_sliced_625 (sim);
@@ -2122,15 +2358,28 @@ sim_read			(vbi_capture *		cap,
 
 		memset (raw_data, 0x80, sim->raw_buffer.size);
 
-		success = vbi_raw_vbi_image (raw_data,
-					     sim->raw_buffer.size,
-					     &sim->sp,
-					     /* blank_level */ 0,
-					     /* white_level */ 0,
-					      /* swap_fields */ FALSE,
-					     sim->sliced,
-					     n_lines);
+		success = _vbi_raw_vbi_image (raw_data,
+					       sim->raw_buffer.size,
+					       &sim->sp,
+					       /* blank_level: default */ 0,
+					       /* white_level: default */ 0,
+					       sim->flags,
+					       sim->sliced,
+					       n_lines);
 		assert (success);
+
+		if (sim->noise_amplitude > 0) {
+			success = vbi_raw_add_noise (raw_data,
+						      &sim->sp,
+						      sim->noise_min_freq,
+						      sim->noise_max_freq,
+						      sim->noise_amplitude,
+						      sim->noise_seed);
+			assert (success);
+
+			sim->noise_seed = sim->noise_seed
+				* 1103515245 + 56789;
+		}
 
 		if (!sim->sp.synchronous)
 			delay_raw_data (sim, raw_data);
@@ -2163,11 +2412,7 @@ sim_read			(vbi_capture *		cap,
 		(*sliced)->timestamp = sim->capture_time;
 	}
 
-#if 3 == VBI_VERSION_MINOR
-	if (VBI_VIDEOSTD_SET_525_60 & sim->sp.videostd_set) {
-#else
-	if (525 == sim->sp.scanning) {
-#endif
+	if (SYSTEM_525 (&sim->sp)) {
 		sim->capture_time += 1001 / 30000.0;
 	} else {
 		sim->capture_time += 1 / 25.0;
@@ -2176,25 +2421,48 @@ sim_read			(vbi_capture *		cap,
 	return TRUE;
 }
 
+static vbi_bool
+sim_sampling_point		(vbi_capture *		cap,
+				 vbi3_bit_slicer_point *point,
+				 unsigned int		row,
+				 unsigned int		nth_bit)
+{
+	vbi_capture_sim *sim = PARENT (cap, vbi_capture_sim, cap);
+
+	if (!sim->decode_raw)
+		return FALSE;
+
+	return vbi3_raw_decoder_sampling_point (sim->rd, point, row, nth_bit);
+}
+
+static vbi_bool
+sim_debug			(vbi_capture *		cap,
+				 vbi_bool		enable)
+{
+	vbi_capture_sim *sim = PARENT (cap, vbi_capture_sim, cap);
+
+	return vbi3_raw_decoder_debug (sim->rd, enable);
+}
+
+/* For compatibility in libzvbi 0.2
+   struct vbi_sampling_par == vbi_raw_decoder. In 0.3
+   we'll drop the decoding related fields. */
+#if 3 == VBI_VERSION_MINOR
+static const vbi_sampling_par *
+#else
 static vbi_raw_decoder *
+#endif
 sim_parameters			(vbi_capture *		cap)
 {
 	vbi_capture_sim *sim = PARENT (cap, vbi_capture_sim, cap);
 
-	/* For compatibility in libzvbi 0.2
-	   struct vbi_sampling_par == vbi_raw_decoder. In 0.3
-	   we'll drop the decoding related fields. */
-#if 3 == VBI_VERSION_MINOR
-	return &sim->rd;
-#else
 	return &sim->sp;
-#endif
 }
 
 static int
 sim_get_fd			(vbi_capture *		cap)
 {
-	cap = cap;
+	cap = cap; /* unused */
 
 	return -1; /* not available */
 }
@@ -2272,6 +2540,8 @@ vbi_capture_sim_new		(int			scanning,
 
 	sim->cap.read		= sim_read;
 	sim->cap.parameters	= sim_parameters;
+	sim->cap.debug		= sim_debug;
+	sim->cap.sampling_point	= sim_sampling_point;
 	sim->cap.get_fd		= sim_get_fd;
 	sim->cap._delete	= sim_delete;
 
@@ -2325,7 +2595,7 @@ vbi_capture_sim_new		(int			scanning,
 	/* Raw VBI decoder. */
 
 	sim->rd = vbi3_raw_decoder_new (&sim->sp);
-	if (0 == sim->rd) {
+	if (NULL == sim->rd) {
 		goto failure;
 	}
 
