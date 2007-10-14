@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.h,v 1.7 2007/08/27 06:44:10 mschimek Exp $ */
+/* $Id: dvb_demux.h,v 1.8 2007/10/14 14:55:40 mschimek Exp $ */
 
 #ifndef __ZVBI_DVB_DEMUX_H__
 #define __ZVBI_DVB_DEMUX_H__
@@ -31,7 +31,6 @@ VBI_BEGIN_DECLS
 /* Public */
 
 /**
- * @ingroup LowDec
  * @addtogroup DVBDemux
  * @{
  */

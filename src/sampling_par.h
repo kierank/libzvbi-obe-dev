@@ -3,6 +3,8 @@
 
 #include "decoder.h"
 
+VBI_BEGIN_DECLS
+
 /* Public */
 
 typedef vbi_raw_decoder vbi_sampling_par;
@@ -49,6 +51,8 @@ extern vbi_bool
 _vbi_sampling_par_valid_log    (const vbi_sampling_par *sp,
                                  _vbi_log_hook *       log)
   __attribute__ ((_vbi_pure));
+
+VBI_END_DECLS
 
 #endif /* __SAMPLING_PAR_H__ */
 

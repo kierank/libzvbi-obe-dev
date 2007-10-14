@@ -1,3 +1,60 @@
+2007-10-14    <mschimek@users.sf.net>
+
+	* src/dvb_mux.c, src/io-sim.c, src/raw_decoder.c,
+	  src/sampling_par.c, test/capture.c, test/decode.c, test/export.c,
+	  test/sliced.c, test/sliced2pes.c, test/test-dvb_mux.cc:
+	  Resynched with 0.3 branch.
+
+	* src/sliced_filter.c (decode_teletext_packet_0): Bug fix: Keep
+	  the very first page header and its timestamp, which is
+	  important for subtitle timing.
+	* test/ttxfilter.c (filter_frame): Did not skip broken sliced
+	  VBI lines, looping forever.
+	* test/README: Updated.
+	* test/export.c (main): Page number error message fix.
+
+	* src/misc.h: Replaced vbi_malloc, vbi_free etc macros by
+	  pointers for fault injection during unit tests.
+	* test/test-common.h, test/test-common.cc (xmemdup): Added for
+	  test-raw_decoder.
+	* test/test-dvb_mux.cc
+	(test_multiplex_sliced_packet_size_checks): Incorrect buffer
+	  pointer check.
+	(test_mr_packet_size): Allocated zero size buffer.
+
+	* src/raw_decoder.h: Added new functions and changed struct
+	  vbi3_raw_decoder.
+	* src/raw_decoder.c: Added support for sampling point recording.
+	(vbi3_raw_decoder_add_services): Inherit log function to bit slicer.
+	* src/io.h (struct vbi_capture): Added sampling_point() and debug()
+	  methods for test/osc in 0.3.
+	* src/io-sim.h: Various new functions and flags.
+	* src/io-sim.c (signal_closed_caption): Added a flag to generate
+	  the low amplitude signal observed by Rich for tests.
+	(vbi_raw_add_noise): New function to test the improved bit slicer.
+	(_vbi_capture_sim_get_flags, _vbi_capture_sim_set_flags): New
+	  functions to modify the simulated VBI signal.
+	(vbi_capture_sim_add_noise): New option to simulate a noisy VBI
+	  signal.
+	(sim_parameters, sim_debug): New capture methods to test the
+	  bit slicer with simulated data. Used by test/osc in 0.3.
+	* configure.in: Added sincos() check for src/io-sim.c.
+	* test/sliced.h: Removed the old sliced file output functions.
+	(capture_stream_sim_set_flags): New function.
+	* test/sliced.c: Added generic support for sampling point
+	  recording to examine the bit slicer.
+	(capture_stream_sim_set_flags): Added to simulate incorrect
+	  signals in test tools.
+	* test/capture.c: Added --sim-noise option.
+	(cc_test): Cleaned up and documented the function.
+	* test/Makefile.am: Replaced raw_decoder.c by test-raw_decoder.cc.
+
+	* src/misc.c (_vbi_strlcpy): Was not BSD compatible.
+
+	* src/dvb_demux.c: Documentation improvements.
+
+	* src/Makefile.am (unrename): Exclude decoder.c.
+
 2007-09-19	<mschimek@users.sf.net>
 
 	* src/io-v4l2k.c (restart_stream): Didn't initialize the

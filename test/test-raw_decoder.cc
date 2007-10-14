@@ -1,7 +1,7 @@
 /*
- *  libzvbi test
+ *  libzvbi - vbi_raw_decoder unit test
  *
- *  Copyright (C) 2004 Michael H. Schimek
+ *  Copyright (C) 2004, 2007 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,23 +18,31 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: raw_decoder.c,v 1.11 2006/09/24 03:08:17 mschimek Exp $ */
-
-/* Automated test of the vbi_raw_decoder. */
+/* $Id: test-raw_decoder.cc,v 1.2 2007/10/14 14:55:41 mschimek Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#include "src/raw_decoder.h"
-#include "src/io-sim.h"
+#include "src/version.h"
+#if 2 == VBI_VERSION_MINOR
+#  include "src/raw_decoder.h"
+#  include "src/io-sim.h"
+#  define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
+#  define vbi_pixfmt_bytes_per_pixel(pf) VBI_PIXFMT_BPP(pf)
+#  define VBI_PIXFMT_IS_YUV(pf) (0 != (VBI_PIXFMT_SET (pf)		\
+					& VBI_PIXFMT_SET_YUV))
+#else
+#  include "src/misc.h"
+#  include "src/zvbi.h"
+#endif
 
-#define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
+#include "test-common.h"
 
-vbi_bool verbose;
+bool verbose;
 
 typedef struct {
-	vbi_service_set		service;
+	vbi_service_set	service;
 
 	/* Scan lines. */
 	unsigned int		first;
@@ -42,31 +50,6 @@ typedef struct {
 } block;
 
 #define BLOCK_END { 0, 0, 0 }
-
-static void *
-memset_rand			(void *			d1,
-				 size_t			n)
-{
-	uint8_t *d = (uint8_t *) d1;
-
-	while (n-- > 0)
-		*d++ = rand ();
-
-	return d1;
-}
-
-static void *
-xmemdup				(const void *		s,
-				 size_t			n)
-{
-	void *d;
-
-	d = malloc (n);
-	assert (NULL != d);
-	memcpy (d, s, n);
-
-	return d;
-}
 
 static void
 dump_hex			(const uint8_t *	p,
@@ -133,6 +116,30 @@ sliced_rand			(vbi_sliced *		s,
 	return s - s_start;
 }
 
+static void
+dump_sliced_pair		(const vbi_sliced *	s1,
+				 const vbi_sliced *	s2,
+				 unsigned int		n_lines)
+{
+	unsigned int i;
+
+	for (i = 0; i < n_lines; ++i)
+		fprintf (stderr, "%2u: "
+			 "%30s %3u %02x %02x %02x <-> "
+			 "%30s %3u %02x %02x %02x\n",
+			 i,
+			 vbi_sliced_name (s1[i].id),
+			 s1[i].line,
+			 s1[i].data[0],
+			 s1[i].data[1],
+			 s1[i].data[2],
+			 vbi_sliced_name (s2[i].id),
+			 s2[i].line,
+			 s2[i].data[0],
+			 s2[i].data[1],
+			 s2[i].data[2]);
+}
+
 static unsigned int
 create_raw			(uint8_t **		raw,
 				 vbi_sliced **		sliced,
@@ -144,6 +151,10 @@ create_raw			(uint8_t **		raw,
 	unsigned int scan_lines;
 	unsigned int sliced_lines;
 	unsigned int raw_size;
+	unsigned int blank_level;
+	unsigned int black_level;
+	unsigned int white_level;
+	vbi_bool success;
 
 	scan_lines = sp->count[0] + sp->count[1];
 	raw_size = sp->bytes_per_line * scan_lines;
@@ -156,22 +167,43 @@ create_raw			(uint8_t **		raw,
 
 	sliced_lines = sliced_rand (*sliced, 50, b);
 
+	/* Use defaults. */
+	blank_level = 0;
+	black_level = 0;
+	white_level = 0;
+
 	if (pixel_mask) {
 		memset_rand (*raw, raw_size);
 
-		assert (_vbi_raw_video_image (*raw, raw_size, sp,
-					      /* blank_level: default */ 0,
-					      /* black_level: default */ 0,
-					      /* white_level: default */ 0,
-					      pixel_mask,
-					      raw_flags,
-					      *sliced, sliced_lines));
+		success = _vbi_raw_video_image (*raw, raw_size, sp,
+						 blank_level,
+						 black_level,
+						 white_level,
+						 pixel_mask,
+						 raw_flags,
+						 *sliced, sliced_lines);
+		assert (success);
 	} else {
-		assert (_vbi_raw_vbi_image (*raw, raw_size, sp,
-					    /* blank_level: default */ 0,
-					    /* white_level: default */ 0,
-					    raw_flags,
-					    *sliced, sliced_lines));
+		success = _vbi_raw_vbi_image (*raw, raw_size, sp,
+					       blank_level,
+					       white_level,
+					       raw_flags,
+					       *sliced, sliced_lines);
+		assert (success);
+
+		if (raw_flags & _VBI_RAW_NOISE_2) {
+			static uint32_t seed = 12345678;
+
+			/* Shape as in capture_stream_sim_add_noise(). */
+			success = vbi_raw_add_noise (*raw, sp,
+						      /* min_freq */ 0,
+						      /* max_freq */ 5000000,
+						      /* amplitude */ 25,
+						      seed);
+			assert (success);
+
+			seed = seed * 1103515245 + 56789;
+		}
 	}
 
 	return sliced_lines;
@@ -197,11 +229,19 @@ create_decoder			(const vbi_sampling_par *sp,
 	assert (NULL != rd);
 
 	if (sp->synchronous) {
+#if 2 == VBI_VERSION_MINOR
 		vbi3_raw_decoder_set_log_fn
 			(rd,
 			 vbi_log_on_stderr,
 			 /* user_data */ NULL,
-			 /* max_level */ VBI_LOG_INFO * 2 - 1);
+			 (vbi_log_mask)(VBI_LOG_INFO * 2 - 1));
+#else
+		vbi3_raw_decoder_set_log_fn
+			(rd,
+			 (vbi_log_mask)(VBI_LOG_INFO * 2 - 1),
+			 vbi_log_on_stderr,
+			 /* user_data */ NULL);
+#endif
 	} else {
 		/* Don't complain about expected failures.
 		   XXX Check for those in a different function. */
@@ -230,7 +270,10 @@ compare_payload			(const vbi_sliced *	in,
 	unsigned int payload;
 
 	payload = vbi_sliced_payload_bits (out->id);
-	assert (0 == memcmp (in->data, out->data, payload >> 3));
+	if (0 != memcmp (in->data, out->data, payload >> 3)) {
+		dump_sliced_pair (in, out, /* n_lines */ 1);
+		assert (0);
+	}
 
 	if (payload & 7) {
 		unsigned int mask = (1 << (payload & 7)) - 1;
@@ -292,7 +335,7 @@ compare_sliced			(const vbi_sampling_par *sp,
 			     old + out_lines,
 			     sizeof (*old) * (old_lines - out_lines)));
 
-	in1 = xmemdup (in, sizeof (*in) * in_lines);
+	in1 = (vbi_sliced *) xmemdup (in, sizeof (*in) * in_lines);
 
 	for (i = 0; i < out_lines; ++i) {
 		if (sp->synchronous) {
@@ -362,7 +405,7 @@ test_cycle			(const vbi_sampling_par *sp,
 
 	in_lines = create_raw (&raw, &in, sp, b, pixel_mask, raw_flags);
 
-	if (0 && verbose)
+	if (verbose)
 		dump_hex (raw + 120, 12);
 
 	rd = create_decoder (sp, b, strict);
@@ -372,16 +415,30 @@ test_cycle			(const vbi_sampling_par *sp,
 
 	out_lines = vbi3_raw_decoder_decode (rd, out, 40, raw);
 
-	if (verbose)
-		fprintf (stderr, "%s %d in=%u out=%u\n",
+	if (verbose) {
+#if 2 == VBI_VERSION_MINOR
+		fprintf (stderr, "%s %08x in=%u out=%u\n",
 			 __FUNCTION__,
-			 (sp->sampling_format),
+			 sp->sampling_format,
 			 in_lines, out_lines);
+#else
+		fprintf (stderr, "%s %s in=%u out=%u\n",
+			 __FUNCTION__,
+			 vbi_pixfmt_name (sp->sample_format),
+			 in_lines, out_lines);
+#endif
+	}
 
-	if (sp->synchronous)
+	if (sp->synchronous) {
+		if (verbose && in_lines != out_lines)
+			dump_sliced_pair (in, out, MIN (in_lines, out_lines));
+
 		assert (in_lines == out_lines);
+	}
 
 	compare_sliced (sp, in, out, old, in_lines, out_lines, 50);
+
+	vbi3_raw_decoder_delete (rd);
 
 	free (in);
 	free (raw);
@@ -389,15 +446,25 @@ test_cycle			(const vbi_sampling_par *sp,
 
 static vbi_bool
 block_contains_service		(const block *		b,
-				 vbi_service_set	services)
+				 vbi_service_set	services,
+				 vbi_bool		exclusive)
 {
+	vbi_service_set all_services = 0;
+
+	assert (0 != services);
+
 	while (b->service) {
-		if (b->service & services)
-			return TRUE;
+		all_services |= b->service;
 		++b;
 	}
 
-	return FALSE;
+	if (0 == (all_services & services))
+		return FALSE;
+
+	if (exclusive && 0 != (all_services & ~services))
+		return FALSE;
+
+	return TRUE;
 }
 
 static void
@@ -409,9 +476,24 @@ test_vbi			(const vbi_sampling_par *sp,
 		    /* raw_flags */ 0, strict);
 
 	/* Tests incorrect signal shape reported by Rich Kadel. */
-	if (block_contains_service (b, VBI_SLICED_CAPTION_525))
+	if (block_contains_service (b, VBI_SLICED_CAPTION_525,
+				    /* exclusive */ FALSE))
 		test_cycle (sp, b, /* pixel_mask */ 0,
 			    _VBI_RAW_SHIFT_CC_CRI, strict);
+
+	/* Tests low amplitude CC signals reported by Rich Kadel. */
+	if (block_contains_service (b, VBI_SLICED_CAPTION_525,
+				    /* exclusive */ TRUE)
+	    && sp->sampling_rate >= 27000000) {
+		unsigned int i;
+
+		/* Repeat because the noise varies. */
+		for (i = 0; i < 1000; ++i) {
+			test_cycle (sp, b, /* pixel_mask */ 0,
+				    _VBI_RAW_LOW_AMP_CC |
+				    _VBI_RAW_NOISE_2, strict);
+		}
+	}
 }
 
 static void
@@ -425,20 +507,28 @@ test_video			(const vbi_sampling_par *sp,
 	unsigned int samples_per_line;
 
 	sp2 = *sp;
+#if 2 == VBI_VERSION_MINOR
 	samples_per_line = sp->bytes_per_line
-		/ VBI_PIXFMT_BPP (sp->sampling_format);
+		/ vbi_pixfmt_bytes_per_pixel (sp->sampling_format);
+#else
+	samples_per_line = sp->samples_per_line;
+#endif
 
 	for (pixfmt = (vbi_pixfmt) 0; pixfmt < VBI_MAX_PIXFMTS;
 	     pixfmt = (vbi_pixfmt)(pixfmt + 1)) {
 		if (0 == (VBI_PIXFMT_SET_ALL & VBI_PIXFMT_SET (pixfmt)))
 			continue;
 
+#if 2 == VBI_VERSION_MINOR
 		sp2.sampling_format = pixfmt;
+#else
+		sp2.sample_format = pixfmt;
+#endif
 		sp2.bytes_per_line = samples_per_line
-			* VBI_PIXFMT_BPP (pixfmt);
+			* vbi_pixfmt_bytes_per_pixel (pixfmt);
 
 		/* Check bit slicer looks at Y/G */
-		if (VBI_PIXFMT_SET (pixfmt) & VBI_PIXFMT_SET_YUV)
+		if (VBI_PIXFMT_IS_YUV (pixfmt))
 			pixel_mask = 0xFF;
 		else
 			pixel_mask = 0xFF00;
@@ -446,7 +536,8 @@ test_video			(const vbi_sampling_par *sp,
 		test_cycle (&sp2, b, pixel_mask,
 			    /* raw_flags */ 0, strict);
 
-		if (block_contains_service (b, VBI_SLICED_CAPTION_525))
+		if (block_contains_service (b, VBI_SLICED_CAPTION_525,
+					    /* exclusive */ FALSE))
 			test_cycle (&sp2, b, pixel_mask,
 				    _VBI_RAW_SHIFT_CC_CRI, strict);
 	}
@@ -470,7 +561,7 @@ static const block ttx_d_625 [] = {
 	BLOCK_END,
 };
 
-static const block hi_625 [] = {
+static const block ttx_wss_cc_625 [] = {
 	{ VBI_SLICED_TELETEXT_B_625,	6, 21 },
 	{ VBI_SLICED_CAPTION_625,	22, 22 },
 	{ VBI_SLICED_WSS_625,		23, 23 },
@@ -491,7 +582,7 @@ static const block hi_f2_525 [] = {
 	BLOCK_END,
 };
 
-static const block low_625 [] = {
+static const block vps_wss_cc_625 [] = {
 	{ VBI_SLICED_VPS,		16, 16 },
 	{ VBI_SLICED_CAPTION_625,	22, 22 },
 	{ VBI_SLICED_WSS_625,		23, 23 },
@@ -525,7 +616,7 @@ static const block hi_525 [] = {
 	BLOCK_END,
 };
 
-static const block low_525 [] = {
+static const block cc_525 [] = {
 	{ VBI_SLICED_CAPTION_525,	21, 21 },
 	{ VBI_SLICED_CAPTION_525,	284, 284 },
 	BLOCK_END,
@@ -534,7 +625,11 @@ static const block low_525 [] = {
 static void
 test2				(const vbi_sampling_par *sp)
 {
+#if 2 == VBI_VERSION_MINOR
 	if (625 == sp->scanning) {
+#else
+	if (sp->videostd_set & VBI_VIDEOSTD_SET_625_50) {
+#endif
 		if (sp->sampling_rate >= 13500000) {
 			vbi_sampling_par sp1;
 
@@ -544,12 +639,21 @@ test2				(const vbi_sampling_par *sp)
 			test_vbi (sp, ttx_c_625, 1);
 
 			/* Needs sampling beyond 0H + 63 us (?) */
+#if 2 == VBI_VERSION_MINOR
 			if (sp->bytes_per_line
 			    == 2048 * VBI_PIXFMT_BPP (sp->sampling_format))
 				test_vbi (sp, ttx_d_625, 1);
+#else
+			if (sp->bytes_per_line == 2048
+			    * vbi_pixfmt_bytes_per_pixel (sp->sample_format))
+				test_vbi (sp, ttx_d_625, 1);
+#endif
 
-			test_vbi (sp, hi_625, 1);
-			test_video (sp, hi_625, 1);
+			test_vbi (sp, ttx_wss_cc_625, 1);
+			test_video (sp, ttx_wss_cc_625, 1);
+
+			/* For low_pass_bit_slicer test. */
+			test_vbi (sp, vps_wss_cc_625, 1);
 
 			if (!sp->interlaced) {
 				sp1 = *sp;
@@ -558,8 +662,8 @@ test2				(const vbi_sampling_par *sp)
 				test_vbi (&sp1, hi_f1_625, 2);
 			}
 		} else if (sp->sampling_rate >= 5000000) {
-			test_vbi (sp, low_625, 1);
-			test_video (sp, low_625, 1);
+			test_vbi (sp, vps_wss_cc_625, 1);
+			test_video (sp, vps_wss_cc_625, 1);
 		} else {
 			/* WSS not possible below 5 MHz due to a cri_rate
 			   check in bit_slicer_init(), but much less won't
@@ -577,6 +681,9 @@ test2				(const vbi_sampling_par *sp)
 			test_vbi (sp, hi_525, 1);
 			test_video (sp, hi_525, 1);
 
+			/* CC only for the low-amp CC test. */
+			test_vbi (sp, cc_525, 1);
+
 			if (!sp->interlaced) {
 				sp1 = *sp;
 				sp1.start[0] = 0;
@@ -584,8 +691,8 @@ test2				(const vbi_sampling_par *sp)
 				test_vbi (&sp1, hi_f2_525, 2);
 			}
 		} else {
-			test_vbi (sp, low_525, 1);
-			test_video (sp, low_525, 1);
+			test_vbi (sp, cc_525, 1);
+			test_video (sp, cc_525, 1);
 		}
 	}
 }
@@ -618,8 +725,15 @@ test1				(const vbi_sampling_par *sp)
 
 		sp2 = *sp;
 		sp2.sampling_rate	= res[i].sampling_rate;
+#if 2 == VBI_VERSION_MINOR
 		sp2.bytes_per_line	= res[i].samples_per_line
-			* VBI_PIXFMT_BPP (sp2.sampling_format);
+			* vbi_pixfmt_bytes_per_pixel (sp2.sampling_format);
+#else
+		sp2.samples_per_line	= res[i].samples_per_line;
+		sp2.bytes_per_line	= res[i].samples_per_line
+			* vbi_pixfmt_bytes_per_pixel (sp2.sample_format);
+#endif
+
 		sp2.offset		= (int)(9.7e-6 * sp2.sampling_rate);
 
 		test2 (&sp2);
@@ -635,9 +749,9 @@ test_services			(void)
 	memset (&sp, 0x55, sizeof (sp));
 
 	set = vbi_sampling_par_from_services (&sp,
-					      /* &max_rate */ NULL,
-					      VBI_VIDEOSTD_SET_625_50,
-					      ~0 & ~VBI_SLICED_VBI_625);
+					       /* &max_rate */ NULL,
+					       VBI_VIDEOSTD_SET_625_50,
+					       ~0 & ~VBI_SLICED_VBI_625);
 	assert (set == (VBI_SLICED_TELETEXT_A |
 			VBI_SLICED_TELETEXT_B_625 |
 			VBI_SLICED_TELETEXT_C_625 |
@@ -649,9 +763,9 @@ test_services			(void)
 	test2 (&sp);
 
 	set = vbi_sampling_par_from_services (&sp,
-					      /* &max_rate */ NULL,
-					      VBI_VIDEOSTD_SET_525_60,
-					      ~0 & ~VBI_SLICED_VBI_525);
+					       /* &max_rate */ NULL,
+					       VBI_VIDEOSTD_SET_525_60,
+					       ~0 & ~VBI_SLICED_VBI_525);
 	assert (set == (VBI_SLICED_TELETEXT_B_525 |
 			VBI_SLICED_TELETEXT_C_525 |
 			VBI_SLICED_TELETEXT_D_525 |
@@ -669,8 +783,13 @@ test_line_order			(vbi_bool		synchronous)
 
 	memset (&sp, 0x55, sizeof (sp));
 
+#if 2 == VBI_VERSION_MINOR
 	sp.scanning		= 625;
 	sp.sampling_format	= VBI_PIXFMT_YUV420;
+#else
+	sp.videostd_set		= VBI_VIDEOSTD_SET_PAL_BG;
+	sp.sample_format	= VBI_PIXFMT_YUV420;
+#endif
 	sp.start[0]		= 6;
 	sp.count[0]		= 23 - 6 + 1;
 	sp.start[1]		= 318;
@@ -684,8 +803,13 @@ test_line_order			(vbi_bool		synchronous)
 
 	test1 (&sp);
 
+#if 2 == VBI_VERSION_MINOR
 	sp.scanning		= 525;
 	sp.sampling_format	= VBI_PIXFMT_YUV420;
+#else
+	sp.videostd_set		= VBI_VIDEOSTD_SET_NTSC;
+	sp.sample_format	= VBI_PIXFMT_YUV420;
+#endif
 	sp.start[0]		= 10;
 	sp.count[0]		= 21 - 10 + 1;
 	sp.start[1]		= 272;
@@ -700,18 +824,23 @@ int
 main				(int			argc,
 				 char **		argv)
 {
-	argc = argc;
 	argv = argv;
 
 	verbose = (argc > 1);
 
 	test_services ();
+
 	test_line_order (/* synchronous */ TRUE);
 	test_line_order (/* synchronous */ FALSE);
 
 	/* More... */
 
-	exit (EXIT_SUCCESS);
-
 	return 0;
 }
+
+/*
+Local variables:
+c-set-style: K&R
+c-basic-offset: 8
+End:
+*/

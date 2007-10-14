@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: explist.c,v 1.10 2006/02/10 06:25:38 mschimek Exp $ */
+/* $Id: explist.c,v 1.11 2007/10/14 14:55:41 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -322,7 +322,7 @@ static void
 dump_option_info(vbi_export *ex, vbi_option_info *oi)
 {
 	vbi_option_value val;
-	char *type_str;
+	const char *type_str;
 	int i;
 
 	switch (oi->type) {

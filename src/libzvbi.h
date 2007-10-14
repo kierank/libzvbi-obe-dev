@@ -1386,6 +1386,13 @@ vbi_raw_video_image		(uint8_t *		raw,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_sliced_lines);
 extern vbi_bool
+vbi_raw_add_noise		(uint8_t *		raw,
+				 const vbi_sampling_par *sp,
+				 unsigned int		min_freq,
+				 unsigned int		max_freq,
+				 unsigned int		amplitude,
+				 unsigned int		seed);
+extern vbi_bool
 vbi_raw_vbi_image		(uint8_t *		raw,
 				 unsigned long		raw_size,
 				 const vbi_sampling_par *sp,
@@ -1395,6 +1402,11 @@ vbi_raw_vbi_image		(uint8_t *		raw,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_sliced_lines);
 
+extern void
+vbi_capture_sim_add_noise	(vbi_capture *		cap,
+				 unsigned int		min_freq,
+				 unsigned int		max_freq,
+				 unsigned int		amplitude);
 #if 3 == VBI_VERSION_MINOR
 extern vbi_bool
 vbi_capture_sim_load_vps	(vbi_capture *		cap,
