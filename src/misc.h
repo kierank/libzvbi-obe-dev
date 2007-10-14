@@ -1,7 +1,7 @@
 /*
  *  libzvbi - Miscellaneous cows and chickens
  *
- *  Copyright (C) 2002-2006 Michael H. Schimek
+ *  Copyright (C) 2002-2007 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.h,v 1.17 2007/08/27 06:42:52 mschimek Exp $ */
+/* $Id: misc.h,v 1.18 2007/10/14 14:54:11 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -32,6 +32,7 @@
 #include <assert.h>
 
 #include "macros.h"
+#include "version.h"
 
 #define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
 
@@ -234,13 +235,27 @@ do {									\
 #define COPY_SET_CLEAR(dest, set, clear)				\
 	(dest = (dest & ~(clear)) | (set))
 
-/* For debugging. */
-#define vbi_malloc malloc
-#define vbi_realloc realloc
-#define vbi_strdup strdup
-#define vbi_free free
-#define vbi_cache_malloc malloc
-#define vbi_cache_free free
+/* For applications, debugging and fault injection during unit tests. */
+
+#if 2 == VBI_VERSION_MINOR
+#  define vbi_malloc malloc
+#  define vbi_realloc realloc
+#  define vbi_strdup strdup
+#  define vbi_free free
+#else
+extern void *
+(* vbi_malloc)			(size_t);
+extern void *
+(* vbi_realloc)		(void *,
+				 size_t);
+extern char *
+(* vbi_strdup)			(const char *);
+extern void
+(* vbi_free)			(void *);
+#endif
+
+#define vbi_cache_malloc vbi_malloc
+#define vbi_cache_free vbi_free
 
 /* Helper functions. */
 
@@ -340,7 +355,7 @@ do {									\
 #  define PRIx64 "llx"
 #endif
 
-/* Use this instead of strncpy(). strlcpy() is a BSD/GNU extension. */
+/* Use this instead of strncpy(). strlcpy() is a BSD extension. */
 #ifndef HAVE_STRLCPY
 #  define strlcpy _vbi_strlcpy
 #endif
@@ -350,7 +365,7 @@ do {									\
 extern size_t
 _vbi_strlcpy			(char *			dst,
 				 const char *		src,
-				 size_t			len);
+				 size_t			size);
 
 /* strndup() is a BSD/GNU extension. */
 #ifndef HAVE_STRNDUP
