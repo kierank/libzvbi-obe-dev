@@ -302,7 +302,8 @@ _bktr.h: Makefile.am $(structpr) ioctl_bt848.h ioctl_meteor.h
 unrename:
 	for file in *.c *.h ; do \
 	  case "$$file" in \
-	  io*|bit_slicer*|raw_decoder*|sampling_par.c) continue ; ;; \
+	  io*|bit_slicer*|decoder.c|raw_decoder*|sampling_par.c) \
+	    continue ; ;; \
 	  esac ; \
 	  if grep -q -i vbi3_ "$$file" ; then \
 	    sed 's/vbi3_/vbi_/g;s/VBI3_/VBI_/g' < "$$file" >tmp ; \
