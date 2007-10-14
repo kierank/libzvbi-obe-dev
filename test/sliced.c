@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.c,v 1.12 2007/09/17 00:59:42 mschimek Exp $ */
+/* $Id: sliced.c,v 1.13 2007/10/14 14:53:39 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -48,6 +48,19 @@
 #include "src/raw_decoder.h"
 #include "src/vbi.h"
 #include "sliced.h"
+
+#if 2 == VBI_VERSION_MINOR
+#  define sp_sample_format sampling_format
+#  define sp_samples_per_line bytes_per_line
+#  define VBI_PIXFMT_Y8 VBI_PIXFMT_YUV420
+#  define vbi_pixfmt_name(x) "Y8"
+#  define vbi_pixfmt_bytes_per_pixel(x) 1
+#elif 3 == VBI_VERSION_MINOR
+#  define sp_sample_format sample_format
+#  define sp_samples_per_line samples_per_line
+#else
+#  error VBI_VERSION_MINOR == ?
+#endif
 
 #undef _
 #define _(x) x /* later */
@@ -90,7 +103,7 @@ struct stream {
 
 	vbi_bool		raw_valid;
 	vbi_bool		decode_raw;
-	vbi_bool		collect_points;
+	vbi_bool		debug;
 
 	unsigned int		sliced2_lines;
 
@@ -198,8 +211,9 @@ stream_delete			(struct stream *	st)
 
 	vbi_capture_delete (st->cap);
 #if 3 == VBI_VERSION_MINOR
-	vbi3_raw_decoder_delete (st->rd);
+	vbi_raw_decoder_delete (st->rd);
 #endif
+
 	free (st->raw);
 
 	CLEAR (*st);
@@ -276,15 +290,6 @@ struct service {
 	vbi_service_set	id;
 	unsigned int		n_bytes;
 };
-
-#if 2 == VBI_VERSION_MINOR
-#  define sp_samples_per_line bytes_per_line
-#  define VBI_PIXFMT_Y8 VBI_PIXFMT_YUV420
-#  define vbi_pixfmt_name(x) "Y8"
-#  define vbi_pixfmt_bytes_per_pixel(x) 1
-#else
-#  define sp_samples_per_line samples_per_line
-#endif
 
 static const struct service
 service_map [] = {
@@ -426,13 +431,13 @@ write_xml_raw			(struct stream *	st,
 	assert ((N_ELEMENTS (st->b64_buffer) - 1) * 3 / 4 - 2
 		>= (unsigned int) sp->sp_samples_per_line);
 
-	format = vbi_pixfmt_name (sp->sampling_format);
+	format = vbi_pixfmt_name (sp->sp_sample_format);
 
 	if (NULL == format)
 		error_exit (_("Unknown raw VBI format."));
 
 	n_samples = sp->sp_samples_per_line
-		* vbi_pixfmt_bytes_per_pixel (sp->sampling_format);
+		* vbi_pixfmt_bytes_per_pixel (sp->sp_sample_format);
 
 	n_rows = sp->count[0] + sp->count[1];
 
@@ -572,7 +577,8 @@ write_func_old_sliced		(struct stream *	st,
 					   sliced->line >> 8);
 
 				n = service_map[i].n_bytes;
-				assert (n > 0 && n <= sizeof (sliced->data));
+				assert (n > 0
+					&& n <= (int) sizeof (sliced->data));
 
 				if (n != write (st->fd, sliced->data, n))
 					write_error_exit (NULL);
@@ -608,7 +614,7 @@ write_func_old_sliced		(struct stream *	st,
 #undef w16
 #undef w32
 		n = p - st->b64_buffer;
-		assert (n > 0 && n <= sizeof (st->b64_buffer));
+		assert (n > 0 && n <= (int) sizeof (st->b64_buffer));
 
 		if (n != write (st->fd, st->b64_buffer, n))
 			write_error_exit (NULL);
@@ -873,7 +879,7 @@ next_raw_data			(struct stream *	st,
 #define r16(v) v = p[0] | (p[1] << 8); p += 2
 #define r32(v) v = p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24); p += 4
 	r16 (system);
-	sp->sampling_format = VBI_PIXFMT_Y8;
+	sp->sp_sample_format = VBI_PIXFMT_Y8;
 	r32 (sp->sampling_rate);
 	r16 (sp->sp_samples_per_line);
 	r16 (sp->bytes_per_line);
@@ -902,7 +908,7 @@ next_raw_data			(struct stream *	st,
 		break;
 	}
 
-#else /* 3 == VBI_VERSION_MINOR */
+#elif 3 == VBI_VERSION_MINOR
 
 	switch (system) {
 	case 525:
@@ -918,7 +924,9 @@ next_raw_data			(struct stream *	st,
 		break;
 	}
 
-#endif /* 3 == VBI_VERSION_MINOR */
+#else
+#  error VBI_VERSION_MINOR == ?
+#endif
 
 	size = (sp->count[0] + sp->count[1]) * sp->bytes_per_line;
 
@@ -928,32 +936,9 @@ next_raw_data			(struct stream *	st,
 
 	next_block (st, p, size);
 
-	if (0) {
-		uint8_t *q;
-		unsigned int i;
-
-		q = malloc (size);
-		if (NULL == q)
-			no_mem_exit ();
-
-		memcpy (q, p, size);
-
-		for (i = 16; i < size; ++i) {
-			int j;
-			unsigned int c = 0;
-
-			for (j = -16; j < 0; ++j) {
-				c += q[i + j];
-			}
-			p[i] = c / 16;
-		}
-
-		free (q);
-	}
-
 #if 3 == VBI_VERSION_MINOR
 
-	if (st->collect_points) {
+	if (st->debug) {
 		if (NULL == st->rd) {
 			vbi_bool success;
 
@@ -961,8 +946,7 @@ next_raw_data			(struct stream *	st,
 			if (NULL == st->rd)
 				return p;
 			vbi_raw_decoder_add_services (st->rd, -1, 1);
-			success =
-				vbi_raw_decoder_collect_points (st->rd, TRUE);
+			success = vbi_raw_decoder_debug (st->rd, TRUE);
 			assert (success);
 		}
 
@@ -1021,9 +1005,7 @@ read_loop_old_sliced		(struct stream *	st)
 		vbi_sliced *s;
 		uint8_t *raw;
 		vbi_sampling_par sp;
-		double sample_time;
 		double dt;
-		int64_t stream_time;
 		vbi_bool success;
 		int n_lines;
 		int count;
@@ -1035,7 +1017,6 @@ read_loop_old_sliced		(struct stream *	st)
 		if (dt < 0.0)
 			dt = -dt;
 
-		sample_time = st->sample_time;
 		st->sample_time += dt;
 
 		if (!next_byte (st, &n_lines))
@@ -1107,17 +1088,19 @@ read_loop_old_sliced		(struct stream *	st)
 			++s;
 		}
 
-		stream_time = sample_time * 90000;
+		st->stream_time = st->sample_time * 90000;
 
 		if (st->raw_valid && st->decode_raw) {
 			success = st->callback (st->sliced2,
 						st->sliced2_lines,
 						raw, &sp,
-						sample_time, stream_time);
+						st->sample_time,
+						st->stream_time);
 		} else {
 			success = st->callback (st->sliced, n_lines,
 						raw, &sp,
-						sample_time, stream_time);
+						st->sample_time,
+						st->stream_time);
 		}
 
 		free (raw);
@@ -1374,6 +1357,27 @@ capture_loop			(struct stream *	st)
 }
 
 void
+capture_stream_sim_set_flags	(struct stream *	st,
+				 unsigned int		flags)
+{
+	if (NULL == st->cap)
+		return;
+
+	if (st->interfaces & INTERFACE_SIM) {
+		_vbi_capture_sim_set_flags (st->cap, flags);
+
+		if (flags & _VBI_RAW_NOISE_2) {
+			vbi_capture_sim_add_noise (st->cap,
+						    /* min_freq */ 0,
+						    /* max_freq */ 5000000,
+						    /* amplitude */ 25);
+		} else {
+			vbi_capture_sim_add_noise (st->cap, 0, 0, 0);
+		}
+	}
+}
+
+void
 capture_stream_sim_decode_raw	(struct stream *	st,
 				 vbi_bool		enable)
 {
@@ -1398,9 +1402,14 @@ capture_stream_sim_load_caption	(struct stream *	st,
 		return FALSE;
 
 #if 2 == VBI_VERSION_MINOR
+	stream = stream; /* unused */
+	append = append;
+
 	return FALSE;
-#else
+#elif 3 == VBI_VERSION_MINOR
 	return vbi_capture_sim_load_caption (st->cap, stream, append);
+#else
+#  error VBI_VERSION_MINOR == ?
 #endif
 }
 
@@ -1411,37 +1420,50 @@ capture_stream_get_point	(struct stream *	st,
 				 unsigned int		nth_bit)
 {
 #if 2 == VBI_VERSION_MINOR
+	st = st; /* unused */
+	point = point;
+	row = row;
+	nth_bit = nth_bit;
+
 	return FALSE;
-#else
+#elif 3 == VBI_VERSION_MINOR
 	if (NULL != st->cap) {
-		return vbi_capture_get_point (st->cap, point, row, nth_bit);
+		return vbi_capture_sampling_point
+			(st->cap, point, row, nth_bit);
 	} else if (NULL != st->rd) {
 		if (!st->raw_valid)
 			return FALSE;
-		return vbi_raw_decoder_get_point (st->rd, point,
-						   row, nth_bit);
+		return vbi_raw_decoder_sampling_point
+			(st->rd, point, row, nth_bit);
 	} else {
 		return FALSE;
 	}
+#else
+#  error VBI_VERSION_MINOR == ?
 #endif
 }
 
 vbi_bool
-capture_stream_collect_points	(struct stream *	st,
+capture_stream_debug		(struct stream *	st,
 				 vbi_bool		enable)
 {
 #if 2 == VBI_VERSION_MINOR
+	st = st; /* unused */
+	enable = enable;
+
 	return FALSE;
-#else
-	st->collect_points = TRUE;
+#elif 3 == VBI_VERSION_MINOR
+	st->debug = TRUE;
 
 	if (NULL != st->cap) {
-		return vbi_capture_collect_points (st->cap, enable);
+		return vbi_capture_debug (st->cap, enable);
 	} else if (NULL != st->rd) {
-		return vbi_raw_decoder_collect_points (st->rd, enable);
+		return vbi_raw_decoder_debug (st->rd, enable);
 	} else {
 		return FALSE;
 	}
+#else
+#  error VBI_VERSION_MINOR == ?
 #endif
 }
 
@@ -1542,12 +1564,14 @@ capture_stream_new		(unsigned int		interfaces,
 			/* XXX error? */
 			vbi_capture_dvb_filter (st->cap, ts_pid);
 		}
-#else
+#elif 3 == VBI_VERSION_MINOR
 		ts_pid = ts_pid;
 		capture_raw_data = capture_raw_data;
 		errstr = NULL;
 
 		error_exit ("Sorry, no DVB support yet.");
+#else
+#  error VBI_VERSION_MINOR == ?
 #endif
 	}
 
