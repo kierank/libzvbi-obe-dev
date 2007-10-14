@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.h,v 1.9 2007/09/12 15:52:43 mschimek Exp $ */
+/* $Id: sliced.h,v 1.10 2007/10/14 14:54:48 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -31,33 +31,9 @@
 #include "src/sampling_par.h"
 #include "src/bit_slicer.h"
 #include "src/version.h"
+#include "src/io-sim.h"
 
-/* Reader and write for old test/capture --sliced output.
-   Attn: this code is not reentrant. */
-
-extern vbi_bool
-write_sliced_xml		(vbi_sliced *		sliced,
-				 unsigned int		n_lines,
-				 unsigned int		n_frame_lines,
-				 int64_t		stream_time,
-				 struct timeval		capture_time);
-extern vbi_bool
-write_sliced			(vbi_sliced *		sliced,
-				 unsigned int		n_lines,
-				 double			timestamp);
-extern vbi_bool
-open_sliced_write		(FILE *			fp,
-				 double			timestamp);
-#if 0
-extern int
-read_sliced			(vbi_sliced *		sliced,
-				 double *		timestamp,
-				 unsigned int		max_lines);
-extern vbi_bool
-open_sliced_read		(FILE *			fp);
-#endif
-
-/* Helpers. */
+/* Helper functions. */
 
 #ifndef CLEAR
 #  define CLEAR(var) memset (&(var), 0, sizeof (var))
@@ -165,6 +141,9 @@ typedef struct {
 #endif
 
 extern void
+capture_stream_sim_set_flags	(struct stream *	st,
+				 unsigned int		flags);
+extern void
 capture_stream_sim_decode_raw	(struct stream *	st,
 				 vbi_bool		enable);
 extern vbi_bool
@@ -177,7 +156,7 @@ capture_stream_get_point	(struct stream *	st,
 				 unsigned int		row,
 				 unsigned int		nth_bit);
 extern vbi_bool
-capture_stream_collect_points	(struct stream *	st,
+capture_stream_debug		(struct stream *	st,
 				 vbi_bool		enable);
 extern void
 capture_stream_get_sampling_par	(struct stream *	st,
