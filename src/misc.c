@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2001-2006 Michael H. Schimek
  *  Copyright (C) 2000-2003 Iñaki García Etxebarria
+ *  Copyright (C) 2001-2007 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.c,v 1.9 2007/09/12 15:53:23 mschimek Exp $ */
+/* $Id: misc.c,v 1.10 2007/10/14 14:54:58 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -56,32 +56,50 @@ _vbi_popcnt			(uint32_t		x)
 
 /**
  * @internal
- * strlcpy() is a BSD/GNU extension. Don't call this function
+ * @param dst The string will be stored in this buffer.
+ * @param src NUL-terminated string to be copied.
+ * @param size Maximum number of bytes to be copied, including the
+ *   terminating NUL (i.e. this is the size of the @a dst buffer).
+ *
+ * Copies @a src to @a dst, but no more than @a size - 1 characters.
+ * Always NUL-terminates @a dst, unless @a size is zero.
+ *
+ * strlcpy() is a BSD extension. Don't call this function
  * directly, we #define strlcpy if necessary.
+ *
+ * @returns
+ * strlen (src).
  */
 size_t
 _vbi_strlcpy			(char *			dst,
 				 const char *		src,
-				 size_t			len)
+				 size_t			size)
 {
-	char *dst1;
-	char *end;
-	char c;
+	const char *src1;
 
 	assert (NULL != dst);
 	assert (NULL != src);
-	assert (len > 0);
 
-	dst1 = dst;
+	src1 = src;
 
-	end = dst + len - 1;
+	if (likely (size > 1)) {
+		char *end = dst + size - 1;
 
-	while (dst < end && (c = *src++))
-		*dst++ = c;
+		do {
+			if (unlikely (0 == (*dst++ = *src++)))
+				goto finish;
+		} while (dst < end);
 
-	*dst = 0;
+		*dst = 0;
+	} else if (size > 0) {
+		*dst = 0;
+	}
 
-	return dst - dst1;
+	while (*src++)
+		;
+
+ finish:
+	return src - src1 - 1;
 }
 
 /**
@@ -114,7 +132,7 @@ _vbi_strndup			(const char *		s,
 
 /**
  * @internal
- * vasprintf() is a GNU extension. Don't call this function
+ * vasprintf() is a BSD/GNU extension. Don't call this function
  * directly, we #define vasprintf if necessary.
  */
 int
