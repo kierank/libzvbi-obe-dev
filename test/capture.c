@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.31 2007/09/17 00:59:19 mschimek Exp $ */
+/* $Id: capture.c,v 1.32 2007/10/14 14:53:23 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -43,10 +43,15 @@
 #include "src/version.h"
 #if 2 == VBI_VERSION_MINOR
 #  include "src/hamm.h"
-#else
+#  define SCANNING(sp) ((sp)->scanning)
+#elif 3 == VBI_VERSION_MINOR
 #  include "src/vbi.h"
 #  include "src/zvbi.h"
 #  include "src/misc.h"
+#  define SCANNING(sp)							\
+	(0 != ((sp)->videostd_set & VBI_VIDEOSTD_SET_525_60) ? 525 : 625)
+#else
+#  error VBI_VERSION_MINOR == ?
 #endif
 
 #include "sliced.h"
@@ -67,6 +72,7 @@ static int			option_cc_test;
 static int			option_cc_test_test;
 static vbi_bool		option_raw_output;
 static vbi_bool		option_sliced_output;
+static unsigned int		option_sim_flags;
 
 static struct stream *		cst;
 static struct stream *		wst;
@@ -208,35 +214,39 @@ decode_sliced			(const vbi_sliced *	s,
 		} else if (s->id & VBI_SLICED_WSS_CPR1204) {
 			decode_wss_cpr1204 (s->data);
 		} else {
-			fprintf (stderr, "Oops. Unhandled vbi service %08x\n",
+			fprintf (stderr, "Oops. Unhandled VBI service %08x\n",
 				 s->id);
 		}
 	}
 }
 
+/* Purpose of this function is to record raw and sliced VBI data
+   around three kinds of events for remote examination:
+   - Frames without data,
+   - Lines which contain 0x00 0x00 instead of 0x80 0x80 bytes,
+   - Lines where the transmitted bytes have wrong parity.
+   The raw VBI data may be required to understand what happened,
+   and due to its volume we cannot record it unconditionally. */
 static vbi_bool
 cc_test				(const vbi_sliced *	sliced,
 				 unsigned int		n_lines)
 {
+	static const unsigned int max_error_count[3] = { 5, 5, 5 };
+	static unsigned int error_count[3];
 	static unsigned int frame_count;
-	static unsigned int error1_count;
-	static unsigned int error2_count;
-	vbi_bool error1;
-	vbi_bool error2;
-	vbi_bool error;
+	unsigned int error_set;
 	unsigned int i;
 
-	error1 = FALSE;
-	error2 = FALSE;
+	error_set = 0;
 
-	if (option_cc_test_test && 0 == rand() % 3000)
+	if (option_cc_test_test && 0 == rand() % 300)
 		n_lines = 0;
 
 	if (0 == n_lines) {
 		error_msg ("No data on this frame...");
-		if (error1_count < 3) {
-			++error1_count;
-			error1 = TRUE;
+		if (error_count[0] < max_error_count[0]) {
+			++error_count[0];
+			error_set |= 1 << 0;
 		}
 	} else {
 		for (i = 0; i < n_lines; ++i) {
@@ -247,10 +257,20 @@ cc_test				(const vbi_sliced *	sliced,
 
 				b1 = sliced[i].data[0];
 				b2 = sliced[i].data[1];
+
 				if (option_cc_test_test
 				    && 0 == rand() % 300) {
 					b1 = 0;
 					b2 = 0;
+				}
+
+				if (0x00 == b1 && 0x00 == b2) {
+					error_msg ("Null bytes...");
+					if (error_count[1]
+					    < max_error_count[1]) {
+						++error_count[1];
+						error_set |= 1 << 1;
+					}
 				}
 
 				c1 = vbi_unpar8 (b1);
@@ -261,13 +281,12 @@ cc_test				(const vbi_sliced *	sliced,
 					c2 = -1;
 				}
 
-				if (0x00 == b1 && 0x00 == b2) {
-					/* Great Scott! */
-				} else if ((c1 | c2) < 0) {
+				if ((c1 | c2) < 0) {
 					error_msg ("Parity error...");
-					if (error2_count < 6) {
-						++error2_count;
-						error2 = TRUE;
+					if (error_count[2]
+					    < max_error_count[2]) {
+						++error_count[2];
+						error_set |= 1 << 2;
 					}
 					break;
 				}
@@ -275,32 +294,38 @@ cc_test				(const vbi_sliced *	sliced,
 		}
 	}
 
-	error = error1 || error2;
+	if (0 != error_set) {
+		unsigned int n_errors = 0;
+		unsigned int n_kinds = 0;
 
-	if (!error) {
-		if (error1_count >= 3
-		    && error2_count >= 6) {
+		for (i = 0; i < N_ELEMENTS (error_count); ++i) {
+			n_errors += 5 - error_count[i];
+			n_kinds += (error_count[i] < 5);
+		}
+
+		if (0 == n_kinds) {
 			error_msg ("Done.");
-			return FALSE;
+			return FALSE; /* terminate loop */
 		}
 
 		if (0 == frame_count % (5 * 30)) {
-			error_msg ("Waiting for %u more errors...",
-				   9 - error1_count - error2_count);
+			error_msg ("Waiting for %u errors of %u kinds...",
+				   n_errors, n_kinds);
 		}
 	}
 
 	++frame_count;
  
-	if (option_raw_output != error) {
-		option_sliced_output = error;
+	if (option_raw_output != (0 != error_set)) {
+		option_sliced_output = (0 != error_set);
+
 		raw_output_count = N_ELEMENTS (frame_buffers) * 2;
 
 		if (sliced_output_count < raw_output_count)
 			sliced_output_count = raw_output_count;
 	}
 
-	return TRUE;
+	return TRUE; /* success, continue loop */
 }
 
 static vbi_bool
@@ -416,6 +441,7 @@ Device options:\n\
 -s | --sim             Simulate a VBI device\n\
 -u | --sim-unsync      Simulate a VBI device with wrong/unknown field\n\
                        parity\n\
+-w | --sim-noise       Simulate a VBI device with noisy signal\n\
 Output options:\n\
 -j | --dump            Sliced VBI data (text)\n\
 -l | --sliced          Sliced VBI data (binary)\n"
@@ -429,7 +455,7 @@ Output options:\n\
 		 option_dev_name);
 }
 
-static const char short_options[] = "c:d:hi:jlmnpqr:suvPT:V";
+static const char short_options[] = "c:d:hi:jlmnpqr:suvwPT:V";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -450,6 +476,7 @@ long_options[] = {
 	{ "sim",	no_argument,		NULL,		's' },
 	{ "sim-unsync",	no_argument,		NULL,		'u' },
 	{ "verbose",	no_argument,		NULL,		'v' },
+	{ "sim-noise",  optional_argument,	NULL,		'w' },
 	{ "pes",	no_argument,		NULL,		'P' },
 	{ "ts",		required_argument,	NULL,		'T' },
 	{ "version",	no_argument,		NULL,		'V' },
@@ -661,6 +688,13 @@ main				(int			argc,
 			parse_option_verbose ();
 			break;
 
+		case 'w':
+			/* Optional optarg: noise parameters
+			   (not implemented yet). */
+			interfaces = INTERFACE_SIM;
+			option_sim_flags |= _VBI_RAW_NOISE_2;
+			break;
+
 		case 'P':
 			option_sliced_output = TRUE;
 			option_dump_sliced = FALSE;
@@ -686,6 +720,15 @@ main				(int			argc,
 		}
 	}
 
+	if (!(option_sliced_output
+	      || option_raw_output
+	      || option_dump_sliced
+	      || option_dump_wss)) {
+		error_msg (_("Give one of the -j, -l, -P or -T options\n"
+			     "to enable output, or -h for help."));
+		exit (EXIT_FAILURE);
+	}
+
 	services = VBI_SLICED_VBI_525 | VBI_SLICED_VBI_625
 		| VBI_SLICED_TELETEXT_B | VBI_SLICED_CAPTION_525
 		| VBI_SLICED_CAPTION_625
@@ -705,8 +748,14 @@ main				(int			argc,
 				  option_strict,
 				  decode_frame);
 
-	if (interfaces & INTERFACE_SIM)
+	if (interfaces & INTERFACE_SIM) {
 		sim_load_caption ();
+
+		capture_stream_sim_set_flags (cst, option_sim_flags);
+
+		if (0 != option_sim_flags)
+			capture_stream_sim_decode_raw (cst, TRUE);
+	}
 
 	if (option_cc_test_test)
 		option_cc_test = TRUE;
@@ -728,16 +777,9 @@ main				(int			argc,
 		if (option_cc_test)
 			init_frame_buffers (&sp);
 
-#if 2 == VBI_VERSION_MINOR
-		scanning = sp.scanning;
-#else
-		scanning = 525;
-		if (sp.videostd_set & VBI_VIDEOSTD_SET_625_50)
-			scanning = 625;
-#endif
 		wst = write_stream_new (option_out_file_format,
 					option_out_ts_pid,
-					scanning);
+					SCANNING (&sp));
 	}
 
 	stream_loop (cst);
