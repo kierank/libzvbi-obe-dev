@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.13 2007/09/12 15:54:18 mschimek Exp $ */
+/* $Id: ttxfilter.c,v 1.14 2007/10/14 14:54:03 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -125,9 +125,9 @@ filter_frame			(const vbi_sliced *	sliced_in,
 			exit (EXIT_FAILURE);
 		}
 
-		assert (n_lines_in > 0);
+		/* Skip the consumed lines and the broken line. */
+		n_lines_prev_in += n_lines_in + 1;
 
-		n_lines_prev_in += n_lines_in;
 		n_lines_prev_out += n_lines_out;
 
 	} while (n_lines_prev_in < n_lines);
