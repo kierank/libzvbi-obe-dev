@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-common.cc,v 1.2 2007/09/14 14:20:50 mschimek Exp $ */
+/* $Id: test-common.cc,v 1.3 2007/10/14 14:54:27 mschimek Exp $ */
 
 #include <stdlib.h>
 #include "src/misc.h"
@@ -34,6 +34,8 @@ memset_rand			(void *			dst,
 	unsigned int x;
 	size_t todo;
 
+	assert (NULL != dst);
+	assert (n_bytes > 0);
 	assert (n_bytes < (10 << 20));
 
 	p = (uint8_t *) dst;
@@ -76,6 +78,7 @@ xmalloc				(size_t			n_bytes)
 {
 	void *p;
 
+	assert (n_bytes > 0);
 	assert (n_bytes < (10 << 20));
 
 	p = malloc (n_bytes);
@@ -88,6 +91,20 @@ void *
 xralloc				(size_t			n_bytes)
 {
 	return memset_rand (xmalloc (n_bytes), n_bytes);
+}
+
+void *
+xmemdup				(const void *		src,
+				 size_t			n_bytes)
+{
+	void *dst;
+
+	assert (NULL != src);
+
+	dst = xmalloc (n_bytes);
+	memcpy (dst, src, n_bytes);
+
+	return dst;
 }
 
 static unsigned int		malloc_count;
