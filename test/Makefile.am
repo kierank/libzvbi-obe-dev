@@ -4,7 +4,7 @@ TESTS = \
 	cpptest \
 	exoptest \
 	hamm \
-	raw_decoder \
+	test-raw_decoder \
 	test-dvb_mux \
 	test-vps
 
@@ -12,10 +12,14 @@ check_PROGRAMS = \
 	cpptest \
 	explist \
 	hamm \
-	raw_decoder \
+	test-raw_decoder \
 	test-dvb_mux
 
 cpptest_SOURCES = cpptest.cc
+
+test_raw_decoder_SOURCES = \
+	test-raw_decoder.cc \
+	test-common.cc test-common.h
 
 test_dvb_mux_SOURCES = \
 	test-dvb_mux.cc \
@@ -107,7 +111,7 @@ LDADD += \
 unrename:
 	for file in *.cc *.c *.h ; do \
 	  case "$$file" in \
-	  raw_decoder.c|osc.c) continue ; ;; \
+	  test-raw_decoder.cc|osc.c) continue ; ;; \
 	  esac ; \
 	  if grep -q -i vbi3_ $$file ; then \
 	    sed 's/vbi3_/vbi_/g;s/VBI3_/VBI_/g' <$$file >tmp ; \
