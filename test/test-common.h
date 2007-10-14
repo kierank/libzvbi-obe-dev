@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-common.h,v 1.1 2007/09/12 15:53:57 mschimek Exp $ */
+/* $Id: test-common.h,v 1.2 2007/10/14 14:54:17 mschimek Exp $ */
 
 #include <string.h>
 #include <inttypes.h>
@@ -37,6 +37,10 @@ xmalloc				(size_t			n_bytes)
 extern void *
 xralloc				(size_t			n_bytes)
   __attribute__ ((_vbi_alloc));
+extern void *
+xmemdup				(const void *		src,
+				 size_t			n_bytes)
+  __attribute__ ((_vbi_nonnull (1), _vbi_alloc));
 
 extern void
 test_malloc			(void			(* function)(void),
