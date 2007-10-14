@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.16 2007/09/12 15:54:24 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.17 2007/10/14 14:55:09 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -33,8 +33,20 @@
 /**
  * @addtogroup DVBDemux DVB VBI demultiplexer
  * @ingroup LowDec
- * @brief Separating VBI data from a DVB PES stream
- *   (EN 301 472, EN 301 775).
+ * @brief Extracting VBI data from a DVB PES or TS stream.
+ *
+ * These functions extract raw and/or sliced VBI data from a DVB Packetized
+ * Elementary Stream or Transport Stream as defined in EN 300 472 "Digital
+ * Video Broadcasting (DVB); Specification for conveying ITU-R System B
+ * Teletext in DVB bitstreams" and EN 301 775 "Digital Video Broadcasting
+ * (DVB); Specification for the carriage of Vertical Blanking Information
+ * (VBI) data in DVB bitstreams".
+ *
+ * Note EN 300 468 "Specification for Service Information (SI) in DVB
+ * systems" defines another method to transmit VPS data in DVB streams.
+ * Libzvbi does not provide functions to decode SI tables but the
+ * vbi_decode_dvb_pdc_descriptor() function is available to convert a PDC
+ * descriptor to a VPS PIL.
  */
 
 /* XXX Preliminary. */
@@ -238,7 +250,7 @@ struct frame {
 	unsigned int		raw_count[2];
 
 	/**
-	 * Pointer to the start of the current line in the raw
+	 * Pointer to the start of the current line in the @a raw
 	 * VBI buffer.
 	 */
 	uint8_t *		rp;
@@ -247,7 +259,7 @@ struct frame {
 	 * Data units can contain at most 251 bytes of payload,
 	 * so raw VBI data is transmitted in segments. This field
 	 * contains the number of raw VBI samples extracted so
-	 * far. Zero before the first and after the last segment
+	 * far, is zero before the first and after the last segment
 	 * was extracted.
 	 */
 	unsigned int		raw_offset;
@@ -261,9 +273,9 @@ struct frame {
 	unsigned int		last_field_line;
 
 	/**
-	 * A frame line number calculated from last_field and
-	 * last_field_line, or the next available line if
-	 * last_field_line is zero. Initially zero.
+	 * A frame line number calculated from @a last_field and
+	 * @a last_field_line, or the next available line if
+	 * @a last_field_line is zero. Initially zero.
 	 */
 	unsigned int		last_frame_line;
 
@@ -282,19 +294,14 @@ struct frame {
 	_vbi_log_hook		log;
 };
 
-/**
- * @internal
- * Minimum lookahead to identify the packet header.
- */
+/* Minimum lookahead required to identify the packet header. */
 #define PES_HEADER_LOOKAHEAD 48u
 #define TS_HEADER_LOOKAHEAD 10u
 
-/**
- * @internal
- * Minimum lookahead for a sync_byte search.
- */
+/* Minimum lookahead required for a TS sync_byte search. */
 #define TS_SYNC_SEARCH_LOOKAHEAD (188u + TS_HEADER_LOOKAHEAD - 1u)
 
+/* Round x up to a cache friendly value. */
 #define ALIGN(x) ((x + 15) & ~15)
 
 typedef vbi_bool
@@ -304,14 +311,18 @@ demux_packet_fn			(vbi_dvb_demux *	dx,
 
 /** @internal */
 struct _vbi_dvb_demux {
-	/** PES wrap-around buffer. Must hold one PES packet,
-	    at most 6 + 65535 bytes. */
-	uint8_t			pes_buffer[ALIGN (65536 + 6)];
+	/**
+	 * PES wrap-around buffer. Must hold one PES packet,
+	 * at most 6 + 65535 bytes (start_code[24], stream_id[8],
+	 * PES_packet_length[16], max. PES_packet_length).
+	 */
+	uint8_t			pes_buffer[ALIGN (6 + 65536)];
 
-	/** TS wrap-around buffer. Must hold one TS packet for
-	    sync_byte search (188 bytes), plus 9 bytes so we
-	    can safely peek at the start_code, stream_id and
-	    PES_packet_length of the contained PES packet. */
+	/**
+	 * TS wrap-around buffer. Must hold one TS packet for
+	 * sync_byte search (188 bytes), plus 9 bytes so we
+         * can safely examine the header of the contained PES packet.
+	 */
 	uint8_t			ts_buffer[ALIGN (TS_SYNC_SEARCH_LOOKAHEAD)];
 
 	/** Output buffer for vbi_dvb_demux_demux(). */
@@ -330,10 +341,17 @@ struct _vbi_dvb_demux {
 	/** PTS of current PES packet. */
 	int64_t			packet_pts;
 
-	/** New frame commences in the current PES packet. (We cannot
-	    reset immediately due to the coroutine design.) */
+	/**
+	 * A new frame commences in the current PES packet. We remember
+	 * this for the next call and return, cannot reset immediately
+	 * due to the coroutine design.
+	 */
 	vbi_bool		new_frame;
 
+	/**
+	 * The TS demuxer synchonized in the last iteration. The next
+	 * incomming byte should be a sync_byte.
+	 */
 	vbi_bool		ts_in_sync;
 
 	/** Data units to be extracted from the pes_buffer. */
@@ -344,20 +362,22 @@ struct _vbi_dvb_demux {
 	uint8_t *		ts_pes_bp;
 	unsigned int		ts_pes_todo;
 
-	/** Next expected transport_packet continuity_counter
-	    (modulo 16). -1 if unknown. */
+	/**
+	 * Next expected transport_packet continuity_counter.
+	 * Value may be greater than 15, so you must compare
+	 * modulo 16. -1 if unknown.
+	 */
 	int			ts_continuity;
 
 	/** PID of VBI data to be filtered out of a TS. */
 	unsigned int		ts_pid;
 
+	/** demux_pes_packet() or demux_ts_packet(). */
 	demux_packet_fn *	demux_packet;
 
-	/** vbi_dvb_demux_demux() data. */
+	/** For vbi_dvb_demux_demux(). */
 	vbi_dvb_demux_cb *	callback;
 	void *			user_data;
-
-
 };
 
 enum systems {
@@ -1314,7 +1334,7 @@ _vbi_dvb_demultiplex_sliced	(vbi_sliced *		sliced,
 }
 
 static vbi_bool
-timestamp			(vbi_dvb_demux *	dx,
+decode_timestamp		(vbi_dvb_demux *	dx,
 				 int64_t *		pts,
 				 unsigned int		mark,
 				 const uint8_t *	p)
@@ -1396,12 +1416,12 @@ valid_pes_packet_header		(vbi_dvb_demux *	dx,
 	   PES_extension_flag */
 	switch (p[7] >> 6) {
 	case 2:	/* PTS 0010 xxx 1 ... */
-		if (!timestamp (dx, &dx->packet_pts, 0x21, p + 9))
+		if (!decode_timestamp (dx, &dx->packet_pts, 0x21, p + 9))
 			return FALSE;
 		break;
 
 	case 3:	/* PTS 0011 xxx 1 ... DTS ... */
-		if (!timestamp (dx, &dx->packet_pts, 0x31, p + 9))
+		if (!decode_timestamp (dx, &dx->packet_pts, 0x31, p + 9))
 			return FALSE;
 		break;
 
@@ -2013,7 +2033,7 @@ demux_ts_packet			(vbi_dvb_demux *	dx,
 
 		adaptation_field_control = b3 & 0x30;
 
-		/* ETS 300 472 section 4.1: adaptation_field_control [2]
+		/* EN 300 472 section 4.1: adaptation_field_control [2]
 		   must be '01' or '10'. */
 		if (likely (0x10 == adaptation_field_control)) {
 			/* No adaptation_field, payload only. */
@@ -2246,7 +2266,7 @@ demux_ts_packet			(vbi_dvb_demux *	dx,
  *   buffers. When you read from an MPEG file, mapping the file into memory
  *   and passing pointers to the mapped data will be fastest.
  *
- * This function consumes and arbitrary number of bytes from a DVB
+ * This function consumes an arbitrary number of bytes from a DVB
  * Packetized Elementary Stream (PES), filters
  * out PRIVATE_STREAM_1 PES packets, filters out valid VBI data units,
  * converts them to vbi_sliced format and stores the sliced data at
@@ -2403,15 +2423,16 @@ vbi_dvb_demux_reset		(vbi_dvb_demux *	dx)
  *   vbi_log_on_stderr(). Can be @c NULL to disable logging.
  * @param user_data User pointer passed through to the @a log_fn function.
  *
- * The DVB demultiplexer supports the logging of errors in the PES stream and
- * information useful to debug the demultiplexer.
+ * The DVB demultiplexer supports the logging of errors in the PES
+ * stream and information useful to debug the demultiplexer.
  *
- * With this function you can redirect log messages generated by this module
- * from the global log function ( see vbi_set_log_fn() ) to a different function,
- * or enable logging only in the DVB demultiplexer @a dx.
+ * With this function you can redirect log messages generated by this
+ * module which would normally go to the global log function (see
+ * vbi_set_log_fn()), or enable logging only in the DVB
+ * demultiplexer @a dx.
  *
  * @note
- * The kind and contents of log messages may change in the future.
+ * The log messages may change in the future.
  *
  * @since 0.2.22
  */
@@ -2448,7 +2469,7 @@ vbi_dvb_demux_delete		(vbi_dvb_demux *	dx)
 
 	CLEAR (*dx);
 
-	free (dx);		
+	vbi_free (dx);		
 }
 
 /* Experimental. */
@@ -2463,12 +2484,16 @@ _vbi_dvb_ts_demux_new		(vbi_dvb_demux_cb *	callback,
 	   0x0001 Conditional Access Table
 	   0x0002-0x000F reserved
 	   0x1FFF Null packet */
-	if (pid <= 0x000F || pid >= 0x1FFF)
+	if (pid <= 0x000F || pid >= 0x1FFF) {
+		/* errno = VBI_ERR_INVALID_PID; */
 		return NULL;
+	}
 
-	dx = malloc (sizeof (*dx));
-	if (NULL == dx)
+	dx = vbi_malloc (sizeof (*dx));
+	if (NULL == dx) {
+		errno = ENOMEM;
 		return NULL;
+	}
 
 	CLEAR (*dx);
 
@@ -2506,9 +2531,11 @@ vbi_dvb_pes_demux_new		(vbi_dvb_demux_cb *	callback,
 {
 	vbi_dvb_demux *dx;
 
-	dx = malloc (sizeof (*dx));
-	if (NULL == dx)
+	dx = vbi_malloc (sizeof (*dx));
+	if (NULL == dx) {
+		errno = ENOMEM;
 		return NULL;
+	}
 
 	CLEAR (*dx);
 
