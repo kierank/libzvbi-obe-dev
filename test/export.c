@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.18 2007/09/14 14:20:54 mschimek Exp $ */
+/* $Id: export.c,v 1.19 2007/10/14 14:53:34 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -42,9 +42,20 @@
 #  include "src/page_table.h"
 #  include "src/vbi.h"
 #  include "src/vt.h"
-#else
+#  define vbi_decoder_feed(vbi, sliced, n_lines, ts)			\
+	vbi_decode (vbi, sliced, n_lines, ts)
+#  define vbi_export_info_from_export(ex)				\
+	vbi_export_info_export (ex)
+   /* Not available. */
+#  define vbi_export_set_timestamp(ex, ts) ((void) 0)
+#  define vbi_export_set_link_cb(ex, cb, ud) ((void) 0)
+#  define vbi_export_set_pdc_cb(ex, cb, ud) ((void) 0)
+typedef unsigned int vbi_ttx_charset_code;
+#elif 3 == VBI_VERSION_MINOR
 #  include "src/misc.h"
 #  include "src/zvbi.h"
+#else
+#  error VBI_VERSION_MINOR == ?
 #endif
 
 #include "sliced.h"
@@ -59,13 +70,8 @@ static unsigned int		option_in_ts_pid;
 
 static vbi_bool		option_dcc;
 static unsigned int		option_delay;
-#if 2 == VBI_VERSION_MINOR
-static unsigned int		option_default_cs;
-static unsigned int		option_override_cs;
-#else
 static vbi_ttx_charset_code	option_default_cs;
 static vbi_ttx_charset_code	option_override_cs;
-#endif
 static vbi_bool		option_dump_pg;
 static vbi_bool		option_fast;
 static vbi_bool		option_header_only;
@@ -248,7 +254,30 @@ event_handler			(vbi_event *		ev,
 	}
 }
 
-#else /* 3 == VBI_VERSION_MINOR */
+static void
+finalize			(void)
+{
+	/* Nothing to do. */
+}
+
+static void
+init_vbi_decoder		(void)
+{
+	vbi_bool success;
+
+	vbi = vbi_decoder_new ();
+	if (NULL == vbi)
+		no_mem_exit ();
+
+	success = vbi_event_handler_add (vbi,
+					 VBI_EVENT_TTX_PAGE,
+					 event_handler,
+					 /* user_data */ NULL);
+	if (!success)
+		no_mem_exit ();
+}
+
+#elif 3 == VBI_VERSION_MINOR
 
 #define ev_timestamp ev->timestamp
 
@@ -525,56 +554,6 @@ event_handler			(const vbi_event *	ev,
 	return TRUE; /* handled */
 }
 
-#endif /* 3 == VBI_VERSION_MINOR */
-
-static vbi_bool
-decode_frame			(const vbi_sliced *	sliced,
-				 unsigned int		n_lines,
-				 const uint8_t *	raw,
-				 const vbi_sampling_par *sp,
-				 double			sample_time,
-				 int64_t		stream_time)
-{
-	raw = raw; /* unused */
-	sp = sp;
-	stream_time = stream_time;
-
-#if 2 == VBI_VERSION_MINOR
-	vbi_decode (vbi, sliced, n_lines, sample_time);
-#else
-	vbi_decoder_feed (vbi, sliced, n_lines, sample_time);
-#endif
-
-	return !quit;
-}
-
-#if 2 == VBI_VERSION_MINOR
-
-static void
-finalize			(void)
-{
-	/* Nothing to do. */
-}
-
-static void
-init_vbi_decoder		(void)
-{
-	vbi_bool success;
-
-	vbi = vbi_decoder_new ();
-	if (NULL == vbi)
-		no_mem_exit ();
-
-	success = vbi_event_handler_add (vbi,
-					 VBI_EVENT_TTX_PAGE,
-					 event_handler,
-					 /* user_data */ NULL);
-	if (!success)
-		no_mem_exit ();
-}
-
-#else /* 3 == VBI_VERSION_MINOR */
-
 static void
 finalize			(void)
 {
@@ -615,7 +594,34 @@ init_vbi_decoder		(void)
 		no_mem_exit ();
 }
 
-#endif /* 3 == VBI_VERSION_MINOR */
+#else
+#  error VBI_VERSION_MINOR == ?
+#endif
+
+static vbi_bool
+decode_frame			(const vbi_sliced *	sliced,
+				 unsigned int		n_lines,
+				 const uint8_t *	raw,
+				 const vbi_sampling_par *sp,
+				 double			sample_time,
+				 int64_t		stream_time)
+{
+	static vbi_bool have_start_timestamp = FALSE;
+
+	raw = raw; /* unused */
+	sp = sp;
+	stream_time = stream_time;
+
+	/* To calculate the delay of the first subtitle page. */
+	if (!have_start_timestamp) {
+		vbi_export_set_timestamp (ex, sample_time);
+		have_start_timestamp = TRUE;
+	}
+
+	vbi_decoder_feed (vbi, sliced, n_lines, sample_time);
+
+	return !quit;
+}
 
 static void
 init_export_module		(const char *		module_name)
@@ -632,9 +638,6 @@ init_export_module		(const char *		module_name)
 		/* NB. free (errstr); here if you don't exit(). */
 	}
 
-#if 2 == VBI_VERSION_MINOR
-	xi = vbi_export_info_export (ex);
-#else
 	if (0 == strncmp (module_name, "html", 4)) {
 		if (option_hyperlinks)
 			vbi_export_set_link_cb (ex, export_link,
@@ -646,7 +649,7 @@ init_export_module		(const char *		module_name)
 	}
 
 	xi = vbi_export_info_from_export (ex);
-#endif
+
 	if (NULL == xi)
 		no_mem_exit ();
 
@@ -784,16 +787,16 @@ Scan options:\n"
 #endif
 "-o | --output name     Write the page to this file instead of standard\n\
                        output. The page number and a suitable .extension\n\
-                       will be appended as necessary\n"
+                       will be appended as necessary.\n"
 #if 3 == VBI_VERSION_MINOR
 "-p | --pdc             Turn PDC markup on a Teletext page into hyperlinks\n\
                        in HTML output\n\
 -r | --row-update      Export a Closed Caption page only when a row is\n\
                        complete, not on every new character. Has only an\n\
-                       effect on roll-up and paint-on style caption\n\
+                       effect on roll-up and paint-on style caption.\n\
 -s | --stream          Export all (rather than just one) transmissions\n\
                        of this page to a single file. This is the default\n\
-                       for caption / subtitle formats\n"
+                       for caption/subtitle formats.\n"
 #endif
 "Formats:\n\
 -i | --list            List available output formats and their options.\n\
@@ -806,8 +809,8 @@ Valid page numbers are:\n"
 #endif
 "100 ... 899            Teletext page. The program can export multiple\n\
                        Teletext pages: 100 110 200-299. If no page\n\
-                       numbers are given the program will export all\n\
-                       received Teletext pages until it is terminated\n\
+                       numbers are given it exports all received Teletext\n\
+                       pages until it is terminated.\n\
 ",
 		 PROGRAM_NAME, VERSION, program_invocation_name);
 }
@@ -1140,8 +1143,20 @@ main				(int			argc,
 			      "a single page number."));
 	}
 
-	if (1 != n_pages && NULL == filename_prefix) {
-		error_exit (_("No output file name specified."));
+	if (NULL == filename_prefix) {
+		switch (n_pages) {
+		case 0: /* all pages? */
+			error_exit (_("No page number or "
+				      "output file name specified."));
+			break;
+
+		case 1: /* one page to stdout */
+			break;
+
+		default: /* multiple pages */
+			error_exit (_("No output file name specified."));
+			break;
+		}
 	}
 
 	init_export_module (module_name);
