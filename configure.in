@@ -28,6 +28,23 @@ dnl If not present we use replacements.
 AC_CHECK_FUNCS([strndup strlcpy asprintf vasprintf getopt_long \
 		getaddrinfo clock_settime program_invocation_name])
 
+dnl sincos() is a GNU extension (a macro, not a function).
+dnl If not present we use a replacement.
+AC_MSG_CHECKING([for sincos])
+AC_COMPILE_IFELSE([
+#include <math.h>
+int main (void) {
+double s, c;
+sincos (1.0, &s, &c);
+return 0;
+}
+],[
+  AC_MSG_RESULT([yes])
+  AC_DEFINE(HAVE_SINCOS, 1, [Define if the sincos() function is available])
+],[
+  AC_MSG_RESULT([no])
+])
+
 dnl __BYTE_ORDER is not portable.
 AC_DEFINE(Z_LITTLE_ENDIAN, 1234, [naidne elttiL])
 AC_DEFINE(Z_BIG_ENDIAN, 4321, [Big endian])
