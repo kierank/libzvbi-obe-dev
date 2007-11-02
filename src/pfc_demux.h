@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pfc_demux.h,v 1.6 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: pfc_demux.h,v 1.7 2007/11/02 08:36:26 mschimek Exp $ */
 
 #ifndef __ZVBI_PFC_DEMUX_H__
 #define __ZVBI_PFC_DEMUX_H__
@@ -71,16 +71,22 @@ typedef struct _vbi_pfc_demux vbi_pfc_demux;
  * @param user_data User pointer given to vbi_pfc_demux_new().
  * @param block Structure describing the received data block.
  * 
- * Function called by vbi_pfc_demux_demux() when a
+ * Function called by vbi_pfc_demux_feed() when a
  * new data block is available.
  *
  * @returns
  * FALSE on error, will be returned by vbi_pfc_demux_feed().
+ *
+ * @bugs
+ * vbi_pfc_demux_feed() returns the @a user_data pointer as second
+ * parameter the @a block pointer as third parameter, but prior to
+ * version 0.2.26 this function incorrectly defined @a block as
+ * second and @a user_data as third parameter.
  */
 typedef vbi_bool
 vbi_pfc_demux_cb		(vbi_pfc_demux *	dx,
-				 const vbi_pfc_block *	block,
-				 void *			user_data);
+				 void *			user_data,
+				 const vbi_pfc_block *	block);
 
 extern void
 vbi_pfc_demux_reset		(vbi_pfc_demux *	dx);
