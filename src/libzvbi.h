@@ -1156,8 +1156,8 @@ typedef struct _vbi_pfc_demux vbi_pfc_demux;
 
 typedef vbi_bool
 vbi_pfc_demux_cb		(vbi_pfc_demux *	dx,
-				 const vbi_pfc_block *	block,
-				 void *			user_data);
+				 void *			user_data,
+				 const vbi_pfc_block *	block);
 
 extern void
 vbi_pfc_demux_reset		(vbi_pfc_demux *	dx);

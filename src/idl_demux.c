@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: idl_demux.c,v 1.6 2007/09/12 15:53:28 mschimek Exp $ */
+/* $Id: idl_demux.c,v 1.7 2007/11/02 08:36:59 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -81,8 +81,10 @@ idl_a_demux_feed		(vbi_idl_demux *	dx,
 	unsigned int i;
 	unsigned int j;
 
-	if ((ial = vbi_unham8 (buffer[3])) < 0)
+	ial = vbi_unham8 (buffer[3]);
+	if (ial < 0) {
 		return FALSE;
+	}
 
 	spa_length = (unsigned int) ial & 7;
 	if (7 == spa_length) /* reserved */
@@ -93,8 +95,9 @@ idl_a_demux_feed		(vbi_idl_demux *	dx,
 	for (i = 0; i < spa_length; ++i)
 		spa |= vbi_unham8 (buffer[4 + i]) << (4 * i);
 
-	if (spa < 0)
+	if (spa < 0) {
 		return FALSE;
+	}
 
 	if (spa != dx->address)
 		return TRUE;
@@ -118,7 +121,7 @@ idl_a_demux_feed		(vbi_idl_demux *	dx,
 	}
 
 	if (0 != crc) {
-		if (!(ri & RI_PACKET_REPEATS)) {
+		if (0 == (ri & RI_PACKET_REPEATS)) {
 			/* Packet is corrupt and won't repeat. */
 
 			dx->ci = -1;

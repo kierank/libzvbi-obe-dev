@@ -1,3 +1,23 @@
+2007-11-02    <mschimek@users.sf.net>
+
+	* test/decode.c (page_function_clear_cb): Second and third
+	  parameter were swapped.
+	(teletext): IDL-A data decoding didn't work because somehow
+	  the vbi_idl_demux_feed() call was lost.
+	(usage): Option --idl-ch shortcut is -l, not -c anymore.
+	(main): Use strtol() base zero to permit C syntax numbers.
+
+	* src/pfc_demux.h (vbi_pfc_demux_cb): Bug fix: Second and third
+	  parameter were swapped in the function prototype. Thanks Tom!
+
+	* contrib/ntsc-cc.c (read_test_stream): Skip raw data in test
+	  streams.
+
+2007-10-29    <mschimek@users.sf.net>
+
+	* src/teletext.c (vbi_format_vt_page): Bug fix: Must not store a
+	  double width character in the last column.
+
 2007-10-14    <mschimek@users.sf.net>
 
 	* src/dvb_mux.c, src/io-sim.c, src/raw_decoder.c,
