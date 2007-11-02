@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: teletext.c,v 1.25 2007/08/27 06:45:13 mschimek Exp $ */
+/* $Id: teletext.c,v 1.26 2007/11/02 08:36:36 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -2361,27 +2361,33 @@ vbi_format_vt_page(vbi_decoder *vbi,
 				break;
 			}
 
-			if (raw <= 0x1F)
+			if (raw <= 0x1F) {
 				ac.unicode = (hold & mosaic) ? held_mosaic_unicode : 0x0020;
-			else
+			} else {
 				if (mosaic && (raw & 0x20)) {
 					held_mosaic_unicode = mosaic_unicodes + raw - 0x20;
 					ac.unicode = held_mosaic_unicode;
 				} else
 					ac.unicode = vbi_teletext_unicode(font->G0,
 									  font->subset, raw);
+			}
 
-			if (!wide_char) {
+			if (wide_char) {
+				wide_char = FALSE;
+			} else {
 				acp[column] = ac;
 
 				wide_char = /*!!*/(ac.size & VBI_DOUBLE_WIDTH);
-
-				if (wide_char && column < (COLUMNS - 1)) {
-					acp[column + 1] = ac;
-					acp[column + 1].size = VBI_OVER_TOP;
+				if (wide_char) {
+                            		if (column < (COLUMNS - 1)) {
+                                    		acp[column + 1] = ac;
+                                    		acp[column + 1].size = VBI_OVER_TOP;
+					} else {
+                                    		acp[column].size = VBI_NORMAL_SIZE;
+						wide_char = FALSE;
+					}
 				}
-			} else
-				wide_char = FALSE;
+			}
 
 			/* set-after spacing attributes */
 
