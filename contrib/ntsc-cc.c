@@ -1076,6 +1076,28 @@ read_test_stream		(vbi_sliced *		sliced,
 		int index;
 
 		index = fgetc (stdin);
+		if (255 == index) {
+			uint8_t buffer[22];
+			unsigned int count[2];
+			unsigned int bytes_per_line;
+			unsigned int bytes_per_frame;
+			uint8_t *p;
+
+			/* Skip raw data. */
+			memset (buffer, 0, sizeof (buffer));
+			fread (buffer, 1, 22, stdin);
+			bytes_per_line = buffer[8] | (buffer[9] << 8);
+			count[0] = buffer[18] | (buffer[19] << 8);
+			count[1] = buffer[20] | (buffer[21] << 8);
+			bytes_per_frame = (count[0] + count[1]) * bytes_per_line;
+			assert (bytes_per_frame > 0 && bytes_per_frame < 50 * 2048);
+			p = malloc (bytes_per_frame);
+			assert (NULL != p);
+			/* fseek() works w/pipe? */
+			fread (p, 1, bytes_per_frame, stdin);
+			free (p);
+			continue;
+		}
 
 		s->line = (fgetc (stdin)
 			   + 256 * fgetc (stdin)) & 0xFFF;
