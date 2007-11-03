@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.19 2007/10/14 14:53:34 mschimek Exp $ */
+/* $Id: export.c,v 1.20 2007/11/03 10:04:14 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -882,7 +882,7 @@ parse_output_option		(void)
 			if (NULL == filename_prefix)
 				no_mem_exit ();
 
-			filename_suffix = strdup (s);
+			filename_suffix = strdup (s + 1);
 			if (NULL == filename_suffix)
 				no_mem_exit ();
 		}
