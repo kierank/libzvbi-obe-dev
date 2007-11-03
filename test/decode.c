@@ -19,11 +19,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: decode.c,v 1.28 2007/11/02 08:36:21 mschimek Exp $ */
+/* $Id: decode.c,v 1.29 2007/11/03 17:04:17 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
-
-#undef NDEBUG
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -68,6 +66,7 @@
 /* Will be installed one day. */
 #define PROGRAM_NAME "zvbi-decode"
 
+static const char *		option_in_file_name;
 static enum file_format		option_in_file_format;
 static unsigned int		option_in_ts_pid;
 
@@ -891,6 +890,8 @@ Usage: %s [options] < sliced VBI data\n\
 -q | --quiet           Suppress progress and error messages\n\
 -V | --version         Print the program version and exit\n\
 Input options:\n\
+-i | --input name      Read the VBI data from this file instead of\n\
+                       standard input\n\
 -P | --pes             Source is a DVB PES stream\n\
 -T | --ts pid          Source is a DVB TS stream\n\
 Decoding options:\n"
@@ -899,7 +900,7 @@ Decoding options:\n"
 -2 | --8302            Teletext packet 8/30 format 2 (PDC)\n"
 #endif
 "-c | --cc              Closed Caption\n\
--i | --idl             Any Teletext IDL packets (M/30, M/31)\n\
+-j | --idl             Any Teletext IDL packets (M/30, M/31)\n\
 -t | --ttx             Decode any Teletext packet\n\
 -v | --vps             Video Programming System (PDC)\n"
 #if 3 == VBI_VERSION_MINOR /* XXX port me back */
@@ -933,7 +934,7 @@ Modifying options:\n\
 }
 
 static const char
-short_options [] = "12abcd:ehil:mnp:qrs:tvwxM:PT:V";
+short_options [] = "12abcd:ehi:jl:mnp:qrs:tvwxM:PT:V";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -947,7 +948,8 @@ long_options [] = {
 	{ "hex",	no_argument,		NULL,		'e' },
 	{ "help",	no_argument,		NULL,		'h' },
 	{ "usage",	no_argument,		NULL,		'h' },
-	{ "idl",	no_argument,		NULL,		'i' },
+	{ "input",	required_argument,	NULL,		'i' },
+	{ "idl",	no_argument,		NULL,		'j' },
 	{ "idl-ch",	required_argument,	NULL,		'l' },
 	{ "time",	no_argument,		NULL,		'm' },
 	{ "network",	no_argument,		NULL,		'n' },
@@ -999,6 +1001,18 @@ main				(int			argc,
 			option_decode_8302 ^= TRUE;
 			break;
 
+		case 'a':
+			option_decode_ttx = TRUE;
+			option_decode_8301 = TRUE;
+			option_decode_8302 = TRUE;
+			option_decode_caption = TRUE;
+			option_decode_idl = TRUE;
+			option_decode_vps = TRUE;
+			option_decode_wss = TRUE;
+			option_decode_xds = TRUE;
+			option_pfc_pgno = 0x1DF;
+			break;
+
 		case 'b':
 			option_dump_bin ^= TRUE;
 			break;
@@ -1016,23 +1030,16 @@ main				(int			argc,
 			option_dump_hex ^= TRUE;
 			break;
 
-		case 'a':
-			option_decode_ttx = TRUE;
-			option_decode_8301 = TRUE;
-			option_decode_8302 = TRUE;
-			option_decode_caption = TRUE;
-			option_decode_idl = TRUE;
-			option_decode_vps = TRUE;
-			option_decode_wss = TRUE;
-			option_decode_xds = TRUE;
-			option_pfc_pgno = 0x1DF;
-			break;
-
 		case 'h':
 			usage (stdout);
 			exit (EXIT_SUCCESS);
 
 		case 'i':
+			assert (NULL != optarg);
+			option_in_file_name = optarg;
+			break;
+
+		case 'j':
 			option_decode_idl ^= TRUE;
 			break;
 
@@ -1132,7 +1139,8 @@ main				(int			argc,
 			no_mem_exit ();
 	}
 
-	rst = read_stream_new (option_in_file_format,
+	rst = read_stream_new (option_in_file_name,
+			       option_in_file_format,
 			       option_in_ts_pid,
 			       decode_frame);
 
