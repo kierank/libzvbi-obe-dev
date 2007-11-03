@@ -25,6 +25,9 @@
  *    for a list of possible options.
  *
  *  $Log: proxy-test.c,v $
+ *  Revision 1.18  2007/11/03 21:15:38  tomzo
+ *  Bugfix setup of raw capture handling
+ *
  *  Revision 1.17  2006/02/10 06:25:38  mschimek
  *  *** empty log message ***
  *
@@ -75,7 +78,7 @@
  */
 
 static const char
-rcsid [] = "$Id: proxy-test.c,v 1.17 2006/02/10 06:25:38 mschimek Exp $";
+rcsid [] = "$Id: proxy-test.c,v 1.18 2007/11/03 21:15:38 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -539,7 +542,7 @@ static void usage_exit( const char *argv0, const char *argvn, const char * reaso
                    "       -strict <level>     : service strictness level: 0..2\n"
                    "       -channel <index>    : switch video input channel\n"
                    "       -freq <kHz * 16>    : switch TV tuner frequency\n"
-                   "       -chnprio <0..4>     : channel switch priority\n"
+                   "       -chnprio <1..3>     : channel switch priority\n"
                    "       -subprio <0..4>     : background scheduling priority\n"
                    "       -debug <level>      : enable debug output: 1=warnings, 2=all\n"
                    "       -help               : this message\n"
@@ -765,6 +768,7 @@ int main ( int argc, char ** argv )
    vbi_capture        * pVbiCapt;
    vbi_sliced         * pVbiData;
    vbi_capture_buffer * pVbiBuf;
+   vbi_raw_decoder      raw_dec;
    char               * pErr;
    struct timeval       timeout;
    unsigned int         new_services;
@@ -820,13 +824,45 @@ int main ( int argc, char ** argv )
          vbi_channel_profile  chn_profile;
 
          memset(&chn_profile, 0, sizeof(chn_profile));
-         if (opt_chnprio == VBI_CHN_PRIO_BACKGROUND)
+
+         if ( (opt_chnprio == VBI_CHN_PRIO_BACKGROUND) &&
+              ((opt_channel != -1) || (opt_frequency != -1)) )
          {
-            chn_profile.is_valid      = (opt_channel != -1) || (opt_frequency != -1);
+            chn_profile.is_valid      = TRUE;
             chn_profile.sub_prio      = opt_subprio;
             chn_profile.min_duration  = 10;
          }
          vbi_proxy_client_channel_request(pProxyClient, opt_chnprio, &chn_profile);
+
+         if (opt_chnprio != VBI_CHN_PRIO_BACKGROUND) {
+            SwitchTvChannel(pProxyClient, opt_channel, opt_frequency);
+         }
+      }
+
+      if ((opt_services & (VBI_SLICED_VBI_625 | VBI_SLICED_VBI_525)) != 0)
+      {
+         vbi_raw_decoder * p_dec;
+
+         /* initialize services for raw capture */
+         p_dec = vbi_capture_parameters(pVbiCapt);
+         if (p_dec != NULL)
+         {
+            vbi_raw_decoder_init(&raw_dec);
+
+            raw_dec.scanning = p_dec->scanning; 
+            raw_dec.sampling_format = p_dec->sampling_format; 
+            raw_dec.sampling_rate = p_dec->sampling_rate; 
+            raw_dec.bytes_per_line = p_dec->bytes_per_line; 
+            raw_dec.offset = p_dec->offset; 
+            raw_dec.start[0] = p_dec->start[0]; 
+            raw_dec.start[1] = p_dec->start[1]; 
+            raw_dec.count[0] = p_dec->count[0]; 
+            raw_dec.count[1] = p_dec->count[1]; 
+            raw_dec.interlaced = p_dec->interlaced; 
+            raw_dec.synchronous = p_dec->synchronous; 
+
+            vbi_raw_decoder_add_services(&raw_dec, ALL_SERVICES_525|ALL_SERVICES_625, 0);
+         }
       }
 
       update_services = (opt_scanning != 0);
@@ -923,16 +959,8 @@ int main ( int argc, char ** argv )
                else if ((res > 0) && (pVbiBuf != NULL))
                {
 #ifdef USE_LIBZVBI
-                  vbi_raw_decoder dec, * p_dec;
-
-                  p_dec = vbi_capture_parameters(pVbiCapt);
-                  if (p_dec == NULL)
-                     break;
-                  dec = *p_dec;
-
                   pVbiData = malloc(32 * sizeof(vbi_sliced));
-                  lineCount = vbi_raw_decode(&dec, pVbiBuf->data, pVbiData);
-                  vbi_raw_decoder_add_services(&dec, ALL_SERVICES_525|ALL_SERVICES_625, 0);
+                  lineCount = vbi_raw_decode(&raw_dec, pVbiBuf->data, pVbiData);
 
                   if (lastLineCount != lineCount)
                   {
