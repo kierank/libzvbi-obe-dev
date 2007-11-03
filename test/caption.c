@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: caption.c,v 1.16 2007/09/12 15:53:04 mschimek Exp $ */
+/* $Id: caption.c,v 1.17 2007/11/03 17:04:28 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -665,7 +665,8 @@ main				 (int			argc,
 	} else {
 		struct stream *st;
 
-		st = read_stream_new (FILE_FORMAT_SLICED,
+		st = read_stream_new (/* filename: stdin */ NULL,
+				      FILE_FORMAT_SLICED,
 				      /* ts_pid */ 0,
 				      decode_frame);
 		stream_loop (st);
