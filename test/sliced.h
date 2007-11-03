@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.h,v 1.11 2007/11/03 17:03:50 mschimek Exp $ */
+/* $Id: sliced.h,v 1.12 2007/11/03 21:38:25 tomzo Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -57,6 +57,7 @@ enum interface {
 	INTERFACE_V4L2		= (1 << 2),
 	INTERFACE_V4L		= (1 << 3),
 	INTERFACE_BKTR		= (1 << 4),
+	INTERFACE_PROXY		= (1 << 5),
 };
 
 typedef vbi_bool

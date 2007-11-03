@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.33 2007/11/03 17:04:22 mschimek Exp $ */
+/* $Id: capture.c,v 1.34 2007/11/03 21:38:25 tomzo Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -465,6 +465,7 @@ static const struct option
 long_options[] = {
 	{ "sim-cc",	required_argument,	NULL,		'c' },
 	{ "device",	required_argument,	NULL,		'd' },
+	{ "proxy",	no_argument,		NULL,		'x' },
 	{ "help",	no_argument,		NULL,		'h' },
 	{ "usage",	no_argument,		NULL,		'h' },
 	{ "pid",	required_argument,	NULL,		'i' },
@@ -627,6 +628,11 @@ main				(int			argc,
 
 		case 'd':
 			parse_option_dev_name ();
+			break;
+
+		case 'x':
+			interfaces &= ~(INTERFACE_SIM | INTERFACE_DVB);
+			interfaces |= INTERFACE_PROXY;
 			break;
 
 		case 'h':

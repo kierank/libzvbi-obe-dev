@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.31 2007/09/12 15:55:05 mschimek Exp $ */
+/* $Id: osc.c,v 1.32 2007/11/03 21:38:25 tomzo Exp $ */
 
 #undef NDEBUG
 
@@ -43,6 +43,8 @@
 #include "src/hamm.h"
 #include "src/io-sim.h"
 #include "src/raw_decoder.h"	/* _vbi_service_table[] */
+#include "src/proxy-msg.h"
+#include "src/proxy-client.h"
 
 #ifndef X_DISPLAY_MISSING
 
@@ -52,6 +54,7 @@
 
 vbi_capture *		cap;
 vbi_raw_decoder *	par;
+vbi_proxy_client *      pxc = NULL;
 int			src_w, src_h;
 vbi_sliced *		sliced;
 int			slines;
@@ -406,6 +409,7 @@ xevent(void)
 
 			case 'q':
 			case 'c':
+			case XK_Escape:
 				quit = TRUE;
 				break;
 
@@ -594,7 +598,7 @@ mainloop(void)
 		case 0: 
 			fprintf(stderr, "VBI read timeout%s\n",
 				ignore_error ? " (ignored)" : "");
-			if (ignore_error)
+			if (ignore_error || (pxc != NULL))
 				continue;
 			else
 				exit(EXIT_FAILURE);
@@ -626,6 +630,7 @@ long_options[] = {
 	{ "v4l",	no_argument,		NULL,		'1' },
 	{ "v4l2-read",	no_argument,		NULL,		'2' },
 	{ "v4l2-mmap",	no_argument,		NULL,		'3' },
+	{ "proxy",	no_argument,		NULL,		'4' },
 	{ "verbose",	no_argument,		NULL,		'v' },
 	{ 0, 0, 0, 0 }
 };
@@ -656,6 +661,7 @@ main(int argc, char **argv)
 			/* fall through */
 		case '1':
 		case '3':
+		case '4':
 			interface = c - '0';
 			break;
 		case 'c':
@@ -697,7 +703,7 @@ main(int argc, char **argv)
 		assert ((par = vbi_capture_parameters(cap)));
 	} else {
 		do {
-			if (1 != interface) {
+			if ((2 == interface) || (3 == interface)) {
 				cap = vbi_capture_v4l2k_new
 					(dev_name, /* fd */ -1,
 					 /* buffers */ 5, &services,
@@ -745,6 +751,24 @@ main(int argc, char **argv)
 
 				free (errstr);
 			}
+
+			if (interface == 4) {
+                                pxc = vbi_proxy_client_create(dev_name, "capture", 0,
+                                                                &errstr, !!verbose);
+                                if (pxc != NULL) {
+                                        /* strip non-raw services, else request for raw is masked out */
+                                        unsigned int sv = services & (VBI_SLICED_VBI_525 |
+                                                                      VBI_SLICED_VBI_625);
+                                        cap = vbi_capture_proxy_new(pxc, 5, 0, &sv,
+                                                                    strict, &errstr );
+                                        if (cap)
+                                                break;
+
+                                        fprintf (stderr, "Cannot capture vbi data "
+                                                 "through proxy:\n%s\n", errstr);
+                                }
+				fprintf (stderr, "Cannot initialize proxy\n%s\n", errstr);
+                        }
 
 			/* BSD interface */
 			if (1) {

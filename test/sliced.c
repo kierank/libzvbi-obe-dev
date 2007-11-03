@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.c,v 1.14 2007/11/03 17:03:55 mschimek Exp $ */
+/* $Id: sliced.c,v 1.15 2007/11/03 21:38:25 tomzo Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -50,6 +50,8 @@
 #include "src/io-sim.h"
 #include "src/raw_decoder.h"
 #include "src/vbi.h"
+#include "src/proxy-msg.h"
+#include "src/proxy-client.h"
 #include "sliced.h"
 
 #if 2 == VBI_VERSION_MINOR
@@ -100,6 +102,7 @@ struct stream {
 
 	vbi_dvb_mux *		mx;
 	vbi_dvb_demux *	dx;
+        vbi_proxy_client *	proxy;
 	vbi_capture *		cap;
 	vbi_raw_decoder *	rd;
 	vbi_sampling_par	sp;
@@ -1563,8 +1566,6 @@ capture_stream_new		(unsigned int		interfaces,
 		interfaces = INTERFACE_SIM;
 	}
 
-	/* XXX proxy? */
-
 	if (NULL == dev_name
 	    && (interfaces & (INTERFACE_DVB |
 			      INTERFACE_V4L2 |
@@ -1578,7 +1579,8 @@ capture_stream_new		(unsigned int		interfaces,
 
 		assert (0 == (interfaces & (INTERFACE_V4L2 |
 					    INTERFACE_V4L |
-					    INTERFACE_BKTR)));
+					    INTERFACE_BKTR |
+					    INTERFACE_PROXY)));
 
 #if 2 == VBI_VERSION_MINOR /* not ported to 0.3 yet */
 		assert (NULL != dev_name);
@@ -1613,6 +1615,34 @@ capture_stream_new		(unsigned int		interfaces,
 #  error VBI_VERSION_MINOR == ?
 #endif
 	}
+
+	if (interfaces & INTERFACE_PROXY) {
+		char *errstr = NULL;
+
+		st->proxy = vbi_proxy_client_create(dev_name,
+						"test/capture",
+						0, /* no flags */
+						&errstr,
+						trace);
+		if (NULL != st->proxy) {
+			st->cap = vbi_capture_proxy_new(st->proxy,
+							 n_buffers,
+							 system,
+							 &services,
+							 strict,
+							 &errstr );
+			if (NULL == st->cap) {
+				interfaces &= ~INTERFACE_PROXY;
+				capture_error_msg ("PROXY", errstr);
+				free (errstr);
+			} else {
+				interfaces = INTERFACE_PROXY;
+			}
+		} else {
+			capture_error_msg ("PROXY", errstr);
+			free (errstr);
+		}
+        }
 
 	if (interfaces & INTERFACE_V4L2) {
 		char *errstr;
@@ -1674,7 +1704,8 @@ capture_stream_new		(unsigned int		interfaces,
 	if (interfaces & (INTERFACE_SIM |
 			  INTERFACE_V4L2 |
 			  INTERFACE_V4L |
-			  INTERFACE_BKTR)) {
+			  INTERFACE_BKTR |
+			  INTERFACE_PROXY)) {
 		unsigned int max_lines;
 		unsigned int raw_size;
 
