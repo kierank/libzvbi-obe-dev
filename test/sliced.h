@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.h,v 1.10 2007/10/14 14:54:48 mschimek Exp $ */
+/* $Id: sliced.h,v 1.11 2007/11/03 17:03:50 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -124,12 +124,14 @@ write_stream_set_pes_packet_size
 				 unsigned int		min,
 				 unsigned int		max);
 extern struct stream *
-write_stream_new		(enum file_format	file_format,
+write_stream_new		(const char *		file_name,
+				 enum file_format	file_format,
 				 unsigned int		ts_pid,
 				 unsigned int		system);
 
 extern struct stream *
-read_stream_new			(enum file_format	file_format,
+read_stream_new			(const char *		file_name,
+				 enum file_format	file_format,
 				 unsigned int		ts_pid,
 				 stream_callback_fn *	callback);
 
