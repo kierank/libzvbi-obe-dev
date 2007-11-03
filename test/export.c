@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: export.c,v 1.20 2007/11/03 10:04:14 mschimek Exp $ */
+/* $Id: export.c,v 1.21 2007/11/03 17:04:12 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -65,6 +65,7 @@ typedef unsigned int vbi_ttx_charset_code;
 
 #define PROGRAM_NAME "zvbi-export"
 
+static const char *		option_in_file_name;
 static enum file_format		option_in_file_format;
 static unsigned int		option_in_ts_pid;
 
@@ -93,8 +94,8 @@ static vbi_export *		ex;
 static vbi_page_table *	pt;
 static vbi_pgno		cc_chan;
 
-static char *			filename_prefix;
-static char *			filename_suffix;
+static char *			out_file_name_prefix;
+static char *			out_file_name_suffix;
 
 static int			cr;
 
@@ -119,12 +120,12 @@ open_output_file		(vbi_pgno		pgno,
 	char *name;
 	int r;
 
-	if (NULL == filename_prefix)
+	if (NULL == out_file_name_prefix)
 		return stdout;
 
 	r = asprintf (&name, "%s-%03x-%02x.%s",
-		      filename_prefix, pgno, subno,
-		      filename_suffix);
+		      out_file_name_prefix, pgno, subno,
+		      out_file_name_suffix);
 	if (r < 0 || NULL == name)
 		no_mem_exit ();
 
@@ -328,10 +329,10 @@ export_link			(vbi_export *		export,
 	case VBI_LINK_PAGE:
 	case VBI_LINK_SUBPAGE:
 		fprintf (fp, "<a href=\"%s-%3x-%02x.%s\">%s</a>",
-			 filename_prefix ? filename_prefix : "ttx",
+			 out_file_name_prefix ? out_file_name_prefix : "ttx",
 			 link->pgno,
 			 (VBI_ANY_SUBNO == link->subno) ? 0 : link->subno,
-			 filename_suffix ? filename_suffix : "html",
+			 out_file_name_suffix ? out_file_name_suffix : "html",
 			 link->name);
 		break;
 
@@ -561,7 +562,7 @@ finalize			(void)
 
 	xi = vbi_export_info_from_export (ex);
 
-	if (xi->open_format && NULL == filename_prefix) {
+	if (xi->open_format && NULL == out_file_name_prefix) {
 		if (!vbi_export_stdio (ex, stdout, NULL))
 			write_error_exit (vbi_export_errstr (ex));
 	}
@@ -653,14 +654,15 @@ init_export_module		(const char *		module_name)
 	if (NULL == xi)
 		no_mem_exit ();
 
-	if (NULL == filename_suffix) {
+	if (NULL == out_file_name_suffix) {
 		char *end = NULL;
 
-		filename_suffix = strdup (xi->extension);
-		if (NULL == filename_suffix)
+		out_file_name_suffix = strdup (xi->extension);
+		if (NULL == out_file_name_suffix)
 			no_mem_exit ();
 
-		filename_suffix = strtok_r (filename_suffix, ",", &end);
+		out_file_name_suffix = strtok_r (out_file_name_suffix,
+						 ",", &end);
 	}
 
 #if 3 == VBI_VERSION_MINOR
@@ -759,6 +761,8 @@ Usage: %s [options] format [page number(s)] < sliced vbi data > file\n\
 -v | --verbose         Increase verbosity\n\
 -V | --version         Print the program version and exit\n\
 Input options:\n\
+-i | --input name      Read the VBI data from this file instead of\n\
+                       standard input\n\
 -P | --pes             Source is a DVB PES stream\n\
 -T | --ts pid          Source is a DVB TS stream\n\
 Scan options:\n"
@@ -816,7 +820,7 @@ Valid page numbers are:\n"
 }
 
 static const char
-short_options [] = "1cdefghilno:pqrsvwAB:C:F:H:O:PT:V";
+short_options [] = "1cdefghi:lmno:pqrsvwAB:C:F:H:O:PT:V";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -829,8 +833,9 @@ long_options [] = {
 	{ "dump-pg",		no_argument,		NULL,	'g' },
 	{ "help",		no_argument,		NULL,	'h' },
 	{ "usage",		no_argument,		NULL,	'h' },
-	{ "list",		no_argument,		NULL,	'i' },
+	{ "input",		required_argument,	NULL,	'i' },
 	{ "links",		no_argument,		NULL,	'l' },
+	{ "list",		no_argument,		NULL,	'm' },
 	{ "nav",		no_argument,		NULL,	'n' },
 	{ "output",		required_argument,	NULL,	'o' },
 	{ "pdc",		no_argument,		NULL,	'p' },
@@ -861,11 +866,11 @@ parse_output_option		(void)
 {
 	assert (NULL != optarg);
 
-	free (filename_prefix);
-	filename_prefix = NULL;
+	free (out_file_name_prefix);
+	out_file_name_prefix = NULL;
 
-	free (filename_suffix);
-	filename_suffix = NULL;
+	free (out_file_name_suffix);
+	out_file_name_suffix = NULL;
 
 	if (0 == strcmp (optarg, "-")) {
 		/* Write to stdout. */
@@ -874,17 +879,19 @@ parse_output_option		(void)
 
 		s = strrchr (optarg, '.');
 		if (NULL == s) {
-			filename_prefix = strdup (optarg);
-			if (NULL == filename_prefix)
+			out_file_name_prefix = strdup (optarg);
+			if (NULL == out_file_name_prefix)
 				no_mem_exit ();
 		} else {
-			filename_prefix = strndup (optarg, s - optarg);
-			if (NULL == filename_prefix)
+			out_file_name_prefix = strndup (optarg, s - optarg);
+			if (NULL == out_file_name_prefix)
 				no_mem_exit ();
 
-			filename_suffix = strdup (s + 1);
-			if (NULL == filename_suffix)
-				no_mem_exit ();
+			if (0 != s[1]) {
+				out_file_name_suffix = strdup (s + 1);
+				if (NULL == out_file_name_suffix)
+					no_mem_exit ();
+			}
 		}
 	}
 }
@@ -1027,12 +1034,17 @@ main				(int			argc,
 			exit (EXIT_SUCCESS);
 
 		case 'i':
-			list_modules ();
-			exit (EXIT_SUCCESS);
+			assert (NULL != optarg);
+			option_in_file_name = optarg;
+			break;
 
 		case 'l':
 			option_hyperlinks = TRUE;
 			break;
+
+		case 'm':
+			list_modules ();
+			exit (EXIT_SUCCESS);
 
 		case 'n':
 			option_navigation = TRUE;
@@ -1129,8 +1141,8 @@ main				(int			argc,
 	if (all_pages) {
 		/* Compatibility. */
 
-		filename_prefix = strdup ("test");
-		if (NULL == filename_prefix)
+		out_file_name_prefix = strdup ("test");
+		if (NULL == out_file_name_prefix)
 			no_mem_exit ();
 	} else {
 		parse_page_numbers (argc - optind, &argv[optind]);
@@ -1143,7 +1155,7 @@ main				(int			argc,
 			      "a single page number."));
 	}
 
-	if (NULL == filename_prefix) {
+	if (NULL == out_file_name_prefix) {
 		switch (n_pages) {
 		case 0: /* all pages? */
 			error_exit (_("No page number or "
@@ -1165,7 +1177,8 @@ main				(int			argc,
 
 	cr = isatty (STDERR_FILENO) ? '\r' : '\n';
 
-	rst = read_stream_new (option_in_file_format,
+	rst = read_stream_new (option_in_file_name,
+			       option_in_file_format,
 			       option_in_ts_pid,
 			       decode_frame);
 
@@ -1179,11 +1192,11 @@ main				(int			argc,
 
 	finalize ();
 
-	free (filename_prefix);
-	filename_prefix = NULL;
+	free (out_file_name_prefix);
+	out_file_name_prefix = NULL;
 
-	free (filename_suffix);
-	filename_suffix = NULL;
+	free (out_file_name_suffix);
+	out_file_name_suffix = NULL;
 
 	if (!option_subtitles) {
 		n_pages = vbi_page_table_num_pages (pt);
