@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced2pes.c,v 1.11 2007/10/14 14:53:47 mschimek Exp $ */
+/* $Id: sliced2pes.c,v 1.12 2007/11/03 17:04:05 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -53,9 +53,11 @@
 /* Will be installed one day. */
 #define PROGRAM_NAME "sliced2pes"
 
+static const char *		option_in_file_name;
 static enum file_format		option_in_file_format;
 static unsigned int		option_in_ts_pid;
 
+static const char *		option_out_file_name;
 static enum file_format		option_out_file_format;
 static unsigned int		option_out_ts_pid;
 
@@ -121,6 +123,8 @@ Usage: %s [options] < sliced VBI data > PES or TS stream\n\
 -v | --verbose                    Increase verbosity\n\
 -V | --version                    Print the program version and exit\n\
 Input options:\n\
+-i | --input name                 Read the VBI data from this file instead\n\
+                                  of standard input\n\
 -P | --pes | --pes-input          Source is a DVB PES stream\n\
 -T | --ts | --ts-input pid        Source is a DVB TS stream\n\
 Output options:\n\
@@ -130,6 +134,8 @@ Output options:\n\
                                   (default 0x%02lx)\n\
 -m | --max | --max-packet-size n  Maximum PES packet size (%lu bytes)\n\
 -n | --min | --min-packet-size n  Minimum PES packet size (%lu bytes)\n\
+-o | --output name                Write the VBI data to this file instead\n\
+                                  of standard output\n\
 -p | --pes-output                 Generate a DVB PES stream\n\
 -t | --ts-output pid              Generate a DVB TS stream with this PID\n\
 "),
@@ -140,7 +146,7 @@ Output options:\n\
 }
 
 static const char
-short_options [] = "d:hm:n:pqt:vPT:V";
+short_options [] = "d:hi:m:n:o:pqt:vPT:V";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -148,8 +154,10 @@ long_options [] = {
 	{ "data-identifier",	required_argument,	NULL,	'd' },
 	{ "help",		no_argument,		NULL,	'h' },
 	{ "usage",		no_argument,		NULL,	'h' },
+	{ "input",		required_argument,	NULL,	'i' },
 	{ "max-packet-size",	required_argument,	NULL,	'm' },
 	{ "min-packet-size",	required_argument,	NULL,	'n' },
+	{ "output",		required_argument,	NULL,	'o' },
 	{ "pes-output",		no_argument,		NULL,	'p' },
 	{ "quiet",		no_argument,		NULL,	'q' },
 	{ "ts-output",		required_argument,	NULL,	't' },
@@ -212,6 +220,11 @@ main				(int			argc,
 			usage (stdout);
 			exit (EXIT_SUCCESS);
 
+		case 'i':
+			assert (NULL != optarg);
+			option_in_file_name = optarg;
+			break;
+
 		case 'm':
 			assert (NULL != optarg);
 			option_max_pes_packet_size =
@@ -226,6 +239,11 @@ main				(int			argc,
 				strtoul (optarg, NULL, 0);
 			if (option_min_pes_packet_size > UINT_MAX)
 				option_min_pes_packet_size = UINT_MAX;
+			break;
+
+		case 'o':
+			assert (NULL != optarg);
+			option_out_file_name = optarg;
 			break;
 
 		case 'p':
@@ -264,7 +282,8 @@ main				(int			argc,
 		}
 	}
 
-	wst = write_stream_new (option_out_file_format,
+	wst = write_stream_new (option_out_file_name,
+				option_out_file_format,
 				option_out_ts_pid,
 				/* system */ 625);
 
@@ -273,7 +292,8 @@ main				(int			argc,
 					  option_min_pes_packet_size,
 					  option_max_pes_packet_size);
 
-	rst = read_stream_new (option_in_file_format,
+	rst = read_stream_new (option_in_file_name,
+			       option_in_file_format,
 			       option_in_ts_pid,
 			       output_frame);
 

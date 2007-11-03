@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.14 2007/10/14 14:54:03 mschimek Exp $ */
+/* $Id: ttxfilter.c,v 1.15 2007/11/03 17:03:59 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -49,10 +49,13 @@
 #undef _
 #define _(x) x /* TODO */
 
+static const char *		option_in_file_name;
 static enum file_format		option_in_file_format;
 static unsigned int		option_in_ts_pid;
 
+static const char *		option_out_file_name;
 static vbi_bool		option_experimental_output;
+
 static vbi_bool		option_abort_on_error;
 static vbi_bool		option_keep_ttx_system_pages;
 static double			option_start_time;
@@ -169,12 +172,17 @@ Usage: %s [options] [page numbers] < sliced VBI data > sliced VBI data\n\
 -v | --verbose         Increase verbosity\n\
 -V | --version         Print the program version and exit\n\
 Input options:\n\
+-i | --input name      Read the VBI data from this file instead\n\
+                       of standard input\n\
 -P | --pes             Source is a DVB PES stream\n\
 -T | --ts pid          Source is a DVB TS stream\n\
 Filter options:\n\
 -s | --system          Keep system pages (page inventories, DRCS etc)\n\
 -t | --time from-to    Keep pages in this time interval, in seconds\n\
                        since the first frame in the stream\n\
+Output options:\n\
+-o | --output name     Write the VBI data to this file instead of\n\
+                       standard output\n\
 Valid page numbers are 100 to 899. You can also specify a range like\n\
 150-299.\n\
 "),
@@ -182,7 +190,7 @@ Valid page numbers are 100 to 899. You can also specify a range like\n\
 }
 
 static const char
-short_options [] = "ahst:qvxPT:V";
+short_options [] = "ahi:o:qst:vxPT:V";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -190,9 +198,11 @@ long_options [] = {
 	{ "abort-on-error",	no_argument,		NULL,	'a' },
 	{ "help",		no_argument,		NULL,	'h' },
 	{ "usage",		no_argument,		NULL,	'h' },
+	{ "input",		required_argument,	NULL,	'i' },
+	{ "output",		required_argument,	NULL,	'o' },
+	{ "quiet",		no_argument,		NULL,	'q' },
 	{ "system",		no_argument,		NULL,	's' },
 	{ "time",		no_argument,		NULL,	't' },
-	{ "quiet",		no_argument,		NULL,	'q' },
 	{ "verbose",		no_argument,		NULL,	'v' },
 	{ "experimental",	no_argument,		NULL,	'x' },
 	{ "pes",		no_argument,		NULL,	'P' },
@@ -333,16 +343,26 @@ main				(int			argc,
 			usage (stdout);
 			exit (EXIT_SUCCESS);
 
+		case 'i':
+			assert (NULL != optarg);
+			option_in_file_name = optarg;
+			break;
+
+		case 'o':
+			assert (NULL != optarg);
+			option_out_file_name = optarg;
+			break;
+
+		case 'q':
+			parse_option_quiet ();
+			break;
+
 		case 's':
 			option_keep_ttx_system_pages = TRUE;
 			break;
 
 		case 't':
 			parse_option_time ();
-			break;
-
-		case 'q':
-			parse_option_quiet ();
 			break;
 
 		case 'v':
@@ -387,16 +407,19 @@ main				(int			argc,
 	sliced_blank.line = 7;
 
 	if (option_experimental_output) {
-		wst = write_stream_new (FILE_FORMAT_XML,
+		wst = write_stream_new (option_out_file_name,
+					FILE_FORMAT_XML,
 					/* ts_pid */ 0,
 					/* system */ 625);
 	} else {
-		wst = write_stream_new (FILE_FORMAT_SLICED,
+		wst = write_stream_new (option_out_file_name,
+					FILE_FORMAT_SLICED,
 					/* ts_pid */ 0,
 					/* system */ 625);
 	}
 
-	rst = read_stream_new (option_in_file_format,
+	rst = read_stream_new (option_in_file_name,
+			       option_in_file_format,
 			       option_in_ts_pid,
 			       filter_frame);
 
