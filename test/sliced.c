@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: sliced.c,v 1.13 2007/10/14 14:53:39 mschimek Exp $ */
+/* $Id: sliced.c,v 1.14 2007/11/03 17:03:55 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -40,6 +40,9 @@
 #include <locale.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "src/dvb_mux.h"
 #include "src/dvb_demux.h"
@@ -115,6 +118,7 @@ struct stream {
 	vbi_bool		read_not_pull;
 
 	int			fd;
+	vbi_bool		close_fd;
 };
 
 #ifndef HAVE_PROGRAM_INVOCATION_NAME
@@ -208,6 +212,13 @@ stream_delete			(struct stream *	st)
 {
 	if (NULL == st)
 		return;
+
+	if (st->close_fd) {
+		if (-1 == close (st->fd)) {
+			if (NULL != st->write_func)
+				write_error_exit (/* msg: errno */ NULL);
+		}
+	}
 
 	vbi_capture_delete (st->cap);
 #if 3 == VBI_VERSION_MINOR
@@ -671,7 +682,8 @@ write_stream_set_pes_packet_size
 }
 
 struct stream *
-write_stream_new		(enum file_format	file_format,
+write_stream_new		(const char *		file_name,
+				 enum file_format	file_format,
 				 unsigned int		ts_pid,
 				 unsigned int		system)
 {
@@ -679,17 +691,32 @@ write_stream_new		(enum file_format	file_format,
 
 	assert (525 == system || 625 == system);
 
-	if (isatty (STDOUT_FILENO)) {
-		error_exit (_("Output of this program is binary data. "
-			      "You should pipe it to another tool or "
-			      "redirect to a file.\n"));
-	}
-
 	st = calloc (1, sizeof (*st));
 	if (NULL == st)
 		no_mem_exit ();
 
-	st->fd = STDOUT_FILENO;
+	if (NULL == file_name
+	    || 0 == strcmp (file_name, "-")) {
+		st->fd = STDOUT_FILENO;
+
+		if (isatty (STDOUT_FILENO)) {
+			error_exit (_("Output of this program is binary "
+				      "data. You should pipe it to another "
+				      "tool or redirect to a file.\n"));
+		}
+	} else {
+		st->fd = open (file_name,
+			       O_WRONLY | O_CREAT | O_EXCL,
+			       (S_IRUSR | S_IWUSR |
+				S_IRGRP | S_IWGRP |
+				S_IROTH | S_IWOTH));
+		if (-1 == st->fd) {
+			error_exit (_("Cannot open '%s' for writing: %s."),
+				    file_name, strerror (errno));
+		}
+
+		st->close_fd = TRUE;
+	}
 
 	switch (file_format) {
 	case FILE_FORMAT_SLICED:
@@ -1215,20 +1242,32 @@ detect_file_format		(struct stream *	st)
 }
 
 struct stream *
-read_stream_new			(enum file_format	file_format,
+read_stream_new			(const char *		file_name,
+				 enum file_format	file_format,
 				 unsigned int		ts_pid,
 				 stream_callback_fn *	callback)
 {
 	struct stream *st;
 
-	if (isatty (STDIN_FILENO))
-		error_exit (_("No VBI data on standard input."));
-
 	st = calloc (1, sizeof (*st));
 	if (NULL == st)
 		no_mem_exit ();
 
-	st->fd = STDIN_FILENO;
+	if (NULL == file_name
+	    || 0 == strcmp (file_name, "-")) {
+		st->fd = STDIN_FILENO;
+
+		if (isatty (STDIN_FILENO))
+			error_exit (_("No VBI data on standard input."));
+	} else {
+		st->fd = open (file_name, O_RDONLY, 0);
+		if (-1 == st->fd) {
+			error_exit (_("Cannot open '%s' for reading: %s."),
+				    file_name, strerror (errno));
+		}
+
+		st->close_fd = TRUE;
+	}
 
 	if (0 == file_format)
 		file_format = detect_file_format (st);
