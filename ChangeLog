@@ -1,5 +1,26 @@
 2007-11-03    <mschimek@users.sf.net>
 
+	* test/sliced.h, test/sliced.c (write_stream_new, read_stream_new):
+	  Added file_name parameter to open a named file instead of
+	  standard input or output.
+	* test/ttxfilter.c, test/sliced2pes.c: Added an -i --input and
+	  -o --output file name option for debugging purposes.
+	* test/export.c: Added an -i --input file name option for
+	  debugging purposes.
+	* test/decode.c: Added an -i --input file name option for
+	  debugging purposes. Renamed -i --idl option to -j.
+	* test/capture.c: Added an -o --output file name option.
+	* test/caption.c (main): read_stream_new() changed.
+
+	* src/dvb_demux.c (decode_timestamp): Print a debug message on
+	  marker mismatch.
+	(valid_pes_packet_header): In debug messages say if header_length
+	  and data_identifier have the expected value. Print a debug
+	  message if the PES header flags mismatch or the PTS is missing.
+
+	* examples/wss.c (init_decoder): Bug fix: Possible overflow in
+	  sampling rate calculation.
+
 	* test/export.c (parse_output_option): Drop the period from
 	  filename_suffix because we add one later.
 
