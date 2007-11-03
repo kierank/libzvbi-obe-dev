@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.32 2007/10/14 14:53:23 mschimek Exp $ */
+/* $Id: capture.c,v 1.33 2007/11/03 17:04:22 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -61,6 +61,7 @@
 
 #define PROGRAM_NAME "zvbi-capture"
 
+static const char *		option_out_file_name;
 static enum file_format		option_out_file_format;
 static unsigned int		option_out_ts_pid;
 
@@ -444,7 +445,9 @@ Device options:\n\
 -w | --sim-noise       Simulate a VBI device with noisy signal\n\
 Output options:\n\
 -j | --dump            Sliced VBI data (text)\n\
--l | --sliced          Sliced VBI data (binary)\n"
+-l | --sliced          Sliced VBI data (binary)\n\
+-o | --output name     Write the VBI data to this file instead of\n\
+                       standard output\n"
 /* later */ /*
 "-r | --raw             Raw VBI data (binary)\n"
 */
@@ -455,7 +458,7 @@ Output options:\n\
 		 option_dev_name);
 }
 
-static const char short_options[] = "c:d:hi:jlmnpqr:suvwPT:V";
+static const char short_options[] = "c:d:hi:jlmno:pqr:suvwPT:V";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
@@ -469,6 +472,7 @@ long_options[] = {
 	{ "sliced",	no_argument,		NULL,		'l' },
 	{ "sim-laced",	no_argument,		NULL,		'm' },
 	{ "ntsc",	no_argument,		NULL,		'n' },
+	{ "output",	required_argument,	NULL,		'o' },
 	{ "pal",	no_argument,		NULL,		'p' },
 	{ "secam",	no_argument,		NULL,		'p' },
 	{ "quiet",	no_argument,		NULL,		'q' },
@@ -657,6 +661,11 @@ main				(int			argc,
 			scanning = 525;
 			break;
 
+		case 'o':
+			assert (NULL != optarg);
+			option_out_file_name = optarg;
+			break;
+
 		case 'p':
 			scanning = 625;
 			break;
@@ -777,7 +786,8 @@ main				(int			argc,
 		if (option_cc_test)
 			init_frame_buffers (&sp);
 
-		wst = write_stream_new (option_out_file_format,
+		wst = write_stream_new (option_out_file_name,
+					option_out_file_format,
 					option_out_ts_pid,
 					SCANNING (&sp));
 	}
