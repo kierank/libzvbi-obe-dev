@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: osc.c,v 1.32 2007/11/03 21:38:25 tomzo Exp $ */
+/* $Id: osc.c,v 1.33 2007/11/04 01:49:20 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -616,7 +616,7 @@ mainloop(void)
 	}
 }
 
-static const char short_options[] = "123cd:enpsv";
+static const char short_options[] = "1234cd:enpsv";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
