@@ -1,4 +1,11 @@
+2007-11-04    <mschimek@users.sf.net>
+
+	* test/osc.c (short_options): Added -4 (proxy interface).
+	* test/capture.c (short_options): Added -x.
+	(usage): Documented -x --proxy option.
+
 2007-11-03    <tomzo@users.sf.net>
+
 	* test/proxy-test.c: Bugfix setup of raw capture handling
 	* test/capture.c, osc.c: Added new command line option --proxy
 	* test/sliced.c, sliced.h: Added support for proxy interface type
