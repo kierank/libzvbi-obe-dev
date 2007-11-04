@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.35 2007/11/04 01:49:24 mschimek Exp $ */
+/* $Id: capture.c,v 1.36 2007/11/04 03:41:08 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -459,7 +459,7 @@ Output options:\n\
 		 option_dev_name);
 }
 
-static const char short_options[] = "c:d:hi:jlmno:pqr:suvwPT:V";
+static const char short_options[] = "c:d:hi:jlmno:pqr:suvwxPT:V";
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option
