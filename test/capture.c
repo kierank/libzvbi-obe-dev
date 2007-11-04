@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: capture.c,v 1.34 2007/11/03 21:38:25 tomzo Exp $ */
+/* $Id: capture.c,v 1.35 2007/11/04 01:49:24 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -443,6 +443,7 @@ Device options:\n\
 -u | --sim-unsync      Simulate a VBI device with wrong/unknown field\n\
                        parity\n\
 -w | --sim-noise       Simulate a VBI device with noisy signal\n\
+-x | --proxy           Capture through the VBI proxy daemon\n\
 Output options:\n\
 -j | --dump            Sliced VBI data (text)\n\
 -l | --sliced          Sliced VBI data (binary)\n\
@@ -465,7 +466,6 @@ static const struct option
 long_options[] = {
 	{ "sim-cc",	required_argument,	NULL,		'c' },
 	{ "device",	required_argument,	NULL,		'd' },
-	{ "proxy",	no_argument,		NULL,		'x' },
 	{ "help",	no_argument,		NULL,		'h' },
 	{ "usage",	no_argument,		NULL,		'h' },
 	{ "pid",	required_argument,	NULL,		'i' },
@@ -482,6 +482,7 @@ long_options[] = {
 	{ "sim-unsync",	no_argument,		NULL,		'u' },
 	{ "verbose",	no_argument,		NULL,		'v' },
 	{ "sim-noise",  optional_argument,	NULL,		'w' },
+	{ "proxy",	no_argument,		NULL,		'x' },
 	{ "pes",	no_argument,		NULL,		'P' },
 	{ "ts",		required_argument,	NULL,		'T' },
 	{ "version",	no_argument,		NULL,		'V' },
@@ -630,11 +631,6 @@ main				(int			argc,
 			parse_option_dev_name ();
 			break;
 
-		case 'x':
-			interfaces &= ~(INTERFACE_SIM | INTERFACE_DVB);
-			interfaces |= INTERFACE_PROXY;
-			break;
-
 		case 'h':
 			usage (stdout);
 			exit (EXIT_SUCCESS);
@@ -708,6 +704,11 @@ main				(int			argc,
 			   (not implemented yet). */
 			interfaces = INTERFACE_SIM;
 			option_sim_flags |= _VBI_RAW_NOISE_2;
+			break;
+
+		case 'x':
+			interfaces &= ~(INTERFACE_SIM | INTERFACE_DVB);
+			interfaces |= INTERFACE_PROXY;
 			break;
 
 		case 'P':
