@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: xds_demux.c,v 1.8 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: xds_demux.c,v 1.9 2007/11/05 19:53:07 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -841,7 +841,7 @@ vbi_xds_demux_reset		(vbi_xds_demux *	xd)
  * You should feed only data from NTSC line 284.
  *
  * @returns
- * FALSE if the buffer contained parity errors.
+ * @c FALSE if the buffer contained parity errors.
  *
  * @since 0.2.16
  */
@@ -1004,6 +1004,50 @@ vbi_xds_demux_feed		(vbi_xds_demux *	xd,
 	}
 
 	return r;
+}
+
+/**
+ * @param xd XDS demultiplexer context allocated with vbi_xds_demux_new().
+ * @param sliced Sliced VBI data.
+ * @param n_lines Number of lines in the @a sliced array.
+ *
+ * This function works like vbi_xds_demux_feed() but operates on sliced
+ * VBI data and filters out @c VBI_SLICED_CAPTION_525 on NTSC line 284.
+ *
+ * @returns
+ * @c FALSE if any of the Caption lines contained parity errors.
+ *
+ * @since 0.2.26
+ */
+vbi_bool
+vbi_xds_demux_feed_frame	(vbi_xds_demux *	xd,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_lines)
+{
+	const vbi_sliced *end;
+
+	assert (NULL != xd);
+	assert (NULL != sliced);
+
+	for (end = sliced + n_lines; sliced < end; ++sliced) {
+		switch (sliced->id) {
+		case VBI_SLICED_CAPTION_525:
+		case VBI_SLICED_CAPTION_525_F2:
+			if (284 != sliced->line
+			    && 0 != sliced->line)
+				continue;
+
+			if (!vbi_xds_demux_feed (xd, sliced->data))
+				return FALSE;
+
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	return TRUE;
 }
 
 #if 0 /* ideas */

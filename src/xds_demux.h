@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: xds_demux.h,v 1.7 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: xds_demux.h,v 1.8 2007/11/05 19:53:07 mschimek Exp $ */
 
 #ifndef __ZVBI_XDS_DEMUX_H__
 #define __ZVBI_XDS_DEMUX_H__
@@ -26,6 +26,7 @@
 #include <inttypes.h>		/* uint8_t */
 #include <stdio.h>		/* FILE */
 #include "macros.h"
+#include "sliced.h"
 
 VBI_BEGIN_DECLS
 
@@ -182,6 +183,10 @@ vbi_xds_demux_reset		(vbi_xds_demux *	xd);
 extern vbi_bool
 vbi_xds_demux_feed		(vbi_xds_demux *	xd,
 				 const uint8_t		buffer[2]);
+extern vbi_bool
+vbi_xds_demux_feed_frame	(vbi_xds_demux *	xd,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_lines);
 extern void
 vbi_xds_demux_delete		(vbi_xds_demux *	xd);
 extern vbi_xds_demux *

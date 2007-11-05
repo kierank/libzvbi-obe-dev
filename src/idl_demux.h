@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: idl_demux.h,v 1.6 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: idl_demux.h,v 1.7 2007/11/05 19:53:07 mschimek Exp $ */
 
 #ifndef __ZVBI_IDL_DEMUX_H__
 #define __ZVBI_IDL_DEMUX_H__
@@ -25,6 +25,7 @@
 #include <stdio.h>		/* FILE */
 #include <inttypes.h>		/* uint8_t */
 #include "macros.h"
+#include "sliced.h"
 
 VBI_BEGIN_DECLS
 
@@ -91,17 +92,26 @@ vbi_idl_demux_cb		(vbi_idl_demux *	dx,
 				 void *			user_data);
 
 extern void
-vbi_idl_demux_reset		(vbi_idl_demux *	dx);
+vbi_idl_demux_reset		(vbi_idl_demux *	dx)
+  __attribute__ ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_idl_demux_feed		(vbi_idl_demux *	dx,
-				 const uint8_t		buffer[42]);
+				 const uint8_t		buffer[42])
+  __attribute__ ((_vbi_nonnull (1, 2)));
+extern vbi_bool
+vbi_idl_demux_feed_frame	(vbi_idl_demux *	dx,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_lines)
+  __attribute__ ((_vbi_nonnull (1, 2)));
 extern void
 vbi_idl_demux_delete		(vbi_idl_demux *	dx);
 extern vbi_idl_demux *
 vbi_idl_a_demux_new		(unsigned int		channel,
 				 unsigned int		address,
 				 vbi_idl_demux_cb *	callback,
-				 void *			user_data);
+				 void *			user_data)
+  __attribute__ ((_vbi_alloc,
+		  _vbi_nonnull (3)));
 
 /** @} */
 
@@ -111,7 +121,7 @@ vbi_idl_a_demux_new		(unsigned int		channel,
 #define _VBI_IDL_FORMAT_A		(1 << 0)
 #define _VBI_IDL_FORMAT_B		(1 << 1)
 #define _VBI_IDL_FORMAT_DATAVIDEO	(1 << 2)
-#define	_VBI_IDL_FORMAT_AUDETEL		(1 << 3)
+#define	_VBI_IDL_FORMAT_AUDETEL	(1 << 3)
 #define	_VBI_IDL_FORMAT_LBRA		(1 << 4)
 
 /** @internal */
@@ -138,14 +148,16 @@ struct _vbi_idl_demux {
 };
 
 extern void
-_vbi_idl_demux_destroy		(vbi_idl_demux *	dx);
+_vbi_idl_demux_destroy		(vbi_idl_demux *	dx)
+  __attribute__ ((_vbi_nonnull (1)));
 extern vbi_bool
 _vbi_idl_demux_init		(vbi_idl_demux *	dx,
 				 _vbi_idl_format	format,
 				 unsigned int		channel,
 				 unsigned int		address,
 				 vbi_idl_demux_cb *	callback,
-				 void *			user_data);
+				 void *			user_data)
+  __attribute__ ((_vbi_nonnull (1, 5)));
 
 VBI_END_DECLS
 

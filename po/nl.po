@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-07-01 20:21+0200\n"
+"Report-Msgid-Bugs-To: mschimek@users.sf.net\n"
+"POT-Creation-Date: 2007-09-12 15:14+0200\n"
 "PO-Revision-Date: 2005-02-07 04:11+0100\n"
 "Last-Translator: Guus Bonnema <abonnema@xs4all.nl>\n"
 "Language-Team: Dutch <ime@iae.nl>\n"
@@ -16,11 +16,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/exp-gfx.c:746
+#: src/exp-gfx.c:750
 msgid "Correct aspect ratio"
 msgstr "Corrigeer beeldverhouding"
 
-#: src/exp-gfx.c:747
+#: src/exp-gfx.c:751
 msgid ""
 "Approach an image aspect ratio similar to a real TV. This will double the "
 "image size."
@@ -28,39 +28,39 @@ msgstr ""
 "Een standaard TV (4:3) verhouding benaderen. De beeldgrootte wordt hierdoor "
 "verdubbeld."
 
-#: src/exp-gfx.c:822 src/exp-gfx.c:1120
+#: src/exp-gfx.c:826 src/exp-gfx.c:1124
 #, c-format
 msgid "Unable to allocate %d KB image buffer."
 msgstr "Onvoldoende geheugen voor een %d kB buffer."
 
-#: src/exp-gfx.c:911
+#: src/exp-gfx.c:915
 msgid "PPM"
 msgstr "PPM"
 
-#: src/exp-gfx.c:912
+#: src/exp-gfx.c:916
 msgid "Export this page as raw PPM image"
 msgstr "Exporteer deze pagina in PPM-formaat"
 
-#: src/exp-gfx.c:1003
+#: src/exp-gfx.c:1007
 #, c-format
 msgid "Unable to allocate %d byte buffer."
 msgstr "Onvoldoende geheugen voor een %d byte buffer."
 
-#: src/exp-gfx.c:1191 src/exp-html.c:233
+#: src/exp-gfx.c:1195 src/exp-html.c:233
 #, c-format
 msgid "Teletext Page %3x.%x"
 msgstr "Teletekst pagina %3x.%x"
 
-#: src/exp-gfx.c:1195 src/exp-html.c:235
+#: src/exp-gfx.c:1199 src/exp-html.c:235
 #, c-format
 msgid "Teletext Page %3x"
 msgstr "Teletekst pagina %3x"
 
-#: src/exp-gfx.c:1264
+#: src/exp-gfx.c:1268
 msgid "PNG"
 msgstr "PNG"
 
-#: src/exp-gfx.c:1265
+#: src/exp-gfx.c:1269
 msgid "Export this page as PNG image"
 msgstr "Exporteren in PNG-formaat"
 
@@ -99,7 +99,7 @@ msgstr "HTML-kop invoegen"
 msgid "<title lang=\"en\">"
 msgstr "<title lang=\"nl\">"
 
-#: src/exp-html.c:353 src/exp-txt.c:612
+#: src/exp-html.c:353 src/exp-txt.c:613
 #, c-format
 msgid "Character conversion Unicode (UCS-2) to %s not supported."
 msgstr "Geen ondersteuning voor tekenconversie van unicode (UCS-2) naar %s."
@@ -236,11 +236,11 @@ msgstr "Achtergrond"
 msgid "Assumed terminal background color"
 msgstr "Aangenomen achtergrondkleur van terminal"
 
-#: src/exp-txt.c:661
+#: src/exp-txt.c:662
 msgid "Text"
 msgstr "Tekst"
 
-#: src/exp-txt.c:662
+#: src/exp-txt.c:663
 msgid "Export this page as text file"
 msgstr "Exporteren als tekst bestand"
 
@@ -318,9 +318,9 @@ msgid "BKTR driver"
 msgstr "BKTR driver"
 
 #: src/io-bktr.c:202 src/io-bktr.c:283 src/io-bktr.c:301 src/io-v4l.c:162
-#: src/io-v4l.c:1131 src/io-v4l.c:1169 src/io-v4l.c:1197 src/io-v4l2.c:105
-#: src/io-v4l2k.c:221 src/io-v4l2k.c:591 src/io-v4l2k.c:1180
-#: src/io-v4l2k.c:1314 src/io-v4l2k.c:1342 src/proxy-client.c:200
+#: src/io-v4l.c:1131 src/io-v4l.c:1169 src/io-v4l.c:1197 src/io-v4l2.c:113
+#: src/io-v4l2k.c:229 src/io-v4l2k.c:599 src/io-v4l2k.c:1188
+#: src/io-v4l2k.c:1322 src/io-v4l2k.c:1350 src/proxy-client.c:200
 #: src/proxy-client.c:1566
 msgid "Virtual memory exhausted."
 msgstr "Geen virtueel geheugen beschikbaar."
@@ -330,12 +330,12 @@ msgstr "Geen virtueel geheugen beschikbaar."
 msgid "Cannot open '%s': %s."
 msgstr "Kan apparaat '%s' niet openen: %s."
 
-#: src/io-bktr.c:271 src/io-v4l.c:756 src/io-v4l.c:1116 src/io-v4l2k.c:1167
+#: src/io-bktr.c:271 src/io-v4l.c:756 src/io-v4l.c:1116 src/io-v4l2k.c:1175
 #, c-format
 msgid "Sorry, %s (%s) cannot capture any of the requested data services."
 msgstr "%s (%s) kan de gewenste datadienst helaas niet ontvangen."
 
-#: src/io-bktr.c:312 src/io-v4l.c:173 src/io-v4l2k.c:602
+#: src/io-bktr.c:312 src/io-v4l.c:173 src/io-v4l2k.c:610
 #, c-format
 msgid "Not enough memory to allocate vbi capture buffer (%d KB)."
 msgstr "Niet genoeg geheugen om VBI-capturebuffer (%d kB) te reserveren."
@@ -344,7 +344,7 @@ msgstr "Niet genoeg geheugen om VBI-capturebuffer (%d kB) te reserveren."
 msgid "BKTR driver interface not compiled."
 msgstr "BKTR interface niet gecompileerd."
 
-#: src/io-v4l.c:807 src/io-v4l2k.c:1012
+#: src/io-v4l.c:807 src/io-v4l2k.c:1020
 #, c-format
 msgid "Cannot initialize %s (%s), the device is already in use."
 msgstr "%s (%s) is al in gebruik."
@@ -354,7 +354,7 @@ msgstr "%s (%s) is al in gebruik."
 msgid "Could not set the vbi capture parameters for %s (%s): %s."
 msgstr "Kan de VBI-capture-parameters voor %s (%s) niet activeren: %s."
 
-#: src/io-v4l.c:959 src/io-v4l2k.c:1116
+#: src/io-v4l.c:959 src/io-v4l2k.c:1124
 #, c-format
 msgid ""
 "%s (%s) offers unknown vbi sampling format #%d. This may be a driver bug or "
@@ -383,7 +383,7 @@ msgstr ""
 msgid "Cannot set or determine current videostandard of %s (%s)."
 msgstr "Kan de huidige videostandaard van %s (%s) niet uitlezen of bepalen."
 
-#: src/io-v4l.c:1088 src/io-v4l2k.c:1131
+#: src/io-v4l.c:1088 src/io-v4l2k.c:1139
 #, c-format
 msgid ""
 "Cannot capture the requested data services with %s (%s), the sampling "
@@ -392,7 +392,7 @@ msgstr ""
 "Kan de gewenste datadienst niet ontvangen met %s (%s), de samplingfrequentie "
 "%.2f MHz is te laag."
 
-#: src/io-v4l.c:1205 src/io-v4l2.c:120 src/io-v4l2k.c:1359
+#: src/io-v4l.c:1205 src/io-v4l2.c:128 src/io-v4l2k.c:1367
 #, c-format
 msgid "Cannot open '%s': %d, %s."
 msgstr "Kan apparaat '%s' niet openen: %d, %s."
@@ -401,7 +401,7 @@ msgstr "Kan apparaat '%s' niet openen: %d, %s."
 msgid "driver unknown"
 msgstr "Onbekende driver"
 
-#: src/io-v4l.c:1237 src/io-v4l2k.c:1386
+#: src/io-v4l.c:1237 src/io-v4l2k.c:1394
 #, c-format
 msgid "%s (%s) is not a raw vbi device."
 msgstr "%s (%s) is geen VBI-apparaat."
@@ -415,20 +415,20 @@ msgstr "%s (%s) ondersteunt de select() functie niet."
 msgid "V4L driver interface not compiled."
 msgstr "V4L driver interface niet gecompileerd."
 
-#: src/io-v4l2.c:212 src/io-v4l2k.c:1528
+#: src/io-v4l2.c:220 src/io-v4l2k.c:1536
 msgid "V4L2 driver interface not compiled."
 msgstr "V4L2 driver interface niet gecompileerd."
 
-#: src/io-v4l2k.c:199
+#: src/io-v4l2k.c:207
 #, c-format
 msgid "Cannot request streaming i/o buffers from %s (%s): %s."
 msgstr "Fout bij opvragen van de streaming I/O-buffers van %s (%s): %s."
 
-#: src/io-v4l2k.c:203 src/io-v4l2k.c:1021
+#: src/io-v4l2k.c:211 src/io-v4l2k.c:1029
 msgid "Possibly a driver bug."
 msgstr "Mogelijk een bug in de drivers."
 
-#: src/io-v4l2k.c:208
+#: src/io-v4l2k.c:216
 #, c-format
 msgid ""
 "%s (%s) granted no streaming i/o buffers, perhaps the physical memory is "
@@ -437,65 +437,65 @@ msgstr ""
 "%s (%s) stelde geen streaming I/O-buffers ter beschikking, geen fysiek "
 "geheugenmeer?"
 
-#: src/io-v4l2k.c:236
+#: src/io-v4l2k.c:244
 #, c-format
 msgid "Querying streaming i/o buffer #%d from %s (%s) failed: %s."
 msgstr "Fout bij opvragen van streaming I/O-buffer #%d van %s (%s): %s."
 
-#: src/io-v4l2k.c:271
+#: src/io-v4l2k.c:279
 #, c-format
 msgid "Memory mapping streaming i/o buffer #%d from %s (%s) failed: %s."
 msgstr "mmap() van streaming I/O buffer #%d van %s (%s) mislukt: %s."
 
-#: src/io-v4l2k.c:296
+#: src/io-v4l2k.c:304
 #, c-format
 msgid "Cannot enqueue streaming i/o buffer #%d to %s (%s): %s."
 msgstr ""
 "Kan streaming I/O buffer #%d van %s (%s) niet in de wachtrij plaatsen: %s."
 
-#: src/io-v4l2k.c:300 src/io-v4l2k.c:748 src/io-v4l2k.c:773
+#: src/io-v4l2k.c:308 src/io-v4l2k.c:756 src/io-v4l2k.c:781
 msgid "Probably a driver bug."
 msgstr "Waarschijnlijk een driver bug."
 
-#: src/io-v4l2k.c:744 src/io-v4l2k.c:770
+#: src/io-v4l2k.c:752 src/io-v4l2k.c:778
 #, c-format
 msgid "Cannot query current videostandard of %s (%s): %s."
 msgstr "Kan huidige videostandaard %s (%s) niet querien: %s."
 
-#: src/io-v4l2k.c:878
+#: src/io-v4l2k.c:886
 #, c-format
 msgid "Cannot query current vbi parameters of %s (%s): %s."
 msgstr "Kan de huidige VBI-parameters van %s (%s) niet uitlezen: %s."
 
-#: src/io-v4l2k.c:920
+#: src/io-v4l2k.c:928
 #, c-format
 msgid ""
 "Sorry, %s (%s) cannot capture any of the requested data services with "
 "scanning %d."
 msgstr "%s (%s) kan de gewenste datadienst niet ontvangen met scanning %d."
 
-#: src/io-v4l2k.c:1018
+#: src/io-v4l2k.c:1026
 #, c-format
 msgid "Could not set the vbi capture parameters for %s (%s): %d, %s."
 msgstr "Kan de VBI-capture-parameters voor %s (%s) niet activeren: %d, %s."
 
-#: src/io-v4l2k.c:1064
+#: src/io-v4l2k.c:1072
 #, c-format
 msgid ""
 "A known bug in driver %s %u.%u.%u impedes VBI capturing in NTSC mode. Please "
 "upgrade the driver."
 msgstr ""
 
-#: src/io-v4l2k.c:1379
+#: src/io-v4l2k.c:1387
 #, c-format
 msgid "Cannot identify '%s': %d, %s."
 msgstr "Kan apparaat '%s' niet openen: %d, %s."
 
-#: src/io-v4l2k.c:1381
+#: src/io-v4l2k.c:1389
 msgid "Probably not a v4l2 device."
 msgstr "Waarschijnlijk geen v4l2 device."
 
-#: src/io-v4l2k.c:1435
+#: src/io-v4l2k.c:1443
 #, c-format
 msgid ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "
@@ -533,30 +533,30 @@ msgstr "Server architectuur komt niet overeen (endianness)"
 msgid "Proxy client interface not compiled."
 msgstr "proxy client interface niet gecompileerd."
 
-#: src/proxy-msg.c:1208
+#: src/proxy-msg.c:1222
 #, c-format
 msgid "Cannot create socket: %s."
 msgstr "Kan socket niet aanmaken: %s."
 
-#: src/proxy-msg.c:1216
+#: src/proxy-msg.c:1230
 #, c-format
 msgid "Invalid hostname or port: %s."
 msgstr "Ongeldige hostnaam of poort: %s."
 
-#: src/proxy-msg.c:1236
+#: src/proxy-msg.c:1250
 msgid "Connection via TCP/IP failed, server not running or unreachable."
 msgstr "TCP/IP verbinding mislukt, server down of niet bereikbaar"
 
-#: src/proxy-msg.c:1238
+#: src/proxy-msg.c:1252
 msgid "Connection via socket failed, server not running."
 msgstr "Socket verbinding mislukt, server is niet up"
 
-#: src/proxy-msg.c:1247 src/proxy-msg.c:1290
+#: src/proxy-msg.c:1261 src/proxy-msg.c:1304
 #, c-format
 msgid "Socket I/O error: %s."
 msgstr "Socket I/O fout: %s."
 
-#: src/proxy-msg.c:1283
+#: src/proxy-msg.c:1297
 #, c-format
 msgid "Cannot connect to server: %s."
 msgstr "Kan server niet bereiken: %s."

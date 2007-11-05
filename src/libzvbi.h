@@ -1118,17 +1118,26 @@ vbi_idl_demux_cb		(vbi_idl_demux *	dx,
 				 void *			user_data);
 
 extern void
-vbi_idl_demux_reset		(vbi_idl_demux *	dx);
+vbi_idl_demux_reset		(vbi_idl_demux *	dx)
+  __attribute__ ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_idl_demux_feed		(vbi_idl_demux *	dx,
-				 const uint8_t		buffer[42]);
+				 const uint8_t		buffer[42])
+  __attribute__ ((_vbi_nonnull (1, 2)));
+extern vbi_bool
+vbi_idl_demux_feed_frame	(vbi_idl_demux *	dx,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_lines)
+  __attribute__ ((_vbi_nonnull (1, 2)));
 extern void
 vbi_idl_demux_delete		(vbi_idl_demux *	dx);
 extern vbi_idl_demux *
 vbi_idl_a_demux_new		(unsigned int		channel,
 				 unsigned int		address,
 				 vbi_idl_demux_cb *	callback,
-				 void *			user_data);
+				 void *			user_data)
+  __attribute__ ((_vbi_alloc,
+		  _vbi_nonnull (3)));
 
 
 
@@ -1160,10 +1169,17 @@ vbi_pfc_demux_cb		(vbi_pfc_demux *	dx,
 				 const vbi_pfc_block *	block);
 
 extern void
-vbi_pfc_demux_reset		(vbi_pfc_demux *	dx);
+vbi_pfc_demux_reset		(vbi_pfc_demux *	dx)
+  __attribute__ ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_pfc_demux_feed		(vbi_pfc_demux *	dx,
-				 const uint8_t		buffer[42]);
+				 const uint8_t		buffer[42])
+  __attribute__ ((_vbi_nonnull (1, 2)));
+extern vbi_bool
+vbi_pfc_demux_feed_frame	(vbi_pfc_demux *	dx,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_lines)
+  __attribute__ ((_vbi_nonnull (1, 2)));
 extern void
 vbi_pfc_demux_delete		(vbi_pfc_demux *	dx);
 extern vbi_pfc_demux *
@@ -1171,7 +1187,8 @@ vbi_pfc_demux_new		(vbi_pgno		pgno,
 				 unsigned int		stream,
 				 vbi_pfc_demux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_alloc));
+  __attribute__ ((_vbi_alloc,
+		  _vbi_nonnull (3)));
 
 /* xds_demux.h */
 
@@ -1277,6 +1294,10 @@ vbi_xds_demux_reset		(vbi_xds_demux *	xd);
 extern vbi_bool
 vbi_xds_demux_feed		(vbi_xds_demux *	xd,
 				 const uint8_t		buffer[2]);
+extern vbi_bool
+vbi_xds_demux_feed_frame	(vbi_xds_demux *	xd,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_lines);
 extern void
 vbi_xds_demux_delete		(vbi_xds_demux *	xd);
 extern vbi_xds_demux *

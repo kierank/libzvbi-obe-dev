@@ -1,3 +1,17 @@
+2007-11-05    <mschimek@users.sf.net>
+
+	* src/dvb_demux.c (vbi_dvb_demux_cor): Assert callback == NULL
+	  to prevent mixed feed and coroutine calls.
+
+	* src/pfc_demux.h, src/idl_demux.h: Added function
+	  __attributes__.
+	* src/xds_demux.h, src/xds_demux.c:
+	  Added vbi_xds_demux_feed_frame().
+	* src/pfc_demux.h, src/pfc_demux.c:
+	  Added vbi_pfc_demux_feed_frame().
+	* src/idl_demux.h, src/idl_demux.c:
+	  Added vbi_idl_demux_feed_frame().
+
 2007-11-04    <mschimek@users.sf.net>
 
 	* test/osc.c (short_options): Added -4 (proxy interface).

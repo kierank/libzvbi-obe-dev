@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pfc_demux.h,v 1.7 2007/11/02 08:36:26 mschimek Exp $ */
+/* $Id: pfc_demux.h,v 1.8 2007/11/05 19:53:07 mschimek Exp $ */
 
 #ifndef __ZVBI_PFC_DEMUX_H__
 #define __ZVBI_PFC_DEMUX_H__
@@ -25,6 +25,7 @@
 #include <inttypes.h>		/* uint8_t */
 #include <stdio.h>		/* FILE */
 #include "bcd.h"		/* vbi_pgno */
+#include "sliced.h"
 
 VBI_BEGIN_DECLS
 
@@ -89,10 +90,17 @@ vbi_pfc_demux_cb		(vbi_pfc_demux *	dx,
 				 const vbi_pfc_block *	block);
 
 extern void
-vbi_pfc_demux_reset		(vbi_pfc_demux *	dx);
+vbi_pfc_demux_reset		(vbi_pfc_demux *	dx)
+  __attribute__ ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_pfc_demux_feed		(vbi_pfc_demux *	dx,
-				 const uint8_t		buffer[42]);
+				 const uint8_t		buffer[42])
+  __attribute__ ((_vbi_nonnull (1, 2)));
+extern vbi_bool
+vbi_pfc_demux_feed_frame	(vbi_pfc_demux *	dx,
+				 const vbi_sliced *	sliced,
+				 unsigned int		n_lines)
+  __attribute__ ((_vbi_nonnull (1, 2)));
 extern void
 vbi_pfc_demux_delete		(vbi_pfc_demux *	dx);
 extern vbi_pfc_demux *
@@ -100,7 +108,8 @@ vbi_pfc_demux_new		(vbi_pgno		pgno,
 				 unsigned int		stream,
 				 vbi_pfc_demux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_alloc));
+  __attribute__ ((_vbi_alloc,
+		  _vbi_nonnull (3)));
 
 /* Private */
 
@@ -130,18 +139,23 @@ struct _vbi_pfc_demux {
 extern void
 _vbi_pfc_block_dump		(const vbi_pfc_block *	pb,
 				 FILE *			fp,
-				 vbi_bool		binary);
+				 vbi_bool		binary)
+  __attribute__ ((_vbi_nonnull (1, 2)));
 extern vbi_bool
 _vbi_pfc_demux_decode		(vbi_pfc_demux *	dx,
-				 const uint8_t		buffer[42]);
+				 const uint8_t		buffer[42])
+  __attribute__ ((_vbi_nonnull (1, 2)));
 extern void
-_vbi_pfc_demux_destroy		(vbi_pfc_demux *	dx);
+_vbi_pfc_demux_destroy		(vbi_pfc_demux *	dx)
+  __attribute__ ((_vbi_nonnull (1)));
 extern vbi_bool
 _vbi_pfc_demux_init		(vbi_pfc_demux *	dx,
 				 vbi_pgno		pgno,
 				 unsigned int		stream,
 				 vbi_pfc_demux_cb *	callback,
-				 void *			user_data);
+				 void *			user_data)
+  __attribute__ ((_vbi_nonnull (1, 4)));
+
 /** @} */
 
 VBI_END_DECLS

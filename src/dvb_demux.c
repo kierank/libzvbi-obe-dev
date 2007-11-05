@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.18 2007/11/03 17:04:34 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.19 2007/11/05 19:53:07 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -2316,6 +2316,9 @@ vbi_dvb_demux_cor		(vbi_dvb_demux *	dx,
 
 	/* FIXME in future version:
 	   buffer_left ought to be an unsigned long. */
+
+	/* FIXME can we handle this? */
+	assert (NULL == dx->callback);
 
 	/* Doesn't work with TS, and isn't safe in any case. */
 	/* dx->frame.sliced_begin = sliced;
