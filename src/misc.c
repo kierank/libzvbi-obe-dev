@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: misc.c,v 1.10 2007/10/14 14:54:58 mschimek Exp $ */
+/* $Id: misc.c,v 1.11 2007/11/13 05:11:47 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -142,6 +142,7 @@ _vbi_vasprintf			(char **		dstp,
 {
 	char *buf;
 	unsigned long size;
+	va_list ap2;
 	int temp;
 
 	assert (NULL != dstp);
@@ -151,6 +152,8 @@ _vbi_vasprintf			(char **		dstp,
 
 	buf = NULL;
 	size = 64;
+
+	__va_copy (ap2, ap);
 
 	for (;;) {
 
@@ -175,6 +178,9 @@ _vbi_vasprintf			(char **		dstp,
 			/* Size needed. */
 			size = len + 1;
 		}
+
+		/* vsnprintf() may advance ap. */
+		__va_copy (ap, ap2);
 	}
 
 	vbi_free (buf);
