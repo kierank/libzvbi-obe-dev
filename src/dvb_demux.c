@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.19 2007/11/05 19:53:07 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.20 2007/11/13 05:12:04 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -2290,6 +2290,10 @@ demux_ts_packet			(vbi_dvb_demux *	dx,
  * converts them to vbi_sliced format and stores the sliced data at
  * @a sliced.
  *
+ * Thou shalt not call this function when you passed a callback to
+ * vbi_dvb_pes_demux_new(), for it is wicked and will bring upon thee
+ * much howling and gnashing of teeth. Try vbi_dvb_demux_feed() instead.
+ *
  * @returns
  * When a frame is complete, the function returns the number of elements
  * stored in the @a sliced array. When more data is needed (@a
@@ -2532,8 +2536,10 @@ _vbi_dvb_ts_demux_new		(vbi_dvb_demux_cb *	callback,
 
 /**
  * @brief Allocates DVB VBI demux.
- * @param callback Function to be called by vbi_dvb_demux_demux() when
- *   a new frame is available.
+ * @param callback Function to be called by vbi_dvb_demux_feed() when
+ *   a new frame is available. If you want to use the vbi_dvb_demux_cor()
+ *   function instead, @a callback must be @c NULL. Conversely you
+ *   must not call vbi_dvb_demux_cor() if a @a callback is given.
  * @param user_data User pointer passed through to @a callback function.
  *
  * Allocates a new DVB VBI (EN 301 472, EN 301 775) demultiplexer taking
