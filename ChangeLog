@@ -1,3 +1,17 @@
+2007-11-13    <mschimek@users.sf.net>
+
+	* src/misc.c (_vbi_vasprintf): Bug fix: Save the va_list parameter
+	  across vsnprintf() because the function may change it.
+
+	* src/conv.h, src/conv.c: Renamed strndup_iconv() to
+	  _vbi_strndup_iconv() and made the function global for
+	  vbi_export_puts_iconv().
+
+2007-11-09    <mschimek@users.sf.net>
+
+	* src/dvb_demux.c: Updated dox to clarify vbi_dvb_demux_cor()
+	  and vbi_dvb_demux_feed() are not interchangeable.
+
 2007-11-05    <mschimek@users.sf.net>
 
 	* src/dvb_demux.c (vbi_dvb_demux_cor): Assert callback == NULL
