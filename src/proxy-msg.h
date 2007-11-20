@@ -17,9 +17,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-msg.h,v 1.10 2007/07/23 20:01:18 mschimek Exp $
+ *  $Id: proxy-msg.h,v 1.11 2007/11/20 21:43:46 tomzo Exp $
  *
  *  $Log: proxy-msg.h,v $
+ *  Revision 1.11  2007/11/20 21:43:46  tomzo
+ *  Improvements and corrections in the proxy API documentation.
+ *
  *  Revision 1.10  2007/07/23 20:01:18  mschimek
  *  *** empty log message ***
  *
@@ -139,30 +142,43 @@ typedef enum
 
 /**
  * @ingroup Proxy
- * @brief Proxy scheduler configuration for background channel switching
+ * @brief Proxy scheduler parameters for background channel switching
+ *
+ * This structure is passed along with channel change requests for
+ * clients with priority @c VBI_CHN_PRIO_BACKGROUND.  The parameters
+ * are used by the proxy daemon to share channel control between
+ * multiple clients with background priority.
  */
 typedef struct
 {
         /**
-         * boolean: ignore struct unless TRUE
+         * Boolean: Ignore contents of this struct unless TRUE
          */
 	uint8_t			is_valid;
         /**
-         * Background prio: VPS/PDC, initial load, update, check, passive
+         * Sub-priority for channel scheduling at "background" priority.
+         * You can use aribtrary values in the range 0 ... 256, but as
+         * this value is only meaningful in relation to priorities used
+         * by other clients, you should stick to the scale defined by
+         * @ref VBI_CHN_SUBPRIO
          */
 	uint8_t			sub_prio;
         /**
-         * boolean: interruption allowed
+         * Boolean: Set to FALSE if your capture client needs an
+         * atomic time slice (i.e. would need to restart capturing
+         * from the beginning it it was interrupted.)
          */
 	uint8_t			allow_suspend;
 
 	uint8_t			reserved0;
         /**
-         * min. continuous use of that channel
+         * Minimum time slice your capture client requires. This value
+         * is used when multiple clients have the same sub-priority
+         * to give all clients channel control in a round-robin manner.
          */
 	time_t			min_duration;
         /**
-         * expected duration of use of that channel
+         * Expected duration of use of that channel
          */
 	time_t			exp_duration;
 
@@ -171,7 +187,7 @@ typedef struct
 
 /**
  * @ingroup Proxy
- * @brief General flags sent from clients to daemon during connect
+ * @brief General flags sent by the proxy daemon to clients during connect
  */
 typedef enum
 {
@@ -185,7 +201,7 @@ typedef enum
 
 /**
  * @ingroup Proxy
- * @brief General flags sent from daemon to clients during connect
+ * @brief General flags sent by clients to the proxy daemon during connect
  */
 typedef enum
 {
@@ -257,9 +273,25 @@ typedef enum
  */
 typedef enum
 {
+        /**
+         * Unknown device API - only used in error cases. Normally
+         * the proxy will always be aware of the driver API as it's
+         * determined by the type of capture context creation function
+         * used when the device is opened.
+         */
         VBI_API_UNKNOWN,
+        /**
+         * Video4Linux version 1 (i.e. Linux kernels 2.4 or older
+         * or old device drivers which have not been ported yet)
+         */
         VBI_API_V4L1,
+        /**
+         * Video4Linux version 2 (i.e. Linux kernels 2.6 and later)
+         */
         VBI_API_V4L2,
+        /**
+         * BSD Brooktree capture driver.
+         */
         VBI_API_BKTR
 } VBI_DRIVER_API_REV;
 

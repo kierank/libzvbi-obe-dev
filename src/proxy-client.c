@@ -17,10 +17,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *
- *  $Id: proxy-client.c,v 1.14 2007/08/27 06:45:37 mschimek Exp $
+ *  $Id: proxy-client.c,v 1.15 2007/11/20 21:43:46 tomzo Exp $
  */
 
-static const char rcsid[] = "$Id: proxy-client.c,v 1.14 2007/08/27 06:45:37 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-client.c,v 1.15 2007/11/20 21:43:46 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1674,7 +1674,10 @@ vbi_proxy_client_channel_suspend( vbi_proxy_client * vpc,
 /**
  * @param vpc Pointer to initialized proxy client context
  * @param request Ioctl request code to be passed to driver
- * @param p_arg Ioctl argument to be passed to driver
+ * @param p_arg Ioctl argument buffer to be passed to driver.
+ *   For ioctls which return data, the buffer will by modified by
+ *   the call (i.e. same as if the ioctl had ben called directly)
+ *   Note the required buffer size depends on the request code.
  *
  * @brief Wrapper for ioctl requests on the VBI device
  *
@@ -1771,7 +1774,7 @@ vbi_proxy_client_get_driver_api( vbi_proxy_client * vpc )
  *
  * This function installs a callback function which will be invoked
  * upon asynchronous events (e.g. channel changes by other clients.)
- * Since the proxy client has no activity carrier on it's own (i.e.
+ * Since the proxy client has no "life" on it's own (i.e.
  * it's not using an internal thread or process) callbacks will only
  * occur from inside other proxy client function calls.  The client's
  * file description will become readable when an asynchronous message
@@ -1827,8 +1830,9 @@ vbi_proxy_client_get_capture_if( vbi_proxy_client * vpc )
  *
  * @param p_proxy_client Reference to an initialized proxy client
  *   context.
- * @param buffers Number of device buffers for raw vbi data. The same
- *   number of buffers is allocated to cache sliced data in the proxy daemon.
+ * @param buffers Number of intermediate buffers on server side
+ *   of the proxy socket connection. (Note this is not related to the
+ *   device buffer count parameter of @a v4l2_new et.al.)
  * @param scanning This indicates the current norm: 625 for PAL and
  *   525 for NTSC; set to 0 if you don't know (you should not attempt
  *   to query the device for the norm, as this parameter is only required
@@ -1839,14 +1843,19 @@ vbi_proxy_client_get_capture_if( vbi_proxy_client * vpc )
  *   decodable will be stored here. See vbi_raw_decoder_add()
  *   for details. If you want to capture raw data only, set to
  *   @c VBI_SLICED_VBI_525, @c VBI_SLICED_VBI_625 or both.
+ *   If this parameter is @c NULL, no services will be installed.
+ *   You can do so later with vbi_capture_update_services(); note the
+ *   reset parameter must be set to @c TRUE in this case.
  * @param strict Will be passed to vbi_raw_decoder_add().
  * @param pp_errorstr If not @c NULL this function stores a pointer to an error
  *   description here. You must free() this string when no longer needed.
  *
  * Open a new connection to a VBI proxy to open a VBI device for the
- * given services.  On side of the proxy one of the regular v4l_new()
- * functions is invoked and if it succeeds, data slicing is started
- * and all captured data forwarded transparently.
+ * given services.  On side of the proxy daemon, one of the regular
+ * capture context creation functions (e.g. v4l2_new) is invoked. 
+ * If the creation succeeds, and any of the requested services are
+ * available, capturing is started and all captured data is forwarded
+ * transparently to the client.
  *
  * Whenever possible the proxy should be used instead of opening the device
  * directly, since it allows the user to start multiple VBI clients in
