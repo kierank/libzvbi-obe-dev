@@ -15,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: misc.h,v 1.18 2007/10/14 14:54:11 mschimek Exp $ */
+/* $Id: misc.h,v 1.19 2007/11/27 17:41:50 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -28,7 +28,9 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <string.h>
-#include <inttypes.h>
+#include <inttypes.h>		/* (u)intXX_t */
+#include <sys/types.h>		/* (s)size_t */
+#include <limits.h>		/* (S)SIZE_MAX */
 #include <assert.h>
 
 #include "macros.h"
@@ -85,7 +87,7 @@
 		_t >>= sizeof (_t) * 8 - 1;				\
 		_n ^= _t;						\
 		_n -= _t;						\
-	} else if (_n < 0) { /* also warns if n is unsigned */		\
+	} else if (_n < 0) { /* also warns if n is unsigned type */	\
 		_n = -_n;						\
 	}								\
 	/* return */ _n;						\
@@ -211,14 +213,15 @@ _vbi_popcnt			(uint32_t		x);
 
 #define CLEAR(var) memset (&(var), 0, sizeof (var))
 
-#define COPY(d, s) /* useful to copy arrays, otherwise use assignment */ \
+/* Useful to copy arrays, otherwise use assignment. */
+#define COPY(d, s)							\
 	(assert (sizeof (d) == sizeof (s)), memcpy (d, s, sizeof (d)))
 
 /* Copy string const into char array. */
 #define STRACPY(array, s)						\
 do {									\
 	/* Complain if s is no string const or won't fit. */		\
-	const char t_[sizeof (array) - 1] __attribute__ ((unused)) = s; \
+	const char t_[sizeof (array) - 1] _vbi_attribute ((unused)) = s; \
 									\
 	memcpy (array, s, sizeof (s));					\
 } while (0)
@@ -246,7 +249,7 @@ do {									\
 extern void *
 (* vbi_malloc)			(size_t);
 extern void *
-(* vbi_realloc)		(void *,
+(* vbi_realloc)			(void *,
 				 size_t);
 extern char *
 (* vbi_strdup)			(const char *);
@@ -259,7 +262,7 @@ extern void
 
 /* Helper functions. */
 
-vbi_inline int
+_vbi_inline int
 _vbi_to_ascii			(int			c)
 {
 	if (c < 0)
@@ -283,6 +286,19 @@ _vbi_keyword_lookup		(int *			value,
 				 const char **		inout_s,
 				 const _vbi_key_value_pair * table,
 				 unsigned int		n_pairs);
+
+extern void
+_vbi_shrink_vector_capacity	(void **		vector,
+				 size_t *		capacity,
+				 size_t			min_capacity,
+				 size_t			element_size)
+  _vbi_attribute ((_vbi_nonnull (1, 2)));
+extern vbi_bool
+_vbi_grow_vector_capacity	(void **		vector,
+				 size_t *		capacity,
+				 size_t			min_capacity,
+				 size_t			element_size)
+  _vbi_attribute ((_vbi_nonnull (1, 2)));
 
 /* Logging stuff. */
 
@@ -353,6 +369,16 @@ do {									\
 #endif
 #ifndef PRIx64
 #  define PRIx64 "llx"
+#endif
+
+/* Should be defined in C99 limits.h? */
+#ifndef SIZE_MAX
+#  define SIZE_MAX ((size_t) -1)
+#endif
+
+/* __va_copy is a GNU extension. */
+#ifndef __va_copy
+#  define __va_copy(ap1, ap2) do { ap1 = ap2; } while (0)
 #endif
 
 /* Use this instead of strncpy(). strlcpy() is a BSD extension. */
