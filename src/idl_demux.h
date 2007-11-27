@@ -4,8 +4,9 @@
  *  Copyright (C) 2005 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: idl_demux.h,v 1.7 2007/11/05 19:53:07 mschimek Exp $ */
+/* $Id: idl_demux.h,v 1.8 2007/11/27 17:41:20 mschimek Exp $ */
 
 #ifndef __ZVBI_IDL_DEMUX_H__
 #define __ZVBI_IDL_DEMUX_H__
@@ -48,15 +49,17 @@ VBI_BEGIN_DECLS
  * demultiplexer context.
  */
 typedef struct _vbi_idl_demux vbi_idl_demux;
+/** @} */
 
 /**
+ * @addtogroup IDLDemux Teletext IDL packet demultiplexer
  * @name vbi_idl_demux_cb flags
  * @{
  */
 
 /**
  * Data was lost (not received or uncorrectable) between the current and
- * previous call.
+ * previous vbi_idl_demux_feed() call.
  */
 #define VBI_IDL_DATA_LOST	(1 << 0)
 
@@ -68,6 +71,11 @@ typedef struct _vbi_idl_demux vbi_idl_demux;
 #define VBI_IDL_DEPENDENT	(1 << 3)
 
 /** @} */
+
+/**
+ * @addtogroup IDLDemux Teletext IDL packet demultiplexer
+ * @{
+ */
 
 /**
  * @param dx IDL demultiplexer returned by
@@ -93,16 +101,22 @@ vbi_idl_demux_cb		(vbi_idl_demux *	dx,
 
 extern void
 vbi_idl_demux_reset		(vbi_idl_demux *	dx)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_idl_demux_feed		(vbi_idl_demux *	dx,
 				 const uint8_t		buffer[42])
-  __attribute__ ((_vbi_nonnull (1, 2)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_nonnull (1, 2)))
+#endif
+  ;
 extern vbi_bool
 vbi_idl_demux_feed_frame	(vbi_idl_demux *	dx,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_lines)
-  __attribute__ ((_vbi_nonnull (1, 2)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_nonnull (1, 2)))
+#endif
+  ;
 extern void
 vbi_idl_demux_delete		(vbi_idl_demux *	dx);
 extern vbi_idl_demux *
@@ -110,8 +124,11 @@ vbi_idl_a_demux_new		(unsigned int		channel,
 				 unsigned int		address,
 				 vbi_idl_demux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_alloc,
-		  _vbi_nonnull (3)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_alloc,
+		   _vbi_nonnull (3)))
+#endif
+  ;
 
 /** @} */
 
@@ -121,13 +138,15 @@ vbi_idl_a_demux_new		(unsigned int		channel,
 #define _VBI_IDL_FORMAT_A		(1 << 0)
 #define _VBI_IDL_FORMAT_B		(1 << 1)
 #define _VBI_IDL_FORMAT_DATAVIDEO	(1 << 2)
-#define	_VBI_IDL_FORMAT_AUDETEL	(1 << 3)
+#define	_VBI_IDL_FORMAT_AUDETEL		(1 << 3)
 #define	_VBI_IDL_FORMAT_LBRA		(1 << 4)
 
 /** @internal */
 typedef unsigned int _vbi_idl_format;
 
-/** @internal */
+/**
+ * @internal
+ */
 struct _vbi_idl_demux {
 	_vbi_idl_format		format;
 
@@ -149,7 +168,7 @@ struct _vbi_idl_demux {
 
 extern void
 _vbi_idl_demux_destroy		(vbi_idl_demux *	dx)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 _vbi_idl_demux_init		(vbi_idl_demux *	dx,
 				 _vbi_idl_format	format,
@@ -157,7 +176,7 @@ _vbi_idl_demux_init		(vbi_idl_demux *	dx,
 				 unsigned int		address,
 				 vbi_idl_demux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_nonnull (1, 5)));
+  _vbi_attribute ((_vbi_nonnull (1, 5)));
 
 VBI_END_DECLS
 

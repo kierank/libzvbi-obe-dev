@@ -4,8 +4,9 @@
  *  Copyright (C) 2003-2004 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: pfc_demux.h,v 1.8 2007/11/05 19:53:07 mschimek Exp $ */
+/* $Id: pfc_demux.h,v 1.9 2007/11/27 17:41:12 mschimek Exp $ */
 
 #ifndef __ZVBI_PFC_DEMUX_H__
 #define __ZVBI_PFC_DEMUX_H__
@@ -33,6 +34,9 @@ VBI_BEGIN_DECLS
 
 /**
  * @addtogroup PFCDemux
+ * @ingroup LowDec
+ * @brief Functions to decode data transmissions in Teletext
+ *   Page Function Clear packets (EN 300 708 section 4).
  * @{
  */
 
@@ -68,7 +72,7 @@ typedef struct _vbi_pfc_demux vbi_pfc_demux;
 
 /**
  * @param dx PFC demultiplexer context returned by
- *   vbi_pfx_demux_new() and given to vbi_pfc_demux_demux().
+ *   vbi_pfx_demux_new() and given to vbi_pfc_demux_feed().
  * @param user_data User pointer given to vbi_pfc_demux_new().
  * @param block Structure describing the received data block.
  * 
@@ -91,16 +95,22 @@ vbi_pfc_demux_cb		(vbi_pfc_demux *	dx,
 
 extern void
 vbi_pfc_demux_reset		(vbi_pfc_demux *	dx)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_pfc_demux_feed		(vbi_pfc_demux *	dx,
 				 const uint8_t		buffer[42])
-  __attribute__ ((_vbi_nonnull (1, 2)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_nonnull (1, 2)))
+#endif
+  ;
 extern vbi_bool
 vbi_pfc_demux_feed_frame	(vbi_pfc_demux *	dx,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_lines)
-  __attribute__ ((_vbi_nonnull (1, 2)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_nonnull (1, 2)))
+#endif
+  ;
 extern void
 vbi_pfc_demux_delete		(vbi_pfc_demux *	dx);
 extern vbi_pfc_demux *
@@ -108,12 +118,19 @@ vbi_pfc_demux_new		(vbi_pgno		pgno,
 				 unsigned int		stream,
 				 vbi_pfc_demux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_alloc,
-		  _vbi_nonnull (3)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_alloc,
+		  _vbi_nonnull (3)))
+#endif
+  ;
+
+/** @} */
 
 /* Private */
 
-/** @internal */
+/**
+ * @internal
+ */
 struct _vbi_pfc_demux {
 	/** Expected next continuity index. */
 	unsigned int		ci;
@@ -140,23 +157,21 @@ extern void
 _vbi_pfc_block_dump		(const vbi_pfc_block *	pb,
 				 FILE *			fp,
 				 vbi_bool		binary)
-  __attribute__ ((_vbi_nonnull (1, 2)));
+  _vbi_attribute ((_vbi_nonnull (1, 2)));
 extern vbi_bool
 _vbi_pfc_demux_decode		(vbi_pfc_demux *	dx,
 				 const uint8_t		buffer[42])
-  __attribute__ ((_vbi_nonnull (1, 2)));
+  _vbi_attribute ((_vbi_nonnull (1, 2)));
 extern void
 _vbi_pfc_demux_destroy		(vbi_pfc_demux *	dx)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 _vbi_pfc_demux_init		(vbi_pfc_demux *	dx,
 				 vbi_pgno		pgno,
 				 unsigned int		stream,
 				 vbi_pfc_demux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_nonnull (1, 4)));
-
-/** @} */
+  _vbi_attribute ((_vbi_nonnull (1, 4)));
 
 VBI_END_DECLS
 
