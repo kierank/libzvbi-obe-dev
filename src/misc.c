@@ -14,10 +14,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: misc.c,v 1.11 2007/11/13 05:11:47 mschimek Exp $ */
+/* $Id: misc.c,v 1.12 2007/11/27 18:26:19 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -263,6 +263,81 @@ _vbi_keyword_lookup		(int *			value,
 			}
 		}
 	}
+
+	return FALSE;
+}
+
+void
+_vbi_shrink_vector_capacity	(void **		vector,
+				 size_t *		capacity,
+				 size_t			min_capacity,
+				 size_t			element_size)
+{
+	void *new_vec;
+	size_t new_capacity;
+
+	if (min_capacity >= *capacity)
+		return;
+
+	new_capacity = min_capacity;
+
+	new_vec = vbi_realloc (*vector, new_capacity * element_size);
+	if (unlikely (NULL == new_vec))
+		return;
+
+	*vector = new_vec;
+	*capacity = new_capacity;
+}
+
+vbi_bool
+_vbi_grow_vector_capacity	(void **		vector,
+				 size_t *		capacity,
+				 size_t			min_capacity,
+				 size_t			element_size)
+{
+	void *new_vec;
+	size_t old_capacity;
+	size_t new_capacity;
+	size_t max_capacity;
+
+	assert (min_capacity > 0);
+	assert (element_size > 0);
+
+	max_capacity = SIZE_MAX / element_size;
+
+	if (unlikely (min_capacity > max_capacity)) {
+		goto failed;
+	}
+
+	old_capacity = *capacity;
+
+	if (unlikely (old_capacity > max_capacity - (1 << 16))) {
+		new_capacity = max_capacity;
+	} else if (old_capacity >= (1 << 16)) {
+		new_capacity = MAX (min_capacity, old_capacity + (1 << 16));
+	} else {
+		new_capacity = MAX (min_capacity, old_capacity * 2);
+	}
+
+	new_vec = vbi_realloc (*vector, new_capacity * element_size);
+	if (unlikely (NULL == new_vec)) {
+		if (new_capacity <= min_capacity)
+			goto failed;
+
+		new_capacity = min_capacity;
+
+		new_vec = vbi_realloc (*vector, new_capacity * element_size);
+		if (unlikely (NULL == new_vec))
+			goto failed;
+	}
+
+	*vector = new_vec;
+	*capacity = new_capacity;
+
+	return TRUE;
+
+ failed:
+	errno = ENOMEM;
 
 	return FALSE;
 }
