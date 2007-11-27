@@ -18,10 +18,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: export.h,v 1.13 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: export.h,v 1.14 2007/11/27 17:42:06 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -33,6 +33,7 @@
 /* Public */
 
 #include <stdio.h> /* FILE */
+#include <sys/types.h> /* size_t, ssize_t */
 
 /**
  * @ingroup Export
@@ -68,7 +69,7 @@ typedef struct vbi_export_info {
 	char *			label;
 	/**
 	 * A brief description (or @c NULL) for the user.
-	 * Clients are encouraged to localize this with dgettext("zvbi", label).
+	 * Clients are encouraged to localize this with dgettext("zvbi", tooltip).
 	 */
 	char *			tooltip;
 	/**
@@ -92,77 +93,92 @@ typedef enum {
 	 * A boolean value, either @c TRUE (1) or @c FALSE (0).
 	 * <table>
 	 * <tr><td>Type:</td><td>int</td></tr>
-	 * <tr><td>Default:</td><td>def.num</td></tr>
-	 * <tr><td>Bounds:</td><td>min.num (0) ... max.num (1),
+	 * <tr><td>Default:</td><td>vbi_option_info.def.num</td></tr>
+	 * <tr><td>Bounds:</td><td>vbi_option_info.min.num (0) ... max.num (1),
 	 * step.num (1)</td></tr>
-	 * <tr><td>Menu:</td><td>%NULL</td></tr>
+	 * <tr><td>Menu:</td><td>NULL</td></tr>
 	 * </table>
 	 */
 	VBI_OPTION_BOOL = 1,
 
 	/**
-	 * A signed integer value. When only a few discrete values rather than
-	 * a range are permitted @p menu points to a vector of integers. Note the
-	 * option is still set by value, not by menu index. Setting the value may
-	 * fail, or it may be replaced by the closest possible.
+	 * A signed integer value.
 	 * <table>
 	 * <tr><td>Type:</td><td>int</td></tr>
-	 * <tr><td>Default:</td><td>def.num or menu.num[def.num]</td></tr>
-	 * <tr><td>Bounds:</td><td>min.num ... max.num, step.num or menu</td></tr>
-	 * <tr><td>Menu:</td><td>%NULL or menu.num[min.num ... max.num],
+	 * <tr><td>Default:</td><td>vbi_option_info.def.num</td></tr>
+	 * <tr><td>Bounds:</td><td>vbi_option_info.min.num ... max.num, step.num</td></tr>
+	 * <tr><td>Menu:</td><td>NULL</td></tr>
+	 * </table>
+	 * When only a few discrete values rather than a range of values are permitted @p
+	 * vbi_option_info.menu points to a vector of integers. However you must still
+	 * set the option by value, not by menu index. If the value is invalid
+	 * vbi_export_option_set() may fail or pick the closest possible value instead.
+	 * <table>
+	 * <tr><td>Type:</td><td>int</td></tr>
+	 * <tr><td>Default:</td><td>vbi_option_info.menu.num[vbi_option_info.def.num]</td></tr>
+	 * <tr><td>Bounds:</td><td>See vbi_option_info.menu.num[] for valid values</td></tr>
+	 * <tr><td>Menu:</td><td>vbi_option_info.menu.num[min.num (0) ... max.num],
 	 * step.num (1)</td></tr>
 	 * </table>
 	 */
 	VBI_OPTION_INT,
 
 	/**
-	 * A real value, optional a vector of suggested values.
+	 * A real value.
 	 * <table>
 	 * <tr><td>Type:</td><td>double</td></tr>
-	 * <tr><td>Default:</td><td>def.dbl or menu.dbl[def.num]</td></tr>
-	 * <tr><td>Bounds:</td><td>min.dbl ... max.dbl,
-	 * step.dbl or menu</td></tr>
-	 * <tr><td>Menu:</td><td>%NULL or menu.dbl[min.num ... max.num],
+	 * <tr><td>Default:</td><td>vbi_option_info.def.dbl</td></tr>
+	 * <tr><td>Bounds:</td><td>vbi_option_info.min.dbl ... max.dbl,
+	 * step.dbl</td></tr>
+	 * <tr><td>Menu:</td><td>NULL</td></tr>
+	 * </table>
+	 * As with @c VBI_OPTION_INT @p vbi_option_info.menu may point to a set
+	 * of valid values:
+	 * <table>
+	 * <tr><td>Type:</td><td>double</td></tr>
+	 * <tr><td>Default:</td><td>vbi_option_info.menu.dbl[vbi_option.info.def.num]</td></tr>
+	 * <tr><td>Bounds:</td><td>See vbi_option_info.menu.dbl[] for valid values</td></tr>
+	 * <tr><td>Menu:</td><td>vbi_option_info.menu.dbl[min.num (0) ... max.num],
 	 * step.num (1)</td></tr>
 	 * </table>
 	 */
 	VBI_OPTION_REAL,
 
 	/**
-	 * A null terminated string. Note the menu version differs from
-	 * VBI_OPTION_MENU in its argument, which is the string itself. For example:
-	 * @code
-	 * menu.str[0] = "red"
-	 * menu.str[1] = "blue"
-	 * ... and the option may accept other color strings not explicitely listed
-	 * @endcode
+	 * A null terminated string.
 	 * <table>
 	 * <tr><td>Type:</td><td>char *</td></tr>
-	 * <tr><td>Default:</td><td>def.str or menu.str[def.num]</td></tr>
-	 * <tr><td>Bounds:</td><td>not applicable</td></tr>
-	 * <tr><td>Menu:</td><td>%NULL or menu.str[min.num ... max.num],
+	 * <tr><td>Default:</td><td>vbi_option_info.def.str</td></tr>
+	 * <tr><td>Bounds:</td><td>Not applicable</td></tr>
+	 * <tr><td>Menu:</td><td>NULL</td></tr>
+	 * </table>
+	 * As with @c VBI_OPTION_INT @p vbi_option_info.menu may point to a set
+	 * of valid strings. Note that vbi_export_option_set() always expects a
+	 * string for this kind of option, and it may accept strings which are
+	 * not in the menu. Contrast this with @c VBI_OPTION_MENU, where a menu
+	 * index is expected.
+	 * <table>
+	 * <tr><td>Type:</td><td>char *</td></tr>
+	 * <tr><td>Default:</td><td>vbi_option_info.menu.str[vbi_option_info.def.num]</td></tr>
+	 * <tr><td>Bounds:</td><td>Not applicable</td></tr>
+	 * <tr><td>Menu:</td><td>vbi_option_info.menu.str[min.num (0) ... max.num],
 	 * step.num (1)</td></tr>
 	 * </table>
 	 */
 	VBI_OPTION_STRING,
 
 	/**
-	 * Choice between a number of named options. For example:
-	 * @code
-	 * menu.str[0] = "up"
-	 * menu.str[1] = "down"
-	 * menu.str[2] = "strange"
-	 * @endcode
+	 * Choice between a number of named options. The value of this kind
+	 * of option is the menu index. The menu strings can be localized
+	 * with a dgettext("zvbi", menu.str[n]) call. For details see
+	 * gettext info file.
 	 * <table>
 	 * <tr><td>Type:</td><td>int</td></tr>
-	 * <tr><td>Default:</td><td>def.num</td></tr>
-	 * <tr><td>Bounds:</td><td>min.num (0) ... max.num, 
+	 * <tr><td>Default:</td><td>vbi_option_info.def.num</td></tr>
+	 * <tr><td>Bounds:</td><td>vbi_option_info.min.num (0) ... max.num, 
 	 *    step.num (1)</td></tr>
-	 * <tr><td>Menu:</td><td>menu.str[min.num ... max.num],
+	 * <tr><td>Menu:</td><td>vbi_option_info.menu.str[vbi_option_info.min.num ... max.num],
 	 *    step.num (1).
-	 * The menu strings are nationalized N_("text"), client
-	 * applications are encouraged to localize with dgettext("zvbi", menu.str[n]).
-	 * For details see info gettext.
 	 * </td></tr>
 	 * </table>
 	 */
@@ -250,6 +266,18 @@ extern vbi_bool			vbi_export_option_get(vbi_export *, const char *keyword,
 extern vbi_bool			vbi_export_option_menu_set(vbi_export *, const char *keyword, int entry);
 extern vbi_bool			vbi_export_option_menu_get(vbi_export *, const char *keyword, int *entry);
 
+extern ssize_t
+vbi_export_mem			(vbi_export *		e,
+				 void *			buffer,
+				 size_t			buffer_size,
+				 const vbi_page *	pg)
+  _vbi_attribute ((_vbi_nonnull (1))); /* sic */
+extern void *
+vbi_export_alloc		(vbi_export *		e,
+				 void **		buffer,
+				 size_t *		buffer_size,
+				 const vbi_page *	pg)
+  _vbi_attribute ((_vbi_nonnull (1))); /* sic */
 extern vbi_bool			vbi_export_stdio(vbi_export *, FILE *fp, vbi_page *pg);
 extern vbi_bool			vbi_export_file(vbi_export *, const char *name, vbi_page *pg);
 
@@ -272,6 +300,29 @@ extern const char _zvbi_intl_domainname[];
 
 typedef struct vbi_export_class vbi_export_class;
 
+/** The export target. */
+enum _vbi_export_target {
+	/** Exporting to a client supplied buffer in memory. */
+	VBI_EXPORT_TARGET_MEM = 1,
+
+	/** Exporting to a newly allocated buffer. */
+	VBI_EXPORT_TARGET_ALLOC,
+
+	/** Exporting to a client supplied file pointer. */
+	VBI_EXPORT_TARGET_FP,
+
+	/** Exporting to a client supplied file descriptor. */
+	VBI_EXPORT_TARGET_FD,
+
+	/** Exporting to a file. */
+	VBI_EXPORT_TARGET_FILE,
+};
+
+typedef vbi_bool
+_vbi_export_write_fn		(vbi_export *		e,
+				 const void *		s,
+				 size_t			n_bytes);
+
 /**
  * @ingroup Exmod
  *
@@ -287,11 +338,14 @@ struct vbi_export {
 	 */
 	vbi_export_class *	_class;
 	char *			errstr;		/**< Frontend private. */
+
 	/**
-	 * Name of the file we are writing, @c NULL if none (may be
-	 * an anonymous FILE though).
+	 * If @c target is @c VBI_EXPORT_FILE the name of the file
+	 * we are writing to, as supplied by the client. Otherwise
+	 * @c NULL. This is intended for debugging and error messages.
 	 */
-	char *			name;
+	const char *		name;
+
 	/**
 	 * Generic option: Network name or @c NULL.
 	 */
@@ -304,6 +358,67 @@ struct vbi_export {
 	 * Generic option: Reveal hidden characters.
 	 */
 	vbi_bool		reveal;
+
+	/**
+	 * The export target. Note _vbi_export_grow_buffer_space() may
+	 * change the target from TARGET_MEM to TARGET_ALLOC if the
+	 * buffer supplied by the application is too small.
+	 */
+	enum _vbi_export_target	target;
+
+	/**
+	 * If @a target is @c VBI_EXPORT_TARGET_FP or
+	 * @c VBI_EXPORT_TARGET_FD the file pointer or file descriptor
+	 * supplied by the client. If @c VBI_EXPORT_TARGET_FILE the
+	 * file descriptor of the file we opened. Otherwise undefined.
+	 *
+	 * Private field. Not to be accessed by export modules.
+	 */
+	union {
+		FILE *			fp;
+		int			fd;
+	}			_handle;
+
+	/**
+	 * Function to write data into @a _handle.
+	 *
+	 * Private field. Not to be accessed by export modules.
+	 */
+	_vbi_export_write_fn *	_write;
+
+	/**
+	 * Output buffer. Export modules can write into this buffer
+	 * directly after ensuring sufficient capacity, and/or call
+	 * the vbi_export_putc() etc functions. Keep in mind these
+	 * functions may call realloc(), changing the @a data pointer,
+	 * and/or vbi_export_flush(), changing the @a offset.
+	 */
+	struct {
+		/**
+		 * Pointer to the start of the buffer in memory.
+		 * @c NULL if @a capacity is zero.
+		 */
+		char *			data;
+
+		/**
+		 * The number of bytes written into the buffer
+		 * so far. Must be <= @c capacity.
+		 */
+		size_t			offset;
+
+		/**
+		 * Number of bytes we can store in the buffer, may be
+		 * zero.
+		 *
+		 * Call _vbi_export_grow_buffer_space() to increase the
+		 * capacity. Keep in mind this may change the @a data
+		 * pointer.
+		 */
+		size_t			capacity;
+	}			buffer;
+
+	/** A write error occurred (like ferror()). */
+	vbi_bool		write_error;
 };
 
 /**
@@ -329,7 +444,7 @@ struct vbi_export_class {
 	vbi_bool		(* option_get)(vbi_export *, const char *keyword,
 					       vbi_option_value *value);
 
-	vbi_bool		(* export)(vbi_export *, FILE *fp, vbi_page *pg);
+	vbi_bool		(* export)(vbi_export *, vbi_page *pg);
 };
 
 /**
@@ -343,12 +458,64 @@ struct vbi_export_class {
  *  Helper functions
  */
 
+/* Output functions. */
+
+extern vbi_bool
+_vbi_export_grow_buffer_space	(vbi_export *		e,
+				 size_t			min_space)
+  _vbi_attribute ((_vbi_nonnull (1)));
+
+extern vbi_bool
+vbi_export_flush		(vbi_export *		e)
+  _vbi_attribute ((_vbi_nonnull (1)));
+extern vbi_bool
+vbi_export_putc			(vbi_export *		e,
+				 int			c)
+  _vbi_attribute ((_vbi_nonnull (1)));
+extern vbi_bool
+vbi_export_write		(vbi_export *		e,
+				 const void *		src,
+				 size_t			src_size)
+  _vbi_attribute ((_vbi_nonnull (1, 2)));
+extern vbi_bool
+vbi_export_puts			(vbi_export *		e,
+				 const char *		src)
+  _vbi_attribute ((_vbi_nonnull (1)));
+extern vbi_bool
+vbi_export_puts_iconv		(vbi_export *		e,
+				 const char *		dst_codeset,
+				 const char *		src_codeset,
+				 const char *		src,
+				 unsigned long		src_size,
+				 int			repl_char)
+  _vbi_attribute ((_vbi_nonnull (1)));
+extern vbi_bool
+vbi_export_puts_iconv_ucs2	(vbi_export *		e,
+				 const char *		dst_codeset,
+				 const uint16_t *	src,
+				 long			src_length,
+				 int			repl_char)
+  _vbi_attribute ((_vbi_nonnull (1)));
+extern vbi_bool
+vbi_export_vprintf		(vbi_export *		e,
+				 const char *		templ,
+				 va_list		ap)
+  _vbi_attribute ((_vbi_nonnull (1, 2)));
+extern vbi_bool
+vbi_export_printf		(vbi_export *		e,
+				 const char *		templ,
+				 ...)
+  _vbi_attribute ((_vbi_nonnull (1, 2),
+		  _vbi_format (printf, 2, 3)));
+
 /**
  * @addtogroup Exmod
  * @{
  */
 extern void			vbi_register_export_module(vbi_export_class *);
 
+extern void
+_vbi_export_malloc_error	(vbi_export *		e);
 extern void			vbi_export_write_error(vbi_export *);
 extern void			vbi_export_unknown_option(vbi_export *, const char *keyword);
 extern void			vbi_export_invalid_option(vbi_export *, const char *keyword, ...);
@@ -480,7 +647,7 @@ extern int			vbi_ucs2be(void);
 #define VBI_AUTOREG_EXPORT_MODULE(name)
 /*
 #define VBI_AUTOREG_EXPORT_MODULE(name)					\
-static void vbi_autoreg_##name(void) __attribute__ ((constructor));	\
+static void vbi_autoreg_##name(void) _vbi_attribute ((constructor));	\
 static void vbi_autoreg_##name(void) {					\
 	vbi_register_export_module(&name);				\
 }
