@@ -4,8 +4,9 @@
  *  Copyright (C) 2006, 2007 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: sliced_filter.h,v 1.2 2007/08/27 06:46:10 mschimek Exp $ */
+/* $Id: sliced_filter.h,v 1.3 2007/11/27 17:41:32 mschimek Exp $ */
 
 #ifndef __ZVBI_SLICED_FILTER_H__
 #define __ZVBI_SLICED_FILTER_H__
@@ -40,25 +41,25 @@ extern vbi_service_set
 vbi_sliced_filter_keep_services
 				(vbi_sliced_filter *	sf,
 				 vbi_service_set	services)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_service_set
 vbi_sliced_filter_drop_services
 				(vbi_sliced_filter *	sf,
 				 vbi_service_set	services)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 
 extern vbi_bool
 vbi_sliced_filter_keep_ttx_pages
 				(vbi_sliced_filter *	sf,
 				 vbi_pgno		first_pgno,
 				 vbi_pgno		last_pgno)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_sliced_filter_drop_ttx_pages
 				(vbi_sliced_filter *	sf,
 				 vbi_pgno		first_pgno,
 				 vbi_pgno		last_pgno)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 static __inline__ vbi_bool
 vbi_sliced_filter_keep_ttx_page	(vbi_sliced_filter *	sf,
 				 vbi_pgno		pgno)
@@ -77,14 +78,14 @@ vbi_sliced_filter_keep_ttx_subpages
 				 vbi_pgno		pgno,
 				 vbi_subno		first_subno,
 				 vbi_subno		last_subno)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_sliced_filter_drop_ttx_subpages
 				(vbi_sliced_filter *	sf,
 				 vbi_pgno		pgno,
 				 vbi_subno		first_subno,
 				 vbi_subno		last_subno)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 static __inline__ vbi_bool
 vbi_sliced_filter_keep_ttx_subpage
 				(vbi_sliced_filter *	sf,
@@ -105,10 +106,10 @@ extern void
 vbi_sliced_filter_keep_ttx_system_pages
 				(vbi_sliced_filter *	sf,
 				 vbi_bool		keep)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern void
 vbi_sliced_filter_reset	(vbi_sliced_filter *	sf)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_sliced_filter_cor		(vbi_sliced_filter *	sf,
 				 vbi_sliced *		sliced_out,
@@ -116,28 +117,28 @@ vbi_sliced_filter_cor		(vbi_sliced_filter *	sf,
 				 unsigned int		max_lines_out,
 				 const vbi_sliced *	sliced_in,
 				 unsigned int *		n_lines_in)
-  __attribute__ ((_vbi_nonnull (1, 2, 3, 5, 6)));
+  _vbi_attribute ((_vbi_nonnull (1, 2, 3, 5, 6)));
 extern vbi_bool
 vbi_sliced_filter_feed		(vbi_sliced_filter *	sf,
 				 const vbi_sliced *	sliced,
 				 unsigned int *		n_lines)
-  __attribute__ ((_vbi_nonnull (1, 2, 3)));
+  _vbi_attribute ((_vbi_nonnull (1, 2, 3)));
 
 extern const char *
 vbi_sliced_filter_errstr	(vbi_sliced_filter *	sf)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern void
 vbi_sliced_filter_set_log_fn	(vbi_sliced_filter *	sf,
 				 vbi_log_mask		mask,
 				 vbi_log_fn *		log_fn,
 				 void *			user_data)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern void
 vbi_sliced_filter_delete	(vbi_sliced_filter *	sf);
 extern vbi_sliced_filter *
 vbi_sliced_filter_new		(vbi_sliced_filter_cb *callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_alloc));
+  _vbi_attribute ((_vbi_alloc));
 
 VBI_END_DECLS
 

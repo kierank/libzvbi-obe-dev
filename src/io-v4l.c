@@ -5,8 +5,9 @@
  *  Copyright (C) 2003, 2004 Tom Zoerner
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,11 +16,11 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 static const char rcsid [] =
-"$Id: io-v4l.c,v 1.35 2007/08/27 06:45:48 mschimek Exp $";
+"$Id: io-v4l.c,v 1.36 2007/11/27 17:42:01 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -62,7 +63,7 @@ static const char rcsid [] =
 /* Custom ioctl of the bttv driver. */
 #define BTTV_VBISIZE		_IOR('v' , BASE_VIDIOCPRIVATE+8, int)
 static __inline__ void IOCTL_ARG_TYPE_CHECK_BTTV_VBISIZE
-  (const int *arg __attribute__ ((unused))) {}
+  (const int *arg _vbi_attribute ((unused))) {}
 
 #undef REQUIRE_SELECT
 #undef REQUIRE_SVBIFMT		/* else accept current parameters */
