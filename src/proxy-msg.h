@@ -14,12 +14,15 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  *
- *  $Id: proxy-msg.h,v 1.11 2007/11/20 21:43:46 tomzo Exp $
+ *  $Id: proxy-msg.h,v 1.12 2007/11/27 18:31:07 mschimek Exp $
  *
  *  $Log: proxy-msg.h,v $
+ *  Revision 1.12  2007/11/27 18:31:07  mschimek
+ *  Updated the FSF address in the copyright notice.
+ *
  *  Revision 1.11  2007/11/20 21:43:46  tomzo
  *  Improvements and corrections in the proxy API documentation.
  *

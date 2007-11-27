@@ -15,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: hamm.c,v 1.2 2006/03/17 13:37:05 mschimek Exp $ */
+/* $Id: hamm.c,v 1.3 2007/11/27 18:26:48 mschimek Exp $ */
 
 /* Automated test of the odd parity and Hamming test/set routines. */
 

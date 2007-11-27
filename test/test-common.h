@@ -15,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: test-common.h,v 1.2 2007/10/14 14:54:17 mschimek Exp $ */
+/* $Id: test-common.h,v 1.3 2007/11/27 18:26:48 mschimek Exp $ */
 
 #include <string.h>
 #include <inttypes.h>

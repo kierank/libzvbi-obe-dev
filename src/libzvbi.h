@@ -19,7 +19,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 /* Generated file, do not edit! */
@@ -49,23 +49,26 @@ typedef struct vbi_decoder vbi_decoder;
 
 #if (__GNUC__ == 3 && __GNUC_MINOR__ >= 3) || __GNUC__ >= 4
 #  define _vbi_nonnull(args...) nonnull(args)
+#  define _vbi_format(args...) format(args)
 #else
-#  define _vbi_nonnull(args...)
+#  define _vbi_nonnull(args...) ,
+#  define _vbi_format(args...) ,
 #endif
 
 #if __GNUC__ >= 3
 #  define _vbi_pure pure
 #  define _vbi_alloc malloc
 #else
-#  define _vbi_pure
-#  define _vbi_alloc
+#  define _vbi_pure ,
+#  define _vbi_alloc ,
 #endif
 
 #if __GNUC__ >= 2
-#  define vbi_inline static __inline__
+#  define _vbi_inline static __inline__
+#  define _vbi_attribute(args...) __attribute__(args)
 #else
-#  define vbi_inline static
-#  define __attribute__(args...)
+#  define _vbi_inline static
+#  define _vbi_attribute(args...)
 #endif
 
 #ifndef TRUE
@@ -100,7 +103,7 @@ typedef enum {
 	
 	VBI_LOG_ERROR		= 1 << 3,
 
-	VBI_LOG_WARNING	= 1 << 4,
+	VBI_LOG_WARNING		= 1 << 4,
 
 	VBI_LOG_NOTICE		= 1 << 5,
 
@@ -137,19 +140,19 @@ typedef int vbi_subno;
 #define VBI_ANY_SUBNO 0x3F7F
 #define VBI_NO_SUBNO 0x3F7F
 
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_dec2bcd(unsigned int dec)
 {
 	return (dec % 10) + ((dec / 10) % 10) * 16 + ((dec / 100) % 10) * 256;
 }
 
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_bcd2dec(unsigned int bcd)
 {
 	return (bcd & 15) + ((bcd >> 4) & 15) * 10 + ((bcd >> 8) & 15) * 100;
 }
 
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_add_bcd(unsigned int a, unsigned int b)
 {
 	unsigned int t;
@@ -163,7 +166,7 @@ vbi_add_bcd(unsigned int a, unsigned int b)
 	return t - b;
 }
 
-vbi_inline vbi_bool
+_vbi_inline vbi_bool
 vbi_is_bcd(unsigned int bcd)
 {
 	static const unsigned int x = 0x06666666;
@@ -187,19 +190,19 @@ vbi_strndup_iconv		(const char *		dst_codeset,
 				 const char *		src,
 				 unsigned long		src_size,
 				 int			repl_char)
-  __attribute__ ((_vbi_alloc));
+  _vbi_attribute ((_vbi_alloc));
 extern char *
 vbi_strndup_iconv_ucs2		(const char *		dst_codeset,
 				 const uint16_t *	src,
 				 long			src_length,
 				 int			repl_char)
-  __attribute__ ((_vbi_alloc));
+  _vbi_attribute ((_vbi_alloc));
 extern char *
 vbi_strndup_iconv_caption	(const char *		dst_codeset,
 				 const char *		src,
 				 long			src_length,
 				 int			repl_char)
-  __attribute__ ((_vbi_alloc));
+  _vbi_attribute ((_vbi_alloc));
 #if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
 extern char *
 vbi_strndup_iconv_teletext	(const char *		dst_codeset,
@@ -207,7 +210,7 @@ vbi_strndup_iconv_teletext	(const char *		dst_codeset,
 				 const uint8_t *	src,
 				 long			src_length,
 				 int			repl_char)
-  __attribute__ ((_vbi_alloc,
+  _vbi_attribute ((_vbi_alloc,
 		  _vbi_nonnull (2)));
 #endif
 extern vbi_bool
@@ -217,14 +220,14 @@ vbi_fputs_iconv			(FILE *			fp,
 				 const char *		src,
 				 unsigned long		src_size,
 				 int			repl_char)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_fputs_iconv_ucs2		(FILE *			fp,
 				 const char *		dst_codeset,
 				 const uint16_t *	src,
 				 long			src_length,
 				 int			repl_char)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern const char *
 vbi_locale_codeset		(void);
 
@@ -627,19 +630,19 @@ typedef struct vbi_page {
 
 typedef struct vbi_font_descr vbi_font_descr;
 
-vbi_inline vbi_bool
+_vbi_inline vbi_bool
 vbi_is_print(unsigned int unicode)
 {
 	return unicode < 0xE600;
 }
 
-vbi_inline vbi_bool
+_vbi_inline vbi_bool
 vbi_is_gfx(unsigned int unicode)
 {
 	return unicode >= 0xEE00 && unicode <= 0xEFFF;
 }
 
-vbi_inline vbi_bool
+_vbi_inline vbi_bool
 vbi_is_drcs(unsigned int unicode)
 {
 	return unicode >= 0xF000;
@@ -652,6 +655,7 @@ vbi_caption_unicode		(unsigned int		c,
 /* export.h */
 
 #include <stdio.h> /* FILE */
+#include <sys/types.h> /* size_t, ssize_t */
 
 typedef struct vbi_export vbi_export;
 
@@ -719,6 +723,18 @@ extern vbi_bool			vbi_export_option_get(vbi_export *, const char *keyword,
 extern vbi_bool			vbi_export_option_menu_set(vbi_export *, const char *keyword, int entry);
 extern vbi_bool			vbi_export_option_menu_get(vbi_export *, const char *keyword, int *entry);
 
+extern ssize_t
+vbi_export_mem			(vbi_export *		e,
+				 void *			buffer,
+				 size_t			buffer_size,
+				 const vbi_page *	pg)
+  _vbi_attribute ((_vbi_nonnull (1))); /* sic */
+extern void *
+vbi_export_alloc		(vbi_export *		e,
+				 void **		buffer,
+				 size_t *		buffer_size,
+				 const vbi_page *	pg)
+  _vbi_attribute ((_vbi_nonnull (1))); /* sic */
 extern vbi_bool			vbi_export_stdio(vbi_export *, FILE *fp, vbi_page *pg);
 extern vbi_bool			vbi_export_file(vbi_export *, const char *name, vbi_page *pg);
 
@@ -823,10 +839,10 @@ typedef struct {
 
 extern const char *
 vbi_sliced_name			(vbi_service_set	service)
-  __attribute__ ((const));
+  _vbi_attribute ((const));
 extern unsigned int
 vbi_sliced_payload_bits		(vbi_service_set	service)
-  __attribute__ ((const));
+  _vbi_attribute ((const));
 
 
 /* decoder.h */
@@ -842,6 +858,7 @@ typedef enum {
 	VBI_PIXFMT_YVYU,
 	VBI_PIXFMT_UYVY,
 	VBI_PIXFMT_VYUY,
+        VBI_PIXFMT_PAL8,
 	VBI_PIXFMT_RGBA32_LE = 32,
 	VBI_PIXFMT_RGBA32_BE,
 	VBI_PIXFMT_BGRA32_LE,
@@ -898,7 +915,7 @@ extern void		vbi_bit_slicer_init(vbi_bit_slicer *slicer,
 					    unsigned int cri_frc, unsigned int cri_mask,
 					    int cri_bits, int frc_bits, int payload,
 					    vbi_modulation modulation, vbi_pixfmt fmt);
-vbi_inline vbi_bool
+_vbi_inline vbi_bool
 vbi_bit_slice(vbi_bit_slicer *slicer, uint8_t *raw, uint8_t *buf)
 {
 	return slicer->func(slicer, raw, buf);
@@ -1011,7 +1028,7 @@ vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 				 unsigned int		data_identifier,
 				 vbi_bool		stuffing)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  __attribute__ ((_vbi_nonnull (1, 2, 3, 4)))
+  _vbi_attribute ((_vbi_nonnull (1, 2, 3, 4)))
 #endif
   ;
 extern vbi_bool
@@ -1026,7 +1043,7 @@ vbi_dvb_multiplex_raw		(uint8_t **		packet,
 				 unsigned int		n_pixels_total,
 				 vbi_bool		stuffing)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  __attribute__ ((_vbi_nonnull (1, 2, 3, 4)))
+  _vbi_attribute ((_vbi_nonnull (1, 2, 3, 4)))
 #endif
   ;
 
@@ -1040,7 +1057,7 @@ vbi_dvb_mux_cb			(vbi_dvb_mux *		mx,
 
 extern void
 vbi_dvb_mux_reset		(vbi_dvb_mux *		mx)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_dvb_mux_cor		(vbi_dvb_mux *		mx,
 				 uint8_t **		buffer,
@@ -1052,7 +1069,7 @@ vbi_dvb_mux_cor		(vbi_dvb_mux *		mx,
 				 const vbi_sampling_par *sampling_par,	 
 				 int64_t		pts)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  __attribute__ ((_vbi_nonnull (1, 2, 3, 4, 5)))
+  _vbi_attribute ((_vbi_nonnull (1, 2, 3, 4, 5)))
 #endif
   ;
 extern vbi_bool
@@ -1063,38 +1080,38 @@ vbi_dvb_mux_feed		(vbi_dvb_mux *		mx,
 				 const uint8_t *	raw,
 				 const vbi_sampling_par *sampling_par,
 				 int64_t		pts)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern unsigned int
 vbi_dvb_mux_get_data_identifier (const vbi_dvb_mux *	mx)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_dvb_mux_set_data_identifier (vbi_dvb_mux *	mx,
 				  unsigned int		data_identifier)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern unsigned int
 vbi_dvb_mux_get_min_pes_packet_size
 				(vbi_dvb_mux *		mx)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern unsigned int
 vbi_dvb_mux_get_max_pes_packet_size
 				(vbi_dvb_mux *		mx)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_dvb_mux_set_pes_packet_size (vbi_dvb_mux *	mx,
 				  unsigned int		min_size,
 				  unsigned int		max_size)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern void
 vbi_dvb_mux_delete		(vbi_dvb_mux *		mx);
 extern vbi_dvb_mux *
 vbi_dvb_pes_mux_new		(vbi_dvb_mux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_alloc));
+  _vbi_attribute ((_vbi_alloc));
 extern vbi_dvb_mux *
 vbi_dvb_ts_mux_new		(unsigned int		pid,
 				 vbi_dvb_mux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_alloc));
+  _vbi_attribute ((_vbi_alloc));
 
 
 
@@ -1104,9 +1121,11 @@ vbi_dvb_ts_mux_new		(unsigned int		pid,
 typedef struct _vbi_idl_demux vbi_idl_demux;
 
 
+
 #define VBI_IDL_DATA_LOST	(1 << 0)
 
 #define VBI_IDL_DEPENDENT	(1 << 3)
+
 
 
 
@@ -1119,16 +1138,22 @@ vbi_idl_demux_cb		(vbi_idl_demux *	dx,
 
 extern void
 vbi_idl_demux_reset		(vbi_idl_demux *	dx)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_idl_demux_feed		(vbi_idl_demux *	dx,
 				 const uint8_t		buffer[42])
-  __attribute__ ((_vbi_nonnull (1, 2)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_nonnull (1, 2)))
+#endif
+  ;
 extern vbi_bool
 vbi_idl_demux_feed_frame	(vbi_idl_demux *	dx,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_lines)
-  __attribute__ ((_vbi_nonnull (1, 2)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_nonnull (1, 2)))
+#endif
+  ;
 extern void
 vbi_idl_demux_delete		(vbi_idl_demux *	dx);
 extern vbi_idl_demux *
@@ -1136,8 +1161,11 @@ vbi_idl_a_demux_new		(unsigned int		channel,
 				 unsigned int		address,
 				 vbi_idl_demux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_alloc,
-		  _vbi_nonnull (3)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_alloc,
+		   _vbi_nonnull (3)))
+#endif
+  ;
 
 
 
@@ -1170,16 +1198,22 @@ vbi_pfc_demux_cb		(vbi_pfc_demux *	dx,
 
 extern void
 vbi_pfc_demux_reset		(vbi_pfc_demux *	dx)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 extern vbi_bool
 vbi_pfc_demux_feed		(vbi_pfc_demux *	dx,
 				 const uint8_t		buffer[42])
-  __attribute__ ((_vbi_nonnull (1, 2)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_nonnull (1, 2)))
+#endif
+  ;
 extern vbi_bool
 vbi_pfc_demux_feed_frame	(vbi_pfc_demux *	dx,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_lines)
-  __attribute__ ((_vbi_nonnull (1, 2)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_nonnull (1, 2)))
+#endif
+  ;
 extern void
 vbi_pfc_demux_delete		(vbi_pfc_demux *	dx);
 extern vbi_pfc_demux *
@@ -1187,8 +1221,13 @@ vbi_pfc_demux_new		(vbi_pgno		pgno,
 				 unsigned int		stream,
 				 vbi_pfc_demux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_alloc,
-		  _vbi_nonnull (3)));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_attribute ((_vbi_alloc,
+		  _vbi_nonnull (3)))
+#endif
+  ;
+
+
 
 /* xds_demux.h */
 
@@ -1278,9 +1317,12 @@ typedef struct {
 	uint8_t			buffer[36];
 } vbi_xds_packet;
 
+
+
 extern void
 _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 				 FILE *			fp);
+
 
 typedef struct _vbi_xds_demux vbi_xds_demux;
 
@@ -1303,7 +1345,9 @@ vbi_xds_demux_delete		(vbi_xds_demux *	xd);
 extern vbi_xds_demux *
 vbi_xds_demux_new		(vbi_xds_demux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_alloc));
+  _vbi_attribute ((_vbi_alloc));
+
+
 
 /* io.h */
 
@@ -1604,7 +1648,7 @@ extern void		vbi_draw_vt_page_region(vbi_page *pg, vbi_pixfmt fmt,
 						int column, int row,
 						int width, int height,
 						int reveal, int flash_on);
-vbi_inline void
+_vbi_inline void
 vbi_draw_vt_page(vbi_page *pg, vbi_pixfmt fmt, void *canvas,
 		 int reveal, int flash_on)
 {
@@ -1617,7 +1661,7 @@ extern void		vbi_draw_cc_page_region(vbi_page *pg, vbi_pixfmt fmt,
 						int column, int row,
 						int width, int height);
 
-vbi_inline void
+_vbi_inline void
 vbi_draw_cc_page(vbi_page *pg, vbi_pixfmt fmt, void *canvas)
 {
 	vbi_draw_cc_page_region(pg, fmt, canvas, -1, 0, 0, pg->columns, pg->rows);
@@ -1633,7 +1677,7 @@ extern int		vbi_print_page_region(vbi_page *pg, char *buf, int size,
 					      const char *format, vbi_bool table, vbi_bool ltr,
 					      int column, int row, int width, int height);
 
-vbi_inline int
+_vbi_inline int
 vbi_print_page(vbi_page *pg, char *buf, int size,
 	       const char *format, vbi_bool table, vbi_bool ltr)
 {
@@ -1651,27 +1695,27 @@ extern const int8_t		_vbi_hamm8_inv [256];
 extern const int8_t		_vbi_hamm24_inv_par [3][256];
 
 
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_rev8			(unsigned int		c)
 {
 	return _vbi_bit_reverse[(uint8_t) c];
 }
 
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_rev16			(unsigned int		c)
 {
 	return _vbi_bit_reverse[(uint8_t) c] * 256
 		+ _vbi_bit_reverse[(uint8_t)(c >> 8)];
 }
 
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_rev16p			(const uint8_t *	p)
 {
 	return _vbi_bit_reverse[p[0]] * 256
 		+ _vbi_bit_reverse[p[1]];
 }
 
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_par8			(unsigned int		c)
 {
 	c &= 255;
@@ -1682,7 +1726,7 @@ vbi_par8			(unsigned int		c)
 	return c;
 }
 
-vbi_inline int
+_vbi_inline int
 vbi_unpar8			(unsigned int		c)
 {
 #ifdef __GNUC__
@@ -1713,19 +1757,19 @@ extern int
 vbi_unpar			(uint8_t *		p,
 				 unsigned int		n);
 
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_ham8			(unsigned int		c)
 {
 	return _vbi_hamm8_fwd[c & 15];
 }
 
-vbi_inline int
+_vbi_inline int
 vbi_unham8			(unsigned int		c)
 {
 	return _vbi_hamm8_inv[(uint8_t) c];
 }
 
-vbi_inline int
+_vbi_inline int
 vbi_unham16p			(const uint8_t *	p)
 {
 	return ((int) _vbi_hamm8_inv[p[0]])
@@ -1734,7 +1778,7 @@ vbi_unham16p			(const uint8_t *	p)
 
 extern int
 vbi_unham24p			(const uint8_t *	p)
-  __attribute__ ((_vbi_pure));
+  _vbi_attribute ((_vbi_pure));
 
 
 
@@ -1780,13 +1824,13 @@ extern vbi_bool
 vbi_decode_vps_cni		(unsigned int *		cni,
 				 const uint8_t		buffer[13])
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  __attribute__ ((_vbi_nonnull (1, 2)))
+  _vbi_attribute ((_vbi_nonnull (1, 2)))
 #endif
   ;
 extern vbi_bool
 vbi_encode_vps_cni		(uint8_t		buffer[13],
 				 unsigned int		cni)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_attribute ((_vbi_nonnull (1)));
 
 /* vbi.h */
 

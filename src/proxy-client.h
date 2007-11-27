@@ -14,9 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
- *  $Id: proxy-client.h,v 1.3 2007/07/23 20:01:18 mschimek Exp $
+ *  $Id: proxy-client.h,v 1.4 2007/11/27 18:31:06 mschimek Exp $
  */
 
 #ifndef PROXY_CLIENT_H
