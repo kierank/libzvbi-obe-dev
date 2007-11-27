@@ -15,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: sliced2pes.c,v 1.12 2007/11/03 17:04:05 mschimek Exp $ */
+/* $Id: sliced2pes.c,v 1.13 2007/11/27 17:54:38 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -31,6 +31,7 @@
 #include <string.h>
 #include <locale.h>
 #include <limits.h>
+#include <unistd.h>		/* optarg */
 #include <assert.h>
 #ifdef HAVE_GETOPT_LONG
 #  include <getopt.h>
