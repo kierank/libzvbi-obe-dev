@@ -15,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: macros.h,v 1.8 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: macros.h,v 1.9 2007/11/27 17:41:54 mschimek Exp $ */
 
 #ifndef __ZVBI_MACROS_H__
 #define __ZVBI_MACROS_H__
@@ -44,23 +44,26 @@ VBI_BEGIN_DECLS
 
 #if (__GNUC__ == 3 && __GNUC_MINOR__ >= 3) || __GNUC__ >= 4
 #  define _vbi_nonnull(args...) nonnull(args)
+#  define _vbi_format(args...) format(args)
 #else
-#  define _vbi_nonnull(args...)
+#  define _vbi_nonnull(args...) ,
+#  define _vbi_format(args...) ,
 #endif
 
 #if __GNUC__ >= 3
 #  define _vbi_pure pure
 #  define _vbi_alloc malloc
 #else
-#  define _vbi_pure
-#  define _vbi_alloc
+#  define _vbi_pure ,
+#  define _vbi_alloc ,
 #endif
 
 #if __GNUC__ >= 2
-#  define vbi_inline static __inline__
+#  define _vbi_inline static __inline__
+#  define _vbi_attribute(args...) __attribute__(args)
 #else
-#  define vbi_inline static
-#  define __attribute__(args...)
+#  define _vbi_inline static
+#  define _vbi_attribute(args...)
 #endif
 
 /**
@@ -108,7 +111,7 @@ typedef enum {
 	 * Invalid parameters and similar problems which suggest
 	 * a bug in the caller.
 	 */
-	VBI_LOG_WARNING	= 1 << 4,
+	VBI_LOG_WARNING		= 1 << 4,
 
 	/**
 	 * Causes of possibly undesired results, for example when a
