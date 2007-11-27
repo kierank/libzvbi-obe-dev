@@ -19,10 +19,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: exp-html.c,v 1.10 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: exp-html.c,v 1.11 2007/11/27 18:26:23 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -55,7 +55,6 @@ typedef struct html_instance {
 	unsigned		color : 1;
 	unsigned		headerless : 1;
 
-	FILE *			fp;
 	iconv_t			cd;
 
 	int			foreground;
@@ -71,6 +70,32 @@ typedef struct html_instance {
 	style			def;
 } html_instance;
 
+static void
+free_styles			(html_instance *	html)
+{
+	style *s;
+
+	if (NULL == html)
+		return;
+
+	while ((s = html->styles)) {
+		html->styles = s->next;
+		if (s != &html->def)
+			free (s);
+	}
+
+	html->foreground	= 0;
+	html->background	= 0;
+	html->underline		= FALSE;
+	html->bold		= FALSE;
+	html->italic		= FALSE;
+	html->flash		= FALSE;
+	html->span		= FALSE;
+	html->link		= FALSE;
+
+	CLEAR (html->def);
+}
+
 static vbi_export *
 html_new(void)
 {
@@ -85,7 +110,10 @@ html_new(void)
 static void
 html_delete(vbi_export *e)
 {
-	free(PARENT(e, html_instance, export));
+	html_instance *html = PARENT(e, html_instance, export);
+
+	free_styles (html);
+	free (html);
 }
 
 static vbi_option_info
@@ -172,39 +200,48 @@ option_set(vbi_export *e, const char *keyword, va_list args)
 #define TEST 0
 #define LF "\n"	/* optional "" */
 
+#undef putc
+#define putc(c) vbi_export_putc (&html->export, c)
+#define puts(s) vbi_export_puts (&html->export, s)
+#define printf(templ, args...) \
+	vbi_export_printf (&html->export, templ, args)
+
 static void
-hash_color(FILE *fp, vbi_rgba color)
+hash_color(html_instance *html, vbi_rgba color)
 {
-	fprintf(fp, "#%02x%02x%02x", VBI_R(color), VBI_G(color), VBI_B(color));
+	printf ("#%02x%02x%02x",
+		VBI_R(color),
+		VBI_G(color),
+		VBI_B(color));
 }
 
 static void
-escaped_fputc(FILE *fp, int c)
+escaped_putc(html_instance *html, int c)
 {
 	switch (c) {
 	case '<':
-		fputs("&lt;", fp);
+		puts ("&lt;");
 		break;
 
 	case '>':
-		fputs("&gt;", fp);
+		puts ("&gt;");
 		break;
 
 	case '&':
-		fputs("&amp;", fp);
+		puts ("&amp;");
 		break;
 
 	default:
-		putc(c, fp);
+		putc (c);
 		break;
 	}
 }
 
 static void
-escaped_fputs(FILE *fp, char *s)
+escaped_puts(html_instance *html, char *s)
 {
 	while (*s)
-		escaped_fputc(fp, *s++);
+		escaped_putc(html, *s++);
 }
 
 static const char *html_underline[]	= { "</u>", "<u>" };
@@ -215,27 +252,30 @@ static void
 title(html_instance *html, vbi_page *pg)
 {
 	if (pg->pgno < 0x100) {
-		fprintf(html->fp, "<title lang=\"en\">");
+		puts ("title lang=\"en\">");
 	} else {
 		/* TRANSLATORS: "lang=\"en\" refers to the page title
 		   "Teletext Page ...". Please specify "de", "fr", "es" etc. */
-		fprintf(html->fp, _("<title lang=\"en\">"));
+		puts (_("<title lang=\"en\">"));
 	}
 
 	if (html->export.network) {
-		escaped_fputs(html->fp, html->export.network);
-		putc(' ', html->fp);
+		escaped_puts (html, html->export.network);
+		putc (' ');
 	}
 
 	if (pg->pgno < 0x100) {
-		fprintf(html->fp, "Closed Caption"); /* no i18n, proper name */
+		/* no i18n, proper name */
+		puts ("Closed Caption");
 	} else if (pg->subno != VBI_ANY_SUBNO) {
-		fprintf(html->fp, _("Teletext Page %3x.%x"), pg->pgno, pg->subno);
+		printf (_("Teletext Page %3x.%x"),
+			pg->pgno, pg->subno);
 	} else {
-		fprintf(html->fp, _("Teletext Page %3x"), pg->pgno);
+		printf (_("Teletext Page %3x"),
+			pg->pgno);
 	}
 
-	fputs("</title>", html->fp);
+	puts ("</title>");
 }
 
 static vbi_bool
@@ -348,9 +388,11 @@ header(html_instance *html, vbi_page *pg)
 		break;
 	}
 
-	if ((html->cd = iconv_open(charset, "UCS-2")) == (iconv_t) -1) {
-		vbi_export_error_printf(&html->export,
-					_("Character conversion Unicode (UCS-2) "
+	html->cd = iconv_open (charset, "UCS-2");
+	if ((iconv_t) -1 == html->cd) {
+		vbi_export_error_printf (&html->export,
+					 _("Character conversion "
+					   "Unicode (UCS-2) "
 					  "to %s not supported."), charset);
 		return FALSE;
 	}
@@ -359,53 +401,54 @@ header(html_instance *html, vbi_page *pg)
 		style *s;
 		int ord;
 
-		fprintf(html->fp,
-			"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\" "
+		printf ("<!DOCTYPE HTML PUBLIC "
+			"\"-//W3C//DTD HTML 4.0 Transitional//EN\" "
 				"\"http://www.w3.org/TR/REC-html40/loose.dtd\">" LF
 			"<html>" LF "<head>" LF
-			"<meta name=\"generator\" lang=\"en\" content=\"%s\">" LF
-			"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\">" LF,
+			"<meta name=\"generator\" "
+			"lang=\"en\" content=\"%s\">" LF
+			"<meta http-equiv=\"Content-Type\" "
+			"content=\"text/html; charset=%s\">" LF,
 			html->export.creator, charset);
 
 		if (html->color) {
-			fputs("<style type=\"text/css\">" LF "<!--" LF, html->fp);
+			puts ("<style type=\"text/css\">" LF
+			      "<!--" LF);
 
 			for (s = html->styles, ord = 1; s; s = s->next)
 				if (s != &html->def && s->ref_count > 1) {
-					fprintf(html->fp, "span.c%d { color:", ord);
-					hash_color(html->fp, pg->color_map[s->foreground]);
-					fputs("; background-color:", html->fp);
-					hash_color(html->fp, pg->color_map[s->background]);
+					printf ("span.c%d { color:", ord);
+					hash_color (html, pg->color_map[s->foreground]);
+					puts ("; background-color:");
+					hash_color (html, pg->color_map[s->background]);
 					if (s->flash)
-						fputs("; text-decoration: blink", html->fp);
-					fputs(" }" LF, html->fp);
+						puts ("; text-decoration: blink");
+					puts (" }" LF);
 					ord++;
 				}
 
-			fputs("//-->" LF "</style>" LF, html->fp);
+			puts ("//-->" LF "</style>" LF);
 		}
 
-		title(html, pg);
+		title (html, pg);
 
-		fputs(LF "</head>" LF "<body ", html->fp);
+		puts (LF "</head>" LF "<body ");
 
 		if (lang && *lang)
-			fprintf(html->fp, "lang=\"%s\" ", lang);
+			printf ("lang=\"%s\" ", lang);
 
 		if (dir && *dir)
-			fprintf(html->fp, "dir=\"%s\" ", dir);
+			printf ("dir=\"%s\" ", dir);
 
-		fputs("text=\"#FFFFFF\" bgcolor=\"", html->fp);
+		puts ("text=\"#FFFFFF\" bgcolor=\"");
 
-		hash_color(html->fp, pg->color_map[pg->screen_color]);
+		hash_color (html, pg->color_map[pg->screen_color]);
 
-		fputs("\">" LF, html->fp);
+		puts ("\">" LF);
 	}
 
-	if (ferror(html->fp)) {
-		vbi_export_write_error(&html->export);
+	if (html->export.write_error)
 		return FALSE;
-	}
 
 	html->foreground	= VBI_WHITE;
 	html->background	= pg->screen_color;
@@ -420,7 +463,7 @@ header(html_instance *html, vbi_page *pg)
 }
 
 static vbi_bool
-export(vbi_export *e, FILE *fp, vbi_page *pgp)
+export(vbi_export *e, vbi_page *pgp)
 {
 	html_instance *html = PARENT(e, html_instance, export);
 	int endian = vbi_ucs2be();
@@ -430,7 +473,7 @@ export(vbi_export *e, FILE *fp, vbi_page *pgp)
 
 	if (endian < 0) {
 		vbi_export_error_printf(&html->export, _("Character conversion failed."));
-		return FALSE;
+		goto failed;
 	}
 
 	pg = *pgp;
@@ -539,12 +582,10 @@ export(vbi_export *e, FILE *fp, vbi_page *pgp)
 		}
 	}
 
-	html->fp = fp;
-
 	if (!header(html, &pg))
-		return FALSE;
+		goto failed;
 
-	fputs("<pre>", html->fp);
+	puts ("<pre>");
 
 	html->underline  = FALSE;
 	html->bold	 = FALSE;
@@ -566,15 +607,15 @@ export(vbi_export *e, FILE *fp, vbi_page *pgp)
 				int ord;
 
 				if (html->italic)
-					fputs(html_italic[0], html->fp);
+					puts (html_italic[0]);
 				if (html->bold)
-					fputs(html_bold[0], html->fp);
+					puts (html_bold[0]);
 				if (html->underline)
-					fputs(html_underline[0], html->fp);
+					puts (html_underline[0]);
 				if (html->span)
-					fputs("</span>", html->fp);
+					puts ("</span>");
 				if (html->link && !acp[j].link) {
-					fputs("</a>", html->fp);
+					puts ("</a>");
 					html->link = FALSE;
 				}
 
@@ -591,7 +632,7 @@ export(vbi_export *e, FILE *fp, vbi_page *pgp)
 					case VBI_LINK_HTTP:
 					case VBI_LINK_FTP:
 					case VBI_LINK_EMAIL:
-						fprintf(html->fp, "<a href=\"%s\">", link.url);
+						printf ("<a href=\"%s\">", link.url);
 						html->link = TRUE;
 
 					default:
@@ -615,7 +656,7 @@ export(vbi_export *e, FILE *fp, vbi_page *pgp)
 							html->foreground = s->foreground;
 							html->background = s->background;
 							html->flash = s->flash;
-							fprintf(html->fp, "<span class=\"c%d\">", ord);
+							printf ("<span class=\"c%d\">", ord);
 						} else {
 							html->foreground = acp[j].foreground;
 							html->background = acp[j].background;
@@ -625,13 +666,13 @@ export(vbi_export *e, FILE *fp, vbi_page *pgp)
 							} else {
 								html->flash = FALSE;
 							}
-							fputs("<span style=\"color:", html->fp);
-							hash_color(html->fp, pg.color_map[html->foreground]);
-							fputs(";background-color:", html->fp);
-							hash_color(html->fp, pg.color_map[html->background]);
+							puts("<span style=\"color:");
+							hash_color(html, pg.color_map[html->foreground]);
+							puts(";background-color:");
+							hash_color(html, pg.color_map[html->background]);
 							if (html->flash)
-								fputs("; text-decoration: blink", html->fp);
-							fputs("\">", html->fp);
+								puts("; text-decoration: blink");
+							puts("\">");
 						}
 						
 						html->span = TRUE;
@@ -646,17 +687,17 @@ export(vbi_export *e, FILE *fp, vbi_page *pgp)
 
 			if (acp[j].underline != html->underline) {
 				html->underline = acp[j].underline;
-				fputs(html_underline[html->underline], html->fp);
+				puts(html_underline[html->underline]);
 			}
 
 			if (acp[j].bold != html->bold) {
 				html->bold = acp[j].bold;
-				fputs(html_bold[html->bold], html->fp);
+				puts(html_bold[html->bold]);
 			}
 
 			if (acp[j].italic != html->italic) {
 				html->italic = acp[j].italic;
-				fputs(html_italic[html->italic], html->fp);
+				puts(html_italic[html->italic]);
 			}
 
 			if (vbi_is_print(acp[j].unicode)) {
@@ -666,58 +707,63 @@ export(vbi_export *e, FILE *fp, vbi_page *pgp)
 				in[0 + endian] = acp[j].unicode;
 				in[1 - endian] = acp[j].unicode >> 8;
 
-				r = iconv (html->cd, (void *) &ip, &li, (void *) &op, &lo);
+				r = iconv (html->cd,
+					   (void *) &ip, &li,
+					   (void *) &op, &lo);
 				if ((size_t) -1 == r
-				    || (out[0] == 0x40 && acp[j].unicode != 0x0040))
-					fprintf(html->fp, "&#%u;", acp[j].unicode);
-				else
-					escaped_fputc(html->fp, out[0]);
+				    || (out[0] == 0x40
+					&& acp[j].unicode != 0x0040)) {
+					printf("&#%u;", acp[j].unicode);
+				} else {
+					escaped_putc(html, out[0]);
+				}
 			} else if (vbi_is_gfx(acp[j].unicode)) {
-				putc(html->gfx_chr, html->fp);
+				putc(html->gfx_chr);
 			} else {
-				putc(0x20, html->fp);
+				putc(0x20);
 			}
 		}
 
-		putc('\n', html->fp);
+		putc('\n');
 	}
 
 	if (html->italic)
-		fputs(html_italic[0], html->fp);
+		puts(html_italic[0]);
 	if (html->bold)
-		fputs(html_bold[0], html->fp);
+		puts(html_bold[0]);
 	if (html->underline)
-		fputs(html_underline[0], html->fp);
+		puts(html_underline[0]);
 	if (html->span)
-		fputs("</span>", html->fp);
+		puts("</span>");
 	if (html->link)
-		fputs("</a>", html->fp);
+		puts("</a>");
 
-	fputs("</pre>", html->fp);
+	puts("</pre>");
 
-	{
-		style *s;
-
-		while ((s = html->styles)) {
-			html->styles = s->next;
-			if (s != &html->def)
-				free(s);
-		}
-	}
+	free_styles (html);
 
 	if (!html->headerless)
-		fputs(LF "</body>" LF "</html>", html->fp);
+		puts(LF "</body>" LF "</html>");
 
-	putc('\n', html->fp);
+	putc('\n');
 
 	iconv_close(html->cd);
+	html->cd = (iconv_t) -1;
 
-	if (ferror(html->fp)) {
-		vbi_export_write_error(e);
-		return FALSE;
-	}
+	if (html->export.write_error)
+		goto failed;
 
 	return TRUE;
+
+ failed:
+	free_styles (html);
+
+	if ((iconv_t) -1 != html->cd) {
+		iconv_close (html->cd);
+		html->cd = (iconv_t) -1;
+	}
+
+	return FALSE;
 }
 
 static vbi_export_info
