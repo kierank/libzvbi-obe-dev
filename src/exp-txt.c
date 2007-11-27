@@ -18,10 +18,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: exp-txt.c,v 1.20 2007/08/27 06:45:17 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.21 2007/11/27 17:42:10 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -98,7 +98,7 @@ iconv_formats[] = {
 };
 
 static const char *
-color_names[] __attribute__ ((unused)) = {
+color_names[] _vbi_attribute ((unused)) = {
 	N_("Black"), N_("Red"), N_("Green"), N_("Yellow"),
 	N_("Blue"), N_("Magenta"), N_("Cyan"), N_("White"),
 	N_("Any")
@@ -594,7 +594,8 @@ print_char(text_instance *text, int endian, vbi_page *pg, vbi_char old, vbi_char
 }
 
 static vbi_bool
-export(vbi_export *e, FILE *fp, vbi_page *pg)
+export				(vbi_export *		e,
+				 vbi_page *		pg)
 {
 	int endian = vbi_ucs2be();
 	text_instance *text = PARENT(e, text_instance, export);
@@ -608,10 +609,16 @@ export(vbi_export *e, FILE *fp, vbi_page *pg)
 	else
 		charset = iconv_formats[text->format];
 
-	if ((text->cd = iconv_open(charset, "UCS-2")) == (iconv_t) -1 || endian < 0) {
+	text->cd = iconv_open (charset, "UCS-2");
+	if ((iconv_t) -1 == text->cd || endian < 0) {
 		vbi_export_error_printf(&text->export,
-			_("Character conversion Unicode (UCS-2) to %s not supported."),
+					_("Character conversion Unicode "
+					  "(UCS-2) to %s not supported."),
 			charset);
+
+		if ((iconv_t) -1 != text->cd)
+			iconv_close (text->cd);
+
 		return FALSE;
 	}
 
@@ -631,9 +638,9 @@ export(vbi_export *e, FILE *fp, vbi_page *pg)
 				iconv_close(text->cd);
 				return FALSE;
 			} else if (n == 1) {
-				fputc(text->buf[0], fp);
+				vbi_export_putc (e, text->buf[0]);
 			} else {
-				fwrite(text->buf, 1, n, fp);
+				vbi_export_write (e, text->buf, n);
 			}
 
 			old = *cp++;
@@ -643,17 +650,18 @@ export(vbi_export *e, FILE *fp, vbi_page *pg)
 
 		if (row >= pg->rows) {
 			if (text->term > 0)
-				fprintf(fp, "\e[m\n"); /* reset */
+				vbi_export_printf (e, "\e[m\n"); /* reset */
 			else
-				fputc('\n', fp);
+				vbi_export_putc (e, '\n');
 			break;
-		} else
-			fputc('\n', fp);
+		} else {
+			vbi_export_putc (e, '\n');
+		}
 	}
 
 	iconv_close(text->cd);
 
-	return !ferror(fp);
+	return !e->write_error;
 }
 
 static vbi_export_info
