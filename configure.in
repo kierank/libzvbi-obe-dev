@@ -23,6 +23,8 @@ AC_PROG_CC
 dnl For header tests only.
 AC_PROG_CXX
 
+LIBS="$LIBS -lm"
+
 dnl Check for BSD/GNU extensions.
 dnl If not present we use replacements.
 AC_CHECK_FUNCS([strndup strlcpy asprintf vasprintf getopt_long \
@@ -31,16 +33,38 @@ AC_CHECK_FUNCS([strndup strlcpy asprintf vasprintf getopt_long \
 dnl sincos() is a GNU extension (a macro, not a function).
 dnl If not present we use a replacement.
 AC_MSG_CHECKING([for sincos])
-AC_COMPILE_IFELSE([
+AC_LINK_IFELSE([
+#include <stdio.h>
 #include <math.h>
 int main (void) {
 double s, c;
-sincos (1.0, &s, &c);
+scanf ("%f", &s);
+sincos (s, &s, &c);
+printf ("%f %f", s, c);
 return 0;
 }
 ],[
   AC_MSG_RESULT([yes])
   AC_DEFINE(HAVE_SINCOS, 1, [Define if the sincos() function is available])
+],[
+  AC_MSG_RESULT([no])
+])
+
+dnl log2() is a GNU extension (a macro, not a function).
+dnl If not present we use a replacement.
+AC_MSG_CHECKING([for log2])
+AC_LINK_IFELSE([
+#include <stdio.h>
+#include <math.h>
+int main (void) {
+double x;
+scanf ("%f", &x);
+printf ("%f", log2 (x));
+return 0;
+}
+],[
+  AC_MSG_RESULT([yes])
+  AC_DEFINE(HAVE_LOG2, 1, [Define if the log2() function is available])
 ],[
   AC_MSG_RESULT([no])
 ])
@@ -53,8 +77,6 @@ AC_C_BIGENDIAN(
   AC_DEFINE(Z_BYTE_ORDER, 1234, [Byte order]))
 
 AC_PROG_LIBTOOL
-
-LIBS="$LIBS -lm"
 
 test -e site_def.h || cat <<EOF >site_def.h
 /* Site specific definitions */

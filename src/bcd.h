@@ -15,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: bcd.h,v 1.15 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: bcd.h,v 1.16 2007/11/27 17:39:36 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -104,7 +104,7 @@ typedef int vbi_subno;
  * @return
  * BCD number.
  */
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_dec2bcd(unsigned int dec)
 {
 	return (dec % 10) + ((dec / 10) % 10) * 16 + ((dec / 100) % 10) * 256;
@@ -122,7 +122,7 @@ vbi_dec2bcd(unsigned int dec)
  * Decimal number. The result is undefined when the bcd number contains
  * hex digits 0xA ... 0xF.
  **/
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_bcd2dec(unsigned int bcd)
 {
 	return (bcd & 15) + ((bcd >> 4) & 15) * 10 + ((bcd >> 8) & 15) * 100;
@@ -142,7 +142,7 @@ vbi_bcd2dec(unsigned int bcd)
  * Packed bcd number. The result is undefined when any of the arguments
  * contain hex digits 0xA ... 0xF.
  */
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_add_bcd(unsigned int a, unsigned int b)
 {
 	unsigned int t;
@@ -166,7 +166,7 @@ vbi_add_bcd(unsigned int a, unsigned int b)
  * @return
  * @c FALSE if @a bcd contains hex digits 0xA ... 0xF.
  */
-vbi_inline vbi_bool
+_vbi_inline vbi_bool
 vbi_is_bcd(unsigned int bcd)
 {
 	static const unsigned int x = 0x06666666;

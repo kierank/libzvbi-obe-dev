@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  *
  *  Description:
@@ -37,6 +37,9 @@
  *
  *
  *  $Log: proxyd.c,v $
+ *  Revision 1.18  2007/11/27 17:39:35  mschimek
+ *  *** empty log message ***
+ *
  *  Revision 1.17  2007/08/27 06:45:24  mschimek
  *  vbi_proxyd_take_service_req, vbi_proxyd_take_message,
  *  vbi_proxyd_take_message: Replaced strncpy() by the faster a safer
@@ -69,7 +72,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxyd.c,v 1.17 2007/08/27 06:45:24 mschimek Exp $";
+static const char rcsid[] = "$Id: proxyd.c,v 1.18 2007/11/27 17:39:35 mschimek Exp $";
 
 #include "config.h"
 

@@ -1,3 +1,116 @@
+2007-11-27    <mschimek@users.sf.net>
+
+	* Release 0.2.26.
+
+2007-11-26    <mschimek@users.sf.net>
+
+	* src/xds_demux.h, src/pfc_demux.h, src/pfc_demux.c,
+	  src/idl_demux.h: Doxumentation fixes.
+
+	* doc/Doxyfile.in (FILE_PATTERNS): Added pfc_demux.h.
+
+	* src/xds_demux.h, src/vt.h, src/vps.h, src/sliced_filter.h,
+	  src/sliced.h, src/sampling_par.h, src/pfc_demux.h,
+	  src/page_table.h, src/misc.h, src/macros.h, src/io-v4l.c,
+	  src/idl_demux.h, src/export.h, src/exp-txt.c, src/exp-gfx.c,
+	  src/dvb_mux.h, src/dvb_demux.h, src/conv.h, src/caption.c, 
+	  src/bit_slicer.h: Use _vbi_attribute macro instead of
+	  __attribute__ so we can safely disable it in libzvbi.h if
+	  there are compiler problems.
+
+	* src/macros.h: Changed the dummy definitions of _vbi_nonnull,
+	  _vbi_format, _vbi_pure and _vbi_alloc because GCC 2.95 aborts
+	  with an error if __attribute__ has no parameters.
+
+	* src/sampling_par.c, src/raw_decoder.c, src/misc.h, src/macros.h,
+	  src/lang.h, src/io-sim.c, src/hamm.h, src/exp-txt.h,
+	  src/exp-gfx.h, src/dvb_mux.c, src/dvb_demux.c, src/decoder.h,
+	  src/bcd.h: Renamed vbi_inline to _vbi_inline (private macro).
+
+	* README, BUGS: Updated.
+
+2007-11-25    <mschimek@users.sf.net>
+
+	* test/sliced2pes.c: Must include unistd.h to declare optarg.
+	* src/export.h, src/misc.h: Include sys/types.h to define
+	  (s)size_t.
+	* src/misc.h: Define SIZE_MAX if not in limits.h because this is
+	  a C99(?) extension. Define __va_copy() if not in stdarg.h
+	  because this is a GNU extension.
+	* src/io-sim.c: Added log2() fallback because this is a GNU
+	  extension.
+	* configure.in: Fixed sincos() check, added log2() check.
+
+2007-11-24    <mschimek@users.sf.net>
+
+	* src/vps.h, src/vps.c, src/teletext.c, src/tables.h,
+	  src/tables.c, src/structpr.pl, src/sliced_filter.h,
+	  src/sliced_filter.c, src/sliced.h, src/sampling_par.h,
+	  src/sampling_par.c, src/raw_decoder.h, src/raw_decoder.c,
+	  src/pfc_demux.h, src/pfc_demux.c, src/page_table.h,
+	  src/page_table.c, src/packet.c, src/lang.h, src/lang.c,
+	  src/io-v4l2k.c, src/io-v4l2.c, src/io-v4l.c,
+	  src/io-sim.h, src/io-sim.c, src/io-bktr.c, src/idl_demux.h,
+	  src/idl_demux.c, src/format.h, src/dvb_mux.h, src/dvb_mux.c, 
+	  src/dvb_demux.h, src/dvb_demux.c, src/decoder.h,
+	  src/decoder.c, src/bit_slicer.h, src/bit_slicer.c: Changed
+	  license from GPLv2 to GPLv2-or-later and updated the FSF
+	  address.
+
+	* test, src, examples, contrib, README:
+	  Updated the FSF address in the copyright notice.
+
+	* NEWS: Added the xpm_support changes.
+
+	Merged in from the xpm_support branch:
+	
+	* test/exp-test.sh: Added for a quick export target test.
+	* test/export.c (do_export): Extended to test vbi_export_mem(),
+	  vbi_export_alloc() and vbi_export_file().
+	(export_pdc, export_link): Replaced stdio by vbi_export output
+	  functions.
+	(usage): Short form of --list changed from -i to -m.
+
+	* src/vbi.c (vbi_decoder_delete): Bug fix: Did not free() the
+	  event handler structures.
+
+	* src/misc.h, src/misc.c (_vbi_shrink_vector_capacity)
+	(_vbi_grow_vector_capacity): New helper functions based on the
+	  page_table.c code for the vbi_export output buffer functions.
+
+	* src/macros.h: Added __attribute__ format macro for
+	  vbi_export_printf().
+
+	* src/exp-txt.c (iconv_formats): Bug fix: Did not free the iconv
+	  structure after the endianess check failed.
+
+	* src/exp-html.c: Bug fix: Did not free the styles list on
+	  error.
+
+	* src/exp-vtx.c	(export), src/exp-txt.c (export),
+	  src/exp-templ.c (export), src/exp-gfx.c (ppm_export),
+	  src/exp-html.c (export): Replaced stdio output by vbi_export
+	  buffer.
+
+	* src/export.h, src/export.c (initialize): New XPM module.
+	(_vbi_export_grow_buffer_space, vbi_export_flush, vbi_export_putc) 
+	(vbi_export_write, vbi_export_puts, vbi_export_puts_iconv) 
+	(vbi_export_puts_iconv_ucs2, vbi_export_vprintf, vbi_export_printf):
+	  New helper functions replacing stdio for export modules.
+	(vbi_export_mem, vbi_export_alloc): New functions to export pages
+	  into memory.
+	(vbi_export_stdio, vbi_export_file): Replaced stdio output by
+	  vbi_export buffer.
+	(_vbi_export_malloc_error): New helper function.
+
+	* src/exp-gfx.c: Tom refactored the PNG code, added an XPM
+	  export module and new transparency and title options to both
+	  modules.
+
+	* src/decoder.h, src/exp-gfx.c: vbi_draw_cc_page_region() and
+	  vbi_draw_vt_page_region() now support a palette
+	  format. Contributed by Tom.
+
 2007-11-13    <mschimek@users.sf.net>
 
 	* src/misc.c (_vbi_vasprintf): Bug fix: Save the va_list parameter

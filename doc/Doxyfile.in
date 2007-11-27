@@ -477,6 +477,7 @@ FILE_PATTERNS          = *.c \
                          io-sim.h \
                          lang.h \
                          macros.h \
+			 pfc_demux.h \
                          proxy-msg.h \
                          proxy-client.h \
                          search.h \

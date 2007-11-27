@@ -1,9 +1,15 @@
-libzvbi 0.2.26
---------------
-The experimental DVB VBI multiplexer was improved and support for
-raw VBI data was added. It is now part of the API. The bit slicer
-was improved to give better results with noisy Closed Caption signals,
-and the capture device simulator can simulate noisy signals.
+libzvbi 0.2.26, 2007-11-27
+--------------------------
+- The experimental DVB VBI multiplexer was improved and support for
+  raw VBI data was added. It is now part of the API.
+- The bit slicer was improved to give better results with noisy
+  Closed Caption signals and the capture device simulator can now
+  simulate noisy signals. Thanks go to Rich Kadel for testing.
+- Tom Zoerner contributed an XPM export module and added support for
+  an 8-bit indexed format to the Teletext page rendering functions.
+  The PNG and PPM modules work a little more efficiently now. Two
+  functions were added to export Teletext and Closed Caption pages
+  into memory instead of an i/o stream or file.
 
 Bug fixes:
 - The V4L2 capture interface did not properly initialize the
@@ -18,6 +24,9 @@ Bug fixes:
   last column.
 - In the vbi_pfc_demux_cb function prototype the second and third
   parameter were swapped. Fix by Tom Zoerner.
+- The vbi_decoder_delete function did not free the event handler list.
+- The text and HTML export modules did not free some internal data on
+  errors.
 
 The test tools were improved:
 - All tools now support a --verbose option for debugging, and --quiet,

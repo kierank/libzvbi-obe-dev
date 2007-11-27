@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  *
  *  Description:
@@ -31,6 +31,9 @@
  *    of environment variables.
  *
  *  $Log: chains.c,v $
+ *  Revision 1.3  2007/11/27 17:39:34  mschimek
+ *  *** empty log message ***
+ *
  *  Revision 1.2  2006/05/22 09:02:43  mschimek
  *  s/vbi_asprintf/asprintf.
  *
@@ -40,7 +43,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: chains.c,v 1.2 2006/05/22 09:02:43 mschimek Exp $";
+static const char rcsid[] = "$Id: chains.c,v 1.3 2007/11/27 17:39:34 mschimek Exp $";
 
 #include "config.h"
 

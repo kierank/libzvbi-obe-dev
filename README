@@ -2,8 +2,8 @@
   libzvbi - VBI decoding library
 
   Copyright (C) 2000-2007 Michael H. Schimek
-  Copyright (C) 2000-2001 Iñaki García Etxebarria
-  Copyright (C) 2003-2004 Tom Zoerner
+  Copyright (C) 2000, 2001 Iñaki García Etxebarria
+  Copyright (C) 2003, 2004, 2007 Tom Zoerner
 	
   Based on AleVT 1.5.1
   Copyright (C) 1998, 1999 Edgar Toernig
@@ -20,7 +20,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
   --------------------------------------------------------------------------
 
@@ -35,7 +35,7 @@
   various test signals, closed captioning, and other digital data can be
   sent during this time period. 
 
-  The zvbi library provides functions to read from Linux V4L, V4L2 and
+  The ZVBI library provides functions to read from Linux V4L, V4L2 and
   FreeBSD BKTR raw VBI capture devices, from Linux DVB devices and from a
   VBI proxy to share V4L and V4L2 VBI devices between multiple applications.
 
@@ -44,24 +44,49 @@
   including Teletext and Closed Caption, a Teletext cache with search
   function, various text export and rendering functions.
 
-  Basically zvbi offers all functions needed by VBI applications except for
+  Basically ZVBI offers all functions needed by VBI applications except for
   the user interface. The library was written for the Zapping TV viewer
   http://zapping.sourceforge.net.
 
   For details on using the library see the documentation in doc/html (built
-  only if you have Doxygen http://www.doxygen.org/) and the files in the
-  test directory.
+  only if you have Doxygen  http://www.doxygen.org/  installed) and the
+  files in the test and examples directories.
+
+
+  Bindings
+  ========
+
+  Tom Zoerner wrote a Perl interface to libzvbi. The ZVBI Perl module covers
+  all exported libzvbi functions. Most of the functions and parameters are
+  exposed nearly identical, or with minor adaptions for the Perl idiom.
+
+  Find out more at  http://search.cpan.org/~TOMZO/Video-ZVBI
+
 
   Download
   ========
 
-  The latest version is available from http://zapping.sourceforge.net.
+  The latest version is available from  http://zapping.sourceforge.net
+  as a tarball and publicly readable CVS.
+
+  Christian Marillat maintains a Debian package:
+  http://packages.debian.org/source/zvbi
+
+  Oliver Lehmann maintains a FreeBSD port:
+  http://www.freebsd.org/cgi/ports.cgi?query=libzvbi
+
+  For RPMs please see the repository of your distribution.
+
+  Sourceforge and Freshmeat can notify you about new releases by e-mail:
+  http://sourceforge.net/project/filemodule_monitor.php?filemodule_id=41356
+  http://freshmeat.net/subscribe/?url=%2Fprojects%2Flibzvbi%2F
+
 
   Installation
   ============
 
-  If you checked out the source from CVS, run "./autogen.sh" to create
-  configuration and make files.
+  If you checked out the sources from CVS, run "./autogen.sh" to create
+  missing configuration and make files.
 
   To build and install type "./configure", "make", "make check" if you
   want to run some tests, and "make install".
@@ -70,6 +95,7 @@
 
   The library has been tested on Linux and FreeBSD.
 
+
   Ideas, questions, patches and bug reports
   =========================================
 
@@ -77,17 +103,30 @@
 
     https://sourceforge.net/tracker/?group_id=2599
 
-  Please leave an e-mail address for questions and progress notification.
+  Please log in or leave an e-mail address for further inquiries and
+  progress notification.
+
+
   Or send a message to the Zapping mailing list:
 
     zapping-misc@lists.sourceforge.net
 
-  Subscribe at:
+  You can subscribe or unsubscribe at:
 
     http://lists.sourceforge.net/lists/listinfo/zapping-misc
 
-  Subscription is not necessary, but the spam checker might delay
-  your messages. Primary author and maintainer of this library is
+  Subscription is not required, but non-member messages may be delayed
+  for spam filtering. This is a low volume list.
 
-    Michael Schimek <mschimek@users.sourceforge.net>
-    Public key: gpg --import <AUTHORS
+  You can browse the list archives at:
+
+    http://sourceforge.net/mailarchive/forum.php?forum_name=zapping-misc
+
+
+  Primary author and maintainer of this library is
+
+    Michael H. Schimek <mschimek@users.sourceforge.net>
+
+  Encrypted e-mail is welcome. You can find my public key in the
+  AUTHORS file, e.g. gpg --import <AUTHORS  Ich spreche deutsch.
+

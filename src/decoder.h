@@ -4,8 +4,9 @@
  *  Copyright (C) 2000, 2001, 2002 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: decoder.h,v 1.9 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: decoder.h,v 1.10 2007/11/27 17:39:37 mschimek Exp $ */
 
 #ifndef DECODER_H
 #define DECODER_H
@@ -136,6 +137,7 @@ typedef enum {
 	VBI_PIXFMT_YVYU,
 	VBI_PIXFMT_UYVY,
 	VBI_PIXFMT_VYUY,
+        VBI_PIXFMT_PAL8,
 	VBI_PIXFMT_RGBA32_LE = 32,
 	VBI_PIXFMT_RGBA32_BE,
 	VBI_PIXFMT_BGRA32_LE,
@@ -287,7 +289,7 @@ extern void		vbi_bit_slicer_init(vbi_bit_slicer *slicer,
  * result from a too weak or noisy signal. Error correction must be
  * implemented at a higher layer.
  */
-vbi_inline vbi_bool
+_vbi_inline vbi_bool
 vbi_bit_slice(vbi_bit_slicer *slicer, uint8_t *raw, uint8_t *buf)
 {
 	return slicer->func(slicer, raw, buf);
