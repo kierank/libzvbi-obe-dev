@@ -18,10 +18,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: vt.h,v 1.10 2007/07/23 20:01:18 mschimek Exp $ */
+/* $Id: vt.h,v 1.11 2007/11/27 17:41:24 mschimek Exp $ */
 
 #ifndef VT_H
 #define VT_H
@@ -134,7 +134,7 @@ typedef struct vt_triplet {
 	unsigned	address : 8;
 	unsigned	mode : 8;
 	unsigned	data : 8;
-} /* __attribute__ ((packed)) */ vt_triplet;
+} /* _vbi_attribute ((packed)) */ vt_triplet;
 
 typedef struct vt_pagenum {
 	unsigned	type : 8;
