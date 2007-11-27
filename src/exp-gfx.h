@@ -19,10 +19,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: exp-gfx.h,v 1.4 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: exp-gfx.h,v 1.5 2007/11/27 17:51:15 mschimek Exp $ */
 
 #ifndef EXP_GFX_H
 #define EXP_GFX_H
@@ -54,7 +54,7 @@ extern void		vbi_draw_vt_page_region(vbi_page *pg, vbi_pixfmt fmt,
  * 
  * Draw a Teletext vbi_page. In this mode one character occupies 12 x 10 pixels.
  */
-vbi_inline void
+_vbi_inline void
 vbi_draw_vt_page(vbi_page *pg, vbi_pixfmt fmt, void *canvas,
 		 int reveal, int flash_on)
 {
@@ -77,7 +77,7 @@ extern void		vbi_draw_cc_page_region(vbi_page *pg, vbi_pixfmt fmt,
  * Draw a Closed Caption vbi_page. In this mode one character occupies
  * 16 x 26 pixels.
  */
-vbi_inline void
+_vbi_inline void
 vbi_draw_cc_page(vbi_page *pg, vbi_pixfmt fmt, void *canvas)
 {
 	vbi_draw_cc_page_region(pg, fmt, canvas, -1, 0, 0, pg->columns, pg->rows);

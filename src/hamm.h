@@ -18,10 +18,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: hamm.h,v 1.11 2007/10/14 14:55:40 mschimek Exp $ */
+/* $Id: hamm.h,v 1.12 2007/11/27 17:51:04 mschimek Exp $ */
 
 #ifndef __ZVBI_HAMM_H__
 #define __ZVBI_HAMM_H__
@@ -55,7 +55,7 @@ extern const int8_t		_vbi_hamm24_inv_par [3][256];
  *
  * @since 0.2.12
  */
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_rev8			(unsigned int		c)
 {
 	return _vbi_bit_reverse[(uint8_t) c];
@@ -71,7 +71,7 @@ vbi_rev8			(unsigned int		c)
  *
  * @since 0.2.12
  */
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_rev16			(unsigned int		c)
 {
 	return _vbi_bit_reverse[(uint8_t) c] * 256
@@ -89,7 +89,7 @@ vbi_rev16			(unsigned int		c)
  *
  * @since 0.2.12
  */
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_rev16p			(const uint8_t *	p)
 {
 	return _vbi_bit_reverse[p[0]] * 256
@@ -105,7 +105,7 @@ vbi_rev16p			(const uint8_t *	p)
  *
  * @since 0.2.12
  */
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_par8			(unsigned int		c)
 {
 	c &= 255;
@@ -125,7 +125,7 @@ vbi_par8			(unsigned int		c)
  *
  * @since 0.2.12
  */
-vbi_inline int
+_vbi_inline int
 vbi_unpar8			(unsigned int		c)
 {
 #ifdef __GNUC__
@@ -167,7 +167,7 @@ vbi_unpar			(uint8_t *		p,
  *
  * @since 0.2.12
  */
-vbi_inline unsigned int
+_vbi_inline unsigned int
 vbi_ham8			(unsigned int		c)
 {
 	return _vbi_hamm8_fwd[c & 15];
@@ -185,7 +185,7 @@ vbi_ham8			(unsigned int		c)
  *
  * @since 0.2.12
  */
-vbi_inline int
+_vbi_inline int
 vbi_unham8			(unsigned int		c)
 {
 	return _vbi_hamm8_inv[(uint8_t) c];
@@ -205,7 +205,7 @@ vbi_unham8			(unsigned int		c)
  *
  * @since 0.2.12
  */
-vbi_inline int
+_vbi_inline int
 vbi_unham16p			(const uint8_t *	p)
 {
 	return ((int) _vbi_hamm8_inv[p[0]])
@@ -214,7 +214,7 @@ vbi_unham16p			(const uint8_t *	p)
 
 extern int
 vbi_unham24p			(const uint8_t *	p)
-  __attribute__ ((_vbi_pure));
+  _vbi_attribute ((_vbi_pure));
 
 /** @} */
 
