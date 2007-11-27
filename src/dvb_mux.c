@@ -4,8 +4,9 @@
  *  Copyright (C) 2004, 2007 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: dvb_mux.c,v 1.13 2007/10/14 14:53:00 mschimek Exp $ */
+/* $Id: dvb_mux.c,v 1.14 2007/11/27 17:51:20 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -512,7 +513,7 @@ insert_sliced_data_units	(uint8_t **		packet,
 	return 0; /* success */
 }
 
-vbi_inline vbi_bool
+_vbi_inline vbi_bool
 fixed_length_format		(unsigned int		data_identifier)
 {
 	/* EN 301 775 section 4.4.2: If the data_identifier has a
@@ -1188,7 +1189,7 @@ samples_pointer			(const uint8_t **	samples,
 	return 0; /* success */
 }
 				 
-vbi_inline void
+_vbi_inline void
 encode_timestamp		(uint8_t *		p,
 				 int64_t		pts,
 				 unsigned int		mark)

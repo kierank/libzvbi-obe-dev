@@ -4,8 +4,9 @@
  *  Copyright (C) 2004, 2006, 2007 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.20 2007/11/13 05:12:04 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.21 2007/11/27 17:51:29 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -117,7 +118,7 @@ struct wrap {
  * If more data is needed the function returns FALSE, and *src_left
  * will be 0.
  */
-vbi_inline vbi_bool
+_vbi_inline vbi_bool
 wrap_around			(struct wrap *		w,
 				 const uint8_t **	dst,
 				 const uint8_t **	scan_end,
@@ -1173,7 +1174,7 @@ extract_data_units		(struct frame *		f,
  * Reset the VBI data unit decoding context at the beginning of a
  * new frame (after extract_data_units() returned -1).
  */
-vbi_inline void
+_vbi_inline void
 reset_frame			(struct frame *		f)
 {
 	f->sp = f->sliced_begin;
@@ -2290,9 +2291,8 @@ demux_ts_packet			(vbi_dvb_demux *	dx,
  * converts them to vbi_sliced format and stores the sliced data at
  * @a sliced.
  *
- * Thou shalt not call this function when you passed a callback to
- * vbi_dvb_pes_demux_new(), for it is wicked and will bring upon thee
- * much howling and gnashing of teeth. Try vbi_dvb_demux_feed() instead.
+ * You must not call this function when you passed a callback function to
+ * vbi_dvb_pes_demux_new(). Call vbi_dvb_demux_feed() instead.
  *
  * @returns
  * When a frame is complete, the function returns the number of elements
