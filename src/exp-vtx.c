@@ -1,7 +1,7 @@
 /*
  *  libzvbi - VTX export function
  *
- *  Copyright (C) 2001 Michael H. Schimek
+ *  Copyright (C) 2001, 2007 Michael H. Schimek
  *
  *  Based on code from AleVT 1.5.1
  *  Copyright (C) 1998, 1999 Edgar Toernig <froese@gmx.de>
@@ -22,10 +22,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: exp-vtx.c,v 1.10 2007/07/23 20:01:17 mschimek Exp $ */
+/* $Id: exp-vtx.c,v 1.11 2007/11/27 18:26:27 mschimek Exp $ */
 
 /*
  *  VTX is the file format used by VideoteXt. It stores Teletext pages in
@@ -68,14 +68,16 @@ struct header {
  */
 
 static vbi_bool
-export(vbi_export *e, FILE *fp, vbi_page *pg)
+export(vbi_export *e, vbi_page *pg)
 {
 	vt_page page, *vtp;
-	struct header h;
+	struct header *h;
+	size_t needed;
 
 	if (pg->pgno < 0x100 || pg->pgno > 0x8FF) {
 		/* TRANSLATORS: Not Closed Caption pages. */
-		vbi_export_error_printf(e, _("Can only export Teletext pages."));
+		vbi_export_error_printf
+			(e, _("Can only export Teletext pages."));
 		return FALSE;
 	}
 
@@ -93,36 +95,38 @@ export(vbi_export *e, FILE *fp, vbi_page *pg)
 
 	if (page.function != PAGE_FUNCTION_UNKNOWN
 	    && page.function != PAGE_FUNCTION_LOP) {
-		vbi_export_error_printf(e, _("Cannot export this page, not displayable."));
+		vbi_export_error_printf
+			(e, _("Cannot export this page, not displayable."));
 		return FALSE;
 	}
 
-	memcpy(h.signature, "VTXV4", 5);
+	needed = sizeof (*h);
+	if (VBI_EXPORT_TARGET_ALLOC == e->target)
+		needed += 40 * 24;
 
-	h.pagenum_l = page.pgno & 0xFF;
-	h.pagenum_h = (page.pgno >> 8) & 15;
+	if (!_vbi_export_grow_buffer_space (e, needed))
+		return FALSE;
 
-	h.hour = 0;
-	h.minute = 0;
+	h = (struct header *)(e->buffer.data + e->buffer.offset);
 
-	h.charset = page.national & 7;
+	memcpy (h->signature, "VTXV4", 5);
 
-	h.wst_flags = page.flags & C4_ERASE_PAGE;
-	h.wst_flags |= vbi_rev8 (page.flags >> 12);
-	h.vtx_flags = (0 << 7) | (0 << 6) | (0 << 5) | (0 << 4) | (0 << 3);
+	h->pagenum_l = page.pgno & 0xFF;
+	h->pagenum_h = (page.pgno >> 8) & 15;
+
+	h->hour = 0;
+	h->minute = 0;
+
+	h->charset = page.national & 7;
+
+	h->wst_flags = page.flags & C4_ERASE_PAGE;
+	h->wst_flags |= vbi_rev8 (page.flags >> 12);
+	h->vtx_flags = (0 << 7) | (0 << 6) | (0 << 5) | (0 << 4) | (0 << 3);
 	/* notfound, pblf (?), hamming error, virtual, seven bits */
 
-	if (fwrite(&h, sizeof(h), 1, fp) != 1)
-		goto write_error;
+	e->buffer.offset += sizeof (*h);
 
-	if (fwrite(page.data.lop.raw, 40 * 24, 1, fp) != 1)
-		goto write_error;
-
-	return TRUE;
-
-write_error:
-	vbi_export_write_error(e);
-	return FALSE;
+	return vbi_export_write (e, page.data.lop.raw, 40 * 24);
 }
 
 static vbi_export_info
