@@ -15,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: xds_demux.h,v 1.8 2007/11/05 19:53:07 mschimek Exp $ */
+/* $Id: xds_demux.h,v 1.9 2007/11/27 17:40:53 mschimek Exp $ */
 
 #ifndef __ZVBI_XDS_DEMUX_H__
 #define __ZVBI_XDS_DEMUX_H__
@@ -149,9 +149,16 @@ typedef struct {
 	uint8_t			buffer[36];
 } vbi_xds_packet;
 
+/** @} */
+
 extern void
 _vbi_xds_packet_dump		(const vbi_xds_packet *	xp,
 				 FILE *			fp);
+
+/**
+ * @addtogroup XDSDemux
+ * @{
+ */
 
 /**
  * @brief XDS demultiplexer.
@@ -192,18 +199,24 @@ vbi_xds_demux_delete		(vbi_xds_demux *	xd);
 extern vbi_xds_demux *
 vbi_xds_demux_new		(vbi_xds_demux_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_alloc));
+  _vbi_attribute ((_vbi_alloc));
+
+/** @} */
 
 /* Private */
 
-/** @internal */
+/**
+ * @internal
+ */
 typedef struct {
 	uint8_t			buffer[32];
 	unsigned int		count;
 	unsigned int		checksum;
 } _vbi_xds_subpacket;
 
-/** @internal */
+/**
+ * @internal
+ */
 struct _vbi_xds_demux {
 	_vbi_xds_subpacket	subpacket[VBI_XDS_MAX_CLASSES]
 					 [VBI_XDS_MAX_SUBCLASSES];
@@ -221,8 +234,6 @@ extern vbi_bool
 _vbi_xds_demux_init		(vbi_xds_demux *	xd,
 				 vbi_xds_demux_cb *	callback,
 				 void *			user_data);
-
-/** @} */
 
 VBI_END_DECLS
 
