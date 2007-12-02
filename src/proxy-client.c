@@ -17,10 +17,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  *
- *  $Id: proxy-client.c,v 1.16 2007/11/27 18:31:06 mschimek Exp $
+ *  $Id: proxy-client.c,v 1.17 2007/12/02 14:41:30 tomzo Exp $
  */
 
-static const char rcsid[] = "$Id: proxy-client.c,v 1.16 2007/11/27 18:31:06 mschimek Exp $";
+static const char rcsid[] = "$Id: proxy-client.c,v 1.17 2007/12/02 14:41:30 tomzo Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -79,7 +79,6 @@ struct vbi_proxy_client
    int                     chn_scanning;
    int                     chn_prio;
    vbi_bool                has_token;
-   int                     ctrl_fd;
 
    vbi_bool                sliced_ind;
    vbi_capture_buffer      raw_buf;
@@ -1429,11 +1428,6 @@ vbi_proxy_client_stop( vbi_capture * vc )
    {
       proxy_client_stop_acq(vpc);
    }
-   if (vpc->ctrl_fd != -1)
-   {
-      close(vpc->ctrl_fd);
-      vpc->ctrl_fd = -1;
-   }
 }
 
 /* document below */
@@ -1506,9 +1500,6 @@ vbi_proxy_client_destroy( vbi_proxy_client * vpc )
       if (vpc->state != CLNT_STATE_NULL)
          proxy_client_stop_acq(vpc);
 
-      if (vpc->ctrl_fd != -1)
-         close(vpc->ctrl_fd);
-
       if (vpc->p_srv_host != NULL)
          free(vpc->p_srv_host);
 
@@ -1559,7 +1550,7 @@ vbi_proxy_client_create( const char *p_dev_name, const char *p_client_name,
       vpc->trace         = trace_level;
 
       vpc->state         = CLNT_STATE_NULL;
-      vpc->ctrl_fd       = -1;
+      vpc->io.sock_fd    = -1;
    }
    else
    {
