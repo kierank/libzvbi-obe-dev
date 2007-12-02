@@ -1,3 +1,8 @@
+2007-12-02    <tomzo@users.sf.net>
+
+	* src/proxy-client.c: Fixed nasty bug: STDIN was closed after
+	  connect failure due to close() on uninitialized sock_fd.
+
 2007-11-27    <mschimek@users.sf.net>
 
 	* Release 0.2.26.
