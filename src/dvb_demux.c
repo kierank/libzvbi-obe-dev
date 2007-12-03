@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: dvb_demux.c,v 1.21 2007/11/27 17:51:29 mschimek Exp $ */
+/* $Id: dvb_demux.c,v 1.22 2007/12/03 02:26:46 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1371,7 +1371,7 @@ decode_timestamp		(vbi_dvb_demux *	dx,
 }
 
 static vbi_bool
-valid_pes_packet_header		(vbi_dvb_demux *	dx,
+valid_vbi_pes_packet_header	(vbi_dvb_demux *	dx,
 				 const uint8_t *	p)
 {
 	unsigned int header_length;
@@ -1664,7 +1664,17 @@ demux_pes_packet		(vbi_dvb_demux *	dx,
 				++p;
 			} else if (PRIVATE_STREAM_1 == p[3]) {
 				break;
-			} else if (p[3] >= 0xBC) {
+			} else if (p[3] < 0xBC) {
+				++p;
+			} else {
+				/* ISO/IEC 13818-1 Table 2-19 stream_id
+				   assignments: 0xBC ... 0xFF. */
+
+				/* XXX We shouldn't take this shortcut
+				   unless we're sure this is a PES packet
+				   header and not some random junk, so we
+				   don't miss any data. */
+
 				packet_length = p[4] * 256 + p[5];
 
 				/* Not a VBI PES packet, skip it. */
@@ -1701,7 +1711,7 @@ demux_pes_packet		(vbi_dvb_demux *	dx,
 		if (packet_length < 178)
 			continue;
 
-		if (!valid_pes_packet_header (dx, p))
+		if (!valid_vbi_pes_packet_header (dx, p))
 			continue;
 
 		/* Habemus packet. Skip all data up to the header,
@@ -1835,7 +1845,7 @@ demux_ts_packet			(vbi_dvb_demux *	dx,
 				if (0)
 					log_block (dx, p, left);
 
-				if (!valid_pes_packet_header (dx, p)) {
+				if (!valid_vbi_pes_packet_header (dx, p)) {
 					/* Discard the data collected
 					   so far. */
 					dx->new_frame = TRUE;
