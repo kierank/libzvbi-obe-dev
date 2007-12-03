@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(zvbi, 0.2.26)
+AC_INIT(zvbi, 0.2.27)
 AC_CONFIG_SRCDIR(src/vbi.c)
 
 AM_INIT_AUTOMAKE([1.9 check-news dist-bzip2])
@@ -67,6 +67,37 @@ return 0;
   AC_DEFINE(HAVE_LOG2, 1, [Define if the log2() function is available])
 ],[
   AC_MSG_RESULT([no])
+])
+
+dnl strerror() is not thread safe and there are different versions
+dnl of strerror_r(). If none of them are present we use a replacement.
+AC_MSG_CHECKING([for strerror_r])
+AC_COMPILE_IFELSE([
+#include <stdlib.h>
+#include <string.h>
+int main (void) {
+return *strerror_r (22, malloc (128), 128);
+}
+],[
+  AC_MSG_RESULT([yes, GNU version])
+  AC_DEFINE(HAVE_GNU_STRERROR_R, 1, [Define to 1 if you have
+	    the GNU version of the strerror_r() function.])
+],[
+  AC_COMPILE_IFELSE([
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+int main (void) {
+printf ("%f", 1.0 + strerror_r (22, malloc (128), 128));
+return 0;
+}
+  ],[
+    AC_MSG_RESULT([yes, SUSV3 version])
+    AC_DEFINE(HAVE_SUSV3_STRERROR_R, 1, [Define to 1 if you have
+	      the SUSV3 version of the strerror_r() function.])
+  ],[
+    AC_MSG_RESULT([no])
+  ])
 ])
 
 dnl __BYTE_ORDER is not portable.
