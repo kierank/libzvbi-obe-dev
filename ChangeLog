@@ -1,3 +1,14 @@
+2007-12-03    <mschimek@users.sf.net>
+
+	* src/dvb_demux.c (demux_pes_packet): Bug fix: Did not skip start
+	  codes with invalid stream_id 0x00 ... 0xBB, looping
+	  forever. Discovered by Tom.
+
+	* test/test-dvb_demux.cc: New regression test for start code bug.
+
+	* configure.in: Bumped version to 0.2.27, incremented .so revision
+	  and added a strerror_r() check.
+
 2007-12-02    <tomzo@users.sf.net>
 
 	* src/proxy-client.c: Fixed nasty bug: STDIN was closed after
