@@ -4,6 +4,7 @@
 	  codes with invalid stream_id 0x00 ... 0xBB, looping
 	  forever. Discovered by Tom.
 
+	* test/Makefile.am: Added test-dvb_demux.cc.
 	* test/test-dvb_demux.cc: New regression test for start code bug.
 
 	* configure.in: Bumped version to 0.2.27, incremented .so revision

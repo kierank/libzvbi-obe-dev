@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: pfc_demux.h,v 1.9 2007/11/27 17:41:12 mschimek Exp $ */
+/* $Id: pfc_demux.h,v 1.10 2007/12/03 02:35:28 mschimek Exp $ */
 
 #ifndef __ZVBI_PFC_DEMUX_H__
 #define __ZVBI_PFC_DEMUX_H__
@@ -82,7 +82,7 @@ typedef struct _vbi_pfc_demux vbi_pfc_demux;
  * @returns
  * FALSE on error, will be returned by vbi_pfc_demux_feed().
  *
- * @bugs
+ * @bug
  * vbi_pfc_demux_feed() returns the @a user_data pointer as second
  * parameter the @a block pointer as third parameter, but prior to
  * version 0.2.26 this function incorrectly defined @a block as
