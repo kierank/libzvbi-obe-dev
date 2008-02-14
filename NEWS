@@ -1,3 +1,10 @@
+libzvbi 0.2.27, 2008-02-14
+--------------------------
+This is a bugfix release.
+
+- The DVB VBI demultiplexer entered an endless loop on some input.
+- The Closed Caption special character conversion did not work.
+
 libzvbi 0.2.26, 2007-11-27
 --------------------------
 - The experimental DVB VBI multiplexer was improved and support for

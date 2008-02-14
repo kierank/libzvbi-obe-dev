@@ -1,7 +1,26 @@
+2008-02-14    <mschimek@users.sf.net>
+
+	* Release 0.2.27.
+
+2008-02-14    <mschimek@users.sf.net>
+
+	* test/test-unicode: New regression test for the Teletext and
+	  Closed Caption to Unicode conversion functions.
+	* test/unicode-out-ref.txt: Reference output of test/unicode for
+	  the test-unicode make check.
+	* test/unicode.c (main): Fixed vbi_caption_unicode() calls. Print
+	  Closed Caption extended characters. Test vbi_caption_unicode()
+	  boundary checks.
+	* test/Makefile.am (TESTS, check_SCRIPTS): Added test-unicode.
+	(EXTRA_DIST): Added unicode-out-ref.txt.
+
+	* src/network-table.h (vbi_cni_table): Updated from TS 101 231
+	  rev. 2008-02.
+
 2008-02-12    <mschimek@users.sf.net>
 
-	* src/lang.c (vbi_caption_unicode): Bug fix: Did not correctly
-	  convert special characters.
+	* src/lang.c (vbi_caption_unicode): Bug fix: Did not convert
+	  special characters.
 
 2007-12-03    <mschimek@users.sf.net>
 

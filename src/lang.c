@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: lang.c,v 1.12 2008/02/12 17:07:05 mschimek Exp $ */
+/* $Id: lang.c,v 1.13 2008/02/14 21:48:48 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -850,20 +850,24 @@ vbi_caption_unicode		(unsigned int		c,
 {
 	to_upper = !!to_upper;
 
+	/* Note the comparisons are sorted for shortest path. */
 	if (likely (c < 0x80)) {
 		if (likely (c >= 0x20)) {
 			return caption[c - 0x20][to_upper];
 		}
 	} else {
-		c &= ~0x0800;
+		c &= ~0x0800; /* ignore channel bit */
 
 		if (c < 0x1240) {
 			if (c < 0x1140 && c >= 0x1130) {
+				/* 001 c001  011 xxxx */
 				return caption_special[c - 0x1130][to_upper];
 			} else if (c >= 0x1220) {
+				/* 001 c010  01x xxxx */
 				return caption_extended2[c - 0x1220][to_upper];
 			}
 		} else if (c < 0x1340 && c >= 0x1320) {
+			/* 001 c011  01x xxxx */
 			return caption_extended3[c - 0x1320][to_upper];
 		}
 	}

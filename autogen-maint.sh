@@ -131,6 +131,10 @@ export CXXFLAGS=`echo $CFLAGS | sed \
  -e s/-Wnonnull// \
 `
 
+# autopoint extracts the gettext files from an ad-hoc CVS repository.
+export CVS_SIGN_COMMITS=off
+export CVS_VERIFY_CHECKOUTS=off
+
 ./autogen.sh $@ \
   $AUTOGENOPTS \
   PATH="$PATH" \
