@@ -4,18 +4,17 @@ TESTS = \
 	cpptest \
 	exoptest \
 	hamm \
-	test-dvb_demux \
-	test-dvb_mux \
 	test-raw_decoder \
+	test-dvb_mux \
+	test-unicode \
 	test-vps
 
 check_PROGRAMS = \
 	cpptest \
 	explist \
 	hamm \
-	test-dvb_demux \
-	test-dvb_mux \
-	test-raw_decoder
+	test-raw_decoder \
+	test-dvb_mux
 
 cpptest_SOURCES = cpptest.cc
 
@@ -31,8 +30,11 @@ test_raw_decoder_SOURCES = \
 	test-raw_decoder.cc \
 	test-common.cc test-common.h
 
+test-unicode: unicode
+
 check_SCRIPTS = \
-	exoptest
+	exoptest \
+	test-unicode
 
 if ENABLE_PROXY
 proxy_programs = proxy-test
@@ -90,8 +92,12 @@ noinst_SCRIPTS = \
 
 EXTRA_DIST = \
 	README \
-	exoptest \
-	uclist
+	$(noinst_SCRIPTS) \
+	$(check_SCRIPTS) \
+	unicode-out-ref.txt
+
+CLEANFILES = \
+	unicode-out.txt
 
 AM_CFLAGS = \
 	-I$(top_srcdir) \
