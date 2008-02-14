@@ -1,7 +1,7 @@
 # English translations for zvbi package.
-# Copyright (C) 2007 Your name here
+# Copyright (C) 2008 Your name here
 # This file is distributed under the same license as the zvbi package.
-# Automatically generated, 2007.
+# Automatically generated, 2008.
 #
 # All this catalog "translates" are quotation characters.
 # The msgids must be ASCII and therefore cannot contain real quotation
@@ -27,10 +27,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: zvbi 0.2.26\n"
+"Project-Id-Version: zvbi 0.2.27\n"
 "Report-Msgid-Bugs-To: mschimek@users.sf.net\n"
-"POT-Creation-Date: 2007-11-27 19:34+0100\n"
-"PO-Revision-Date: 2007-11-27 19:34+0100\n"
+"POT-Creation-Date: 2008-02-12 19:30+0100\n"
+"PO-Revision-Date: 2008-02-12 19:30+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -365,8 +365,8 @@ msgstr "BKTR driver"
 #: src/io-bktr.c:203 src/io-bktr.c:284 src/io-bktr.c:302 src/io-v4l.c:163
 #: src/io-v4l.c:1132 src/io-v4l.c:1170 src/io-v4l.c:1198 src/io-v4l2.c:114
 #: src/io-v4l2k.c:230 src/io-v4l2k.c:604 src/io-v4l2k.c:1193
-#: src/io-v4l2k.c:1327 src/io-v4l2k.c:1355 src/proxy-client.c:200
-#: src/proxy-client.c:1566
+#: src/io-v4l2k.c:1327 src/io-v4l2k.c:1355 src/proxy-client.c:199
+#: src/proxy-client.c:1557
 msgid "Virtual memory exhausted."
 msgstr "Virtual memory exhausted."
 
@@ -551,32 +551,32 @@ msgstr ""
 "%s (%s) lacks a vbi read interface, possibly an output only device or a "
 "driver bug."
 
-#: src/proxy-client.c:152
+#: src/proxy-client.c:151
 msgid "Server hostname not configured."
 msgstr "Server hostname not configured."
 
-#: src/proxy-client.c:154
+#: src/proxy-client.c:153
 msgid "Server port not configured."
 msgstr "Server port not configured."
 
-#: src/proxy-client.c:423
+#: src/proxy-client.c:422
 msgid "Protocol error (unexpected message)."
 msgstr "Protocol error (unexpected message)."
 
-#: src/proxy-client.c:584 src/proxy-client.c:636
+#: src/proxy-client.c:583 src/proxy-client.c:635
 msgid "Connection lost due to I/O error."
 msgstr "Connection lost due to I/O error."
 
-#: src/proxy-client.c:757
+#: src/proxy-client.c:756
 #, c-format
 msgid "Incompatible server version %u.%u.%u."
 msgstr "Incompatible server version %u.%u.%u."
 
-#: src/proxy-client.c:765
+#: src/proxy-client.c:764
 msgid "Incompatible server architecture (endianess mismatch)."
 msgstr "Incompatible server architecture (endianess mismatch)."
 
-#: src/proxy-client.c:1878 src/proxy-client.c:1926
+#: src/proxy-client.c:1869 src/proxy-client.c:1917
 msgid "Proxy client interface not compiled."
 msgstr "Proxy client interface not compiled."
 

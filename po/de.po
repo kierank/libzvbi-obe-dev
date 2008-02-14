@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.2\n"
 "Report-Msgid-Bugs-To: mschimek@users.sf.net\n"
-"POT-Creation-Date: 2007-11-27 19:34+0100\n"
+"POT-Creation-Date: 2008-02-12 19:30+0100\n"
 "PO-Revision-Date: 2007-11-27 18:33+0100\n"
 "Last-Translator: Michael H. Schimek <mschimek@users.sf.net>\n"
 "Language-Team: German <de@li.org>\n"
@@ -343,8 +343,8 @@ msgstr "BKTR Treiber"
 #: src/io-bktr.c:203 src/io-bktr.c:284 src/io-bktr.c:302 src/io-v4l.c:163
 #: src/io-v4l.c:1132 src/io-v4l.c:1170 src/io-v4l.c:1198 src/io-v4l2.c:114
 #: src/io-v4l2k.c:230 src/io-v4l2k.c:604 src/io-v4l2k.c:1193
-#: src/io-v4l2k.c:1327 src/io-v4l2k.c:1355 src/proxy-client.c:200
-#: src/proxy-client.c:1566
+#: src/io-v4l2k.c:1327 src/io-v4l2k.c:1355 src/proxy-client.c:199
+#: src/proxy-client.c:1557
 msgid "Virtual memory exhausted."
 msgstr "Virtueller Speicher erschöpft."
 
@@ -535,32 +535,32 @@ msgstr ""
 "%s (%s) hat keine VBI Leseschnittstelle, möglicherweise ein Ausgabegerät "
 "oder ein Treiber Bug."
 
-#: src/proxy-client.c:152
+#: src/proxy-client.c:151
 msgid "Server hostname not configured."
 msgstr "Server Rechnername nicht konfiguriert."
 
-#: src/proxy-client.c:154
+#: src/proxy-client.c:153
 msgid "Server port not configured."
 msgstr "Server Port nicht konfiguriert."
 
-#: src/proxy-client.c:423
+#: src/proxy-client.c:422
 msgid "Protocol error (unexpected message)."
 msgstr "Protokollfehler (unerwartete Nachricht)."
 
-#: src/proxy-client.c:584 src/proxy-client.c:636
+#: src/proxy-client.c:583 src/proxy-client.c:635
 msgid "Connection lost due to I/O error."
 msgstr "Verbindung getrennt durch I/O Fehler."
 
-#: src/proxy-client.c:757
+#: src/proxy-client.c:756
 #, c-format
 msgid "Incompatible server version %u.%u.%u."
 msgstr "Inkompatible Serverversion %u.%u.%u."
 
-#: src/proxy-client.c:765
+#: src/proxy-client.c:764
 msgid "Incompatible server architecture (endianess mismatch)."
 msgstr "Inkompatible Serverarchitektur."
 
-#: src/proxy-client.c:1878 src/proxy-client.c:1926
+#: src/proxy-client.c:1869 src/proxy-client.c:1917
 msgid "Proxy client interface not compiled."
 msgstr "Proxy-Schnittstelle nicht kompiliert."
 
