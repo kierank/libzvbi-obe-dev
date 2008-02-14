@@ -1,7 +1,7 @@
 /*
  *  libzvbi test
  *
- *  Copyright (C) 2000, 2001 Michael H. Schimek
+ *  Copyright (C) 2000, 2001, 2008 Michael H. Schimek
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,12 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: unicode.c,v 1.9 2007/11/27 18:26:48 mschimek Exp $ */
+/* $Id: unicode.c,v 1.10 2008/02/14 21:48:18 mschimek Exp $ */
+
+#undef NDEBUG
+
+#include <assert.h>
+#include <limits.h>
 
 #include "src/lang.h"
 #include "src/misc.h"
@@ -63,7 +68,6 @@ print_set			(const char *		name,
 	unsigned int i, j;
 
 	putwstr (name);
-	putwchar ('\n');
 	putwchar ('\n');
 
 	for (i = 0; i < 16; ++i) {
@@ -158,9 +162,7 @@ main				(int			argc,
 		putwchar ('\n');
 	}
 
-	putwchar ('\n');
-
-	putwstr ("Teletext composed glyphs\n\n   ");
+	putwstr ("\nTeletext composed glyphs\n\n   ");
 
 	for (i = 0x60; i < 0x80; ++i)
 		putwchar (vbi_teletext_unicode (1, 0, i));
@@ -181,28 +183,69 @@ main				(int			argc,
 		putwchar ('\n');
 	}
 
-	putwchar ('\n');
-
-	putwstr ("EIA 608 Closed Captioning Basic Character Set\n\n");
+	putwstr ("\nEIA 608 Closed Caption Basic Character Set\n\n");
 
 	for (i = 0; i < 8; ++i) {
 		for (j = 0x20; j < 0x80; j += 8) {
-			putwchar (vbi_caption_unicode (j + i, '?'));
+			putwchar (vbi_caption_unicode (j + i, FALSE));
+			putwchar (' ');
+		}
+
+		putwstr ("       ");
+
+		for (j = 0x20; j < 0x80; j += 8) {
+			putwchar (vbi_caption_unicode (j + i, TRUE));
 			putwchar (' ');
 		}
 
 		putwchar ('\n');
 	}
 
+	putwstr ("\n\nEIA 608 Closed Caption "
+		 "Special Characters (0x1130+n)\n\n");
+
+	for (i = 0; i < 16; ++i)
+		putwchar (vbi_caption_unicode (0x1130 + i, FALSE));
+	putwchar ('\n');
+	for (i = 0; i < 16; ++i)
+		putwchar (vbi_caption_unicode (0x1130 + i, TRUE));
+
+	putwstr ("\n\nEIA 608 Closed Caption "
+		 "Extended Characters (0x1220+n)\n\n");
+
+	for (i = 0; i < 32; ++i)
+		putwchar (vbi_caption_unicode (0x1220 + i, FALSE));
+	putwchar ('\n');
+	for (i = 0; i < 32; ++i)
+		putwchar (vbi_caption_unicode (0x1220 + i, TRUE));
+
+	putwstr ("\n\nEIA 608 Closed Caption "
+		 "Extended Characters (0x1320+n)\n\n");
+
+	for (i = 0; i < 32; ++i)
+		putwchar (vbi_caption_unicode (0x1320 + i, FALSE));
+	putwchar ('\n');
+	for (i = 0; i < 32; ++i)
+		putwchar (vbi_caption_unicode (0x1320 + i, TRUE));
+
 	putwchar ('\n');
 
-	putwstr ("EIA 608 Closed Captioning Special Characters\n\n");
+	assert ('a' == vbi_caption_unicode ('a', FALSE));
+	assert ('A' == vbi_caption_unicode ('a', TRUE));
+	assert ('A' == vbi_caption_unicode ('a', -1));
+	assert ('A' == vbi_caption_unicode ('a', INT_MAX));
 
-	for (i = 0; i < 16; ++i) {
-		putwchar (vbi_caption_unicode (i, '?'));
+	for (i = 0; i < 2; ++i) {
+		assert (0 == vbi_caption_unicode (-1, i));
+		assert (0 == vbi_caption_unicode (0x80, i));
+		assert (0 == vbi_caption_unicode (0x1130 - 1, i));
+		assert (0 == vbi_caption_unicode (0x1130 + 16, i));
+		assert (0 == vbi_caption_unicode (0x1220 - 1, i));
+		assert (0 == vbi_caption_unicode (0x1220 + 32, i));
+		assert (0 == vbi_caption_unicode (0x1320 - 1, i));
+		assert (0 == vbi_caption_unicode (0x1320 + 32, i));
+		assert (0 == vbi_caption_unicode (INT_MAX, i));
 	}
-
-	putwchar ('\n');
 
 	exit (EXIT_SUCCESS);
 }
