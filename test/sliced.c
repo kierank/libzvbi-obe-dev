@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: sliced.c,v 1.16 2007/11/27 18:26:48 mschimek Exp $ */
+/* $Id: sliced.c,v 1.17 2008/02/17 13:33:25 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -1590,10 +1590,8 @@ capture_stream_new		(unsigned int		interfaces,
 				      "from a DVB device."));
 		}
 
-		st->cap = vbi_capture_dvb_new (dev_name,
-						system,
-						&services,
-						strict,
+		st->cap = vbi_capture_dvb_new2 (dev_name,
+						ts_pid,
 						&errstr,
 						trace);
 		if (NULL == st->cap) {
@@ -1601,9 +1599,6 @@ capture_stream_new		(unsigned int		interfaces,
 			capture_error_msg ("DVB", errstr);
 		} else {
 			interfaces = INTERFACE_DVB;
-
-			/* XXX error? */
-			vbi_capture_dvb_filter (st->cap, ts_pid);
 		}
 #elif 3 == VBI_VERSION_MINOR
 		ts_pid = ts_pid;
@@ -1722,6 +1717,12 @@ capture_stream_new		(unsigned int		interfaces,
 			no_mem_exit ();
 	} else if (interfaces & INTERFACE_DVB) {
 		assert (N_ELEMENTS (st->sliced) >= 2 * 32);
+
+		/* XXX We should have sampling parameters because
+		   DVB VBI can transmit raw VBI samples.
+		   For now let's just make write_stream_new() happy. */
+		CLEAR (st->sp);
+		st->sp.scanning = 625;
 	}
 
 	st->loop = capture_loop;
