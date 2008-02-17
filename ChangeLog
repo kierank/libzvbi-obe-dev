@@ -1,3 +1,11 @@
+2008-02-17    <mschimek@users.sf.net>
+
+	* test/sliced.c (capture_stream_new): Capturing from a Linux DVB
+	  device didn't work because we opened the buggy old interface
+	  and a sampling format check in test/sliced.c failed.
+
+	* configure.in: Bumped version to 0.2.28, incremented .so revision.
+
 2008-02-14    <mschimek@users.sf.net>
 
 	* Release 0.2.27.
