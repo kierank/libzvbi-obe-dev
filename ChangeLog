@@ -1,5 +1,8 @@
 2008-02-18    <mschimek@users.sf.net>
 
+	* examples/wss.c, examples/rawout.c, examples/network.c:
+	  Changed the license to a 2-clause BSD-style license.
+
 	* src/xds_demux.h, src/xds_demux.c, src/wstfont2.xbm,
 	  src/wss.h, src/wss.c, src/vps.h, src/vps.c, 
 	  src/vbi.c, src/trigger.h, src/trigger.c, src/teletext.c, 
