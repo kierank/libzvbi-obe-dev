@@ -25,7 +25,7 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: wss.c,v 1.10 2008/02/19 00:48:56 mschimek Exp $ */
+/* $Id: wss.c,v 1.11 2008/02/19 00:52:04 mschimek Exp $ */
 
 /* This example shows how to extract Wide Screen Signalling data
    (EN 300 294) from video images. The signal is transmitted on the

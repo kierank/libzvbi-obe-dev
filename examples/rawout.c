@@ -25,7 +25,7 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: rawout.c,v 1.7 2008/02/19 00:48:56 mschimek Exp $ */
+/* $Id: rawout.c,v 1.8 2008/02/19 00:52:04 mschimek Exp $ */
 
 /* This example shows how to convert VBI data in a DVB PES stream
    to raw VBI data.
