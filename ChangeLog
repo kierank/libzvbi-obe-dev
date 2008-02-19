@@ -86,8 +86,8 @@
 	* src/Makefile.am: Added hammgen and hamm-tables.h rule.
 	(BUILT_SOURCES, EXTRA_DIST, libzvbi_la_SOURCES): Added hamm-tables.h.
 
-	* test/export.c: Enabled default character set option with
-	  libzvbi 0.2.
+	* test/export.c: The --default-cs option now works with libzvbi
+	  0.2 as well.
 
 	* m4/autogen.sh: Fixed a typo. 
 

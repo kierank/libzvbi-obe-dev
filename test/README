@@ -124,6 +124,24 @@ capture
 
 	--long options are only available on GNU & compatible systems.
 
+
+	Note you will need another application to tune in a channel,
+	for example v4lctl from the xawtv package or czap/szap/tzap from
+	the dvbutils package:
+
+	v4lctl setstation BBC
+	./capture --device /dev/vbi --sliced | ./export text 100
+
+	tzap BBC # keep it running in another terminal window
+	./capture --device /dev/dvb/adapter0/demux0 --pid 1234 --sliced | \
+	  ./export text 100
+
+	The capture tool cannot automatically determine the PID of the
+	DVB VBI stream. To find it you will need another tool evaluating
+	the service information tables transmitted by the network, or you
+	can look for the PID of the video stream in the tzap config file
+	and try a slightly higher number.
+
 decode
 	Decodes sliced VBI data on stdin, e. g.
 	./capture --sliced | ./decode --ttx

@@ -1,5 +1,22 @@
 libzvbi 0.2.28, 2008-02-19
 --------------------------
+The ZVBI libraries libzvbi and libzvbi-chains are now licensed under
+the terms of the GNU Library General Public License version 2 or
+later. Example programs are licensed under a 2-clause BSD-style
+license. The VBI proxy daemon, contributed programs, test programs
+and programs required to build the library are still licensed under
+GNU General Public License version 2 or later.
+
+Other changes:
+- The VTX export module has been disabled for licensing reasons. It
+  may return after a rewrite.
+- New BCD functions and vbi_ham24p(), counterpart of vbi_unham24p(),
+  were added.
+- The artificial 41st column in Teletext pages is no longer black
+  but continues the previous column if appropriate.
+- The capture test tool did not work with DVB devices.
+- The --default-cs option of the export test tool now works with
+  libzvbi 0.2 as well.
 
 libzvbi 0.2.27, 2008-02-14
 --------------------------
