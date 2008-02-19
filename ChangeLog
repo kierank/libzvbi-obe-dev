@@ -88,9 +88,8 @@
 
 	* m4/autogen.sh: Fixed a typo. 
 
-	* Makefile.am (EXTRA_DIST): Added COPYING-GPL, COPYING-LGPL.
-	* COPYING-LGPL: Added.
-	* COPYING, COPYING-GPL: COPYING renamed to COPYING-GPL.
+	* Makefile.am (EXTRA_DIST): Added COPYING.LIB.
+	* COPYING.LIB: Added.
 	* README: Updated licensing information. Added IRC link.
 
 2008-02-17    <mschimek@users.sf.net>

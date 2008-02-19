@@ -15,14 +15,14 @@
   This library is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  file COPYING-LGPL for more details.
+  file COPYING.LIB for more details.
 
   Software in this package which is not part of the library,
   including code generators, programs in the test and contrib
   directories, and the VBI proxy daemon, are licensed under the
   terms of the GNU General Public License as published by the
   Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version. See the file COPYING-GPL
+  (at your option) any later version. See the file COPYING
   for more details.
 
   Programs in the examples directory are licensed under a 2-clause
