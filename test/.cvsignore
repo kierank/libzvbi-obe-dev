@@ -1,0 +1,16 @@
+.deps
+.libs
+Makefile
+Makefile.in
+caption
+capture
+decode
+explist
+export
+glyph
+osc
+proxy-test
+sliced2pes
+test-vps
+ttxfilter
+unicode

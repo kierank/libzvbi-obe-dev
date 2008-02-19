@@ -1,0 +1,4 @@
+*.stamp
+Makefile
+Makefile.in
+html
