@@ -1,24 +1,25 @@
 /*
- *  libzvbi - BCD arithmetic for Teletext page numbers
+ *  libzvbi -- BCD arithmetic for Teletext page numbers
  *
  *  Copyright (C) 2001, 2002 Michael H. Schimek
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the 
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: bcd.h,v 1.16 2007/11/27 17:39:36 mschimek Exp $ */
+/* $Id: bcd.h,v 1.17 2008/02/19 00:35:14 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -112,6 +113,12 @@ vbi_dec2bcd(unsigned int dec)
 
 /**
  * @ingroup BCD
+ * @since 0.2.28
+ */
+#define vbi_bin2bcd(n) vbi_dec2bcd(n)
+
+/**
+ * @ingroup BCD
  * @param bcd BCD number.
  * 
  * Converts a packed bcd number between 0x000 ... 0xFFF to a two's
@@ -127,6 +134,12 @@ vbi_bcd2dec(unsigned int bcd)
 {
 	return (bcd & 15) + ((bcd >> 4) & 15) * 10 + ((bcd >> 8) & 15) * 100;
 }
+
+/**
+ * @ingroup BCD
+ * @since 0.2.28
+ */
+#define vbi_bcd2bin(n) vbi_bcd2dec(n)
 
 /**
  * @ingroup BCD
@@ -172,6 +185,29 @@ vbi_is_bcd(unsigned int bcd)
 	static const unsigned int x = 0x06666666;
 
 	return (((bcd + x) ^ (bcd ^ x)) & 0x11111110) == 0;
+}
+
+/**
+ * @param bcd Unsigned BCD number.
+ * @param maximum Unsigned maximum value.
+ *
+ * Compares an unsigned packed bcd number digit-wise against a maximum
+ * value, for example 0x295959. @a maximum can contain digits 0x0
+ * ... 0xF.
+ *
+ * @return
+ * @c TRUE if any digit of @a bcd is greater than the
+ * corresponding digit of @a maximum.
+ *
+ * @since 0.2.28
+ */
+_vbi_inline vbi_bool
+vbi_bcd_digits_greater		(unsigned int		bcd,
+				 unsigned int		maximum)
+{
+	maximum ^= ~0;
+
+	return 0 != (((bcd + maximum) ^ bcd ^ maximum) & 0x11111110);
 }
 
 /* Private */

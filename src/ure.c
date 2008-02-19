@@ -7,8 +7,8 @@
  *
  * Modifications by Michael H. Schimek <mschimek@users.sf.net>
  * for libzvbi 0.1: Added character classes :gfx: and :drcs:,
- * commented surrogate expansion and IGNORE_NONSPACING
- * in ure_exec we don't need.
+ * commented out the surrogate expansion and IGNORE_NONSPACING
+ * in ure_exec since we don't need that.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,7 +28,8 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $Id: ure.c,v 1.7 2007/07/23 20:01:18 mschimek Exp $ */
+
+/* $Id: ure.c,v 1.8 2008/02/19 00:35:22 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"

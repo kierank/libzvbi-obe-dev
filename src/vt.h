@@ -1,451 +1,603 @@
 /*
- *  libzvbi - Teletext decoder
+ *  libzvbi -- Teletext decoder internals
  *
- *  Copyright (C) 2000, 2001 Michael H. Schimek
+ *  Copyright (C) 2000, 2001, 2003, 2004, 2008 Michael H. Schimek
  *
- *  Based on code from AleVT 1.5.1
- *  Copyright (C) 1998, 1999 Edgar Toernig <froese@gmx.de>
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
+ *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the 
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vt.h,v 1.11 2007/11/27 17:41:24 mschimek Exp $ */
+/* $Id: vt.h,v 1.12 2008/02/19 00:35:23 mschimek Exp $ */
 
 #ifndef VT_H
 #define VT_H
 
-#include <inttypes.h>
-
-#include "bcd.h"
-#include "format.h"
-
-#ifndef VBI_DECODER
-#define VBI_DECODER
-typedef struct vbi_decoder vbi_decoder;
+#include "version.h"
+#include "bcd.h"		/* vbi_pgno, vbi_subno */
+#if 2 == VBI_VERSION_MINOR
+#  include "lang.h"
+#  define VBI_TTX_CHARSET_CODE_NONE ((vbi_ttx_charset_code) -1)
+typedef unsigned int vbi_ttx_charset_code;
+typedef struct vbi_font_descr vbi_ttx_charset;
+_vbi_inline const vbi_ttx_charset *
+vbi_ttx_charset_from_code	(vbi_ttx_charset_code	code)
+{
+	if (VALID_CHARACTER_SET (code))
+		return vbi_font_descriptors + code;
+	else
+		return NULL;
+}
+#elif 3 == VBI_VERSION_MINOR
+#  include "lang.h"		/* vbi_ttx_charset_code */
+#  include "page.h"		/* vbi_color */
+#else
+#  error VBI_VERSION_MINOR == ?
 #endif
 
 /**
  * @internal
- *
- * Page function code according to ETS 300 706, Section 9.4.2,
- * Table 3: Page function and page coding bits (packets X/28/0 Format 1,
- * X/28/3 and X/28/4).
+ * EN 300 706 Section 9.4.2, Table 3: Page function.
+ * (Packet X/28/0 Format 1, X/28/3 and X/28/4.)
  */
-typedef enum {
-	PAGE_FUNCTION_EPG = -4,		/* libzvbi private */
-	PAGE_FUNCTION_TRIGGER = -3,	/* libzvbi private */
-	PAGE_FUNCTION_DISCARD = -2,	/* libzvbi private */
-	PAGE_FUNCTION_UNKNOWN = -1,	/* libzvbi private */
-	PAGE_FUNCTION_LOP,
-	PAGE_FUNCTION_DATA_BROADCAST,
+enum ttx_page_function {
+	/**
+	 * EN 300 706 annex L, EACEM/ECCA Automatic Channel
+	 * Installation data (libzvbi internal code).
+	 */
+	PAGE_FUNCTION_ACI		= -5,
+
+	/**
+	 * Data broadcasting page coded according to EN 300 708
+	 * clause 4 (Page Format - Clear) containing Electronic
+	 * Programme Guide data according to EN 300 707 (NexTView).
+	 * (Libzvbi internal code.)
+	 */
+	PAGE_FUNCTION_EPG		= -4,
+
+	/**
+	 * Page contains trigger messages defined according to EACEM
+	 * TP 14-99-16 "Data Broadcasting", rev 0.8 (libzvbi internal
+	 * code).
+	 */
+	PAGE_FUNCTION_EACEM_TRIGGER	= -3,
+
+	/** Invalid data (libzvbi internal code). */
+	PAGE_FUNCTION_DISCARD		= -2,
+
+	/** Unknown page function (libzvbi internal code). */
+	PAGE_FUNCTION_UNKNOWN		= -1,
+
+	/** Basic level one page. */
+	PAGE_FUNCTION_LOP		= 0,
+
+	/**
+	 * Data broadcasting page coded according
+	 * to EN 300 708 Section 4 (Page Format - Clear).
+	 */
+	PAGE_FUNCTION_DATA,
+
+	/** Global object definition page. */
 	PAGE_FUNCTION_GPOP,
+
+	/** Normal object definition page. */
 	PAGE_FUNCTION_POP,
+
+	/** Global DRCS downloading page. */
 	PAGE_FUNCTION_GDRCS,
+
+	/** Normal DRCS downloading page. */
 	PAGE_FUNCTION_DRCS,
+
+	/** Magazine Organization Table. */
 	PAGE_FUNCTION_MOT,
+
+	/** Magazine Inventory Page. */
 	PAGE_FUNCTION_MIP,
+
+	/** Basic TOP Table. */
 	PAGE_FUNCTION_BTT,
+
+	/** TOP Additional Information Table. */
 	PAGE_FUNCTION_AIT,
+
+	/** TOP Multi-Page Table. */
 	PAGE_FUNCTION_MPT,
-	PAGE_FUNCTION_MPT_EX
-} page_function;
+
+	/** TOP Multi-Page Extension Table. */
+	PAGE_FUNCTION_MPT_EX,
+
+	/**
+	 * Page contains trigger messages defined according to IEC/PAS
+	 * 62297 Edition 1.0 (2002-01): "Proposal for introducing a
+	 * trigger mechanism into TV transmissions".
+	 *
+	 * Might be the same as PAGE_FUNCTION_EACEM_TRIGGER, but author
+	 * got no copy of IEC/PAS 62297 to verify.
+	 */
+	PAGE_FUNCTION_IEC_TRIGGER
+};
+
+extern const char *
+ttx_page_function_name		(enum ttx_page_function	function);
 
 /**
  * @internal
- * Page coding code according to ETS 300 706, Section 9.4.2,
- * Table 3: Page function and page coding bits (packets X/28/0 Format 1,
- * X/28/3 and X/28/4).
+ * EN 300 706 Section 9.4.2, Table 3: Page coding bits.
+ * (Packet X/28/0 Format 1, X/28/3 and X/28/4.)
  */
-typedef enum {
-	PAGE_CODING_UNKNOWN = -1,	/* libzvbi private */
-	PAGE_CODING_PARITY,
-	PAGE_CODING_BYTES,
+enum ttx_page_coding {
+	/** Unknown coding (libzvbi internal code). */
+	PAGE_CODING_UNKNOWN		= -1,
+
+	/**
+	 * 8 bit bytes with 7 data bits and one odd parity bit
+	 * in the most significant position.
+	 */
+	PAGE_CODING_ODD_PARITY,
+
+	/** 8 bit bytes with 8 data bits. */
+	PAGE_CODING_UBYTES,
+
+	/** Hamming 24/18 coded triplets (struct ttx_triplet). */
 	PAGE_CODING_TRIPLETS,
+
+	/** Hamming 8/4 coded 8 bit bytes. */
 	PAGE_CODING_HAMMING84,
+
+	/** Eight HAMMING84 bytes followed by twelve ODD_PARITY bytes. */
 	PAGE_CODING_AIT,
+
+	/**
+	 * First byte is a Hamming 8/4 coded 4 bit ttx_page_coding
+	 * value describing the remaining 39 bytes.
+	 */
 	PAGE_CODING_META84
-} page_coding;
+};
+
+extern const char *
+ttx_page_coding_name		(enum ttx_page_coding	coding);
 
 /**
  * @internal
- *
- * DRCS character coding according to ETS 300 706, Section 14.2,
- * Table 31: DRCS modes; Section 9.4.6, Table 9: Coding of Packet
+ * Page function coded in TOP BTT links to other TOP pages.
+ * top_page_number() translates these codes to enum ttx_page_function.
+ */
+enum ttx_top_page_function {
+	/** Multi-Page Table. */
+	TOP_PAGE_FUNCTION_MPT		= 1,
+
+	/** Additional Information Table. */
+	TOP_PAGE_FUNCTION_AIT,
+
+	/** Multi-Page Extension Table. */
+	TOP_PAGE_FUNCTION_MPT_EX,
+};
+
+/**
+ * @internal
+ * Page type coded in TOP BTT pages. decode_btt_page() translates
+ * these codes to MIP page type (enum vbi_page_type).
+ */
+enum ttx_btt_page_type {
+	BTT_NO_PAGE			= 0,
+
+	/** Subtitle page. */
+	BTT_SUBTITLE,
+
+	/** Index page, single page. */
+	BTT_PROGR_INDEX_S,
+
+	/**
+	 * Index page, multi-page
+	 * (number of subpages coded in MPT or MPT-EX).
+	 */
+	BTT_PROGR_INDEX_M,
+
+	/** First page of a block, single page. */
+	BTT_BLOCK_S,
+
+	/** First page of a block, multi-page. */
+	BTT_BLOCK_M,
+
+	/** First page of a group, single page. */
+	BTT_GROUP_S,
+
+	/** First page of a group, multi-page. */
+	BTT_GROUP_M,
+
+	/** Normal page, single page. */
+	BTT_NORMAL_S,
+
+	/** Unknown purpose. */
+	BTT_NORMAL_9,
+
+	/** Normal page, multi-page. */
+	BTT_NORMAL_M,
+
+	/** Unknown purpose. */
+	BTT_NORMAL_11,
+
+	/** Unknown purpose. */
+	BTT_12,
+
+	/** Unknown purpose. */
+	BTT_13,
+
+	/** Unknown purpose. */
+	BTT_14,
+
+	/** Unknown purpose. */
+	BTT_15
+};
+
+/**
+ * @internal
+ * EN 300 706 Section 12.3.1, Table 28: Enhancement object type.
+ */
+enum ttx_object_type {
+	/** Depending on context. */
+	LOCAL_ENHANCEMENT_DATA		= 0,
+
+	OBJECT_TYPE_NONE		= 0,
+	OBJECT_TYPE_ACTIVE,
+	OBJECT_TYPE_ADAPTIVE,
+	OBJECT_TYPE_PASSIVE
+};
+
+extern const char *
+ttx_object_type_name		(enum ttx_object_type	type);
+
+/**
+ * @internal
+ * EN 300 706 Section 14.2, Table 31: DRCS modes.
+ * EN 300 706 Section 9.4.6, Table 9: Coding of Packet
  * X/28/3 for DRCS Downloading Pages.
  */
-enum drcs_mode {
-	DRCS_MODE_12_10_1,
+enum ttx_drcs_mode {
+	DRCS_MODE_12_10_1		= 0,
 	DRCS_MODE_12_10_2,
 	DRCS_MODE_12_10_4,
 	DRCS_MODE_6_5_4,
-	DRCS_MODE_SUBSEQUENT_PTU = 14,
+	DRCS_MODE_SUBSEQUENT_PTU	= 14,
 	DRCS_MODE_NO_DATA
 };
 
-/*
-    Only a minority of pages need this
- */
+extern const char *
+ttx_drcs_mode_name		(enum ttx_drcs_mode	mode);
 
-typedef struct {
-	int		black_bg_substitution;
-	int		left_side_panel;
-	int		right_side_panel;
-	int		left_panel_columns;
-} ext_fallback;
+/** @internal */
+#define DRCS_PTUS_PER_PAGE 48
 
-#define VBI_TRANSPARENT_BLACK 8
-
-typedef struct {
-	unsigned int	designations;
-
-	int		char_set[2];		/* primary, secondary */
-
-	int		def_screen_color;
-	int		def_row_color;
-
-	int		foreground_clut;	/* 0, 8, 16, 24 */
-	int		background_clut;
-
-	ext_fallback	fallback;
-
-	uint8_t		drcs_clut[2 + 2 * 4 + 2 * 16];
-						/* f/b, dclut4, dclut16 */
-	vbi_rgba	color_map[40];
-} vt_extension;
-
-/**
- * @internal
- *
- * Packet X/26 code triplet according to ETS 300 706, Section 12.3.1.
- */
-typedef struct vt_triplet {
-	unsigned	address : 8;
-	unsigned	mode : 8;
-	unsigned	data : 8;
-} /* _vbi_attribute ((packed)) */ vt_triplet;
-
-typedef struct vt_pagenum {
-	unsigned	type : 8;
-	unsigned	pgno : 16;
-	unsigned	subno : 16;
-} pagenum;
-
-typedef struct {
-	pagenum	        page;
-	uint8_t		text[12];
-} ait_entry;
-
-typedef vt_triplet enhancement[16 * 13 + 1];
-
+/** @internal */
 #define NO_PAGE(pgno) (((pgno) & 0xFF) == 0xFF)
 
-/*                              0xE03F7F    nat. char. subset and sub-page */
-#define C4_ERASE_PAGE		0x000080 /* erase previously stored packets */
-#define C5_NEWSFLASH		0x004000 /* box and overlay */
-#define C6_SUBTITLE		0x008000 /* box and overlay */
-#define C7_SUPPRESS_HEADER	0x010000 /* row 0 not to be displayed */
-#define C8_UPDATE		0x020000
-#define C9_INTERRUPTED		0x040000
-#define C10_INHIBIT_DISPLAY	0x080000 /* rows 1-24 not to be displayed */
-#define C11_MAGAZINE_SERIAL	0x100000
+/**
+ * @internal
+ * Teletext page link.
+ */
+struct ttx_page_link {
+	/** Function of the target. */
+	enum ttx_page_function		function;
+
+	/**
+	 * Page number of the target. NO_PAGE (pgno) == TRUE when
+	 * this link is unused or broken.
+	 */
+	vbi_pgno			pgno;
+
+	/**
+	 * Subpage number of the target or VBI_NO_SUBNO.
+	 *
+	 * For X/27/4 ... 5 format 1 links (struct ttx_lop.link[])
+	 * this is the set of required subpages (1 << (0 ... 15))
+	 * instead.
+	 */
+	vbi_subno			subno;
+};
+
+extern void
+ttx_page_link_dump		(const struct ttx_page_link *pl,
+				 FILE *			fp);
+
+/* Level one page enhancement. */
 
 /**
  * @internal
- *
- * This structure holds a raw Teletext page as decoded by
- * vbi_teletext_packet(), stored in the Teletext page cache, and
- * formatted by vbi_format_vt_page() creating a vbi_page. It is
- * thus not directly accessible by the client. Note the size
- * (of the union) will vary in order to save cache memory.
- **/
-typedef struct vt_page {
+ * EN 300 706 Section 12.3.1: Packet X/26 code triplet.
+ * Broken triplets have all fields set to -1.
+ */
+struct ttx_triplet {
+	uint8_t				address;
+	uint8_t				mode;
+	uint8_t				data;
+};
+
+/**
+ * @internal
+ * Level one page enhancements triplets (packets X/26).
+ */
+typedef struct ttx_triplet ttx_enhancement[16 * 13 + 1];
+
+/* Level one page extension. */
+
+/**
+ * @internal
+ * EN 300 706 Section 9.4.2.2: X/28/0, X/28/4 and
+ * EN 300 706 Section 10.6.4: MOT POP link fallback flags.
+ */
+struct ttx_ext_fallback {
+	vbi_bool			black_bg_substitution;
+
+	int				left_panel_columns;
+	int				right_panel_columns;
+};
+
+/**
+ * @internal
+ * Index of the "transparent" color in the Level 2.5/3.5 color_map[].
+ */
+#define VBI_TRANSPARENT_BLACK 8
+
+/**
+ * @internal
+ * EN 300 706 Section 9.4.2: Packet X/28.
+ * EN 300 706 Section 9.5: Packet M/29.
+ */
+struct ttx_extension {
 	/**
-	 * Defines the page function and which member of the
-	 * union applies.
+	 * We have data from packets X/28 (in LOP) or M/29 (in magazine)
+	 * with this set of designations. LOP pages without X/28 packets
+	 * should fall back to the magazine defaults unless these bits
+	 * are set. The extension data in struct ttx_magazine is always
+	 * valid, contains global defaults as specified in EN 300 706
+	 * (see _vbi_teletext_decoder_default_magazine()) unless M/29
+	 * packets have been received.
+	 *
+	 * - 1 << 4: color_map[0 ... 15] is valid
+	 * - 1 << 1: drcs_clut[] is valid
+	 * - 1 << 0 or 1 << 4: the remaining fields are valid.
+	 *
+	 * color_map[32 .. 39] is always valid.
+	 */
+	unsigned int			designations;
+
+	/** Primary and secondary character set. */
+	vbi_ttx_charset_code		charset_code[2];
+
+	/** Default colors. */
+	unsigned int			def_screen_color;
+	unsigned int			def_row_color;
+
+	/**
+	 * Adding these values (0, 8, 16, 24) to character color
+	 * 0 ... 7 gives an index into color_map[] below.
 	 */ 
-	page_function		function;
+	unsigned int			foreground_clut;
+	unsigned int			background_clut;
+
+	struct ttx_ext_fallback		fallback;
 
 	/**
-	 * Page and subpage number.
+	 * DRCS color lookup table. Translates (G)DRCS pixel values to
+	 * indices into the color_map[].
+	 *
+	 * - 2 dummy entries (12x10x1 (G)DRCS pixels are interpreted
+	 *     like built-in character pixels, selecting the current
+	 *     foreground or background color).
+	 * - 4 entries for 12x10x2 GDRCS pixel 0 ... 3 to color_map[].
+	 * - 4 more for local DRCS
+	 * - 16 entries for 12x10x4 and 6x5x4 GDRCS pixel 0 ... 15
+	 *	to color_map[].
+	 * - 16 more for local DRCS.
 	 */
-	vbi_pgno		pgno;
-	vbi_subno		subno;
+#if 2 == VBI_VERSION_MINOR
+	/* For compatibility with the drcs_clut pointer in vbi_page. */
+	uint8_t				drcs_clut[2 + 2 * 4 + 2 * 16];
+#elif 3 == VBI_VERSION_MINOR
+	vbi_color			drcs_clut[2 + 2 * 4 + 2 * 16];
+#else
+#  error VBI_VERSION_MINOR == ?
+#endif
 
 	/**
-	 * National character set designator 0 ... 7.
+	 * Five palettes of 8 each colors each.
+	 *
+	 * Level 1.0 and 1.5 pages use only palette #0, Level 2.5 and
+	 * 3.5 pages use palette #0 ... #3.
+	 *
+	 * At Level 2.5 palette #2 and #3 are redefinable, except
+	 * color_map[8] which is "transparent" color
+	 * (VBI_TRANSPARENT_BLACK). At Level 3.5 palette #0 and #1
+	 * are also redefinable.
+	 *
+	 * Palette #4 never changes and contains libzvbi internal
+	 * colors for navigation bars, search text highlighting etc.
+	 * These colors are roughly the same as the default palette #0,
+	 * see vbi_color.
 	 */
-	int			national;
+	vbi_rgba			color_map[40];
+};
 
-	/**
-	 * Page flags C4_ERASE_PAGE ... C11_MAGAZIN_SERIAL.
-	 */
-	int			flags;
-
-	/**
-	 * One bit for each LOP and enhancement packet
-	 */
-	int			lop_lines;
-	int			enh_lines;
-
-	union {
-		struct lop {
-			unsigned char	raw[26][40];
-		        pagenum	        link[6 * 6];		/* X/27/0-5 links */
-			vbi_bool	flof, ext;
-		}		unknown, lop;
-		struct {
-			struct lop	lop;
-			enhancement	enh;
-		}		enh_lop;
-		struct {
-			struct lop	lop;
-			enhancement	enh;
-			vt_extension	ext;
-		}		ext_lop;
-		struct {
-			uint16_t	pointer[96];
-			vt_triplet	triplet[39 * 13 + 1];
-// XXX preset [+1] mode (not 0xFF) or catch
-		}		gpop, pop;
-		struct {
-			uint8_t			raw[26][40];
-			uint8_t			bits[48][12 * 10 / 2];
-			uint8_t			mode[48];
-			uint64_t		invalid;
-		}		gdrcs, drcs;
-
-		ait_entry	ait[46];
-
-	}		data;
-
-	/* 
-	 *  Dynamic size, add no fields below unless
-	 *  vt_page is statically allocated.
-	 */
-} vt_page;
-
-/**
- * @internal
- * @param vtp Teletext page in question.
- * 
- * @return Storage size required for the raw Teletext page,
- * depending on its function and the data union member used.
- **/
-static inline int
-vtp_size(vt_page *vtp)
-{
-	switch (vtp->function) {
-	case PAGE_FUNCTION_UNKNOWN:
-	case PAGE_FUNCTION_LOP:
-		if (vtp->data.lop.ext)
-			return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.ext_lop);
-		else if (vtp->enh_lines)
-			return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.enh_lop);
-		else
-			return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.lop);
-
-	case PAGE_FUNCTION_GPOP:
-	case PAGE_FUNCTION_POP:
-		return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.pop);
-
-	case PAGE_FUNCTION_GDRCS:
-	case PAGE_FUNCTION_DRCS:
-		return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.drcs);
-
-	case PAGE_FUNCTION_AIT:
-		return sizeof(*vtp) - sizeof(vtp->data)	+ sizeof(vtp->data.ait);
-
-	default:
-		;
-	}
-
-	return sizeof(*vtp);
-}
+extern void
+ttx_extension_dump		(const struct ttx_extension *ext,
+				 FILE *			fp);
 
 /**
  * @internal
  *
- * TOP BTT page class.
- */
-typedef enum {
-	BTT_NO_PAGE = 0,
-	BTT_SUBTITLE,
-	BTT_PROGR_INDEX_S,
-	BTT_PROGR_INDEX_M,
-	BTT_BLOCK_S,
-	BTT_BLOCK_M,
-	BTT_GROUP_S,
-	BTT_GROUP_M,
-	BTT_NORMAL_S,
-	BTT_NORMAL_9, /* ? */
-	BTT_NORMAL_M,
-	BTT_NORMAL_11 /* ? */
-	/* 12 ... 15 ? */
-} btt_page_class;
-
-/**
- * @internal
- *
- * Enhancement object type according to ETS 300 706, Section 12.3.1,
- * Table 28: Function of Row Address triplets.
- */
-typedef enum {
-	LOCAL_ENHANCEMENT_DATA = 0,
-	OBJ_TYPE_NONE = 0,
-	OBJ_TYPE_ACTIVE,
-	OBJ_TYPE_ADAPTIVE,
-	OBJ_TYPE_PASSIVE
-} object_type;
-
-/**
- * @internal
+ * EN 300 706 Section 12.3.1, Table 28: Mode 10001, 10101 - Object
+ * invocation, object definition. See also triplet_object_address().
  *
  * MOT default, POP and GPOP object address.
  *
  * n8  n7  n6  n5  n4  n3  n2  n1  n0
  * packet  triplet lsb ----- s1 -----
- *
- * According to ETS 300 706, Section 12.3.1, Table 28
- * (under Mode 10001 - Object Invocation ff.)
  */
-typedef int object_address;
-
-typedef struct {
-	int		pgno;
-	ext_fallback	fallback;
-	struct {
-		object_type	type;
-		object_address	address;
-	}		default_obj[2];
-} vt_pop_link;
-
-typedef struct {
-	vt_extension	extension;
-
-	uint8_t		pop_lut[256];
-	uint8_t		drcs_lut[256];
-
-    	vt_pop_link	pop_link[16];
-	vbi_pgno	drcs_link[16];
-} vt_magazine;
-
-struct raw_page {
-	vt_page			page[1];
-	uint8_t			drcs_mode[48];
-	int			num_triplets;
-	int			ait_page;
-};
-
-/* Public */
+typedef int ttx_object_address;
 
 /**
- * @ingroup HiDec
- * @brief Teletext implementation level.
+ * @internal
+ * Decoded TOP Additional Information Table entry.
  */
-typedef enum {
-	VBI_WST_LEVEL_1,   /**< 1 - Basic Teletext pages */
-	VBI_WST_LEVEL_1p5, /**< 1.5 - Additional national and graphics characters */
+struct ttx_ait_title {
+	struct ttx_page_link		link;
+	uint8_t				text[12];
+};
+
+/* Basic level one page. */
+
+/**
+ * @internal
+ * EN 300 706 Section 9.3.1.3: Control bits (~0xE03F7F),
+ * EN 300 706 Section 15.2: National subset C12-C14,
+ * EN 300 706 Appendix B.6: Transmission rules for enhancement data.
+ */
+enum ttx_flags {
+	C4_ERASE_PAGE			= 0x000080,
+	C5_NEWSFLASH			= 0x004000,
+	C6_SUBTITLE			= 0x008000,
+	C7_SUPPRESS_HEADER		= 0x010000,
+	C8_UPDATE			= 0x020000,
+	C9_INTERRUPTED			= 0x040000,
+	C10_INHIBIT_DISPLAY		= 0x080000,
+	C11_MAGAZINE_SERIAL		= 0x100000,
+	C12_FRAGMENT			= 0x200000,
+	C13_PARTIAL_PAGE		= 0x400000,
+	C14_RESERVED			= 0x800000
+};
+
+/**
+ * @internal
+ * Basic level one page.
+ */
+struct ttx_lop {
+	/** Raw data as received. */
+	uint8_t				raw[26][40];
+
+	/** Packet X/27/0-5 links. */
+	struct ttx_page_link		link[6 * 6];
+
 	/**
-	 * 2.5 - Additional text styles, more colors and DRCS. You should
-	 * enable Level 2.5 only if you can render and/or export such pages.
+	 * Packet X/27 flag (ETR 287 section 10.4):
+	 * Have FLOF navigation, display row 24.
 	 */
-	VBI_WST_LEVEL_2p5,
-	VBI_WST_LEVEL_3p5  /**< 3.5 - Multicolor DRCS, proportional script */
-} vbi_wst_level;
-
-/* Private */
-
-struct teletext {
-	vbi_wst_level		max_level;
-
-	pagenum                 header_page;
-	uint8_t		        header[40];
-
-        pagenum		        initial_page;
-	vt_magazine		magazine[9];		/* 1 ... 8; #0 unmodified level 1.5 default */
-
-	int                     region;
-
-	struct page_info {
-		unsigned 		code : 8;
-		unsigned		language : 8;
-		unsigned 		subcode : 16;
-	}			page_info[0x800];
-
-	/*
-	 *  Property of cache.c in the network context:
-	 *  0: page not cached, 1-3F80: highest subno + 1
-	 */
-	uint16_t		cached[0x800];
-
-	pagenum		        btt_link[15];
-	vbi_bool		top;			/* use top navigation, flof overrides */
-
-	struct raw_page		raw_page[8];
-	struct raw_page		*current;
+	vbi_bool			have_flof;
 };
 
-/* Public */
+/* Magazine defaults. */
 
 /**
- * @addtogroup Service
- * @{
+ * @internal
+ * EN 300 706 Section 10.6.4: MOT object links.
  */
-extern void		vbi_teletext_set_default_region(vbi_decoder *vbi, int default_region);
-extern void		vbi_teletext_set_level(vbi_decoder *vbi, int level);
-/** @} */
+struct ttx_pop_link {
+	vbi_pgno			pgno;
+	struct ttx_ext_fallback		fallback;
+	struct {
+		enum ttx_object_type		type;
+		ttx_object_address		address;
+	}				default_obj[2];
+};
+
 /**
- * @addtogroup Cache
- * @{
+ * @internal
+ * Magazine defaults.
  */
-extern vbi_bool		vbi_fetch_vt_page(vbi_decoder *vbi, vbi_page *pg,
-					  vbi_pgno pgno, vbi_subno subno,
-					  vbi_wst_level max_level, int display_rows,
-					  vbi_bool navigation);
-extern int		vbi_page_title(vbi_decoder *vbi, int pgno, int subno, char *buf);
-/** @} */
+struct ttx_magazine {
+	/** Default extension. */
+	struct ttx_extension		extension;
+
+	/**
+	 * Converts page number to index into pop_link[] for default
+	 * object invocation. Valid range 0 ... 7, -1 if broken.
+	 */
+	int8_t				pop_lut[0x100];
+
+	/**
+	 * Converts page number to index into drcs_link[] for default
+	 * object invocation. Valid range 0 ... 7, -1 if broken.
+	 */
+	int8_t				drcs_lut[0x100];
+
+	/**
+	 * Level 2.5 [0] or 3.5 [1], one global [0] and seven local links
+	 * to POP page. NO_PAGE(pop_link[][].pgno) == TRUE if the link
+	 * is unused or broken.
+	 */
+	struct ttx_pop_link		pop_link[2][8];
+
+	/**
+	 * Level 2.5 [0] or 3.5 [1], one global [0] and seven local links
+	 * to DRCS page. NO_PAGE(drcs_link[][]) == TRUE if the link
+	 * is unused or broken.
+	 */
+	vbi_pgno			drcs_link[2][8];
+};
+
+extern const struct ttx_magazine *
+_vbi_teletext_decoder_default_magazine (void);
+
+/* Network data. */
+
+/** @internal */
+#define SUBCODE_SINGLE_PAGE		0x0000
+/** @internal */
+#define SUBCODE_MULTI_PAGE		0xFFFE
+/** @internal */
+#define SUBCODE_UNKNOWN			0xFFFF
+
 /**
- * @addtogroup Event
- * @{
+ * @internal
+ * Internal teletext page statistics.
  */
-extern void		vbi_resolve_link(vbi_page *pg, int column, int row,
-					 vbi_link *ld);
-extern void		vbi_resolve_home(vbi_page *pg, vbi_link *ld);
-/** @} */
+struct ttx_page_stat {
+	/* Information gathered from MOT, MIP, BTT, G/POP pages. */
 
-/* Private */
+	/** Actually vbi_page_type. */
+	uint8_t				page_type;
 
-/* packet.c */
+	/** Actually vbi_ttx_charset_code, 0xFF if unknown. */
+	uint8_t				charset_code;
 
-extern void		vbi_teletext_init(vbi_decoder *vbi);
-extern void		vbi_teletext_destroy(vbi_decoder *vbi);
-extern vbi_bool		vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p);
-extern void		vbi_teletext_desync(vbi_decoder *vbi);
-extern void             vbi_teletext_channel_switched(vbi_decoder *vbi);
-extern vt_page *	vbi_convert_page(vbi_decoder *vbi, vt_page *vtp,
-					 vbi_bool cached, page_function new_function);
+	/**
+	 * Highest subpage number transmitted according to MOT, MIP, BTT.
+	 * - 0x0000		single page (SUBCODE_SINGLE_PAGE)
+	 * - 0x0002 - 0x0079	multi-page
+	 * - 0x0080 - 0x3F7F	clock page, other pages with non-standard
+	 *			subpages not to be cached
+	 * These codes were not transmitted but generated by libzvbi:
+	 * - 0xFFFE		has 2+ subpages (SUBCODE_MULTI_PAGE)
+	 * - 0xFFFF		unknown (SUBCODE_UNKNOWN)
+	 */
+	uint16_t			subcode;
 
-extern void		vbi_decode_vps(vbi_decoder *vbi, uint8_t *p);
+	/** Last received page ttx_flags (cache_page.flags). */
+	uint32_t			flags;
 
-/* teletext.c */
+	/* Cache statistics. */
 
-extern vbi_bool		vbi_format_vt_page(vbi_decoder *, vbi_page *,
-					   vt_page *, vbi_wst_level max_level,
-					   int display_rows, vbi_bool navigation);
+	/** Subpages cached now and ever. */
+	uint8_t				n_subpages;
+	uint8_t				max_subpages;
 
-#endif
+	/** Subpage numbers actually received (0x00 ... 0x79). */
+	uint8_t				subno_min;
+	uint8_t				subno_max;
+};
+
+#endif /* VT_H */
 
 /*
 Local variables:

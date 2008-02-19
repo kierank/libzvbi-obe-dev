@@ -46,8 +46,16 @@
 #include "proxy-client.h"
 
 #if !defined (__NetBSD__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__)
-#include "videodev.h"
+#include <asm/types.h> /* __u8 and friends */
+#ifndef HAVE_S64_U64
+#  include <inttypes.h>
+  /* Linux 2.6.x asm/types.h defines __s64 and __u64 only
+     if __GNUC__ is defined. */
+typedef int64_t __s64;
+typedef uint64_t __u64;
+#endif
 #include "videodev2k.h"
+#include "videodev.h"
 # define BASE_VIDIOCPRIVATE      192
 # define BTTV_VERSION            _IOR('v' , BASE_VIDIOCPRIVATE+6, int)
 # define BTTV_VBISIZE            _IOR('v' , BASE_VIDIOCPRIVATE+8, int)

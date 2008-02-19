@@ -1,27 +1,25 @@
 /*
  *  libzvbi - Export modules
  *
- *  Copyright (C) 2001, 2002 Michael H. Schimek
+ *  Copyright (C) 2001, 2002, 2007 Michael H. Schimek
  *
- *  Based on code from AleVT 1.5.1
- *  Copyright (C) 1998, 1999 Edgar Toernig <froese@gmx.de>
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
+ *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the 
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: export.c,v 1.28 2007/11/27 18:26:37 mschimek Exp $ */
+/* $Id: export.c,v 1.29 2008/02/19 00:35:15 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -131,7 +129,9 @@ extern vbi_export_class vbi_export_class_png;
 extern vbi_export_class vbi_export_class_html;
 extern vbi_export_class vbi_export_class_tmpl;
 extern vbi_export_class vbi_export_class_text;
+/* Temporarily disabled, see exp-vtx.c.
 extern vbi_export_class vbi_export_class_vtx;
+*/
 
 /* AUTOREG not reliable, sigh. */
 static void
@@ -145,7 +145,9 @@ initialize(void)
 #endif
 		&vbi_export_class_html,
 		&vbi_export_class_text,
+/* Temporarily disabled, see exp-vtx.c.
 		&vbi_export_class_vtx,
+*/
 		NULL,
 		&vbi_export_class_tmpl,
 	};
@@ -938,7 +940,7 @@ vbi_export_option_menu_set(vbi_export *export, const char *keyword,
  *
  * This function increases the capacity of the output buffer in the
  * vbi_export @a e structure to @a e->buffer.offset + min_space or
- * more. In other words, it ensures at least @a min_spaces bytes can
+ * more. In other words, it ensures at least @a min_space bytes can
  * be written into the buffer at @a e->buffer.offset.
  *
  * Note on success this function may change the @a e->buffer.data
@@ -947,8 +949,9 @@ vbi_export_option_menu_set(vbi_export *export, const char *keyword,
  * @returns
  * @c TRUE if the buffer capacity is already sufficient or was
  * successfully increased. @c FALSE if @a e->write_error is @c TRUE
- * or more memory could not be allocated. In this case @a e->buffer
- * remains unmodified.
+ * (a previously called export output function failed) or more memory
+ * could not be allocated. In this case @a e->buffer remains
+ * unmodified.
  */
 vbi_bool
 _vbi_export_grow_buffer_space	(vbi_export *		e,
@@ -1203,10 +1206,10 @@ fast_write			(vbi_export *		e,
  * output buffer. Only export modules and their callback functions
  * (e.g. vbi_export_link_cb) may call this function.
  *
- * If earlier vbi_export output function calls failed, this function
- * does nothing and returns @c FALSE immediately. If @a src_size is
- * large, this function may write the data directly into the target
- * file, with the same effects as vbi_export_flush().
+ * If earlier vbi_export output functions failed, this function
+ * does nothing and returns @c FALSE immediately. If the export target
+ * is a file, the function may call vbi_export_flush() and write
+ * the data directly into the file.
  *
  * @returns
  * @c FALSE if the buffer capacity was insufficent and could not be
@@ -1269,10 +1272,10 @@ vbi_export_write		(vbi_export *		e,
  * and their callback functions (e.g. vbi_export_link_cb) may call this
  * function.
  *
- * If earlier vbi_export output function calls failed, this function
- * does nothing and returns @c FALSE immediately. If the string is
- * very long this function may write the data directly into the target
- * file, with the same effects as vbi_export_flush().
+ * If earlier vbi_export output functions failed, this function
+ * does nothing and returns @c FALSE immediately. If the export target
+ * is a file, the function may call vbi_export_flush() and write
+ * the data directly into the file.
  *
  * @returns
  * @c FALSE if the buffer capacity was insufficent and could not be
@@ -1315,10 +1318,10 @@ vbi_export_puts			(vbi_export *		e,
  * result into the buffer. Only export modules and their callback
  * functions (e.g. vbi_export_link_cb) may call this function.
  *
- * If earlier vbi_export output function calls failed, this function
- * does nothing and returns @c FALSE immediately. If the string is
- * very long this function may write the data directly into the target
- * file, with the same effects as vbi_export_flush().
+ * If earlier vbi_export output functions failed, this function
+ * does nothing and returns @c FALSE immediately. If the export target
+ * is a file, the function may call vbi_export_flush() and write
+ * the data directly into the file.
  *
  * @returns
  * @c FALSE if the conversion failed, if the buffer capacity was
@@ -1381,9 +1384,9 @@ vbi_export_puts_iconv		(vbi_export *		e,
  * functions (e.g. vbi_export_link_cb) may call this function.
  *
  * If earlier vbi_export output functions failed, this function
- * does nothing and returns @c FALSE immediately. If the string is
- * very long this function may write the data directly into the target
- * file, with the same effects as vbi_export_flush().
+ * does nothing and returns @c FALSE immediately. If the export target
+ * is a file, the function may call vbi_export_flush() and write
+ * the data directly into the file.
  *
  * @returns
  * @c FALSE if the conversion failed, if the buffer capacity was
@@ -1428,8 +1431,8 @@ vbi_export_puts_iconv_ucs2	(vbi_export *		e,
  *
  * If earlier vbi_export output functions failed, this function
  * does nothing and returns @c FALSE immediately. If the export target
- * is a file, this function may write the data directly into the file,
- * with the same effects as vbi_export_flush().
+ * is a file, the function may call vbi_export_flush() and write
+ * the data directly into the file.
  *
  * @returns
  * @c FALSE if the buffer capacity was insufficent and could not be
@@ -1525,8 +1528,8 @@ vbi_export_vprintf		(vbi_export *		e,
  *
  * If earlier vbi_export output functions failed, this function
  * does nothing and returns @c FALSE immediately. If the export target
- * is a file, this function may write the data directly into the file,
- * with the same effects as vbi_export_flush().
+ * is a file, the function may call vbi_export_flush() and write
+ * the data directly into the file.
  *
  * @returns
  * @c FALSE if the buffer capacity was insufficent and could not be
@@ -1558,17 +1561,17 @@ vbi_export_printf		(vbi_export *		e,
  * @param buffer_size Size of the output buffer in bytes.
  * @param pg Page to be exported.
  * 
- * This function writes the @a pg contents, converted to the respective
- * export module format, into the @a buffer.
+ * This function writes the @a pg contents, converted to the format
+ * selected with vbi_export_new(), into the @a buffer.
  *
- * You can call this function as many times as you want, it does not
- * change vbi_export state or the vbi_page.
+ * You can call this function repeatedly, it does not change the state
+ * of the vbi_export or vbi_page structure.
  * 
- * @return
+ * @returns
  * On success the function returns the actual number of bytes stored in
  * the buffer. If @a buffer_size is too small it returns the required
- * size. On other errors it returns -1. The buffer contents are undefined
- * when the function failed.
+ * size and the buffer contents are undefined. On other errors it
+ * returns -1 and the buffer contents are undefined.
  *
  * @since 0.2.26
  */
@@ -1632,21 +1635,22 @@ vbi_export_mem			(vbi_export *		e,
 /**
  * @param e Initialized vbi_export object.
  * @param buffer The address of the output buffer will be stored here.
- *    Can be @c NULL.
+ *    @a buffer can be @c NULL.
  * @param buffer_size The amount of data stored in the output buffer,
  *    in bytes, will be stored here. @a buffer_size can be @c NULL.
  * @param pg Page to be exported.
  * 
- * This function writes the @a pg contents, converted to the respective
- * export module format, into a newly allocated buffer. You must free()
- * this buffer when it is no longer needed.
+ * This function writes the @a pg contents, converted to the format
+ * selected with vbi_export_new(), into a newly allocated buffer. You
+ * must free() this buffer when it is no longer needed.
  *
- * You can call this function as many times as you want, it does not
- * change vbi_export state or the vbi_page.
+ * You can call this function repeatedly, it does not change the state
+ * of the vbi_export or vbi_page structure.
  * 
  * @returns
- * @c NULL on failure, and @a buffer and @a buffer_size remain
- * unmodified. The address of the allocated buffer on success.
+ * On success the function returns the address of the allocated buffer.
+ * On failure it returns @c NULL, and @a buffer and @a buffer_size
+ * remain unmodified.
  *
  * @since 0.2.26
  */
@@ -1704,16 +1708,16 @@ vbi_export_alloc		(vbi_export *		e,
  * @param fp Buffered i/o stream to write to.
  * @param pg Page to be exported.
  * 
- * This function writes the @a pg contents, converted to the respective
- * export module format, to the stream @a fp. The caller is responsible for
- * opening and closing the stream, don't forget to check for i/o
- * errors after closing. Note this function may write incomplete files
- * when an error occurs.
+ * This function writes the @a pg contents, converted to the format
+ * selected with the vbi_export_new() function, into the stream @a fp.
+ * The caller is responsible for opening and closing the stream. Don't
+ * forget to check for i/o errors after closing. Note this function
+ * may write incomplete files when an error occurs.
  *
- * You can call this function as many times as you want, it does not
- * change vbi_export state or the vbi_page.
+ * You can call this function repeatedly, it does not change the state
+ * of the vbi_export or vbi_page structure.
  * 
- * @return 
+ * @returns
  * @c FALSE on failure, @c TRUE on success.
  */
 vbi_bool
@@ -1798,12 +1802,12 @@ xopen				(const char *		name,
  * @param name File to be created.
  * @param pg Page to be exported.
  * 
- * Writes the @a pg contents, converted to the respective
- * export format, into a new file of the given @a name. When an error
- * occured after the file was opened, the function deletes the file.
+ * Writes the @a pg contents, converted to the format selected with
+ * vbi_export_new(), into a new file with the given @a name. When an
+ * error occurs after the file was opened, the function deletes the file.
  * 
- * You can call this function as many times as you want, it does not
- * change vbi_export state or the vbi_page.
+ * You can call this function repeatedly, it does not change the state
+ * of the vbi_export or vbi_page structure.
  * 
  * @returns
  * @c FALSE on failure, @c TRUE on success.

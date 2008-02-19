@@ -82,7 +82,7 @@ version_check() {
     if [ "$vc_status" != 0 ]; then
 	printerr "***Error***: You must have $vc_package >= $vc_min_version installed"
 	printerr "  to build $PACKAGE.  Download the appropriate package for"
-	printerr "  from your distribution or get the source tarball at"
+	printerr "  your distribution or get the source tarball at"
         printerr "    $vc_source"
 	printerr
     fi

@@ -1,25 +1,25 @@
 /*
- *  libzvbi - VBI decoding library
+ *  libzvbi -- VBI decoding library
  *
  *  Copyright (C) 2000, 2001, 2002 Michael H. Schimek
  *  Copyright (C) 2000, 2001 Iñaki García Etxebarria
  *
- *  Based on AleVT 1.5.1
- *  Copyright (C) 1998, 1999 Edgar Toernig <froese@gmx.de>
+ *  Originally based on AleVT 1.5.1 by Edgar Toernig
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the 
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  Boston, MA  02110-1301  USA.
  */
 
 /* Generated file, do not edit! */
@@ -29,7 +29,7 @@
 
 #define VBI_VERSION_MAJOR 0
 #define VBI_VERSION_MINOR 2
-#define VBI_VERSION_MICRO 27
+#define VBI_VERSION_MICRO 28
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,8 +42,10 @@ typedef struct vbi_decoder vbi_decoder;
 
 #if __GNUC__ >= 4
 #  define _vbi_sentinel sentinel(0)
+#  define _vbi_deprecated deprecated
 #else
-#  define _vbi_sentinel
+#  define _vbi_sentinel ,
+#  define _vbi_deprecated ,
 #  define __restrict__
 #endif
 
@@ -146,11 +148,15 @@ vbi_dec2bcd(unsigned int dec)
 	return (dec % 10) + ((dec / 10) % 10) * 16 + ((dec / 100) % 10) * 256;
 }
 
+#define vbi_bin2bcd(n) vbi_dec2bcd(n)
+
 _vbi_inline unsigned int
 vbi_bcd2dec(unsigned int bcd)
 {
 	return (bcd & 15) + ((bcd >> 4) & 15) * 10 + ((bcd >> 8) & 15) * 100;
 }
+
+#define vbi_bcd2bin(n) vbi_bcd2dec(n)
 
 _vbi_inline unsigned int
 vbi_add_bcd(unsigned int a, unsigned int b)
@@ -172,6 +178,15 @@ vbi_is_bcd(unsigned int bcd)
 	static const unsigned int x = 0x06666666;
 
 	return (((bcd + x) ^ (bcd ^ x)) & 0x11111110) == 0;
+}
+
+_vbi_inline vbi_bool
+vbi_bcd_digits_greater		(unsigned int		bcd,
+				 unsigned int		maximum)
+{
+	maximum ^= ~0;
+
+	return 0 != (((bcd + maximum) ^ bcd ^ maximum) & 0x11111110);
 }
 
 /* conv.h */
@@ -203,7 +218,7 @@ vbi_strndup_iconv_caption	(const char *		dst_codeset,
 				 long			src_length,
 				 int			repl_char)
   _vbi_attribute ((_vbi_alloc));
-#if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
+#if 3 == VBI_VERSION_MINOR
 extern char *
 vbi_strndup_iconv_teletext	(const char *		dst_codeset,
 				 const vbi_ttx_charset *cs,
@@ -742,13 +757,6 @@ extern char *			vbi_export_errstr(vbi_export *);
 
 
 /* cache.h */
-
-extern void		vbi_unref_page(vbi_page *pg);
-
-extern int		vbi_is_cached(vbi_decoder *, int pgno, int subno);
-extern int		vbi_cache_hi_subno(vbi_decoder *vbi, int pgno);
-
-
 /* search.h */
 
 typedef enum {
@@ -1391,9 +1399,18 @@ extern vbi_capture *	vbi_capture_bktr_new (const char *	dev_name,
 					      char **		errstr,
 					      vbi_bool		trace);
 extern int		vbi_capture_dvb_filter(vbi_capture *cap, int pid);
-extern vbi_capture*	vbi_capture_dvb_new(char *dev, int scanning,
-				        unsigned int *services, int strict,
-				        char **errstr, vbi_bool trace);
+
+/* This function is deprecated. Use vbi_capture_dvb_new2() instead.
+   See io-dvb.c or the Doxygen documentation for details. */
+extern vbi_capture *
+vbi_capture_dvb_new		(char *			dev,
+				 int			scanning,
+				 unsigned int *		services,
+				 int			strict,
+				 char **		errstr,
+				 vbi_bool		trace)
+  __attribute__ ((_vbi_deprecated));
+
 extern int64_t
 vbi_capture_dvb_last_pts	(const vbi_capture *	cap);
 extern vbi_capture *
@@ -1776,6 +1793,9 @@ vbi_unham16p			(const uint8_t *	p)
 	  | (((int) _vbi_hamm8_inv[p[1]]) << 4);
 }
 
+extern void
+vbi_ham24p			(uint8_t *		p,
+				 unsigned int		c);
 extern int
 vbi_unham24p			(const uint8_t *	p)
   _vbi_attribute ((_vbi_pure));
@@ -1788,7 +1808,7 @@ extern vbi_bool		vbi_fetch_cc_page(vbi_decoder *vbi, vbi_page *pg,
 					  vbi_pgno pgno, vbi_bool reset);
 
 
-/* vt.h */
+/* teletext_decoder.h */
 
 typedef enum {
 	VBI_WST_LEVEL_1,   

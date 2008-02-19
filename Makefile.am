@@ -8,6 +8,8 @@ endif
 
 EXTRA_DIST = \
 	BUGS \
+	COPYING-GPL \
+	COPYING-LGPL \
 	config.rpath \
 	depcomp \
 	zvbi.spec.in

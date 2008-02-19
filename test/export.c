@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: export.c,v 1.22 2007/11/27 18:26:09 mschimek Exp $ */
+/* $Id: export.c,v 1.23 2008/02/19 00:35:23 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -50,7 +50,6 @@
 #  define vbi_export_set_timestamp(ex, ts) ((void) 0)
 #  define vbi_export_set_link_cb(ex, cb, ud) ((void) 0)
 #  define vbi_export_set_pdc_cb(ex, cb, ud) ((void) 0)
-typedef unsigned int vbi_ttx_charset_code;
 #elif 3 == VBI_VERSION_MINOR
 #  include "src/misc.h"
 #  include "src/zvbi.h"
@@ -71,6 +70,7 @@ static unsigned int		option_in_ts_pid;
 
 static vbi_bool		option_dcc;
 static unsigned int		option_delay;
+static vbi_bool			have_option_default_cs;
 static vbi_ttx_charset_code	option_default_cs;
 static vbi_ttx_charset_code	option_override_cs;
 static vbi_bool		option_dump_pg;
@@ -253,7 +253,7 @@ do_export			(vbi_pgno		pgno,
 		assert (buffer == buffer2);
 		success = (NULL != buffer);
 		if (success) {
-	fp = open_output_file (pgno, subno);
+			fp = open_output_file (pgno, subno);
 			if (1 != fwrite (buffer, size, 1, fp))
 				write_error_exit (/* msg: errno */ NULL);
 			close_output_file (fp);
@@ -267,7 +267,7 @@ do_export			(vbi_pgno		pgno,
 		   wrote proper unit tests. */
 
 		fp = open_output_file (pgno, subno);
-	success = vbi_export_stdio (ex, fp, &page);
+		success = vbi_export_stdio (ex, fp, &page);
 		close_output_file (fp);
 		break;
 
@@ -347,6 +347,10 @@ init_vbi_decoder		(void)
 	vbi = vbi_decoder_new ();
 	if (NULL == vbi)
 		no_mem_exit ();
+
+	if (have_option_default_cs) {
+		vbi_teletext_set_default_region (vbi, option_default_cs);
+	}
 
 	success = vbi_event_handler_add (vbi,
 					 VBI_EVENT_TTX_PAGE,
@@ -1243,6 +1247,7 @@ main				(int			argc,
 		case 'C':
 			assert (NULL != optarg);
 			option_default_cs = strtoul (optarg, NULL, 0);
+			have_option_default_cs = TRUE;
 			break;
 
 		case 'F':

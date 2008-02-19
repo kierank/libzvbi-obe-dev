@@ -1,21 +1,22 @@
 /*
- *  libzvbi -- dvb driver interface
+ *  libzvbi -- Linux DVB driver interface
  *
- *  (c) 2003 Gerd Knorr <kraxel@bytesex.org> [SUSE Labs]
- *  (c) 2004-2005 Michael H. Schimek (vbi_dvb_demux, new dvb_read)
+ *  (c) 2004, 2005, 2007 Michael H. Schimek
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the 
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  Boston, MA  02110-1301  USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -24,15 +25,8 @@
 
 #ifdef ENABLE_DVB
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
+#include <unistd.h>		/* read() */
 #include <errno.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <inttypes.h>
-
 #include <sys/select.h>
 #include <sys/ioctl.h>
 
@@ -42,67 +36,40 @@
 typedef int64_t __s64;
 typedef uint64_t __u64;
 #endif
-
-#include "dvb/frontend.h"
 #include "dvb/dmx.h"
-#include "hamm.h"
+
 #include "io.h"
-#include "vbi.h"
+#include "vbi.h"		/* vbi_init_once */
 #include "dvb_demux.h"
 
-/* ----------------------------------------------------------------------- */
-
-
 typedef struct {
-    vbi_capture		cap;
-    vbi_dvb_demux *	demux;
-    int 		fd;
-    int     	        debug;
-    vbi_capture_buffer	sliced_buffer;
-    vbi_sliced		sliced_data[128];
-    double		sample_time;
-    uint8_t		pes_buffer[1024*8];
-    const uint8_t *	bp;
-    unsigned int	b_left;
-    int64_t		last_pts;
-    vbi_bool		bug_compatible;
+	vbi_capture		capture;
+
+	int			fd;
+
+	/* FIXME This may be too small? */
+	uint8_t			pes_buffer[1024 * 8];
+	const uint8_t *		bp;
+	unsigned int		b_left;
+
+	vbi_dvb_demux *		demux;
+
+	vbi_capture_buffer	sliced_buffer;
+	vbi_sliced		sliced_data[256];
+	double			sample_time;
+	int64_t			last_pts;
+
+	vbi_bool		do_trace;
+	vbi_bool		bug_compatible;
 } vbi_capture_dvb;
 
-/* ----------------------------------------------------------------------- */
-
-static vbi_capture_dvb* dvb_init(const char *dev, char **errstr, int debug)
-{
-    vbi_capture_dvb *dvb;
-
-    dvb = malloc(sizeof(*dvb));
-    if (NULL == dvb) {
-	asprintf(errstr, _("Virtual memory exhausted."));
-        errno = ENOMEM;
-	return NULL;
-    }
-    CLEAR (*dvb);
-
-    if (!(dvb->demux = vbi_dvb_pes_demux_new (NULL, NULL))) {
-	asprintf(errstr, _("Virtual memory exhausted."));
-	errno = ENOMEM;
-        free (dvb);
-	return NULL;
-    }
-
-    dvb->debug = debug;
-    dvb->fd = open(dev, O_RDONLY | O_NONBLOCK);
-    if (-1 == dvb->fd) {
-	asprintf(errstr, _("Cannot open '%s': %d, %s."),
-		 dev, errno, strerror(errno));
-	free(dvb);
-	return NULL;
-    }
-    if (dvb->debug)
-	fprintf(stderr,"dvb-vbi: opened device %s\n",dev);
-    return dvb;
-}
-
-/* ----------------------------------------------------------------------- */
+#define printv(format, args...)						\
+do {									\
+	if (dvb->do_trace) {						\
+		fprintf (stderr, "libzvbi: " format ,##args);		\
+		fflush (stderr);					\
+	}								\
+} while (0)
 
 static __inline__ void
 timeval_subtract		(struct timeval *	delta,
@@ -223,8 +190,7 @@ select_read			(vbi_capture_dvb *	dvb,
 		}
 
 	case 0: /* EOF? */
-		if (dvb->debug)
-			fprintf (stderr, "dvb-vbi: end of file\n");
+		printv ("End of file\n");
 
 		errno = 0;
 
@@ -243,7 +209,7 @@ dvb_read			(vbi_capture *		cap,
 				 vbi_capture_buffer **	sliced,
 				 const struct timeval *	timeout)
 {
-	vbi_capture_dvb *dvb = PARENT (cap, vbi_capture_dvb, cap);
+	vbi_capture_dvb *dvb = PARENT (cap, vbi_capture_dvb, capture);
 	vbi_capture_buffer *sb;
 	struct timeval start;
 	struct timeval now;
@@ -330,71 +296,158 @@ dvb_read			(vbi_capture *		cap,
 	return 1; /* success */
 }
 
-static vbi_raw_decoder* dvb_parameters(vbi_capture *cap)
+static vbi_raw_decoder *
+dvb_parameters			(vbi_capture *		cap)
 {
-    static vbi_raw_decoder raw = {
-	.count = { 128, 128 },
-    };
+	/* This is kinda silly but we keep it for compatibility
+	   with earlier versions of the library. */
+	static vbi_raw_decoder raw = {
+		.count = { 128, 128 }, /* see dvb_read() */
+	};
 
-    cap = cap;
+	cap = cap; /* unused, no warning please */
 
-    return &raw;
+	return &raw;
 }
 
-static void
-dvb_delete(vbi_capture *cap)
+static unsigned int
+dvb_update_services		(vbi_capture *		cap,
+				 vbi_bool		reset,
+				 vbi_bool		commit,
+				 unsigned int		services,
+				 int			strict,
+				 char **		errstr)
 {
-    vbi_capture_dvb *dvb = PARENT (cap, vbi_capture_dvb, cap);
+	return (VBI_SLICED_TELETEXT_B |
+		VBI_SLICED_VPS |
+		VBI_SLICED_CAPTION_625 |
+		VBI_SLICED_WSS_625);
+}
 
-    if (dvb->fd != -1)
-	close(dvb->fd);
+void
+dvb_flush			(vbi_capture *		cap)
+{
+	vbi_capture_dvb *dvb = PARENT (cap, vbi_capture_dvb, capture);
 
-    vbi_dvb_demux_delete (dvb->demux);
+	vbi_dvb_demux_reset (dvb->demux);
 
-    /* Make unusable. */
-    CLEAR (*dvb);
+	dvb->bp = dvb->pes_buffer;
+	dvb->b_left = 0;
+}
 
-    free(dvb);
+static VBI_CAPTURE_FD_FLAGS
+dvb_get_fd_flags		(vbi_capture *		cap)
+{
+	return (VBI_FD_HAS_SELECT |
+		VBI_FD_IS_DEVICE);
 }
 
 static int
-dvb_fd(vbi_capture *cap)
+dvb_get_fd			(vbi_capture *		cap)
 {
-    vbi_capture_dvb *dvb = PARENT (cap, vbi_capture_dvb, cap);
-    return dvb->fd;
-}
+	vbi_capture_dvb *dvb = PARENT (cap, vbi_capture_dvb, capture);
 
-/* ----------------------------------------------------------------------- */
-/* public interface                                                        */
+	return dvb->fd;
+}
 
 int64_t
 vbi_capture_dvb_last_pts	(const vbi_capture *	cap)
 {
-	const vbi_capture_dvb *dvb = CONST_PARENT (cap, vbi_capture_dvb, cap);
+	const vbi_capture_dvb *dvb =
+		CONST_PARENT (cap, vbi_capture_dvb, capture);
 
 	return dvb->last_pts;
 }
 
-int vbi_capture_dvb_filter(vbi_capture *cap, int pid)
+int
+vbi_capture_dvb_filter		(vbi_capture *		cap,
+				 int			pid)
 {
-    vbi_capture_dvb *dvb = PARENT (cap, vbi_capture_dvb, cap);
-    struct dmx_pes_filter_params filter;
+	vbi_capture_dvb *dvb = PARENT (cap, vbi_capture_dvb, capture);
+	struct dmx_pes_filter_params filter;
 
-    CLEAR (filter);
-    filter.pid = pid;
-    filter.input = DMX_IN_FRONTEND;
-    filter.output = DMX_OUT_TAP;
-    filter.pes_type = DMX_PES_OTHER;
-    filter.flags = DMX_IMMEDIATE_START;
-    if (0 != ioctl(dvb->fd, DMX_SET_PES_FILTER, &filter)) {
-	if (dvb->debug)
-	    perror("ioctl DMX_SET_PES_FILTER");
-	return -1;
-    }
-    if (dvb->debug)
-	fprintf(stderr,"dvb-vbi: filter setup done | fd %d pid %d\n",
-		dvb->fd, pid);
-    return 0;
+	CLEAR (filter);
+
+	filter.pid	= pid;
+	filter.input	= DMX_IN_FRONTEND;
+	filter.output	= DMX_OUT_TAP;
+	filter.pes_type	= DMX_PES_OTHER;
+	filter.flags	= DMX_IMMEDIATE_START;
+
+	if (-1 == ioctl (dvb->fd, DMX_SET_PES_FILTER, &filter))
+		return -1;
+
+	printv ("Capturing PES packets with PID %d\n", pid);
+
+	return 0;
+}
+
+static void
+dvb_delete			(vbi_capture *		cap)
+{
+	vbi_capture_dvb *dvb;
+
+	if (NULL == cap)
+		return;
+
+	dvb = PARENT (cap, vbi_capture_dvb, capture);
+
+	if (-1 != dvb->fd) {
+		/* Error ignored. */
+		device_close (dvb->capture.sys_log_fp, dvb->fd);
+	}
+
+	vbi_dvb_demux_delete (dvb->demux);
+
+	/* Make unusable. */
+	CLEAR (*dvb);
+
+	free (dvb);
+}
+
+static vbi_bool
+open_device			(vbi_capture_dvb *	dvb,
+				 const char *		device_name,
+				 char **		errstr)
+{
+	int saved_errno;
+	struct stat st;
+
+	if (-1 == stat (device_name, &st))
+		goto io_error;
+
+	if (!S_ISCHR (st.st_mode)) {
+		asprintf (errstr, _("%s is not a device."),
+			  device_name);
+		saved_errno = 0;
+		goto failed;
+	}
+
+	/* XXX Can we check if this is really a DVB demux device? */
+
+	dvb->fd = device_open (dvb->capture.sys_log_fp,
+			       device_name,
+			       O_RDONLY | O_NONBLOCK,
+			       /* mode */ 0);
+	if (-1 == dvb->fd)
+		goto io_error;
+
+	return TRUE;
+
+ io_error:
+	saved_errno = errno;
+
+	asprintf (errstr, _("Cannot open '%s': %s."),
+		  device_name, strerror (saved_errno));
+
+	/* fall through */	
+
+ failed:
+	dvb->fd = -1;
+
+	errno = saved_errno;
+
+	return FALSE;
 }
 
 vbi_capture *
@@ -403,68 +456,120 @@ vbi_capture_dvb_new2		(const char *		device_name,
 				 char **		errstr,
 				 vbi_bool		trace)
 {
-    char *error = NULL;
-    vbi_capture_dvb *dvb;
-
-    if (!errstr)
-	    errstr = &error;
-    *errstr = NULL;
-
-    dvb = dvb_init(device_name,errstr,trace);
-    if (NULL == dvb)
-	goto failure;
-
-    dvb->cap.parameters = dvb_parameters;
-    dvb->cap.read       = dvb_read;
-    dvb->cap.get_fd     = dvb_fd;
-    dvb->cap._delete    = dvb_delete;
-
-    if (0 != pid) {
-	if (-1 == vbi_capture_dvb_filter (&dvb->cap, pid)) {
-	    asprintf (errstr, "DMX_SET_PES_FILTER: %s",
-		      strerror (errno));
-	    dvb_delete (&dvb->cap);
-	    goto failure;
-	}
-    }
-
-    if (errstr == &error) {
-	free (error);
-	error = NULL;
-    }
-
-    return &dvb->cap;
-
- failure:
-    if (errstr == &error) {
-	free (error);
-	error = NULL;
-    }
-
-    return NULL;
-}
-
-vbi_capture*
-vbi_capture_dvb_new(char *dev, int scanning,
-		    unsigned int *services, int strict,
-		    char **errstr, vbi_bool trace)
-{
 	char *error = NULL;
-	vbi_capture *cap;
+	int saved_errno;
+	vbi_capture_dvb *dvb;
 
-	scanning = scanning;
-	services = services;
-	strict = strict;
+	pthread_once (&vbi_init_once, vbi_init);
 
-	if (!errstr)
+	if (NULL == errstr)
 		errstr = &error;
 	*errstr = NULL;
 
-	if ((cap = vbi_capture_dvb_new2 (dev, 0, errstr, trace))) {
-		vbi_capture_dvb *dvb = PARENT (cap, vbi_capture_dvb, cap);
-		dvb->bug_compatible = TRUE;
+	dvb = vbi_malloc (sizeof (*dvb));
+	if (NULL == dvb)
+		goto no_memory;
+
+	CLEAR (*dvb);
+
+	dvb->capture.read		= dvb_read;
+	dvb->capture.sampling_point	= NULL;
+	dvb->capture.debug		= NULL;
+	dvb->capture.parameters		= dvb_parameters;
+	dvb->capture.update_services	= dvb_update_services;
+	dvb->capture.get_scanning	= NULL;
+	dvb->capture.flush		= dvb_flush;
+	dvb->capture.get_fd		= dvb_get_fd;
+	dvb->capture.get_fd_flags	= dvb_get_fd_flags;
+	dvb->capture.set_video_path	= NULL;
+	dvb->capture._delete		= dvb_delete;
+
+	dvb->fd = -1;
+
+	dvb->do_trace = trace;
+
+	dvb->demux = vbi_dvb_pes_demux_new (/* callback */ NULL,
+					    /* user_data */ NULL);
+	if (NULL == dvb->demux)
+		goto no_memory;
+
+	if (!open_device (dvb, device_name, errstr)) {
+		saved_errno = errno;
+		goto failed;
 	}
 
+	printv ("Opened device %s\n", device_name);
+
+	if (0 != pid) {
+		if (-1 == vbi_capture_dvb_filter (&dvb->capture, pid)) {
+			saved_errno = errno;
+			asprintf (errstr, _("DMX_SET_PES_FILTER failed: %s."),
+				  strerror (errno));
+			goto failed;
+		}
+	}
+
+	dvb_flush (&dvb->capture);
+
+	if (errstr == &error) {
+		free (error);
+		error = NULL;
+	}
+
+	return &dvb->capture;
+
+ no_memory:
+	asprintf (errstr, _("Virtual memory exhausted."));
+
+	saved_errno = ENOMEM;
+
+	/* fall through */
+
+ failed:
+	if (NULL != dvb) {
+		dvb_delete (&dvb->capture);
+		dvb = NULL;
+	}
+
+	if (errstr == &error) {
+		free (error);
+		error = NULL;
+	}
+
+	errno = saved_errno;
+
+	return NULL;
+}
+
+vbi_capture *
+vbi_capture_dvb_new		(char *			dev,
+				 int			scanning,
+				 unsigned int *		services,
+				 int			strict,
+				 char **		errstr,
+				 vbi_bool		trace)
+{
+	char *error = NULL;
+	vbi_capture *cap;
+	vbi_capture_dvb *dvb;
+
+	scanning = scanning; /* unused, no warning please */
+	services = services;
+	strict = strict;
+
+	if (NULL == errstr)
+		errstr = &error;
+	*errstr = NULL;
+
+	cap = vbi_capture_dvb_new2 (dev, /* pid */ 0, errstr, trace);
+	if (NULL == cap)
+		goto failed;
+
+	dvb = PARENT (cap, vbi_capture_dvb, capture);
+
+	dvb->bug_compatible = TRUE;
+
+ failed:
 	if (errstr == &error) {
 		free (error);
 		error = NULL;
@@ -486,20 +591,22 @@ vbi_capture_dvb_new(char *dev, int scanning,
  * VBI line, not the last packet containing data of that frame.
  *
  * Note timestamps returned by vbi_capture read functions contain
- * the sampling time of the data, that is the time at which the
- * packet containing the first sliced line arrived.
+ * the system time (gettimeofday()) when the packet containing the
+ * first sliced line was captured, not the PTS.
  *
  * @returns
  * Presentation time stamp (33 bits).
  *
- * @bug PTS' should be part of the generic I/O interface.
+ * @bug
+ * The read functions should return the PTS along with
+ * the capture timestamp.
  *
  * @since 0.2.13
  */
 int64_t
 vbi_capture_dvb_last_pts	(const vbi_capture *	cap)
 {
-	cap = cap;
+	cap = cap; /* unused, no warning please */
 
 	return 0;
 }
@@ -508,9 +615,9 @@ vbi_capture_dvb_last_pts	(const vbi_capture *	cap)
  * @param cap Initialized DVB vbi_capture context.
  * @param pid Filter out a stream with this PID.
  *
- * Programs the DVB device transport stream demultiplexer to filter
- * out PES packets with this PID.
- * 
+ * Programs the DVB device transport stream demultiplexer on the
+ * DVB capture device to filter out packets with this PID.
+ *
  * @returns
  * -1 on failure, 0 on success.
  */
@@ -518,7 +625,7 @@ int
 vbi_capture_dvb_filter		(vbi_capture *		cap,
 				 int			pid)
 {
-	cap = cap;
+	cap = cap; /* unused, no warning please */
 	pid = pid;
 
 	return -1;
@@ -545,11 +652,11 @@ vbi_capture_dvb_new2		(const char *		device_name,
 				 char **		errstr,
 				 vbi_bool		trace)
 {
-	device_name = device_name;
+	device_name = device_name; /* unused, no warning please */
 	pid = pid;
 	trace = trace;
 
-	if (errstr)
+	if (NULL != errstr)
 		asprintf (errstr, _("DVB interface not compiled."));
 
 	return NULL;
@@ -585,18 +692,21 @@ vbi_capture_dvb_new2		(const char *		device_name,
  * given unusual PES streams. On error and select timeout older versions
  * invariably print a warning on stderr.
  */
-vbi_capture*
-vbi_capture_dvb_new(char *dev, int scanning,
-		    unsigned int *services, int strict,
-		    char **errstr, vbi_bool trace)
+vbi_capture *
+vbi_capture_dvb_new		(char *			dev,
+				 int			scanning,
+				 unsigned int *		services,
+				 int			strict,
+				 char **		errstr,
+				 vbi_bool		trace)
 {
-	dev = dev;
+	dev = dev; /* unused, no warning please */
 	scanning = scanning;
 	services = services;
 	strict = strict;
 	trace = trace;
 
-	if (errstr)
+	if (NULL != errstr)
 		asprintf (errstr, _("DVB interface not compiled."));
 
 	return NULL;

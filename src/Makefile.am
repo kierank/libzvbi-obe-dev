@@ -5,6 +5,7 @@ SUBDIRS = dvb
 structpr = structpr.pl
 
 BUILT_SOURCES = \
+	hamm-tables.h \
 	libzvbi.h \
 	network-table.h \
 	version.h \
@@ -14,6 +15,7 @@ BUILT_SOURCES = \
 
 EXTRA_DIST = \
 	$(structpr) \
+	hamm-tables.h \
 	network-table.pl \
 	$(BUILT_SOURCES) \
 	wstfont2.xbm \
@@ -60,7 +62,7 @@ lib_LTLIBRARIES = \
 libzvbi_la_SOURCES = \
 	bcd.h \
 	bit_slicer.c bit_slicer.h \
-	cache.c cache.h \
+	cache.c cache.h cache-priv.h dlist.h \
 	caption.c cc.h \
 	conv.c conv.h \
 	dvb.h \
@@ -71,7 +73,7 @@ libzvbi_la_SOURCES = \
 	exp-txt.c exp-txt.h \
 	exp-vtx.c \
 	export.c export.h format.h \
-	hamm.c hamm.h \
+	hamm.c hamm.h hamm-tables.h \
 	idl_demux.c idl_demux.h \
 	intl-priv.h \
 	io.c io.h \
@@ -84,7 +86,7 @@ libzvbi_la_SOURCES = \
 	lang.c lang.h \
 	macros.h \
 	misc.c misc.h \
-	packet.c teletext.c vt.h \
+	packet.c teletext.c teletext_decoder.h vt.h \
 	page_table.c page_table.h \
 	pfc_demux.c pfc_demux.h \
 	proxy-client.c proxy-client.h \
@@ -119,6 +121,12 @@ libzvbi_chains_la_SOURCES = \
 
 if MAINTAINER_MODE
 
+hammgen: hammgen.c
+	$(CC) -o hammgen $(srcdir)/hammgen.c
+
+hamm-tables.h: hammgen$(EXEEXT) Makefile.am
+	$(top_builddir)/src/hammgen$(EXEEXT) > $@
+
 version.h: ../configure.in
 	echo -e "\n#define VBI_VERSION_MAJOR" `echo @VERSION@ \
 	 | sed "s/\./\\\\\n#define VBI_VERSION_MINOR /" \
@@ -151,7 +159,7 @@ LIBZVBI_HDRS = \
 	exp-txt.h \
 	hamm.h \
 	cc.h \
-	vt.h \
+	teletext_decoder.h \
 	tables.h \
 	vps.h \
 	vbi.h

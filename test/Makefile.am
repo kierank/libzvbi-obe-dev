@@ -3,18 +3,20 @@
 TESTS = \
 	cpptest \
 	exoptest \
-	hamm \
-	test-raw_decoder \
+	test-dvb_demux \
 	test-dvb_mux \
+	test-hamm \
+	test-raw_decoder \
 	test-unicode \
 	test-vps
 
 check_PROGRAMS = \
 	cpptest \
 	explist \
-	hamm \
-	test-raw_decoder \
-	test-dvb_mux
+	test-dvb_mux \
+	test-dvb_demux \
+	test-hamm \
+	test-raw_decoder
 
 cpptest_SOURCES = cpptest.cc
 
@@ -25,6 +27,8 @@ test_dvb_demux_SOURCES = \
 test_dvb_mux_SOURCES = \
 	test-dvb_mux.cc \
 	test-common.cc test-common.h
+
+test_hamm_SOURCES = test-hamm.cc
 
 test_raw_decoder_SOURCES = \
 	test-raw_decoder.cc \

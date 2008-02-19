@@ -1,4 +1,4 @@
-$Id: TODO,v 1.19 2006/04/29 05:55:34 mschimek Exp $
+$Id: TODO,v 1.20 2008/02/19 00:35:13 mschimek Exp $
 
 Version 0.3
 
@@ -7,6 +7,7 @@ Version 0.3
 * Sometimes the bit slicers seems to interpret noise on a blank line
   as a valid CC signal. Try to reproduce this. Try a minimum amplitude
   check.
+* Arabic character set is related to ASMO 449?
 
 -------------------------------------------------------------------------------
 Ideas? Drop us a note at http://zapping.sourceforge.net.

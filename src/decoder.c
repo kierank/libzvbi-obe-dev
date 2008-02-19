@@ -1,24 +1,31 @@
 /*
- *  libzvbi - Raw vbi decoder
+ *  libzvbi -- Old raw VBI decoder
  *
  *  Copyright (C) 2000, 2001, 2002 Michael H. Schimek
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the 
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: decoder.c,v 1.24 2007/11/27 17:39:36 mschimek Exp $ */
+/* $Id: decoder.c,v 1.25 2008/02/19 00:35:15 mschimek Exp $ */
+
+/* Note this code is only retained for compatibility with older versions
+   of libzvbi. vbi_raw_decoder is now just a wrapper for the new raw
+   decoder (raw_decoder.c) and bit slicer (bit_slicer.c). We'll drop
+   the old API in libzvbi 0.3. Other modules (e.g. io-v4l2k.c) should
+   already use the new raw VBI decoder directly. */
 
 #include "site_def.h"
 

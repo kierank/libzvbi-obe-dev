@@ -1,3 +1,98 @@
+2008-02-18    <mschimek@users.sf.net>
+
+	* src/xds_demux.h, src/xds_demux.c, src/wstfont2.xbm,
+	  src/wss.h, src/wss.c, src/vps.h, src/vps.c, 
+	  src/vbi.c, src/trigger.h, src/trigger.c, src/teletext.c, 
+	  src/tables.h, src/tables.c, src/sliced_filter.h, 
+	  src/sliced_filter.c, src/sliced.h,
+	  src/sampling_par.h, src/sampling_par.c, src/raw_decoder.h,
+	  src/raw_decoder.c, src/pfc_demux.h, src/pfc_demux.c,
+	  src/page_table.h, src/page_table.c, src/packet.c,
+	  src/network-table.pl, src/macros.h, src/lang.h, src/lang.c,
+	  src/io-v4l2.c, src/io-sim.h, src/io-sim.c, src/io-bktr.c,
+	  src/intl-priv.h, src/idl_demux.h, src/idl_demux.c,
+	  src/export.h, src/export.c, src/event.h, src/exp-txt.h,
+	  src/exp-txt.c, src/exp-html.c, src/exp-gfx.h, src/exp-gfx.c,
+	  src/format.h, src/dvb_mux.h, src/dvb_mux.c, src/dvb_demux.h,
+	  src/dvb_demux.c, src/dvb.h, src/decoder.h, src/decoder.c,
+	  src/conv.h, src/conv.c, src/ccfont2.xbm, src/cc.h,
+	  src/caption.c, src/bit_slicer.h, src/bit_slicer.c,
+	  src/bcd.h: Changed the license to LGPLv2+.
+
+	* src/search.h, src/search.c, src/vbi.h, src/vbi.c: Changed the
+	  license to LGPLv2+ with Iñaki's permission. Could not contact
+	  Edgar Toernig for permission but the file changed a lot and
+	  only traces of AleVT remain.
+
+	* src/misc.h, src/misc.c: Changed the license to LGPLv2+ with
+	  Iñaki's permission.
+
+	* src/proxy-msg.h, src/proxy-msg.c, src/proxy-client.h,
+	  src/proxy-client.c, src/io.h, src/io.c, src/io-v4l2k.c,
+	  src/io-v4l.c: Changed the license to LGPLv2+ with Tom's
+	  permission.
+
+	* src/export.c: Disabled VTX export module. Improved
+	  documentation.
+	* src/exp-vtx.c: Disabled for now because this code is
+	  licensed under GPLv2+ and cannot be linked with the rest
+	  of libzvbi, which is licensed under LGPLv2+.
+
+	* src/proxy-msg.c: Include videodev.h because videodev2k.h
+	  won't do that anymore.
+	* src/proxy-msg.c, src/chains.c: Define __s64 and __u64 for
+	  videodev2.h and videodev2k.h if not defined in asm/types.h.
+	* src/videodev2.h, src/videodev.h:
+	  Replaced the file by a new uncopyrighted version because the
+	  original was copied from the Linux kernel sources which are,
+	  absent other declarations, licensed under GPLv2.
+	* src/io.h: Added "deprecated" attribute to vbi_capture_dvb_new()
+	  function.
+	* src/macros.h (_vbi_deprecated): New macro for src/io.h
+	  vbi_capture_dvb_new() declaration.
+	* src/io-dvb.c: Rewrote this code and changed license to
+	  LGPLv2+.
+
+	* configure.in: Updated site_def.h defaults.
+	* src/vbi.h, src/vbi.c, src/search.c, src/teletext.c,
+	  src/packet.c: src/cache.c, src/vt.h changed.
+	* src/Makefile.am (libzvbi_la_SOURCES): Added cache-priv.h,
+	  dlist.h.
+	* src/bcd.h: Added vbi_bin2bcd(), vbi_bcd2bin() and
+	  vbi_bcd_digits_greater() for src/cache.c.
+	* src/dlist.h, src/cache-priv.h: Added for src/cache.c.
+	* src/cache.h, src/cache.c: Replaced by new Teletext cache code
+	  from branch 0.3 and changed license to LGPLv2+.
+	* src/vt.h: Resynched with branch 0.3. 
+	* src/vt.h, src/teletext_decoder.h: Moved some definitions
+	  from vt.h to new file teletext_decoder.h, so I can include
+	  vt.h in cache-priv.h and cache-priv.h in teletext_decoder.h.
+	  Changed the license to LGPLv2+. Could not contact Edgar
+	  Toernig for permission but the file changed a lot and only
+	  traces of AleVT remain.
+	* src/Makefile.am (libzvbi_la_SOURCES, LIBZVBI_HDRS):
+	  Added teletext_decoder.h.
+
+	* src/hamm.c, src/hamm.h: Replaced the code from AleVT and changed
+	  the license to LGPLv2+. Added a new function vbi_ham24p().
+	* test/test-hamm.cc: Added a test for the new vbi_ham24p() function.
+	* test/hamm.c, test/test-hamm.cc: Replaced hamm.c by test-hamm.cc.
+	* test/Makefile.am (TESTS, check_PROGRAMS): Replaced hamm by
+	  test-hamm. Added test_hamm_SOURCES because the source is a C++
+	  file.
+	* src/Makefile.am: Added hammgen and hamm-tables.h rule.
+	(BUILT_SOURCES, EXTRA_DIST, libzvbi_la_SOURCES): Added hamm-tables.h.
+
+	* test/export.c: Enabled default character set option with
+	  libzvbi 0.2.
+
+	* m4/autogen.sh: Fixed a typo. 
+
+	* Makefile.am (EXTRA_DIST): Added COPYING-GPL, COPYING-LGPL.
+	* COPYING-LGPL: Added.
+	* COPYING, COPYING-GPL: COPYING renamed to COPYING-GPL.
+	* README: Updated licensing information. Added IRC link.
+
 2008-02-17    <mschimek@users.sf.net>
 
 	* test/sliced.c (capture_stream_new): Capturing from a Linux DVB

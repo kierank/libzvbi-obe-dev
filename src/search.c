@@ -1,28 +1,28 @@
 /*
- *  libzvbi - Teletext page cache search functions
+ *  libzvbi -- Teletext page cache search functions
  *
  *  Copyright (C) 2000, 2001, 2002 Michael H. Schimek
  *  Copyright (C) 2000, 2001 Iñaki G. Etxebarria
  *
- *  Based on code from AleVT 1.5.1
- *  Copyright (C) 1998, 1999 Edgar Toernig <froese@gmx.de>
+ *  Originally based on AleVT 1.5.1 by Edgar Toernig
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the 
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: search.c,v 1.14 2007/11/27 18:31:07 mschimek Exp $ */
+/* $Id: search.c,v 1.15 2008/02/19 00:35:21 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -37,6 +37,7 @@
 #include "search.h"
 #include "ure.h"
 #include "vbi.h"
+#include "teletext_decoder.h"
 
 /**
  * @addtogroup Search
@@ -72,7 +73,7 @@ struct vbi_search {
 #define LAST_ROW 24
 
 static void
-highlight(struct vbi_search *s, vt_page *vtp,
+highlight(struct vbi_search *s, cache_page *vtp,
 	  ucs2_t *first, long ms, long me)
 {
 	vbi_page *pg = &s->pg;
@@ -162,7 +163,7 @@ highlight(struct vbi_search *s, vt_page *vtp,
 }
 
 static int
-search_page_fwd(void *p, vt_page *vtp, vbi_bool wrapped)
+search_page_fwd(cache_page *vtp, vbi_bool wrapped, void *p)
 {
 	vbi_search *s = p;
 	vbi_char *acp;
@@ -258,7 +259,7 @@ fprintf(stderr, "exec: %x/%x; start %d,%d; %c%c%c...\n",
 }
 
 static int
-search_page_rev(void *p, vt_page *vtp, vbi_bool wrapped)
+search_page_rev(cache_page *vtp, vbi_bool wrapped, void *p)
 {
 	vbi_search *s = p;
 	vbi_char *acp;
@@ -388,7 +389,7 @@ vbi_search_delete(vbi_search *search)
 static size_t
 ucs2_strlen(const void *string)
 {
-	const ucs2_t *p = (ucs2_t *) string;
+	const ucs2_t *p = (const ucs2_t *) string;
 	size_t i = 0;
 
 	if (!string)
@@ -587,8 +588,14 @@ vbi_search_next(vbi_search *search, vbi_page **pg, int dir)
 		search->stop_subno[1] = search->start_subno;
 	}
 #endif
-	switch (vbi_cache_foreach(search->vbi, search->start_pgno, search->start_subno, dir,
-		 (dir > 0) ? search_page_fwd : search_page_rev, search)) {
+	switch (_vbi_cache_foreach_page (search->vbi->ca,
+					 search->vbi->cn,
+					 search->start_pgno,
+					 search->start_subno,
+					 dir,
+					 (dir > 0) ? search_page_fwd
+					 : search_page_rev,
+					 /* user_data */ search)) {
 	case 1:
 		*pg = &search->pg;
 		return VBI_SEARCH_SUCCESS;

@@ -1,26 +1,32 @@
 
-  libzvbi - VBI decoding library
+  libzvbi - VBI capture and decoding library
 
-  Copyright (C) 2000-2007 Michael H. Schimek
+  Copyright (C) 2000-2008 Michael H. Schimek
   Copyright (C) 2000, 2001 Iñaki García Etxebarria
   Copyright (C) 2003, 2004, 2007 Tom Zoerner
 	
-  Based on AleVT 1.5.1
-  Copyright (C) 1998, 1999 Edgar Toernig
+  Originally based on AleVT 1.5.1 by Edgar Toernig
 
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Library General Public
+  License as published by the Free Software Foundation; either
+  version 2 of the License, or (at your option) any later version.
 
-  This program is distributed in the hope that it will be useful,
+  This library is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  file COPYING-LGPL for more details.
 
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+  Software in this package which is not part of the library,
+  including code generators, programs in the test and contrib
+  directories, and the VBI proxy daemon, are licensed under the
+  terms of the GNU General Public License as published by the
+  Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version. See the file COPYING-GPL
+  for more details.
+
+  Programs in the examples directory are licensed under a 2-clause
+  BSD-style license. See the respective source files for details.
 
   --------------------------------------------------------------------------
 
@@ -70,16 +76,16 @@
   as a tarball and publicly readable CVS.
 
   Christian Marillat maintains a Debian package:
-  http://packages.debian.org/source/zvbi
+    http://packages.debian.org/source/zvbi
 
   Oliver Lehmann maintains a FreeBSD port:
-  http://www.freebsd.org/cgi/ports.cgi?query=libzvbi
+    http://www.freebsd.org/cgi/ports.cgi?query=libzvbi
 
   For RPMs please see the repository of your distribution.
 
   Sourceforge and Freshmeat can notify you about new releases by e-mail:
-  http://sourceforge.net/project/filemodule_monitor.php?filemodule_id=41356
-  http://freshmeat.net/subscribe/?url=%2Fprojects%2Flibzvbi%2F
+    http://sourceforge.net/project/filemodule_monitor.php?filemodule_id=41356
+    http://freshmeat.net/subscribe/?url=%2Fprojects%2Flibzvbi%2F
 
 
   Installation
@@ -96,37 +102,34 @@
   The library has been tested on Linux and FreeBSD.
 
 
-  Ideas, questions, patches and bug reports
-  =========================================
+  Ideas, questions, patches, bug reports, chit-chat
+  =================================================
 
-  Sourceforge tracker:
+  * You can post patches, feature requests and bug reports at
+    our Sourceforge tracker:
+      https://sourceforge.net/tracker/?group_id=2599
 
-    https://sourceforge.net/tracker/?group_id=2599
+    Please log in or leave an e-mail address for further inquiries and
+    progress notification.
 
-  Please log in or leave an e-mail address for further inquiries and
-  progress notification.
+  * Or you can send a message to the Zapping mailing list:
+      zapping-misc@lists.sourceforge.net
 
+    You can subscribe or unsubscribe at:
+      http://lists.sourceforge.net/lists/listinfo/zapping-misc
 
-  Or send a message to the Zapping mailing list:
+    Subscription is not required, but non-member messages may be
+    delayed for spam filtering. This is a low volume list.
 
-    zapping-misc@lists.sourceforge.net
+    You can browse the list archives at:
+      http://sourceforge.net/mailarchive/forum.php?forum_name=zapping-misc
 
-  You can subscribe or unsubscribe at:
-
-    http://lists.sourceforge.net/lists/listinfo/zapping-misc
-
-  Subscription is not required, but non-member messages may be delayed
-  for spam filtering. This is a low volume list.
-
-  You can browse the list archives at:
-
-    http://sourceforge.net/mailarchive/forum.php?forum_name=zapping-misc
-
+  * Or you can try our IRC channel:
+      #zapping at irc.freenode.net
 
   Primary author and maintainer of this library is
 
     Michael H. Schimek <mschimek@users.sourceforge.net>
 
-  Encrypted e-mail is welcome. You can find my public key in the
-  AUTHORS file, e.g. gpg --import <AUTHORS  Ich spreche deutsch.
-
+  Encrypted e-mail is welcome. You can find my PGP/GPG key in the
+  AUTHORS file, e.g. type "gpg --import <AUTHORS". Ich spreche deutsch.

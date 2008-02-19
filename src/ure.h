@@ -20,7 +20,8 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $Id: ure.h,v 1.8 2007/07/23 20:01:18 mschimek Exp $ */
+
+/* $Id: ure.h,v 1.9 2008/02/19 00:35:22 mschimek Exp $ */
 
 #ifndef _h_ure
 #define _h_ure

@@ -1,28 +1,29 @@
 /*
- *  libzvbi - VBI decoding library
+ *  libzvbi -- VBI decoding library
  *
- *  Copyright (C) 2000, 2001, 2002 Michael H. Schimek
+ *  Copyright (C) 2000-2008 Michael H. Schimek
  *  Copyright (C) 2000, 2001 Iñaki García Etxebarria
+ *  Copyright (C) 2003, 2004 Tom Zoerner
  *
- *  Based on AleVT 1.5.1
- *  Copyright (C) 1998, 1999 Edgar Toernig <froese@gmx.de>
+ *  Originally based on AleVT 1.5.1 by Edgar Toernig
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the 
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vbi.c,v 1.22 2007/11/27 18:26:15 mschimek Exp $ */
+/* $Id: vbi.c,v 1.23 2008/02/19 00:35:22 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -482,13 +483,18 @@ vbi_decode(vbi_decoder *vbi, vbi_sliced *sliced, int lines, double time)
 void
 vbi_chsw_reset(vbi_decoder *vbi, vbi_nuid identified)
 {
-	vbi_nuid old_nuid = vbi->network.ev.network.nuid;
+	vbi_nuid old_nuid;
+
+	old_nuid = vbi->network.ev.network.nuid;
 
 	if (0)
 		fprintf(stderr, "*** chsw identified=%d old nuid=%d\n",
 			identified, old_nuid);
 
-	vbi_cache_flush(vbi);
+	cache_network_unref (vbi->cn);
+	vbi->cn = _vbi_cache_add_network (vbi->ca, /* nk */ NULL,
+					  VBI_VIDEOSTD_SET_625_50);
+	assert (NULL != vbi->cn);
 
 	vbi_teletext_channel_switched(vbi);
 	vbi_caption_channel_switched(vbi);
@@ -708,7 +714,7 @@ vbi_page_type
 vbi_classify_page(vbi_decoder *vbi, vbi_pgno pgno,
 		  vbi_subno *subno, char **language)
 {
-	struct page_info *pi;
+	struct ttx_page_stat *ps;
 	int code, subc;
 	char *lang;
 
@@ -733,19 +739,19 @@ vbi_classify_page(vbi_decoder *vbi, vbi_pgno pgno,
 		return VBI_UNKNOWN_PAGE;
 	}
 
-	pi = vbi->vt.page_info + pgno - 0x100;
-	code = pi->code;
+	ps = cache_network_page_stat (vbi->cn, pgno);
+	code = ps->page_type;
 
 	if (code != VBI_UNKNOWN_PAGE) {
 		if (code == VBI_SUBTITLE_PAGE) {
-			if (pi->language != 0xFF)
-				*language = vbi_font_descriptors[pi->language].label;
+			if (ps->charset_code != 0xFF)
+				*language = vbi_font_descriptors[ps->charset_code].label;
 		} else if (code == VBI_TOP_BLOCK || code == VBI_TOP_GROUP)
 			code = VBI_NORMAL_PAGE;
 		else if (code == VBI_NOT_PUBLIC || code > 0xE0)
 			return VBI_UNKNOWN_PAGE;
 
-		*subno = pi->subcode;
+		*subno = ps->subcode;
 
 		return code;
 	}
@@ -818,6 +824,9 @@ vbi_decoder_delete(vbi_decoder *vbi)
 {
 	struct event_handler *eh;
 
+	if (NULL == vbi)
+		return;
+
 	vbi_trigger_flush(vbi);
 
 	vbi_caption_destroy(vbi);
@@ -832,9 +841,13 @@ vbi_decoder_delete(vbi_decoder *vbi)
 	pthread_mutex_destroy(&vbi->event_mutex);
 	pthread_mutex_destroy(&vbi->chswcd_mutex);
 
-	vbi_cache_destroy(vbi);
+	cache_network_unref (vbi->cn);
 
-	free(vbi);
+	vbi_cache_delete (vbi->ca);
+
+	CLEAR (*vbi);
+
+	free (vbi);
 }
 
 /**
@@ -851,10 +864,19 @@ vbi_decoder_new(void)
 
 	pthread_once (&vbi_init_once, vbi_init);
 
-	if (!(vbi = (vbi_decoder *) calloc(1, sizeof(*vbi))))
-		return NULL;
+	vbi = (vbi_decoder *) calloc (1, sizeof (*vbi));
+	if (NULL == vbi)
+		goto failed;
 
-	vbi_cache_init(vbi);
+	vbi->ca = vbi_cache_new ();
+	if (NULL == vbi->ca)
+		goto failed;
+
+	vbi->cn = _vbi_cache_add_network (vbi->ca,
+					  /* nk */ NULL,
+					  VBI_VIDEOSTD_SET_625_50);
+	if (NULL == vbi->cn)
+		goto failed;
 
 	pthread_mutex_init(&vbi->chswcd_mutex, NULL);
 	pthread_mutex_init(&vbi->event_mutex, NULL);
@@ -872,6 +894,19 @@ vbi_decoder_new(void)
 	vbi_caption_init(vbi);
 
 	return vbi;
+
+ failed:
+	if (NULL != vbi) {
+		cache_network_unref (vbi->cn);
+
+		vbi_cache_delete (vbi->ca);
+
+		CLEAR (*vbi);
+
+		free (vbi);
+	}
+
+	return NULL;
 }
 
 /**

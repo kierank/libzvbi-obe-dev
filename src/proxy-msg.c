@@ -1,22 +1,25 @@
 /*
- *  Basic I/O between VBI proxy client & server
+ *  libvbi -- Basic I/O between VBI proxy client & server
  *
- *  Copyright (C) 2003,2004 Tom Zoerner
+ *  Copyright (C) 2003, 2004 Tom Zoerner
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- *
- *
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the 
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  Boston, MA  02110-1301  USA.
+ */
+
+/*
  *  Description:
  *
  *    This module contains a collection of functions for lower-level
@@ -28,10 +31,15 @@
  *
  *    Both UNIX domain and IPv4 and IPv6 sockets are implemented, but
  *    the latter ones are currently not officially supported.
- *
- *  $Id: proxy-msg.c,v 1.19 2007/11/27 18:31:07 mschimek Exp $
+ */
+ 
+/*
+ *  $Id: proxy-msg.c,v 1.20 2008/02/19 00:35:21 mschimek Exp $
  *
  *  $Log: proxy-msg.c,v $
+ *  Revision 1.20  2008/02/19 00:35:21  mschimek
+ *  *** empty log message ***
+ *
  *  Revision 1.19  2007/11/27 18:31:07  mschimek
  *  Updated the FSF address in the copyright notice.
  *
@@ -132,12 +140,19 @@
 #include "misc.h"
 #include "proxy-msg.h"
 
+#ifdef ENABLE_V4L2
+#include <asm/types.h>		/* __u8 and friends for videodev2k.h */
+#ifndef HAVE_S64_U64
+#  include <inttypes.h>
+  /* Linux 2.6.x asm/types.h defines __s64 and __u64 only
+     if __GNUC__ is defined. */
+typedef int64_t __s64;
+typedef uint64_t __u64;
+#endif
+#include "videodev2k.h"
+#endif
 #ifdef ENABLE_V4L
 #include "videodev.h"
-#endif
-#ifdef ENABLE_V4L2
-#include <asm/types.h>
-#include "videodev2k.h"
 #endif
 
 #define dprintf1(fmt, arg...)    do {if (proxy_msg_trace >= 1) fprintf(stderr, "proxy_msg: " fmt, ## arg);} while(0)
