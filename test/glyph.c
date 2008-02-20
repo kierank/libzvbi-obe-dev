@@ -18,9 +18,13 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: glyph.c,v 1.9 2007/11/27 18:26:48 mschimek Exp $ */
+/* $Id: glyph.c,v 1.10 2008/02/20 22:55:04 mschimek Exp $ */
 
 #undef NDEBUG
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -19,9 +19,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: decode.c,v 1.30 2007/11/27 18:26:48 mschimek Exp $ */
+/* $Id: decode.c,v 1.31 2008/02/20 22:55:04 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
+
+#undef NDEBUG
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"

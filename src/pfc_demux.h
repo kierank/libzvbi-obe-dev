@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: pfc_demux.h,v 1.11 2008/02/19 00:35:21 mschimek Exp $ */
+/* $Id: pfc_demux.h,v 1.12 2008/02/20 22:55:04 mschimek Exp $ */
 
 #ifndef __ZVBI_PFC_DEMUX_H__
 #define __ZVBI_PFC_DEMUX_H__
@@ -34,7 +34,7 @@ VBI_BEGIN_DECLS
 /* Public */
 
 /**
- * @addtogroup PFCDemux
+ * @addtogroup PFCDemux Teletext PFC packet demultiplexer
  * @ingroup LowDec
  * @brief Functions to decode data transmissions in Teletext
  *   Page Function Clear packets (EN 300 708 section 4).

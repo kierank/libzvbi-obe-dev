@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: bcd.h,v 1.17 2008/02/19 00:35:14 mschimek Exp $ */
+/* $Id: bcd.h,v 1.18 2008/02/20 22:55:04 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H
@@ -188,6 +188,7 @@ vbi_is_bcd(unsigned int bcd)
 }
 
 /**
+ * @ingroup BCD
  * @param bcd Unsigned BCD number.
  * @param maximum Unsigned maximum value.
  *

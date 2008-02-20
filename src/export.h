@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: export.h,v 1.15 2008/02/19 00:35:17 mschimek Exp $ */
+/* $Id: export.h,v 1.16 2008/02/20 22:55:04 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -446,7 +446,7 @@ struct vbi_export_class {
 };
 
 /**
- * @example exp-templ.c
+ * @example src/exp-templ.c
  * @ingroup Exmod
  *
  * Template for internal export module.

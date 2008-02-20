@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: teletext.c,v 1.28 2008/02/19 00:35:22 mschimek Exp $ */
+/* $Id: teletext.c,v 1.29 2008/02/20 22:55:04 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -2728,7 +2728,6 @@ vbi_format_vt_page(vbi_decoder *vbi,
 			success = enhance(vbi, mag, ext, pg, vtp, LOCAL_ENHANCEMENT_DATA,
 				vtp->data.enh_lop.enh, elements(vtp->data.enh_lop.enh),
 				0, 0, max_level, display_rows == 1, NULL);
-							   // here --^
 		} else
 			success = default_object_invocation(vbi, mag, ext, pg, vtp,
 							    max_level, display_rows == 1);

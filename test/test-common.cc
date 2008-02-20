@@ -18,9 +18,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-common.cc,v 1.3 2007/10/14 14:54:27 mschimek Exp $ */
+/* $Id: test-common.cc,v 1.4 2008/02/20 22:55:05 mschimek Exp $ */
+
+#undef NDEBUG
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <stdlib.h>
+
 #include "src/misc.h"
 #include "test-common.h"
 #include "src/version.h"
