@@ -18,9 +18,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: ttxfilter.c,v 1.16 2007/11/27 18:26:48 mschimek Exp $ */
+/* $Id: ttxfilter.c,v 1.17 2008/02/21 07:18:53 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
+
+#undef NDEBUG
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"

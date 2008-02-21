@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: bcd.h,v 1.18 2008/02/20 22:55:04 mschimek Exp $ */
+/* $Id: bcd.h,v 1.19 2008/02/21 07:18:52 mschimek Exp $ */
 
 #ifndef BCD_H
 #define BCD_H

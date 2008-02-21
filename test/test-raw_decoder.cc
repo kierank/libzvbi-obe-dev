@@ -18,7 +18,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-raw_decoder.cc,v 1.2 2007/10/14 14:55:41 mschimek Exp $ */
+/* $Id: test-raw_decoder.cc,v 1.3 2008/02/21 07:18:53 mschimek Exp $ */
+
+#undef NDEBUG
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <stdlib.h>
 #include <string.h>

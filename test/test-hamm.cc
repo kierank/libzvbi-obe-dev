@@ -18,7 +18,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-hamm.cc,v 1.2 2008/02/19 00:35:24 mschimek Exp $ */
+/* $Id: test-hamm.cc,v 1.3 2008/02/21 07:18:53 mschimek Exp $ */
+
+#undef NDEBUG
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <assert.h>
 

@@ -18,11 +18,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-dvb_demux.cc,v 1.1 2007/12/03 02:26:50 mschimek Exp $ */
+/* $Id: test-dvb_demux.cc,v 1.2 2008/02/21 07:18:53 mschimek Exp $ */
 
 #undef NDEBUG
 
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #include <assert.h>
+
 #include "src/dvb_demux.h"
 #include "test-common.h"
 

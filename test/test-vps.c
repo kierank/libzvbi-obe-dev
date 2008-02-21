@@ -18,9 +18,13 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: test-vps.c,v 1.5 2007/11/27 18:26:48 mschimek Exp $ */
+/* $Id: test-vps.c,v 1.6 2008/02/21 07:18:53 mschimek Exp $ */
 
 #undef NDEBUG
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <assert.h>
 #include <stdlib.h>

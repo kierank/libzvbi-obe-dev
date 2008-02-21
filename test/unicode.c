@@ -18,9 +18,13 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: unicode.c,v 1.10 2008/02/14 21:48:18 mschimek Exp $ */
+/* $Id: unicode.c,v 1.11 2008/02/21 07:18:53 mschimek Exp $ */
 
 #undef NDEBUG
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <assert.h>
 #include <limits.h>

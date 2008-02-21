@@ -18,9 +18,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-dvb_mux.cc,v 1.4 2007/10/14 14:53:54 mschimek Exp $ */
+/* $Id: test-dvb_mux.cc,v 1.5 2008/02/21 07:18:53 mschimek Exp $ */
 
 #undef NDEBUG
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
 #include <assert.h>
 #include <stdlib.h>

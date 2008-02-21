@@ -13,6 +13,7 @@ configure
 depcomp
 install-sh
 libtool
+macros
 missing
 site_def.h
 stamp-h1

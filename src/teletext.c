@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: teletext.c,v 1.29 2008/02/20 22:55:04 mschimek Exp $ */
+/* $Id: teletext.c,v 1.30 2008/02/21 07:18:52 mschimek Exp $ */
 
 #include "site_def.h"
 

@@ -4,6 +4,7 @@ Makefile
 Makefile.in
 caption
 capture
+cpptest
 decode
 explist
 export
@@ -11,6 +12,11 @@ glyph
 osc
 proxy-test
 sliced2pes
+test-dvb_demux
+test-dvb_mux
+test-hamm
+test-raw_decoder
 test-vps
 ttxfilter
 unicode
+unicode-out.txt
