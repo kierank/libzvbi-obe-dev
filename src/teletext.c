@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: teletext.c,v 1.30 2008/02/21 07:18:52 mschimek Exp $ */
+/* $Id: teletext.c,v 1.31 2008/02/22 03:10:16 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -1250,6 +1250,7 @@ enhance(vbi_decoder *vbi,
 	int active_column, active_row;
 	int offset_column, offset_row;
 	int row_color, next_row_color;
+	int row_color_transparent;
 	struct vbi_font_descr *font;
 	int invert;
 	int drcs_s1[2];
@@ -1306,11 +1307,13 @@ enhance(vbi_decoder *vbi,
 				c.underline = u;
 			}
 			if (mac.foreground)
-				c.foreground = (ac.foreground == VBI_TRANSPARENT_BLACK) ?
-					row_color : ac.foreground;
+				c.foreground = (ac.foreground != VBI_TRANSPARENT_BLACK) ?
+					ac.foreground : (row_color_transparent) ?
+					VBI_TRANSPARENT_BLACK : row_color;
 			if (mac.background)
-				c.background = (ac.background == VBI_TRANSPARENT_BLACK) ?
-					row_color : ac.background;
+				c.background = (ac.background != VBI_TRANSPARENT_BLACK) ?
+					ac.background : (row_color_transparent) ?
+					VBI_TRANSPARENT_BLACK : row_color;
 			if (invert) {
 				int t = c.foreground;
 
@@ -1440,6 +1443,7 @@ enhance(vbi_decoder *vbi,
 
 	row_color =
 	next_row_color = ext->def_row_color;
+	row_color_transparent = FALSE;
 
 	drcs_s1[0] = 0; /* global */
 	drcs_s1[1] = 0; /* normal */
@@ -1939,14 +1943,16 @@ enhance(vbi_decoder *vbi,
 					+ ((p->data & 1) ? VBI_DOUBLE_HEIGHT : 0);
 				mac.size = ~0;
 
-				if (p->data & 2) {
-					if (vtp->flags & (C5_NEWSFLASH | C6_SUBTITLE))
+				if (vtp->flags & (C5_NEWSFLASH | C6_SUBTITLE)) {
+					if (p->data & 2) {
 						ac.opacity = VBI_SEMI_TRANSPARENT;
-					else
-						ac.opacity = VBI_TRANSPARENT_SPACE;
-				} else
-					ac.opacity = pg->page_opacity[1];
-				mac.opacity = ~0;
+					} else {
+						ac.opacity = pg->page_opacity[1];
+					}
+					mac.opacity = ~0;
+				} else {
+					row_color_transparent = p->data & 2;
+				}
 
 				ac.conceal = !!(p->data & 4);
 				mac.conceal = ~0;
