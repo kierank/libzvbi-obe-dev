@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: zvbi 0.2.9\n"
 "Report-Msgid-Bugs-To: mschimek@users.sf.net\n"
-"POT-Creation-Date: 2008-02-18 17:43+0100\n"
+"POT-Creation-Date: 2008-02-22 04:10+0100\n"
 "PO-Revision-Date: 2007-11-27 18:34+0100\n"
 "Last-Translator: Iñaki García Etxebarria <garetxe@users.sourceforge.net>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -562,30 +562,30 @@ msgstr ""
 msgid "Proxy client interface not compiled."
 msgstr "Interfaz del controlador V4L no compilado."
 
-#: src/proxy-msg.c:1237
+#: src/proxy-msg.c:1240
 #, fuzzy, c-format
 msgid "Cannot create socket: %s."
 msgstr "No se puede crear '%s': %s."
 
-#: src/proxy-msg.c:1245
+#: src/proxy-msg.c:1248
 #, fuzzy, c-format
 msgid "Invalid hostname or port: %s."
 msgstr "Cadena de opción incorrecta \"%s\"."
 
-#: src/proxy-msg.c:1265
+#: src/proxy-msg.c:1268
 msgid "Connection via TCP/IP failed, server not running or unreachable."
 msgstr ""
 
-#: src/proxy-msg.c:1267
+#: src/proxy-msg.c:1270
 msgid "Connection via socket failed, server not running."
 msgstr ""
 
-#: src/proxy-msg.c:1276 src/proxy-msg.c:1319
+#: src/proxy-msg.c:1279 src/proxy-msg.c:1322
 #, c-format
 msgid "Socket I/O error: %s."
 msgstr ""
 
-#: src/proxy-msg.c:1312
+#: src/proxy-msg.c:1315
 #, c-format
 msgid "Cannot connect to server: %s."
 msgstr ""
