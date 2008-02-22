@@ -7,6 +7,9 @@
 	* src/teletext.c (enhance): Bug fix: Row color transparency
 	  toggling by display attribute triplet.
 
+	* configure.in: Incremented .so version to reflect the
+	  src/hamm.c, src/bcd.h and src/exp-vtx.c changes.
+
 2008-02-18    <mschimek@users.sf.net>
 
 	* examples/wss.c, examples/rawout.c, examples/network.c:
