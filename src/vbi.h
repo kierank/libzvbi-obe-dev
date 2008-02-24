@@ -22,7 +22,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vbi.h,v 1.15 2008/02/19 00:35:22 mschimek Exp $ */
+/* $Id: vbi.h,v 1.16 2008/02/24 14:16:19 mschimek Exp $ */
 
 #ifndef VBI_H
 #define VBI_H
@@ -141,10 +141,10 @@ typedef enum {
 	VBI_NOW_AND_NEXT = 0x7D,
 	VBI_PROGR_INDEX = 0x7F,
 	VBI_PROGR_SCHEDULE = 0x81,
-	VBI_UNKNOWN_PAGE = 0xFF,
+	VBI_UNKNOWN_PAGE = 0xFF
 /* Private */
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-	VBI_NOT_PUBLIC = 0x80,
+	, VBI_NOT_PUBLIC = 0x80,
 	VBI_CA_DATA_BROADCAST =	0xE0,
 	VBI_EPG_DATA = 0xE3,
 	VBI_SYSTEM_PAGE = 0xE7,
