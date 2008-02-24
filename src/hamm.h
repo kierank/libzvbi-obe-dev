@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: hamm.h,v 1.13 2008/02/19 00:35:20 mschimek Exp $ */
+/* $Id: hamm.h,v 1.14 2008/02/24 14:16:36 mschimek Exp $ */
 
 #ifndef __ZVBI_HAMM_H__
 #define __ZVBI_HAMM_H__
@@ -126,8 +126,9 @@ vbi_par8			(unsigned int		c)
 _vbi_inline int
 vbi_unpar8			(unsigned int		c)
 {
-#ifdef __GNUC__
-#if #cpu (i686)
+/* Disabled until someone finds a reliable way
+   to test for cmov support at compile time. */
+#if 0
 	int r = c & 127;
 
 	/* This saves cache flushes and an explicit branch. */
@@ -135,7 +136,6 @@ vbi_unpar8			(unsigned int		c)
 		 " cmovp	%2,%0\n"
 		 : "+&a" (r) : "c" (c), "rm" (-1));
 	return r;
-#endif
 #endif
 	if (_vbi_hamm24_inv_par[0][(uint8_t) c] & 32) {
 		return c & 127;
@@ -215,7 +215,7 @@ vbi_ham24p			(uint8_t *		p,
 				 unsigned int		c);
 extern int
 vbi_unham24p			(const uint8_t *	p)
-  _vbi_attribute ((_vbi_pure));
+  _vbi_pure;
 
 /** @} */
 
