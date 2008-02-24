@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: exp-gfx.c,v 1.15 2008/02/19 00:35:15 mschimek Exp $ */
+/* $Id: exp-gfx.c,v 1.16 2008/02/24 14:17:47 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -55,7 +55,7 @@
 
 #define CCPL (ccfont2_width / CCW * ccfont2_height / CCH)
 
-static void init_gfx(void) _vbi_attribute ((constructor));
+static void init_gfx(void) __attribute__ ((constructor));
 
 static void
 init_gfx(void)
@@ -1172,13 +1172,13 @@ draw_drcs_indexed(uint8_t * canvas, int rowstride, uint8_t * pen,
 
 static void
 draw_row_indexed(vbi_page * pg, vbi_char * ac, uint8_t * canvas, uint8_t * pen,
-                 int rowstride, vbi_bool conceal, vbi_bool is_cc, int scale)
+                 int rowstride, vbi_bool conceal, vbi_bool is_cc)
 {
         const int cw = is_cc ? CCW : TCW;
         const int ch = is_cc ? CCH : TCH;
 	void (* draw_char_indexed)(uint8_t *, int, uint8_t *, int, vbi_char *)
                 = is_cc ? draw_char_cc_indexed : draw_char_vt_indexed;
-		int row, column;
+	int column;
         int unicode;
 
         for (column = 0; column < pg->columns ; canvas += cw, column++, ac++) {
@@ -1587,7 +1587,7 @@ xpm_export			(vbi_export *		e,
         for (row = 0; row < (unsigned int) pg->rows; ++row) {
                 draw_row_indexed (pg, &pg->text[row * pg->columns],
 				  indexed_image, pen, image_width,
-				  !e->reveal, pg->columns < 40, scale);
+				  !e->reveal, pg->columns < 40);
 
                 if (!xpm_write_row (e, indexed_image,
 				    image_width, char_height, scale))
@@ -1816,7 +1816,7 @@ png_export(vbi_export *e, vbi_page *pg)
         for (row = 0; row < pg->rows; row++) {
                 draw_row_indexed(pg, &pg->text[row * pg->columns],
                                  image + row * row_adv,  pen, rowstride,
-                                 !e->reveal, pg->columns < 40, scale);
+                                 !e->reveal, pg->columns < 40);
 	}
 
 	/* Now save the image */
