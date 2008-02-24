@@ -318,13 +318,20 @@ dvb_update_services		(vbi_capture *		cap,
 				 int			strict,
 				 char **		errstr)
 {
+	cap = cap; /* unused, no warning please */
+	reset = reset;
+	commit = commit;
+	services = services;
+	strict = strict;
+	errstr = errstr;
+
 	return (VBI_SLICED_TELETEXT_B |
 		VBI_SLICED_VPS |
 		VBI_SLICED_CAPTION_625 |
 		VBI_SLICED_WSS_625);
 }
 
-void
+static void
 dvb_flush			(vbi_capture *		cap)
 {
 	vbi_capture_dvb *dvb = PARENT (cap, vbi_capture_dvb, capture);
@@ -338,6 +345,8 @@ dvb_flush			(vbi_capture *		cap)
 static VBI_CAPTURE_FD_FLAGS
 dvb_get_fd_flags		(vbi_capture *		cap)
 {
+	cap = cap; /* unused, no warning please */
+
 	return (VBI_FD_HAS_SELECT |
 		VBI_FD_IS_DEVICE);
 }
