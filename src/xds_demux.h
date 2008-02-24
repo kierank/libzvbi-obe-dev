@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: xds_demux.h,v 1.10 2008/02/19 00:35:23 mschimek Exp $ */
+/* $Id: xds_demux.h,v 1.11 2008/02/24 14:16:16 mschimek Exp $ */
 
 #ifndef __ZVBI_XDS_DEMUX_H__
 #define __ZVBI_XDS_DEMUX_H__
@@ -50,7 +50,7 @@ typedef enum {
 	VBI_XDS_CLASS_MISC,
 	VBI_XDS_CLASS_PUBLIC_SERVICE,
 	VBI_XDS_CLASS_RESERVED,
-	VBI_XDS_CLASS_UNDEFINED,
+	VBI_XDS_CLASS_UNDEFINED
 } vbi_xds_class;
 
 #define VBI_XDS_MAX_CLASSES (VBI_XDS_CLASS_UNDEFINED + 1)
@@ -73,7 +73,7 @@ typedef enum {
 	/** @since 0.2.17 */
 	VBI_XDS_PROGRAM_MISC_DATA,
 	VBI_XDS_PROGRAM_DESCRIPTION_BEGIN = 0x10,
-	VBI_XDS_PROGRAM_DESCRIPTION_END = 0x18,
+	VBI_XDS_PROGRAM_DESCRIPTION_END = 0x18
 } vbi_xds_subclass_program;
 
 /** @brief @c VBI_XDS_CLASS_CHANNEL subclass. */
@@ -82,7 +82,7 @@ typedef enum {
 	VBI_XDS_CHANNEL_CALL_LETTERS,
 	VBI_XDS_CHANNEL_TAPE_DELAY,
 	/** @since 0.2.17 */
-	VBI_XDS_CHANNEL_TSID,
+	VBI_XDS_CHANNEL_TSID
 } vbi_xds_subclass_channel;
 
 /** @brief @c VBI_XDS_CLASS_MISC subclass. */
@@ -98,7 +98,7 @@ typedef enum {
 	/** @since 0.2.17 */
 	VBI_XDS_CHANNEL_MAP_HEADER,
 	/** @since 0.2.17 */
-	VBI_XDS_CHANNEL_MAP,
+	VBI_XDS_CHANNEL_MAP
 } vbi_xds_subclass_misc;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -118,7 +118,7 @@ typedef enum {
  */
 typedef enum {
 	VBI_XDS_WEATHER_BULLETIN = 0x01,
-	VBI_XDS_WEATHER_MESSAGE,
+	VBI_XDS_WEATHER_MESSAGE
 } vbi_xds_subclass_public_service;
 
 #define VBI_XDS_MAX_SUBCLASSES (0x18)
@@ -200,7 +200,7 @@ vbi_xds_demux_delete		(vbi_xds_demux *	xd);
 extern vbi_xds_demux *
 vbi_xds_demux_new		(vbi_xds_demux_cb *	callback,
 				 void *			user_data)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 
 /** @} */
 

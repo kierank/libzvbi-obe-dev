@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: cache.h,v 1.9 2008/02/19 00:35:15 mschimek Exp $ */
+/* $Id: cache.h,v 1.10 2008/02/24 14:16:32 mschimek Exp $ */
 
 #ifndef __ZVBI_CACHE_H__
 #define __ZVBI_CACHE_H__
@@ -250,13 +250,13 @@ typedef enum {
 	VBI_TOP_PAGE		= 0xFE,
 
 	/** The page type is unknown, a libzvbi internal code. */
-	VBI_UNKNOWN_PAGE	= 0xFF,
+	VBI_UNKNOWN_PAGE	= 0xFF
 } vbi_page_type;
 
 /* in packet.c */
 extern const char *
 vbi_page_type_name		(vbi_page_type		type)
-  __attribute__ ((const));
+  _vbi_const;
 
 #endif /* 3 == VBI_VERSION_MINOR */
 
@@ -302,16 +302,16 @@ typedef struct {
 
 extern void
 vbi_ttx_page_stat_destroy	(vbi_ttx_page_stat *	ps)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi_ttx_page_stat_init		(vbi_ttx_page_stat *	ps)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_cache_get_ttx_page_stat	(vbi_cache *		ca,
 				 vbi_ttx_page_stat *	ps,
 				 const vbi_network *	nk,
 				 vbi_pgno		pgno)
-  __attribute__ ((_vbi_nonnull (1, 2, 3)));
+  _vbi_nonnull ((1, 2, 3));
 
 #else /* 3 != VBI_VERSION_MINOR */
 #  define vbi_page_type_name(x) "unknown"
@@ -325,12 +325,12 @@ vbi_cache_get_top_title		(vbi_cache *		ca,
 				 const vbi_network *	nk,
 				 vbi_pgno		pgno,
 				 vbi_subno		subno)
-  __attribute__ ((_vbi_nonnull (1, 2, 3)));
+  _vbi_nonnull ((1, 2, 3));
 extern vbi_top_title *
 vbi_cache_get_top_titles	(vbi_cache *		ca,
 				 const vbi_network *	nk,
 				 unsigned int *		n_elements)
-  __attribute__ ((_vbi_nonnull (1, 2, 3)));
+  _vbi_nonnull ((1, 2, 3));
 
 #endif /* 3 == VBI_VERSION_MINOR */
 
@@ -522,7 +522,7 @@ vbi_cache_get_teletext_page_va_list
 				 vbi_pgno		pgno,
 				 vbi_subno		subno,
 				 va_list		format_options)
-  __attribute__ ((_vbi_nonnull (1, 2)));
+  _vbi_nonnull ((1, 2));
 /* in teletext.c */
 extern vbi_page *
 vbi_cache_get_teletext_page	(vbi_cache *		ca,
@@ -530,7 +530,7 @@ vbi_cache_get_teletext_page	(vbi_cache *		ca,
 				 vbi_pgno		pgno,
 				 vbi_subno		subno,
 				 ...)
-  __attribute__ ((_vbi_nonnull (1, 2)));
+  _vbi_nonnull ((1, 2));
 
 #endif /* 3 == VBI_VERSION_MINOR */
 
@@ -543,13 +543,13 @@ extern void
 vbi_cache_remove_event_handler	(vbi_cache *		ca,
 				 vbi_event_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_cache_add_event_handler	(vbi_cache *		ca,
 				 vbi_event_mask	event_mask,
 				 vbi_event_cb *	callback,
 				 void *			user_data)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 #endif /* 3 == VBI_VERSION_MINOR */
 
@@ -562,15 +562,15 @@ vbi_cache_add_event_handler	(vbi_cache *		ca,
 extern vbi_network *
 vbi_cache_get_networks		(vbi_cache *		ca,
 				 unsigned int *		n_elements)
-  __attribute__ ((_vbi_nonnull (1, 2)));
+  _vbi_nonnull ((1, 2));
 extern void
 vbi_cache_set_memory_limit	(vbi_cache *		ca,
 				 unsigned long		limit)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi_cache_set_network_limit	(vbi_cache *		ca,
 				 unsigned int		limit)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 #endif /* 3 == VBI_VERSION_MINOR */
 
@@ -587,12 +587,12 @@ extern void
 vbi_cache_unref			(vbi_cache *		ca);
 extern vbi_cache *
 vbi_cache_ref			(vbi_cache *		ca)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi_cache_delete		(vbi_cache *		ca);
 extern vbi_cache *
 vbi_cache_new			(void)
-  __attribute__ ((_vbi_alloc));
+  _vbi_alloc;
 
 VBI_END_DECLS
 

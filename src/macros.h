@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: macros.h,v 1.10 2008/02/19 00:35:20 mschimek Exp $ */
+/* $Id: macros.h,v 1.11 2008/02/24 14:16:23 mschimek Exp $ */
 
 #ifndef __ZVBI_MACROS_H__
 #define __ZVBI_MACROS_H__
@@ -37,36 +37,38 @@ VBI_BEGIN_DECLS
 /* Public */
 
 #if __GNUC__ >= 4
-#  define _vbi_sentinel sentinel(0)
-#  define _vbi_deprecated deprecated
+#  define _vbi_sentinel __attribute__ ((__sentinel__(0)))
+#  define _vbi_deprecated __attribute__ ((__deprecated__))
 #else
-#  define _vbi_sentinel ,
-#  define _vbi_deprecated ,
+#  define _vbi_sentinel
+#  define _vbi_deprecated
 #  define __restrict__
 #endif
 
 #if (__GNUC__ == 3 && __GNUC_MINOR__ >= 3) || __GNUC__ >= 4
-#  define _vbi_nonnull(args...) nonnull(args)
-#  define _vbi_format(args...) format(args)
+#  define _vbi_nonnull(params) __attribute__ ((__nonnull__ params))
+#  define _vbi_format(params) __attribute__ ((__format__ params))
 #else
-#  define _vbi_nonnull(args...) ,
-#  define _vbi_format(args...) ,
+#  define _vbi_nonnull(params)
+#  define _vbi_format(params)
 #endif
 
 #if __GNUC__ >= 3
-#  define _vbi_pure pure
-#  define _vbi_alloc malloc
+#  define _vbi_pure __attribute__ ((__pure__))
+#  define _vbi_alloc __attribute__ ((__malloc__))
 #else
-#  define _vbi_pure ,
-#  define _vbi_alloc ,
+#  define _vbi_pure
+#  define _vbi_alloc
 #endif
 
 #if __GNUC__ >= 2
+#  define _vbi_unused __attribute__ ((__unused__))
+#  define _vbi_const __attribute__ ((__const__))
 #  define _vbi_inline static __inline__
-#  define _vbi_attribute(args...) __attribute__(args)
 #else
+#  define _vbi_unused
+#  define _vbi_const
 #  define _vbi_inline static
-#  define _vbi_attribute(args...)
 #endif
 
 /**
@@ -134,7 +136,7 @@ typedef enum {
 
 	/** More detailed debugging information. */
 	VBI_LOG_DEBUG2		= 1 << 9,
-	VBI_LOG_DEBUG3		= 1 << 10,
+	VBI_LOG_DEBUG3		= 1 << 10
 } vbi_log_mask;
 
 typedef void
