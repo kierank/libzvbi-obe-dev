@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(zvbi, 0.2.28)
+AC_INIT(zvbi, 0.2.29)
 AC_CONFIG_SRCDIR(src/vbi.c)
 
 AM_INIT_AUTOMAKE([1.9 check-news dist-bzip2])
@@ -13,7 +13,7 @@ dnl [current:revision:age]
 dnl Any change: ++revision
 dnl Interface added: ++current, revision = 0
 dnl age = last binary compatible version - current
-AC_SUBST(LIBZVBI_SO_VERSION, [12:0:12])
+AC_SUBST(LIBZVBI_SO_VERSION, [12:1:12])
 
 dnl Enable GNU extensions if available.
 AC_GNU_SOURCE
@@ -127,17 +127,38 @@ test -e site_def.h || cat <<EOF >site_def.h
 #endif /* SITE_DEF_H */
 EOF
 
-dnl
+dnl option, define/conditional name
+AC_DEFUN([CHECK_CC_OPTION], [
+  AC_MSG_CHECKING([if $CC supports $1])
+  SAVE_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS $1"
+  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [return 0;]),
+		    [$2=yes], [$2=no])
+  CFLAGS="$SAVE_CFLAGS"
+  AC_MSG_RESULT($$2)
+  AM_CONDITIONAL($2, [test "x$$2" = "xyes"])])
+
+dnl option, define/conditional name
+AC_DEFUN([CHECK_CXX_OPTION], [
+  AC_MSG_CHECKING([if $CXX supports $1])
+  SAVE_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $1"
+  AC_LANG_PUSH(C++)
+  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [return 0;]),
+		    [$2=yes], [$2=no])
+  AC_LANG_POP()
+  CXXFLAGS="$SAVE_CXXFLAGS"
+  AC_MSG_RESULT($$2)
+  AM_CONDITIONAL($2, [test "x$$2" = "xyes"])])
+
 dnl See if we can / have to increase inlining limits.
-dnl
-AC_MSG_CHECKING([if $CC supports --param inline-unit-growth])
-SAVE_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS --param inline-unit-growth=3000"
-AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [return 0;]),
-		  [HAVE_GCC_LIMITS=yes], [HAVE_GCC_LIMITS=no])
-AC_MSG_RESULT($HAVE_GCC_LIMITS)
-AM_CONDITIONAL(HAVE_GCC_LIMITS, [test "x$HAVE_GCC_LIMITS" = "xyes"])
-CFLAGS="$SAVE_CFLAGS"
+CHECK_CC_OPTION([--param inline-unit-growth=3000], HAVE_GCC_LIMITS)
+
+dnl For make check.
+CHECK_CC_OPTION([-std=c89], HAVE_GCC_C89_SUPPORT)
+CHECK_CC_OPTION([-std=iso9899:199409], HAVE_GCC_C94_SUPPORT)
+CHECK_CC_OPTION([-std=c99], HAVE_GCC_C99_SUPPORT)
+CHECK_CXX_OPTION([-std=c++98], HAVE_GXX_CXX98_SUPPORT)
 
 dnl
 dnl Check how to link pthreads functions.
