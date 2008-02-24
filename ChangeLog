@@ -1,3 +1,37 @@
+2008-02-24    <mschimek@users.sf.net>
+
+	* Release 0.2.29.
+
+2008-02-24    <mschimek@users.sf.net>
+
+	* src/xds_demux.h, src/vbi.h, src/macros.h, src/io.h: 
+	* src/cache.h: ISO C89 does not permit a
+	  comma at the end of an enumerator list.
+	* src/hamm.h (vbi_unpar8): ISO C89 does not permit an #if #cpu
+	  test (and it probably didn't work as intended anyway).
+	* test/Makefile.am: Added strict ISO C89, C94, C99, and C++98
+	  checks of the libzvbi header.
+	* configure.in: Added a gcc -std check for test/ctest.c and
+	  test/cpptest.cc.
+	* test/test-common.h, src/xds_demux.h, src/vps.h: 
+	* src/sliced_filter.h, src/sliced.h, src/sampling_par.h: 
+	* src/pfc_demux.h, src/page_table.h, src/misc.h: 
+	* src/macros.h, src/io.h, src/io-v4l.c, src/idl_demux.h: 
+	* src/hamm.h, src/export.h, src/exp-txt.c, src/exp-gfx.c: 
+	* src/dvb_mux.h, src/dvb_demux.h, src/conv.h, src/caption.c: 
+	* src/cache.h, src/bit_slicer.h: Rewrote the GCC __attribute__
+	  wrapper macros for compatibility with strict ISO C.
+
+	* src/exp-gfx.c (draw_row_indexed): Removed an unused parameter.
+	* test/test-common.cc (test_malloc):
+	* src/io-dvb.c: Muffle compiler warnings.
+
+	* src/exp-html.c: Include teletext_decoder.h instead of vt.h to
+	  declare vbi_resolve_link().
+
+	* configure.in: Bumped version to 0.2.29, incremented .so
+	  revision.
+
 2008-02-22    <mschimek@users.sf.net>
 
 	* Release 0.2.28.

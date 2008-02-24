@@ -1,3 +1,8 @@
+libzvbi 0.2.29, 2008-02-24
+--------------------------
+This version fixes incompatibilities in the libzvbi header file
+with strict ISO C.
+
 libzvbi 0.2.28, 2008-02-22
 --------------------------
 The ZVBI libraries libzvbi and libzvbi-chains are now licensed under

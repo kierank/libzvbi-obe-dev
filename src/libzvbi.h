@@ -29,7 +29,7 @@
 
 #define VBI_VERSION_MAJOR 0
 #define VBI_VERSION_MINOR 2
-#define VBI_VERSION_MICRO 28
+#define VBI_VERSION_MICRO 29
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,36 +41,38 @@ typedef struct vbi_decoder vbi_decoder;
 /* macros.h */
 
 #if __GNUC__ >= 4
-#  define _vbi_sentinel sentinel(0)
-#  define _vbi_deprecated deprecated
+#  define _vbi_sentinel __attribute__ ((__sentinel__(0)))
+#  define _vbi_deprecated __attribute__ ((__deprecated__))
 #else
-#  define _vbi_sentinel ,
-#  define _vbi_deprecated ,
+#  define _vbi_sentinel
+#  define _vbi_deprecated
 #  define __restrict__
 #endif
 
 #if (__GNUC__ == 3 && __GNUC_MINOR__ >= 3) || __GNUC__ >= 4
-#  define _vbi_nonnull(args...) nonnull(args)
-#  define _vbi_format(args...) format(args)
+#  define _vbi_nonnull(params) __attribute__ ((__nonnull__ params))
+#  define _vbi_format(params) __attribute__ ((__format__ params))
 #else
-#  define _vbi_nonnull(args...) ,
-#  define _vbi_format(args...) ,
+#  define _vbi_nonnull(params)
+#  define _vbi_format(params)
 #endif
 
 #if __GNUC__ >= 3
-#  define _vbi_pure pure
-#  define _vbi_alloc malloc
+#  define _vbi_pure __attribute__ ((__pure__))
+#  define _vbi_alloc __attribute__ ((__malloc__))
 #else
-#  define _vbi_pure ,
-#  define _vbi_alloc ,
+#  define _vbi_pure
+#  define _vbi_alloc
 #endif
 
 #if __GNUC__ >= 2
+#  define _vbi_unused __attribute__ ((__unused__))
+#  define _vbi_const __attribute__ ((__const__))
 #  define _vbi_inline static __inline__
-#  define _vbi_attribute(args...) __attribute__(args)
 #else
+#  define _vbi_unused
+#  define _vbi_const
 #  define _vbi_inline static
-#  define _vbi_attribute(args...)
 #endif
 
 #ifndef TRUE
@@ -120,7 +122,7 @@ typedef enum {
 
 	
 	VBI_LOG_DEBUG2		= 1 << 9,
-	VBI_LOG_DEBUG3		= 1 << 10,
+	VBI_LOG_DEBUG3		= 1 << 10
 } vbi_log_mask;
 
 typedef void
@@ -205,19 +207,19 @@ vbi_strndup_iconv		(const char *		dst_codeset,
 				 const char *		src,
 				 unsigned long		src_size,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 extern char *
 vbi_strndup_iconv_ucs2		(const char *		dst_codeset,
 				 const uint16_t *	src,
 				 long			src_length,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 extern char *
 vbi_strndup_iconv_caption	(const char *		dst_codeset,
 				 const char *		src,
 				 long			src_length,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 #if 3 == VBI_VERSION_MINOR
 extern char *
 vbi_strndup_iconv_teletext	(const char *		dst_codeset,
@@ -225,8 +227,7 @@ vbi_strndup_iconv_teletext	(const char *		dst_codeset,
 				 const uint8_t *	src,
 				 long			src_length,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_alloc,
-		  _vbi_nonnull (2)));
+  _vbi_alloc _vbi_nonnull ((2));
 #endif
 extern vbi_bool
 vbi_fputs_iconv			(FILE *			fp,
@@ -235,14 +236,14 @@ vbi_fputs_iconv			(FILE *			fp,
 				 const char *		src,
 				 unsigned long		src_size,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_fputs_iconv_ucs2		(FILE *			fp,
 				 const char *		dst_codeset,
 				 const uint16_t *	src,
 				 long			src_length,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern const char *
 vbi_locale_codeset		(void);
 
@@ -743,13 +744,13 @@ vbi_export_mem			(vbi_export *		e,
 				 void *			buffer,
 				 size_t			buffer_size,
 				 const vbi_page *	pg)
-  _vbi_attribute ((_vbi_nonnull (1))); /* sic */
+  _vbi_nonnull ((1)); /* sic */
 extern void *
 vbi_export_alloc		(vbi_export *		e,
 				 void **		buffer,
 				 size_t *		buffer_size,
 				 const vbi_page *	pg)
-  _vbi_attribute ((_vbi_nonnull (1))); /* sic */
+  _vbi_nonnull ((1)); /* sic */
 extern vbi_bool			vbi_export_stdio(vbi_export *, FILE *fp, vbi_page *pg);
 extern vbi_bool			vbi_export_file(vbi_export *, const char *name, vbi_page *pg);
 
@@ -847,10 +848,10 @@ typedef struct {
 
 extern const char *
 vbi_sliced_name			(vbi_service_set	service)
-  _vbi_attribute ((const));
+  _vbi_const;
 extern unsigned int
 vbi_sliced_payload_bits		(vbi_service_set	service)
-  _vbi_attribute ((const));
+  _vbi_const;
 
 
 /* decoder.h */
@@ -1036,7 +1037,7 @@ vbi_dvb_multiplex_sliced	(uint8_t **		packet,
 				 unsigned int		data_identifier,
 				 vbi_bool		stuffing)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2, 3, 4)))
+  _vbi_nonnull ((1, 2, 3, 4))
 #endif
   ;
 extern vbi_bool
@@ -1051,7 +1052,7 @@ vbi_dvb_multiplex_raw		(uint8_t **		packet,
 				 unsigned int		n_pixels_total,
 				 vbi_bool		stuffing)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2, 3, 4)))
+  _vbi_nonnull ((1, 2, 3, 4))
 #endif
   ;
 
@@ -1065,7 +1066,7 @@ vbi_dvb_mux_cb			(vbi_dvb_mux *		mx,
 
 extern void
 vbi_dvb_mux_reset		(vbi_dvb_mux *		mx)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_dvb_mux_cor		(vbi_dvb_mux *		mx,
 				 uint8_t **		buffer,
@@ -1077,7 +1078,7 @@ vbi_dvb_mux_cor		(vbi_dvb_mux *		mx,
 				 const vbi_sampling_par *sampling_par,	 
 				 int64_t		pts)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2, 3, 4, 5)))
+  _vbi_nonnull ((1, 2, 3, 4, 5))
 #endif
   ;
 extern vbi_bool
@@ -1088,38 +1089,38 @@ vbi_dvb_mux_feed		(vbi_dvb_mux *		mx,
 				 const uint8_t *	raw,
 				 const vbi_sampling_par *sampling_par,
 				 int64_t		pts)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern unsigned int
 vbi_dvb_mux_get_data_identifier (const vbi_dvb_mux *	mx)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_dvb_mux_set_data_identifier (vbi_dvb_mux *	mx,
 				  unsigned int		data_identifier)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern unsigned int
 vbi_dvb_mux_get_min_pes_packet_size
 				(vbi_dvb_mux *		mx)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern unsigned int
 vbi_dvb_mux_get_max_pes_packet_size
 				(vbi_dvb_mux *		mx)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_dvb_mux_set_pes_packet_size (vbi_dvb_mux *	mx,
 				  unsigned int		min_size,
 				  unsigned int		max_size)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi_dvb_mux_delete		(vbi_dvb_mux *		mx);
 extern vbi_dvb_mux *
 vbi_dvb_pes_mux_new		(vbi_dvb_mux_cb *	callback,
 				 void *			user_data)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 extern vbi_dvb_mux *
 vbi_dvb_ts_mux_new		(unsigned int		pid,
 				 vbi_dvb_mux_cb *	callback,
 				 void *			user_data)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 
 
 
@@ -1146,12 +1147,12 @@ vbi_idl_demux_cb		(vbi_idl_demux *	dx,
 
 extern void
 vbi_idl_demux_reset		(vbi_idl_demux *	dx)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_idl_demux_feed		(vbi_idl_demux *	dx,
 				 const uint8_t		buffer[42])
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 extern vbi_bool
@@ -1159,7 +1160,7 @@ vbi_idl_demux_feed_frame	(vbi_idl_demux *	dx,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_lines)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 extern void
@@ -1170,8 +1171,7 @@ vbi_idl_a_demux_new		(unsigned int		channel,
 				 vbi_idl_demux_cb *	callback,
 				 void *			user_data)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_alloc,
-		   _vbi_nonnull (3)))
+  _vbi_alloc _vbi_nonnull ((3))
 #endif
   ;
 
@@ -1206,12 +1206,12 @@ vbi_pfc_demux_cb		(vbi_pfc_demux *	dx,
 
 extern void
 vbi_pfc_demux_reset		(vbi_pfc_demux *	dx)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_pfc_demux_feed		(vbi_pfc_demux *	dx,
 				 const uint8_t		buffer[42])
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 extern vbi_bool
@@ -1219,7 +1219,7 @@ vbi_pfc_demux_feed_frame	(vbi_pfc_demux *	dx,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_lines)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 extern void
@@ -1230,8 +1230,7 @@ vbi_pfc_demux_new		(vbi_pgno		pgno,
 				 vbi_pfc_demux_cb *	callback,
 				 void *			user_data)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_alloc,
-		  _vbi_nonnull (3)))
+  _vbi_alloc _vbi_nonnull ((3))
 #endif
   ;
 
@@ -1247,7 +1246,7 @@ typedef enum {
 	VBI_XDS_CLASS_MISC,
 	VBI_XDS_CLASS_PUBLIC_SERVICE,
 	VBI_XDS_CLASS_RESERVED,
-	VBI_XDS_CLASS_UNDEFINED,
+	VBI_XDS_CLASS_UNDEFINED
 } vbi_xds_class;
 
 #define VBI_XDS_MAX_CLASSES (VBI_XDS_CLASS_UNDEFINED + 1)
@@ -1267,7 +1266,7 @@ typedef enum {
 	
 	VBI_XDS_PROGRAM_MISC_DATA,
 	VBI_XDS_PROGRAM_DESCRIPTION_BEGIN = 0x10,
-	VBI_XDS_PROGRAM_DESCRIPTION_END = 0x18,
+	VBI_XDS_PROGRAM_DESCRIPTION_END = 0x18
 } vbi_xds_subclass_program;
 
 
@@ -1276,7 +1275,7 @@ typedef enum {
 	VBI_XDS_CHANNEL_CALL_LETTERS,
 	VBI_XDS_CHANNEL_TAPE_DELAY,
 	
-	VBI_XDS_CHANNEL_TSID,
+	VBI_XDS_CHANNEL_TSID
 } vbi_xds_subclass_channel;
 
 
@@ -1292,7 +1291,7 @@ typedef enum {
 	
 	VBI_XDS_CHANNEL_MAP_HEADER,
 	
-	VBI_XDS_CHANNEL_MAP,
+	VBI_XDS_CHANNEL_MAP
 } vbi_xds_subclass_misc;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -1308,7 +1307,7 @@ typedef enum {
 
 typedef enum {
 	VBI_XDS_WEATHER_BULLETIN = 0x01,
-	VBI_XDS_WEATHER_MESSAGE,
+	VBI_XDS_WEATHER_MESSAGE
 } vbi_xds_subclass_public_service;
 
 #define VBI_XDS_MAX_SUBCLASSES (0x18)
@@ -1353,7 +1352,7 @@ vbi_xds_demux_delete		(vbi_xds_demux *	xd);
 extern vbi_xds_demux *
 vbi_xds_demux_new		(vbi_xds_demux_cb *	callback,
 				 void *			user_data)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 
 
 
@@ -1372,7 +1371,7 @@ typedef struct vbi_capture vbi_capture;
 typedef enum {
         VBI_FD_HAS_SELECT  = 1<<0,
         VBI_FD_HAS_MMAP    = 1<<1,
-        VBI_FD_IS_DEVICE   = 1<<2,
+        VBI_FD_IS_DEVICE   = 1<<2
 } VBI_CAPTURE_FD_FLAGS;
 
 extern vbi_capture *	vbi_capture_v4l2_new(const char *dev_name, int buffers,
@@ -1409,7 +1408,7 @@ vbi_capture_dvb_new		(char *			dev,
 				 int			strict,
 				 char **		errstr,
 				 vbi_bool		trace)
-  __attribute__ ((_vbi_deprecated));
+  _vbi_deprecated;
 
 extern int64_t
 vbi_capture_dvb_last_pts	(const vbi_capture *	cap);
@@ -1746,8 +1745,9 @@ vbi_par8			(unsigned int		c)
 _vbi_inline int
 vbi_unpar8			(unsigned int		c)
 {
-#ifdef __GNUC__
-#if #cpu (i686)
+/* Disabled until someone finds a reliable way
+   to test for cmov support at compile time. */
+#if 0
 	int r = c & 127;
 
 	/* This saves cache flushes and an explicit branch. */
@@ -1755,7 +1755,6 @@ vbi_unpar8			(unsigned int		c)
 		 " cmovp	%2,%0\n"
 		 : "+&a" (r) : "c" (c), "rm" (-1));
 	return r;
-#endif
 #endif
 	if (_vbi_hamm24_inv_par[0][(uint8_t) c] & 32) {
 		return c & 127;
@@ -1798,7 +1797,7 @@ vbi_ham24p			(uint8_t *		p,
 				 unsigned int		c);
 extern int
 vbi_unham24p			(const uint8_t *	p)
-  _vbi_attribute ((_vbi_pure));
+  _vbi_pure;
 
 
 
@@ -1844,13 +1843,13 @@ extern vbi_bool
 vbi_decode_vps_cni		(unsigned int *		cni,
 				 const uint8_t		buffer[13])
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 extern vbi_bool
 vbi_encode_vps_cni		(uint8_t		buffer[13],
 				 unsigned int		cni)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 /* vbi.h */
 
@@ -1865,7 +1864,7 @@ typedef enum {
 	VBI_NOW_AND_NEXT = 0x7D,
 	VBI_PROGR_INDEX = 0x7F,
 	VBI_PROGR_SCHEDULE = 0x81,
-	VBI_UNKNOWN_PAGE = 0xFF,
+	VBI_UNKNOWN_PAGE = 0xFF
 } vbi_page_type;
 
 extern void		vbi_set_brightness(vbi_decoder *vbi, int brightness);
