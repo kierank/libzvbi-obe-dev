@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: exp-html.c,v 1.12 2008/02/19 00:35:15 mschimek Exp $ */
+/* $Id: exp-html.c,v 1.13 2008/02/24 14:18:25 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -34,7 +34,7 @@
 
 #include "lang.h"
 #include "export.h"
-#include "vt.h"
+#include "teletext_decoder.h"
 
 typedef struct style {
 	struct style *		next;
