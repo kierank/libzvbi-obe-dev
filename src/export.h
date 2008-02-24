@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: export.h,v 1.17 2008/02/21 07:18:52 mschimek Exp $ */
+/* $Id: export.h,v 1.18 2008/02/24 14:17:37 mschimek Exp $ */
 
 #ifndef EXPORT_H
 #define EXPORT_H
@@ -269,13 +269,13 @@ vbi_export_mem			(vbi_export *		e,
 				 void *			buffer,
 				 size_t			buffer_size,
 				 const vbi_page *	pg)
-  _vbi_attribute ((_vbi_nonnull (1))); /* sic */
+  _vbi_nonnull ((1)); /* sic */
 extern void *
 vbi_export_alloc		(vbi_export *		e,
 				 void **		buffer,
 				 size_t *		buffer_size,
 				 const vbi_page *	pg)
-  _vbi_attribute ((_vbi_nonnull (1))); /* sic */
+  _vbi_nonnull ((1)); /* sic */
 extern vbi_bool			vbi_export_stdio(vbi_export *, FILE *fp, vbi_page *pg);
 extern vbi_bool			vbi_export_file(vbi_export *, const char *name, vbi_page *pg);
 
@@ -461,24 +461,24 @@ struct vbi_export_class {
 extern vbi_bool
 _vbi_export_grow_buffer_space	(vbi_export *		e,
 				 size_t			min_space)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 extern vbi_bool
 vbi_export_flush		(vbi_export *		e)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_export_putc			(vbi_export *		e,
 				 int			c)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_export_write		(vbi_export *		e,
 				 const void *		src,
 				 size_t			src_size)
-  _vbi_attribute ((_vbi_nonnull (1, 2)));
+  _vbi_nonnull ((1, 2));
 extern vbi_bool
 vbi_export_puts			(vbi_export *		e,
 				 const char *		src)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_export_puts_iconv		(vbi_export *		e,
 				 const char *		dst_codeset,
@@ -486,25 +486,24 @@ vbi_export_puts_iconv		(vbi_export *		e,
 				 const char *		src,
 				 unsigned long		src_size,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_export_puts_iconv_ucs2	(vbi_export *		e,
 				 const char *		dst_codeset,
 				 const uint16_t *	src,
 				 long			src_length,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_export_vprintf		(vbi_export *		e,
 				 const char *		templ,
 				 va_list		ap)
-  _vbi_attribute ((_vbi_nonnull (1, 2)));
+  _vbi_nonnull ((1, 2));
 extern vbi_bool
 vbi_export_printf		(vbi_export *		e,
 				 const char *		templ,
 				 ...)
-  _vbi_attribute ((_vbi_nonnull (1, 2),
-		  _vbi_format (printf, 2, 3)));
+  _vbi_nonnull ((1, 2)) _vbi_format ((printf, 2, 3));
 
 /**
  * @addtogroup Exmod

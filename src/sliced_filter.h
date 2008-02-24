@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: sliced_filter.h,v 1.4 2008/02/19 00:35:22 mschimek Exp $ */
+/* $Id: sliced_filter.h,v 1.5 2008/02/24 14:16:58 mschimek Exp $ */
 
 #ifndef __ZVBI_SLICED_FILTER_H__
 #define __ZVBI_SLICED_FILTER_H__
@@ -42,25 +42,25 @@ extern vbi_service_set
 vbi_sliced_filter_keep_services
 				(vbi_sliced_filter *	sf,
 				 vbi_service_set	services)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_service_set
 vbi_sliced_filter_drop_services
 				(vbi_sliced_filter *	sf,
 				 vbi_service_set	services)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 extern vbi_bool
 vbi_sliced_filter_keep_ttx_pages
 				(vbi_sliced_filter *	sf,
 				 vbi_pgno		first_pgno,
 				 vbi_pgno		last_pgno)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_sliced_filter_drop_ttx_pages
 				(vbi_sliced_filter *	sf,
 				 vbi_pgno		first_pgno,
 				 vbi_pgno		last_pgno)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 static __inline__ vbi_bool
 vbi_sliced_filter_keep_ttx_page	(vbi_sliced_filter *	sf,
 				 vbi_pgno		pgno)
@@ -79,14 +79,14 @@ vbi_sliced_filter_keep_ttx_subpages
 				 vbi_pgno		pgno,
 				 vbi_subno		first_subno,
 				 vbi_subno		last_subno)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_sliced_filter_drop_ttx_subpages
 				(vbi_sliced_filter *	sf,
 				 vbi_pgno		pgno,
 				 vbi_subno		first_subno,
 				 vbi_subno		last_subno)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 static __inline__ vbi_bool
 vbi_sliced_filter_keep_ttx_subpage
 				(vbi_sliced_filter *	sf,
@@ -107,10 +107,10 @@ extern void
 vbi_sliced_filter_keep_ttx_system_pages
 				(vbi_sliced_filter *	sf,
 				 vbi_bool		keep)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi_sliced_filter_reset	(vbi_sliced_filter *	sf)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_sliced_filter_cor		(vbi_sliced_filter *	sf,
 				 vbi_sliced *		sliced_out,
@@ -118,28 +118,28 @@ vbi_sliced_filter_cor		(vbi_sliced_filter *	sf,
 				 unsigned int		max_lines_out,
 				 const vbi_sliced *	sliced_in,
 				 unsigned int *		n_lines_in)
-  _vbi_attribute ((_vbi_nonnull (1, 2, 3, 5, 6)));
+  _vbi_nonnull ((1, 2, 3, 5, 6));
 extern vbi_bool
 vbi_sliced_filter_feed		(vbi_sliced_filter *	sf,
 				 const vbi_sliced *	sliced,
 				 unsigned int *		n_lines)
-  _vbi_attribute ((_vbi_nonnull (1, 2, 3)));
+  _vbi_nonnull ((1, 2, 3));
 
 extern const char *
 vbi_sliced_filter_errstr	(vbi_sliced_filter *	sf)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi_sliced_filter_set_log_fn	(vbi_sliced_filter *	sf,
 				 vbi_log_mask		mask,
 				 vbi_log_fn *		log_fn,
 				 void *			user_data)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi_sliced_filter_delete	(vbi_sliced_filter *	sf);
 extern vbi_sliced_filter *
 vbi_sliced_filter_new		(vbi_sliced_filter_cb *callback,
 				 void *			user_data)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 
 VBI_END_DECLS
 

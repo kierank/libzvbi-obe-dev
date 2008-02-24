@@ -20,7 +20,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: misc.h,v 1.20 2008/02/19 00:35:20 mschimek Exp $ */
+/* $Id: misc.h,v 1.21 2008/02/24 14:17:22 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -223,7 +223,7 @@ _vbi_popcnt			(uint32_t		x);
 #define STRACPY(array, s)						\
 do {									\
 	/* Complain if s is no string const or won't fit. */		\
-	const char t_[sizeof (array) - 1] _vbi_attribute ((unused)) = s; \
+	const char t_[sizeof (array) - 1] _vbi_unused = s;		\
 									\
 	memcpy (array, s, sizeof (s));					\
 } while (0)
@@ -294,13 +294,13 @@ _vbi_shrink_vector_capacity	(void **		vector,
 				 size_t *		capacity,
 				 size_t			min_capacity,
 				 size_t			element_size)
-  _vbi_attribute ((_vbi_nonnull (1, 2)));
+  _vbi_nonnull ((1, 2));
 extern vbi_bool
 _vbi_grow_vector_capacity	(void **		vector,
 				 size_t *		capacity,
 				 size_t			min_capacity,
 				 size_t			element_size)
-  _vbi_attribute ((_vbi_nonnull (1, 2)));
+  _vbi_nonnull ((1, 2));
 
 /* Logging stuff. */
 

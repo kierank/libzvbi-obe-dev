@@ -21,7 +21,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l.c,v 1.37 2008/02/19 00:35:20 mschimek Exp $";
+"$Id: io-v4l.c,v 1.38 2008/02/24 14:17:28 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -64,7 +64,7 @@ static const char rcsid [] =
 /* Custom ioctl of the bttv driver. */
 #define BTTV_VBISIZE		_IOR('v' , BASE_VIDIOCPRIVATE+8, int)
 static __inline__ void IOCTL_ARG_TYPE_CHECK_BTTV_VBISIZE
-  (const int *arg _vbi_attribute ((unused))) {}
+  (const int *arg _vbi_unused) {}
 
 #undef REQUIRE_SELECT
 #undef REQUIRE_SVBIFMT		/* else accept current parameters */

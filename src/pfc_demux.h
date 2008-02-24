@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: pfc_demux.h,v 1.13 2008/02/21 07:18:52 mschimek Exp $ */
+/* $Id: pfc_demux.h,v 1.14 2008/02/24 14:17:10 mschimek Exp $ */
 
 #ifndef __ZVBI_PFC_DEMUX_H__
 #define __ZVBI_PFC_DEMUX_H__
@@ -96,12 +96,12 @@ vbi_pfc_demux_cb		(vbi_pfc_demux *	dx,
 
 extern void
 vbi_pfc_demux_reset		(vbi_pfc_demux *	dx)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_pfc_demux_feed		(vbi_pfc_demux *	dx,
 				 const uint8_t		buffer[42])
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 extern vbi_bool
@@ -109,7 +109,7 @@ vbi_pfc_demux_feed_frame	(vbi_pfc_demux *	dx,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_lines)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 extern void
@@ -120,8 +120,7 @@ vbi_pfc_demux_new		(vbi_pgno		pgno,
 				 vbi_pfc_demux_cb *	callback,
 				 void *			user_data)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_alloc,
-		  _vbi_nonnull (3)))
+  _vbi_alloc _vbi_nonnull ((3))
 #endif
   ;
 
@@ -158,21 +157,21 @@ extern void
 _vbi_pfc_block_dump		(const vbi_pfc_block *	pb,
 				 FILE *			fp,
 				 vbi_bool		binary)
-  _vbi_attribute ((_vbi_nonnull (1, 2)));
+  _vbi_nonnull ((1, 2));
 extern vbi_bool
 _vbi_pfc_demux_decode		(vbi_pfc_demux *	dx,
 				 const uint8_t		buffer[42])
-  _vbi_attribute ((_vbi_nonnull (1, 2)));
+  _vbi_nonnull ((1, 2));
 extern void
 _vbi_pfc_demux_destroy		(vbi_pfc_demux *	dx)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 _vbi_pfc_demux_init		(vbi_pfc_demux *	dx,
 				 vbi_pgno		pgno,
 				 unsigned int		stream,
 				 vbi_pfc_demux_cb *	callback,
 				 void *			user_data)
-  _vbi_attribute ((_vbi_nonnull (1, 4)));
+  _vbi_nonnull ((1, 4));
 
 VBI_END_DECLS
 

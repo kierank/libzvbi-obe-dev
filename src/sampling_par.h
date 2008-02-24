@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: sampling_par.h,v 1.8 2008/02/19 00:35:21 mschimek Exp $ */
+/* $Id: sampling_par.h,v 1.9 2008/02/24 14:17:06 mschimek Exp $ */
 
 #ifndef __SAMPLING_PAR_H__
 #define __SAMPLING_PAR_H__
@@ -51,7 +51,7 @@ vbi_sampling_par_check_services
                                 (const vbi_sampling_par *sp,
                                  vbi_service_set       services,
                                  unsigned int           strict)
-  _vbi_attribute ((_vbi_pure));
+  _vbi_pure;
 
 extern vbi_videostd_set
 _vbi_videostd_set_from_scanning	(int			scanning);
@@ -69,11 +69,11 @@ _vbi_sampling_par_check_services_log
                                  vbi_service_set       services,
                                  unsigned int           strict,
                                  _vbi_log_hook *       log)
-  _vbi_attribute ((_vbi_pure));
+  _vbi_pure;
 extern vbi_bool
 _vbi_sampling_par_valid_log    (const vbi_sampling_par *sp,
                                  _vbi_log_hook *       log)
-  _vbi_attribute ((_vbi_pure));
+  _vbi_pure;
 
 VBI_END_DECLS
 

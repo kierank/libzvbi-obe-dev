@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: idl_demux.h,v 1.9 2008/02/19 00:35:20 mschimek Exp $ */
+/* $Id: idl_demux.h,v 1.10 2008/02/24 14:17:32 mschimek Exp $ */
 
 #ifndef __ZVBI_IDL_DEMUX_H__
 #define __ZVBI_IDL_DEMUX_H__
@@ -102,12 +102,12 @@ vbi_idl_demux_cb		(vbi_idl_demux *	dx,
 
 extern void
 vbi_idl_demux_reset		(vbi_idl_demux *	dx)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_idl_demux_feed		(vbi_idl_demux *	dx,
 				 const uint8_t		buffer[42])
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 extern vbi_bool
@@ -115,7 +115,7 @@ vbi_idl_demux_feed_frame	(vbi_idl_demux *	dx,
 				 const vbi_sliced *	sliced,
 				 unsigned int		n_lines)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 extern void
@@ -126,8 +126,7 @@ vbi_idl_a_demux_new		(unsigned int		channel,
 				 vbi_idl_demux_cb *	callback,
 				 void *			user_data)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_alloc,
-		   _vbi_nonnull (3)))
+  _vbi_alloc _vbi_nonnull ((3))
 #endif
   ;
 
@@ -169,7 +168,7 @@ struct _vbi_idl_demux {
 
 extern void
 _vbi_idl_demux_destroy		(vbi_idl_demux *	dx)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 _vbi_idl_demux_init		(vbi_idl_demux *	dx,
 				 _vbi_idl_format	format,
@@ -177,7 +176,7 @@ _vbi_idl_demux_init		(vbi_idl_demux *	dx,
 				 unsigned int		address,
 				 vbi_idl_demux_cb *	callback,
 				 void *			user_data)
-  _vbi_attribute ((_vbi_nonnull (1, 5)));
+  _vbi_nonnull ((1, 5));
 
 VBI_END_DECLS
 

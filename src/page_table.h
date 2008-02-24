@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: page_table.h,v 1.4 2008/02/19 00:35:21 mschimek Exp $ */
+/* $Id: page_table.h,v 1.5 2008/02/24 14:17:16 mschimek Exp $ */
 
 /* Note this module is not an offical part of the library yet because
    it needs more testing and the interface may change. Use at your own
@@ -39,12 +39,12 @@ extern vbi_bool
 vbi_page_table_contains_all_subpages
 				(const vbi_page_table *pt,
 				 vbi_pgno		pgno)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_page_table_contains_subpage	(const vbi_page_table *pt,
 				 vbi_pgno		pgno,
 				 vbi_subno		subno)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 /**
  * @param pt Teletext page table allocated with vbi_page_table_new().
@@ -65,20 +65,20 @@ extern vbi_bool
 vbi_page_table_next_subpage	(const vbi_page_table *pt,
 				 vbi_pgno *		pgno,
 				 vbi_subno *		subno)
-  _vbi_attribute ((_vbi_nonnull (1, 2, 3)));
+  _vbi_nonnull ((1, 2, 3));
 extern vbi_bool
 vbi_page_table_next_page	(const vbi_page_table *pt,
 				 vbi_pgno *		pgno)
-  _vbi_attribute ((_vbi_nonnull (1, 2)));
+  _vbi_nonnull ((1, 2));
 extern unsigned int
 vbi_page_table_num_pages	(const vbi_page_table *pt)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_page_table_remove_subpages	(vbi_page_table *	pt,
 				 vbi_pgno		pgno,
 				 vbi_subno		first_subno,
 				 vbi_subno		last_subno)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 /**
  * @param pt Teletext page table allocated with vbi_page_table_new().
@@ -107,7 +107,7 @@ vbi_page_table_add_subpages	(vbi_page_table *	pt,
 				 vbi_pgno		pgno,
 				 vbi_subno		first_subno,
 				 vbi_subno		last_subno)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 /**
  * @param pt Teletext page table allocated with vbi_page_table_new().
@@ -135,7 +135,7 @@ extern vbi_bool
 vbi_page_table_remove_pages	(vbi_page_table *	pt,
 				 vbi_pgno		first_pgno,
 				 vbi_pgno		last_pgno)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 /**
  * @param pt Teletext page table allocated with vbi_page_table_new().
@@ -159,7 +159,7 @@ extern vbi_bool
 vbi_page_table_add_pages	(vbi_page_table *	pt,
 				 vbi_pgno		first_pgno,
 				 vbi_pgno		last_pgno)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 /**
  * @param pt Teletext page table allocated with vbi_page_table_new().
@@ -191,14 +191,14 @@ vbi_page_table_add_page		(vbi_page_table *	pt,
 
 extern void
 vbi_page_table_remove_all_pages	(vbi_page_table *	pt)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi_page_table_add_all_displayable_pages
 				(vbi_page_table *	pt)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi_page_table_add_all_pages	(vbi_page_table *	pt)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi_page_table_delete		(vbi_page_table *	pt);
 extern vbi_page_table *

@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: conv.h,v 1.8 2008/02/19 00:35:15 mschimek Exp $ */
+/* $Id: conv.h,v 1.9 2008/02/24 14:17:58 mschimek Exp $ */
 
 #ifndef __ZVBI_CONV_H__
 #define __ZVBI_CONV_H__
@@ -55,19 +55,19 @@ vbi_strndup_iconv		(const char *		dst_codeset,
 				 const char *		src,
 				 unsigned long		src_size,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 extern char *
 vbi_strndup_iconv_ucs2		(const char *		dst_codeset,
 				 const uint16_t *	src,
 				 long			src_length,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 extern char *
 vbi_strndup_iconv_caption	(const char *		dst_codeset,
 				 const char *		src,
 				 long			src_length,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 #if 3 == VBI_VERSION_MINOR
 extern char *
 vbi_strndup_iconv_teletext	(const char *		dst_codeset,
@@ -75,8 +75,7 @@ vbi_strndup_iconv_teletext	(const char *		dst_codeset,
 				 const uint8_t *	src,
 				 long			src_length,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_alloc,
-		  _vbi_nonnull (2)));
+  _vbi_alloc _vbi_nonnull ((2));
 #endif
 extern vbi_bool
 vbi_fputs_iconv			(FILE *			fp,
@@ -85,14 +84,14 @@ vbi_fputs_iconv			(FILE *			fp,
 				 const char *		src,
 				 unsigned long		src_size,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 vbi_fputs_iconv_ucs2		(FILE *			fp,
 				 const char *		dst_codeset,
 				 const uint16_t *	src,
 				 long			src_length,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern const char *
 vbi_locale_codeset		(void);
 
@@ -109,15 +108,14 @@ _vbi_strndup_iconv		(unsigned long *	out_size,
 				 const char *		src,
 				 unsigned long		src_size,
 				 int			repl_char)
-  _vbi_attribute ((_vbi_alloc,
-		  _vbi_nonnull (1, 2, 3)));
+  _vbi_alloc _vbi_nonnull ((1, 2, 3));
 extern vbi_bool
 _vbi_iconv_ucs2			(vbi_iconv_t *		cd,
 				 char **		dst,
 				 unsigned long		dst_size,
 				 const uint16_t *	src,
 				 long			src_length)
-  _vbi_attribute ((_vbi_nonnull (1, 2)));
+  _vbi_nonnull ((1, 2));
 extern void
 _vbi_iconv_close		(vbi_iconv_t *		cd);
 extern vbi_iconv_t *

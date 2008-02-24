@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: sliced.h,v 1.10 2008/02/19 00:35:22 mschimek Exp $ */
+/* $Id: sliced.h,v 1.11 2008/02/24 14:17:02 mschimek Exp $ */
 
 #ifndef SLICED_H
 #define SLICED_H
@@ -345,10 +345,10 @@ typedef struct {
  */
 extern const char *
 vbi_sliced_name			(vbi_service_set	service)
-  _vbi_attribute ((const));
+  _vbi_const;
 extern unsigned int
 vbi_sliced_payload_bits		(vbi_service_set	service)
-  _vbi_attribute ((const));
+  _vbi_const;
 /** @} */
 
 /* Private */

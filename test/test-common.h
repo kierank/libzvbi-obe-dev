@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/* $Id: test-common.h,v 1.3 2007/11/27 18:26:48 mschimek Exp $ */
+/* $Id: test-common.h,v 1.4 2008/02/24 14:16:49 mschimek Exp $ */
 
 #include <string.h>
 #include <inttypes.h>
@@ -30,17 +30,17 @@
 extern void *
 memset_rand			(void *			d1,
 				 size_t			n)
-  __attribute__ ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void *
 xmalloc				(size_t			n_bytes)
-  __attribute__ ((_vbi_alloc));
+  _vbi_alloc;
 extern void *
 xralloc				(size_t			n_bytes)
-  __attribute__ ((_vbi_alloc));
+  _vbi_alloc;
 extern void *
 xmemdup				(const void *		src,
 				 size_t			n_bytes)
-  __attribute__ ((_vbi_nonnull (1), _vbi_alloc));
+  _vbi_alloc _vbi_nonnull ((1));
 
 extern void
 test_malloc			(void			(* function)(void),

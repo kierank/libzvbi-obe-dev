@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: exp-txt.c,v 1.22 2008/02/19 00:35:15 mschimek Exp $ */
+/* $Id: exp-txt.c,v 1.23 2008/02/24 14:17:41 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -96,7 +96,7 @@ iconv_formats[] = {
 };
 
 static const char *
-color_names[] _vbi_attribute ((unused)) = {
+color_names[] _vbi_unused = {
 	N_("Black"), N_("Red"), N_("Green"), N_("Yellow"),
 	N_("Blue"), N_("Magenta"), N_("Cyan"), N_("White"),
 	N_("Any")

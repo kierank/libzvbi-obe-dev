@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: bit_slicer.h,v 1.10 2008/02/19 00:35:14 mschimek Exp $ */
+/* $Id: bit_slicer.h,v 1.11 2008/02/24 14:18:13 mschimek Exp $ */
 
 #ifndef __ZVBI_BIT_SLICER_H__
 #define __ZVBI_BIT_SLICER_H__
@@ -105,13 +105,13 @@ vbi3_bit_slicer_slice_with_points
 				 unsigned int *		n_points,
 				 unsigned int		max_points,
 				 const uint8_t *	raw)
-  _vbi_attribute ((_vbi_nonnull (1, 2, 4, 5, 7)));
+  _vbi_nonnull ((1, 2, 4, 5, 7));
 extern vbi_bool
 vbi3_bit_slicer_slice		(vbi3_bit_slicer *	bs,
 				 uint8_t *		buffer,
 				 unsigned int		buffer_size,
 				 const uint8_t *	raw)
-  _vbi_attribute ((_vbi_nonnull (1, 2, 4)));
+  _vbi_nonnull ((1, 2, 4));
 extern vbi_bool
 vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 				 vbi_pixfmt		sample_format,
@@ -128,18 +128,18 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 				 unsigned int		payload_bits,
 				 unsigned int		payload_rate,
 				 vbi3_modulation	modulation)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi3_bit_slicer_set_log_fn	(vbi3_bit_slicer *	bs,
 				 vbi_log_mask		mask,
 				 vbi_log_fn *		log_fn,
 				 void *			user_data)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern void
 vbi3_bit_slicer_delete		(vbi3_bit_slicer *	bs);
 extern vbi3_bit_slicer *
 vbi3_bit_slicer_new		(void)
-  _vbi_attribute ((_vbi_alloc));
+  _vbi_alloc;
 
 /* Private */
 
@@ -178,10 +178,10 @@ struct _vbi3_bit_slicer {
 
 extern void
 _vbi3_bit_slicer_destroy	(vbi3_bit_slicer *	bs)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 extern vbi_bool
 _vbi3_bit_slicer_init		(vbi3_bit_slicer *	bs)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 /** @} */
 

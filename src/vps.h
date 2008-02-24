@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vps.h,v 1.6 2008/02/19 00:35:23 mschimek Exp $ */
+/* $Id: vps.h,v 1.7 2008/02/24 14:16:53 mschimek Exp $ */
 
 #ifndef __ZVBI_VPS_H__
 #define __ZVBI_VPS_H__
@@ -43,13 +43,13 @@ extern vbi_bool
 vbi_decode_vps_cni		(unsigned int *		cni,
 				 const uint8_t		buffer[13])
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 extern vbi_bool
 vbi_encode_vps_cni		(uint8_t		buffer[13],
 				 unsigned int		cni)
-  _vbi_attribute ((_vbi_nonnull (1)));
+  _vbi_nonnull ((1));
 
 /* Private */
 
@@ -58,28 +58,28 @@ extern vbi_bool
 vbi_decode_vps_pdc		(vbi_program_id *	pid,
 				 const uint8_t		buffer[13])
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 extern vbi_bool
 vbi_encode_vps_pdc		(uint8_t		buffer[13],
 				 const vbi_program_id *pid)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 vbi_bool
 vbi_decode_dvb_pdc_descriptor	(vbi_program_id *	pid,
 				 const uint8_t		buffer[5])
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 vbi_bool
 vbi_encode_dvb_pdc_descriptor	(uint8_t		buffer[5],
 				 const vbi_program_id *pid)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  _vbi_attribute ((_vbi_nonnull (1, 2)))
+  _vbi_nonnull ((1, 2))
 #endif
   ;
 #endif
