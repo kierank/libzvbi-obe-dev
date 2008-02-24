@@ -1,7 +1,50 @@
 ## Process this file with automake to produce Makefile.in
 
+compile_tests = \
+	ctest \
+	cpptest
+
+cpptest_SOURCES = cpptest.cc
+
+if HAVE_GCC_C89_SUPPORT
+compile_tests += ctest-c89 ctest-gnu89
+
+ctest_c89_SOURCES = ctest.c
+ctest_c89_CFLAGS = -pedantic-errors -std=c89
+
+ctest_gnu89_SOURCES = ctest.c
+ctest_gnu89_CFLAGS = -pedantic-errors -std=gnu89
+endif
+
+if HAVE_GCC_C94_SUPPORT
+compile_tests += ctest-c94
+
+ctest_c94_SOURCES = ctest.c
+ctest_c94_CFLAGS = -pedantic-errors -std=iso9899:199409
+endif
+
+if HAVE_GCC_C99_SUPPORT
+compile_tests += ctest-c99 ctest-gnu99
+
+ctest_c99_SOURCES = ctest.c
+ctest_c99_CFLAGS = -pedantic-errors -std=c99
+
+ctest_gnu99_SOURCES = ctest.c
+ctest_gnu99_CFLAGS = -pedantic-errors -std=gnu99
+endif
+
+if HAVE_GXX_CXX98_SUPPORT
+compile_tests += cpptest-cxx98 cpptest-gnuxx98
+
+cpptest_cxx98_SOURCES = cpptest.cc
+cpptest_cxx98_CXXFLAGS = -pedantic-errors -std=c++98
+
+cpptest_gnuxx98_SOURCES = cpptest.cc
+cpptest_gnuxx98_CXXFLAGS = -pedantic-errors -std=gnu++98
+endif
+
 TESTS = \
-	cpptest \
+	$(compile_tests) \
 	exoptest \
 	test-dvb_demux \
 	test-dvb_mux \
@@ -11,14 +54,16 @@ TESTS = \
 	test-vps
 
 check_PROGRAMS = \
-	cpptest \
-	explist \
-	test-dvb_mux \
+	$(compile_tests) \
 	test-dvb_demux \
+	test-dvb_mux \
 	test-hamm \
-	test-raw_decoder
+	test-raw_decoder \
+	test-vps
 
-cpptest_SOURCES = cpptest.cc
+check_SCRIPTS = \
+	exoptest \
+	test-unicode
 
 test_dvb_demux_SOURCES = \
 	test-dvb_demux.cc \
@@ -34,11 +79,11 @@ test_raw_decoder_SOURCES = \
 	test-raw_decoder.cc \
 	test-common.cc test-common.h
 
-test-unicode: unicode
+test_vps_SOURCES = test-vps.c
 
-check_SCRIPTS = \
-	exoptest \
-	test-unicode
+exoptest: explist
+
+test-unicode: unicode
 
 if ENABLE_PROXY
 proxy_programs = proxy-test
@@ -88,8 +133,6 @@ sliced2pes_SOURCES = \
 ttxfilter_SOURCES = \
 	ttxfilter.c \
 	sliced.c sliced.h
-
-test_vps_SOURCES = test-vps.c
 
 noinst_SCRIPTS = \
 	uclist
