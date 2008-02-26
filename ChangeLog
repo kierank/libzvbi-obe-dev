@@ -1,3 +1,11 @@
+2008-02-26    <mschimek@users.sf.net>
+
+	* src/cache.c (_vbi_cache_put_page), src/cache.h: Resynched with
+	  corrections on branch 0.3.
+
+	* configure.in: Bumped version to 0.2.30, incremented .so
+	  revision.
+
 2008-02-24    <mschimek@users.sf.net>
 
 	* Release 0.2.29.
