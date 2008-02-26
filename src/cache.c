@@ -33,6 +33,7 @@
 #  include "cache-priv.h"
 #  include "intl-priv.h"
 #  include "vbi.h"		/* vbi_page_type */
+#  define VBI_CLOCK_PAGE VBI_NONSTD_SUBPAGES
 #elif 3 == VBI_VERSION_MINOR
 #  include "event-priv.h"
 #  include "cache-priv.h"
@@ -577,6 +578,7 @@ cache_network_get_ttx_page_stat	(const cache_network *	cn,
 				 vbi_pgno		pgno)
 {
 	const struct ttx_page_stat *ps1;
+	vbi_ttx_charset_code charset_code;
 	unsigned int subcode;
 
 	assert (NULL != ps);
@@ -600,12 +602,13 @@ cache_network_get_ttx_page_stat	(const cache_network *	cn,
 		ps->page_type = (vbi_page_type) ps1->page_type;
 	}
 
-	if (0xFF == ps1->ttx_charset_code) {
+	charset_code = (vbi_ttx_charset_code) ps1->charset_code;
+
+	if (0xFF == charset_code) {
 		/* Unknown. */
 		ps->ttx_charset = NULL;
 	} else {
-		ps->ttx_charset = vbi_ttx_charset_from_code
-			((vbi_ttx_charset_code) ps1->ttx_charset_code);
+		ps->ttx_charset = vbi_ttx_charset_from_code (charset_code);
 	}
 
 	subcode = ps1->subcode;
@@ -1487,7 +1490,7 @@ _vbi_cache_put_page		(vbi_cache *		ca,
 			ps = cache_network_const_page_stat (cn, cp->pgno);
 			page_type = ps->page_type;
 
-			if (VBI_NONSTD_SUBPAGES == page_type
+			if (VBI_CLOCK_PAGE == page_type
 			    || subno >= 0x0100) {
 				/* A clock page or a rolling page without
 				   subpages (Section A.1 Note 1).
