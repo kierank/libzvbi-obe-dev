@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: cache.h,v 1.10 2008/02/24 14:16:32 mschimek Exp $ */
+/* $Id: cache.h,v 1.11 2008/02/26 14:50:13 mschimek Exp $ */
 
 #ifndef __ZVBI_CACHE_H__
 #define __ZVBI_CACHE_H__
@@ -30,6 +30,7 @@
 #  include "lang.h"
 typedef struct _vbi_cache vbi_cache;
 #elif 3 == VBI_VERSION_MINOR
+#  include <sys/time.h>		/* struct timeval */
 #  include "network.h"
 #  include "page.h"
 #  include "top_title.h"
@@ -511,7 +512,7 @@ typedef enum {
 	 */
 	VBI_DEFAULT_BACKGROUND,
 
-	VBI_ROW_CHANGE,
+	VBI_ROW_CHANGE
 } vbi_format_option;
 
 /* in teletext.c */
