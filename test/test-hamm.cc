@@ -18,7 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: test-hamm.cc,v 1.3 2008/02/21 07:18:53 mschimek Exp $ */
+/* $Id: test-hamm.cc,v 1.4 2008/02/27 06:56:30 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -27,6 +27,8 @@
 #endif
 
 #include <assert.h>
+#include <stdlib.h>		/* mrand48() */
+#include <string.h>		/* memset() */
 
 #include "src/hamm.h"
 
@@ -108,40 +110,9 @@ hamming_distance		(unsigned int		a,
 }
 
 static void
-test_unham24			(unsigned int		val)
-{
-	uint8_t buf[4];
-	unsigned int A, B, C, D, E, F;
-	unsigned int n;
-
-	memset (buf, 0xA5, sizeof (buf));
-
-	vbi::ham24 (buf, val);
-
-	assert (0xA5 == buf[3]);
-
-	assert ((int)(val & ((1 << 18) - 1)) == vbi::unham24 (buf));
-
-	n = buf[0] | (buf[1] << 8) | (buf[2] << 16);
-
-	A = parity (n & 0x555555);
-	B = parity (n & 0x666666);
-	C = parity (n & 0x787878);
-	D = parity (n & 0x007F80);
-	E = parity (n & 0x7F8000);
-	F = parity (n & 0xFFFFFF);
-
-	assert (A && B && C && D && E && F);
-}
-
-int
-main				(int			argc,
-				 char **		argv)
+test_rev			(void)
 {
 	unsigned int i;
-
-	argc = argc;
-	argv = argv;
 
 	for (i = 0; i < 10000; ++i) {
 		unsigned int n = (i < 256) ? i : (unsigned int) mrand48 ();
@@ -156,6 +127,17 @@ main				(int			argc,
 		assert (r == vbi::rev8 (n));
 		assert (vbi::rev8 (n) == vbi::rev8 (buf));
 		assert (vbi::rev16 (n) == vbi::rev16 (buf));
+	}
+}
+
+static void
+test_par_unpar			(void)
+{
+	unsigned int i;
+
+	for (i = 0; i < 10000; ++i) {
+		unsigned int n = (i < 256) ? i : (unsigned int) mrand48 ();
+		uint8_t buf[4] = { n, n >> 8, n >> 16, 0xA5 };
 
 		if (parity (n & 0xFF))
 			assert (vbi::unpar8 (n) == (int)(n & 127));
@@ -174,6 +156,12 @@ main				(int			argc,
 		assert (vbi::unpar (buf, sizeof (buf)) < 0);
 		assert (buf[2] == (buf[1] & 0x7F));
 	}
+}
+
+static void
+test_ham8_ham16_unham8_unham16	(void)
+{
+	unsigned int i;
 
 	for (i = 0; i < 10000; ++i) {
 		unsigned int n = (i < 256) ? i : (unsigned int) mrand48 ();
@@ -214,12 +202,39 @@ main				(int			argc,
 		vbi::ham16 (buf, n);
 		assert (vbi::unham16 (buf) == (int)(n & 255));
 	}
+}
 
-	for (i = 0; i < (1 << 18); ++i)
-		test_unham24 (i);
+static void
+test_ham24			(unsigned int		val)
+{
+	uint8_t buf[4];
+	unsigned int A, B, C, D, E, F;
+	unsigned int n;
 
-	test_unham24 (1 << 18);
-	test_unham24 (-1);
+	memset (buf, 0xA5, sizeof (buf));
+
+	vbi::ham24 (buf, val);
+
+	assert (0xA5 == buf[3]);
+
+	assert ((int)(val & ((1 << 18) - 1)) == vbi::unham24 (buf));
+
+	n = buf[0] | (buf[1] << 8) | (buf[2] << 16);
+
+	A = parity (n & 0x555555);
+	B = parity (n & 0x666666);
+	C = parity (n & 0x787878);
+	D = parity (n & 0x007F80);
+	E = parity (n & 0x7F8000);
+	F = parity (n & 0xFFFFFF);
+
+	assert (A && B && C && D && E && F);
+}
+
+static void
+test_unham24			(void)
+{
+	unsigned int i;
 
 	for (i = 0; i < (1 << 24); ++i) {
 		uint8_t buf[4] = { i, i >> 8, i >> 16, 0xA5 };
@@ -282,6 +297,30 @@ main				(int			argc,
 			assert (vbi::unham24 (buf) == d);
 		}
 	}
+}
+
+int
+main				(int			argc,
+				 char **		argv)
+{
+	unsigned int i;
+
+	argc = argc; /* unused */
+	argv = argv;
+
+	test_rev ();
+
+	test_par_unpar ();
+
+	test_ham8_ham16_unham8_unham16	();
+
+	for (i = 0; i < (1 << 18); ++i)
+		test_ham24 (i);
+
+	test_ham24 (1 << 18);
+	test_ham24 (-1);
+
+	test_unham24 ();
 
 	return 0;
 }
