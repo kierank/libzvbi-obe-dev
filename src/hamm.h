@@ -19,13 +19,13 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: hamm.h,v 1.14 2008/02/24 14:16:36 mschimek Exp $ */
+/* $Id: hamm.h,v 1.15 2008/02/27 06:56:36 mschimek Exp $ */
 
 #ifndef __ZVBI_HAMM_H__
 #define __ZVBI_HAMM_H__
 
 #include <inttypes.h>		/* uintN_t */
-#include "misc.h"
+#include "macros.h"
 
 VBI_BEGIN_DECLS
 
