@@ -1,5 +1,10 @@
 2008-02-26    <mschimek@users.sf.net>
 
+	* test/test-hamm.cc: Include stdlib.h and string.h to declare
+	  rand() and memset(). Refactored to clarify which functions
+	  are tested.
+	* src/hamm.h: Include macros.h, not misc.h.
+
 	* src/cache.c (_vbi_cache_put_page), src/cache.h: Resynched with
 	  corrections on branch 0.3.
 
