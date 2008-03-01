@@ -15,10 +15,11 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA 02110-1301, USA.
  */
 
-/* $Id: test-hamm.cc,v 1.4 2008/02/27 06:56:30 mschimek Exp $ */
+/* $Id: test-hamm.cc,v 1.5 2008/03/01 07:35:55 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -312,7 +313,7 @@ main				(int			argc,
 
 	test_par_unpar ();
 
-	test_ham8_ham16_unham8_unham16	();
+	test_ham8_ham16_unham8_unham16 ();
 
 	for (i = 0; i < (1 << 18); ++i)
 		test_ham24 (i);
