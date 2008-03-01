@@ -15,10 +15,11 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA 02110-1301, USA.
  */
 
-/* $Id: sliced.c,v 1.17 2008/02/17 13:33:25 mschimek Exp $ */
+/* $Id: sliced.c,v 1.18 2008/03/01 07:37:29 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -50,11 +51,11 @@
 #include "src/io-sim.h"
 #include "src/raw_decoder.h"
 #include "src/vbi.h"
-#include "src/proxy-msg.h"
-#include "src/proxy-client.h"
 #include "sliced.h"
 
 #if 2 == VBI_VERSION_MINOR
+#  include "src/proxy-msg.h"
+#  include "src/proxy-client.h"
 #  define sp_sample_format sampling_format
 #  define sp_samples_per_line bytes_per_line
 #  define VBI_PIXFMT_Y8 VBI_PIXFMT_YUV420
@@ -102,7 +103,9 @@ struct stream {
 
 	vbi_dvb_mux *		mx;
 	vbi_dvb_demux *	dx;
+#if 2 == VBI_VERSION_MINOR
         vbi_proxy_client *	proxy;
+#endif
 	vbi_capture *		cap;
 	vbi_raw_decoder *	rd;
 	vbi_sampling_par	sp;
@@ -1612,6 +1615,7 @@ capture_stream_new		(unsigned int		interfaces,
 	}
 
 	if (interfaces & INTERFACE_PROXY) {
+#if 2 == VBI_VERSION_MINOR
 		char *errstr = NULL;
 
 		st->proxy = vbi_proxy_client_create(dev_name,
@@ -1637,6 +1641,10 @@ capture_stream_new		(unsigned int		interfaces,
 			capture_error_msg ("PROXY", errstr);
 			free (errstr);
 		}
+#else
+		error_exit ("Sorry, the proxy interface is not "
+			    "available yet.\n");
+#endif
         }
 
 	if (interfaces & INTERFACE_V4L2) {
@@ -1722,7 +1730,11 @@ capture_stream_new		(unsigned int		interfaces,
 		   DVB VBI can transmit raw VBI samples.
 		   For now let's just make write_stream_new() happy. */
 		CLEAR (st->sp);
+#if 2 == VBI_VERSION_MINOR
 		st->sp.scanning = 625;
+#else
+		st->sp.videostd_set = VBI_VIDEOSTD_SET_625_50;
+#endif
 	}
 
 	st->loop = capture_loop;
