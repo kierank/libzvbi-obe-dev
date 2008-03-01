@@ -1,3 +1,24 @@
+2008-03-01    <mschimek@users.sf.net>
+
+	* test/.cvsignore: Added ctest*, cpptest*.
+
+	* test/unicode.c, test/ttxfilter.c, test/test-vps.c: 
+	* test/test-raw_decoder.cc, test/test-hamm.cc:
+	* test/test-dvb_mux.cc, test/test-dvb_demux.cc:
+	* test/test-common.h, test/test-common.cc, test/sliced2pes.c: 
+	* test/proxy-test.c, test/osc.c, test/glyph.c, test/export.c: 
+	* test/explist.c, test/decode.c, test/ctest.c, test/cpptest.cc: 
+	* test/cc-test-stream.dtd, test/capture.c, test/caption.c:
+	  Line feed cosmetics.
+
+	* test/sliced.h, test/sliced.c: Resynched with branch 0.3.
+	
+	* src/vt.h: Resynched with branch 0.3, adding
+	  ttx_page_function_valid() and ttx_page_coding_valid() helpers.
+
+	* src/misc.h: Resynched with branch 0.3, adding function
+	  attributes.
+
 2008-02-26    <mschimek@users.sf.net>
 
 	* test/test-hamm.cc: Include stdlib.h and string.h to declare
