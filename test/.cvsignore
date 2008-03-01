@@ -5,6 +5,14 @@ Makefile.in
 caption
 capture
 cpptest
+cpptest-cxx98
+cpptest-gnuxx98
+ctest
+ctest-c89
+ctest-c94
+ctest-c99
+ctest-gnu89
+ctest-gnu99
 decode
 explist
 export
