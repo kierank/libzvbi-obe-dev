@@ -20,7 +20,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: misc.h,v 1.21 2008/02/24 14:17:22 mschimek Exp $ */
+/* $Id: misc.h,v 1.22 2008/03/01 07:37:38 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -248,15 +248,19 @@ do {									\
 #  define vbi_strdup strdup
 #  define vbi_free free
 #else
+
 extern void *
 (* vbi_malloc)			(size_t);
 extern void *
-(* vbi_realloc)			(void *,
-				 size_t);
+(* vbi_realloc)		(void *,
+				 size_t)
+  _vbi_nonnull ((1));
 extern char *
-(* vbi_strdup)			(const char *);
+(* vbi_strdup)			(const char *)
+  _vbi_nonnull ((1));
 extern void
 (* vbi_free)			(void *);
+
 #endif
 
 #define vbi_cache_malloc vbi_malloc
@@ -287,7 +291,8 @@ extern vbi_bool
 _vbi_keyword_lookup		(int *			value,
 				 const char **		inout_s,
 				 const _vbi_key_value_pair * table,
-				 unsigned int		n_pairs);
+				 unsigned int		n_pairs)
+  _vbi_nonnull ((1, 2, 3));
 
 extern void
 _vbi_shrink_vector_capacity	(void **		vector,
@@ -307,21 +312,23 @@ _vbi_grow_vector_capacity	(void **		vector,
 extern _vbi_log_hook		_vbi_global_log;
 
 extern void
-_vbi_log_vprintf		(vbi_log_fn		log_fn,
+_vbi_log_vprintf		(vbi_log_fn *		log_fn,
 				 void *			user_data,
 				 vbi_log_mask		level,
 				 const char *		source_file,
 				 const char *		context,
 				 const char *		templ,
-				 va_list		ap);
+				 va_list		ap)
+  _vbi_nonnull ((1, 4, 5, 6));
 extern void
-_vbi_log_printf			(vbi_log_fn		log_fn,
+_vbi_log_printf		(vbi_log_fn *		log_fn,
 				 void *			user_data,
 				 vbi_log_mask		level,
 				 const char *		source_file,
 				 const char *		context,
 				 const char *		templ,
-				 ...);
+				 ...)
+  _vbi_nonnull ((1, 4, 5, 6)) _vbi_format ((printf, 6, 7));
 
 #define _vbi_log(hook, level, templ, args...)				\
 do {									\
@@ -393,7 +400,8 @@ do {									\
 extern size_t
 _vbi_strlcpy			(char *			dst,
 				 const char *		src,
-				 size_t			size);
+				 size_t			size)
+  _vbi_nonnull ((1, 2));
 
 /* strndup() is a BSD/GNU extension. */
 #ifndef HAVE_STRNDUP
@@ -402,7 +410,8 @@ _vbi_strlcpy			(char *			dst,
 
 extern char *
 _vbi_strndup			(const char *		s,
-				 size_t			len);
+				 size_t			len)
+  _vbi_nonnull ((1));
 
 /* vasprintf() is a GNU extension. */
 #ifndef HAVE_VASPRINTF
@@ -412,7 +421,8 @@ _vbi_strndup			(const char *		s,
 extern int
 _vbi_vasprintf			(char **		dstp,
 				 const char *		templ,
-				 va_list		ap);
+				 va_list		ap)
+  _vbi_nonnull ((1, 2));
 
 /* asprintf() is a GNU extension. */
 #ifndef HAVE_ASPRINTF
@@ -422,7 +432,8 @@ _vbi_vasprintf			(char **		dstp,
 extern int
 _vbi_asprintf			(char **		dstp,
 				 const char *		templ,
-				 ...);
+				 ...)
+  _vbi_nonnull ((1, 2)) _vbi_format ((printf, 2, 3));
 
 #undef sprintf
 #define sprintf use_snprintf_or_asprintf_instead
