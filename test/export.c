@@ -15,10 +15,11 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA 02110-1301, USA.
  */
 
-/* $Id: export.c,v 1.23 2008/02/19 00:35:23 mschimek Exp $ */
+/* $Id: export.c,v 1.24 2008/03/01 07:36:51 mschimek Exp $ */
 
 #undef NDEBUG
 

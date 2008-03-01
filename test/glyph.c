@@ -15,10 +15,11 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA 02110-1301, USA.
  */
 
-/* $Id: glyph.c,v 1.10 2008/02/20 22:55:04 mschimek Exp $ */
+/* $Id: glyph.c,v 1.11 2008/03/01 07:36:46 mschimek Exp $ */
 
 #undef NDEBUG
 

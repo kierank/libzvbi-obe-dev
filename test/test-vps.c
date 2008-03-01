@@ -15,10 +15,11 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA 02110-1301, USA.
  */
 
-/* $Id: test-vps.c,v 1.6 2008/02/21 07:18:53 mschimek Exp $ */
+/* $Id: test-vps.c,v 1.7 2008/03/01 07:35:44 mschimek Exp $ */
 
 #undef NDEBUG
 

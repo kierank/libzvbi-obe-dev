@@ -14,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA 02110-1301, USA.
  *
  *
  *  Description:
@@ -25,6 +26,9 @@
  *    for a list of possible options.
  *
  *  $Log: proxy-test.c,v $
+ *  Revision 1.20  2008/03/01 07:36:32  mschimek
+ *  Line feed cosmetics.
+ *
  *  Revision 1.19  2007/11/27 18:26:48  mschimek
  *  Updated the FSF address in the copyright notice.
  *
@@ -81,7 +85,7 @@
  */
 
 static const char
-rcsid [] = "$Id: proxy-test.c,v 1.19 2007/11/27 18:26:48 mschimek Exp $";
+rcsid [] = "$Id: proxy-test.c,v 1.20 2008/03/01 07:36:32 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
