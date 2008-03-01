@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vt.h,v 1.12 2008/02/19 00:35:23 mschimek Exp $ */
+/* $Id: vt.h,v 1.13 2008/03/01 07:37:35 mschimek Exp $ */
 
 #ifndef VT_H
 #define VT_H
@@ -129,6 +129,13 @@ enum ttx_page_function {
 	PAGE_FUNCTION_IEC_TRIGGER
 };
 
+_vbi_inline vbi_bool
+ttx_page_function_valid		(enum ttx_page_function	function)
+{
+	return ((unsigned int) function
+		<= (unsigned int) PAGE_FUNCTION_IEC_TRIGGER);
+}
+
 extern const char *
 ttx_page_function_name		(enum ttx_page_function	function);
 
@@ -165,6 +172,13 @@ enum ttx_page_coding {
 	 */
 	PAGE_CODING_META84
 };
+
+_vbi_inline vbi_bool
+ttx_page_coding_valid		(enum ttx_page_coding	coding)
+{
+	return ((unsigned int) coding
+		<= (unsigned int) PAGE_CODING_META84);
+}
 
 extern const char *
 ttx_page_coding_name		(enum ttx_page_coding	coding);
