@@ -1,3 +1,9 @@
+libzvbi 0.2.30, 2008-03-05
+--------------------------
+This is a bugfix release restoring the functions vbi_unref_page(),
+vbi_is_cached() and vbi_cache_hi_subno() which were accidentally
+dropped in libzvbi 0.2.28.
+
 libzvbi 0.2.29, 2008-02-24
 --------------------------
 This version fixes incompatibilities with strict ISO C in the

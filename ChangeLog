@@ -1,3 +1,18 @@
+2008-03-05    <mschimek@users.sf.net>
+
+	* Release 0.2.30.
+
+2008-03-05    <mschimek@users.sf.net>
+
+	* configure.in: Incremented .so version along with the
+	  return of vbi_unref_page(), vbi_is_cached() and
+	  vbi_cache_hi_subno().
+	* src/vbi.c (vbi_is_cached, vbi_cache_hi_subno): Bug fix:
+	  Restored these functions which were lost in 0.2.28.
+	* src/cache.h (vbi_is_cached, vbi_cache_hi_subno): Bug fix:
+	  Restored these declarations which were lost in 0.2.28.
+	  Restored the Public/Private markers.
+
 2008-03-01    <mschimek@users.sf.net>
 
 	* test/.cvsignore: Added ctest*, cpptest*.

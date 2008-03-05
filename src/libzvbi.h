@@ -758,6 +758,12 @@ extern char *			vbi_export_errstr(vbi_export *);
 
 
 /* cache.h */
+
+extern void             vbi_unref_page(vbi_page *pg);
+extern int              vbi_is_cached(vbi_decoder *, int pgno, int subno);
+extern int              vbi_cache_hi_subno(vbi_decoder *vbi, int pgno);
+
+
 /* search.h */
 
 typedef enum {
