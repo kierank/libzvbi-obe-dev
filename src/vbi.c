@@ -23,7 +23,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vbi.c,v 1.23 2008/02/19 00:35:22 mschimek Exp $ */
+/* $Id: vbi.c,v 1.24 2008/03/05 13:33:04 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -929,6 +929,54 @@ vbi_version			(unsigned int *		major,
 	if (major) *major = VBI_VERSION_MAJOR;
 	if (minor) *minor = VBI_VERSION_MINOR;
 	if (micro) *micro = VBI_VERSION_MICRO;
+}
+
+/**
+ * @param vbi 
+ * @param pgno 
+ * @param subno 
+ * 
+ * @deprecated At the moment pages can only be added to the
+ * cache but not removed unless the decoder is reset. That
+ * will change, making the result volatile in a multithreaded
+ * environment.
+ * 
+ * @returns
+ * @c TRUE if the given page is cached.
+ */
+int
+vbi_is_cached			(vbi_decoder *		vbi,
+				 int			pgno,
+				 int			subno)
+{
+	cache_page *cp;
+
+	cp = _vbi_cache_get_page (vbi->ca, vbi->cn,
+				  pgno, subno,
+				  /* subno_mask */ -1);
+	cache_page_unref (cp);
+
+	return NULL != cp;
+}
+
+/**
+ * @param vbi 
+ * @param pgno
+ * 
+ * @deprecated Rationale same as vbi_is_cached().
+ * 
+ * @returns
+ * Highest cached subpage of this page.
+ */
+int
+vbi_cache_hi_subno		(vbi_decoder *		vbi,
+				 int			pgno)
+{
+	const struct ttx_page_stat *ps;
+
+	ps = cache_network_const_page_stat (vbi->cn, pgno);
+
+	return ps->subno_max;
 }
 
 /*
