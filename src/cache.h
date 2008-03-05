@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: cache.h,v 1.11 2008/02/26 14:50:13 mschimek Exp $ */
+/* $Id: cache.h,v 1.12 2008/03/05 13:33:11 mschimek Exp $ */
 
 #ifndef __ZVBI_CACHE_H__
 #define __ZVBI_CACHE_H__
@@ -577,8 +577,18 @@ vbi_cache_set_network_limit	(vbi_cache *		ca,
 
 #if 2 == VBI_VERSION_MINOR
 
-void
-vbi_unref_page			(vbi_page *		pg);
+/* Public */
+
+/**
+ * @addtogroup Cache
+ * @{
+ */
+extern void             vbi_unref_page(vbi_page *pg);
+extern int              vbi_is_cached(vbi_decoder *, int pgno, int subno);
+extern int              vbi_cache_hi_subno(vbi_decoder *vbi, int pgno);
+/** @} */
+
+/* Private */
 
 #endif /* 2 == VBI_VERSION_MINOR */
 
