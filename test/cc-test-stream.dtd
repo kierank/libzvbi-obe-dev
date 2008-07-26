@@ -5,8 +5,9 @@
   Copyright (C) 2006 Michael H. Schimek
 
   This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License version 2 as
-  published by the Free Software Foundation.
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,7 +19,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
   MA 02110-1301, USA.
 
-  $Id: cc-test-stream.dtd,v 1.2 2008/03/01 07:37:12 mschimek Exp $
+  $Id: cc-test-stream.dtd,v 1.3 2008/07/26 06:22:15 mschimek Exp $
 
   This is the format of the string loaded with
   vbi_capture_sim_load_caption(). Note the XML parser is very
