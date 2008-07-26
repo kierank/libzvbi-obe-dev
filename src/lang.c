@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: lang.c,v 1.14 2008/02/19 00:35:20 mschimek Exp $ */
+/* $Id: lang.c,v 1.15 2008/07/26 06:22:38 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -777,7 +777,7 @@ caption_extended2 [32][2] = {
 	{ 0x00EB, 0x00CB }, /* 0x1236 e with diaeresis */
 	{ 0x00CE, 0x00CE }, /* 0x1237 I with circumflex */
 	{ 0x00CF, 0x00CF }, /* 0x1238 I with diaeresis */
-	{ 0x00EE, 0x00CE }, /* 0x1239 i with diaeresis */
+	{ 0x00EF, 0x00CF }, /* 0x1239 i with diaeresis */
 	{ 0x00D4, 0x00D4 }, /* 0x123A O with circumflex */
 	{ 0x00D9, 0x00D9 }, /* 0x123B U with grave accent */
 	{ 0x00F9, 0x00D9 }, /* 0x123C u with grave accent */
