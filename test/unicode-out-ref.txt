@@ -324,8 +324,8 @@ EIA 608 Closed Caption Special Characters (0x1130+n)
 
 EIA 608 Closed Caption Extended Characters (0x1220+n)
 
-ÁÉÓÚÜü‘¡*'─©℠•“”ÀÂÇÈÊËëÎÏîÔÙùÛ«»
-ÁÉÓÚÜÜ‘¡*'─©℠•“”ÀÂÇÈÊËËÎÏÎÔÙÙÛ«»
+ÁÉÓÚÜü‘¡*'─©℠•“”ÀÂÇÈÊËëÎÏïÔÙùÛ«»
+ÁÉÓÚÜÜ‘¡*'─©℠•“”ÀÂÇÈÊËËÎÏÏÔÙÙÛ«»
 
 EIA 608 Closed Caption Extended Characters (0x1320+n)
 
