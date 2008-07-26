@@ -13,8 +13,7 @@
 
 #include <inttypes.h>
 
-struct v4l2_capability
-{
+struct v4l2_capability {
 	char			name[32];
 	int			type;
 	int			inputs;

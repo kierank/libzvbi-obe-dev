@@ -19,8 +19,7 @@
 #  define VID_TYPE_TELETEXT 0x0004
 #endif
 
-struct video_capability
-{
+struct video_capability {
 	char			name[32];
 	int			type;
 	int			channels;
@@ -37,8 +36,7 @@ struct video_capability
 /* type */
 #define VIDEO_TYPE_TV 0x0001
 
-struct video_channel
-{
+struct video_channel {
 	int			channel;
 	char			name[32];
 	int			tuners;
@@ -54,8 +52,7 @@ enum {
 	VIDEO_MODE_SECAM
 };
 
-struct video_tuner
-{
+struct video_tuner {
 	int			tuner;
 	char			name[32];
 	unsigned long		rangelow;
@@ -65,8 +62,7 @@ struct video_tuner
 	uint16_t		signal;
 };
 
-struct video_unit
-{
+struct video_unit {
 	int			video;
 	int			vbi;
 	int			radio;
