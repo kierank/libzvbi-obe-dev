@@ -1,11 +1,12 @@
 /*
  *  VBI proxy test client
  *
- *  Copyright (C) 2003,2004 Tom Zoerner
+ *  Copyright (C) 2003, 2004 Tom Zoerner
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -26,6 +27,9 @@
  *    for a list of possible options.
  *
  *  $Log: proxy-test.c,v $
+ *  Revision 1.21  2008/07/26 06:22:19  mschimek
+ *  Changed the license to GPLv2+ with Tom's permission.
+ *
  *  Revision 1.20  2008/03/01 07:36:32  mschimek
  *  Line feed cosmetics.
  *
@@ -85,7 +89,7 @@
  */
 
 static const char
-rcsid [] = "$Id: proxy-test.c,v 1.20 2008/03/01 07:36:32 mschimek Exp $";
+rcsid [] = "$Id: proxy-test.c,v 1.21 2008/07/26 06:22:19 mschimek Exp $";
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"

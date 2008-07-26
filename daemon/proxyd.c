@@ -4,8 +4,9 @@
  *  Copyright (C) 2002-2004 Tom Zoerner (and others)
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,7 +15,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA 02110-1301, USA.
  *
  *
  *  Description:
@@ -37,6 +39,9 @@
  *
  *
  *  $Log: proxyd.c,v $
+ *  Revision 1.19  2008/07/26 06:22:24  mschimek
+ *  Changed the license to GPLv2+ with Tom's permission.
+ *
  *  Revision 1.18  2007/11/27 17:39:35  mschimek
  *  *** empty log message ***
  *
@@ -72,7 +77,7 @@
  *
  */
 
-static const char rcsid[] = "$Id: proxyd.c,v 1.18 2007/11/27 17:39:35 mschimek Exp $";
+static const char rcsid[] = "$Id: proxyd.c,v 1.19 2008/07/26 06:22:24 mschimek Exp $";
 
 #include "config.h"
 
