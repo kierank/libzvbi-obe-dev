@@ -1,3 +1,26 @@
+2008-07-26    <mschimek@users.sf.net>
+
+	* Release 0.2.31.
+
+2008-07-22    <mschimek@users.sf.net>
+
+	* src/videodev.h, src/videodev2.h: Indentation pedantry.
+
+	* src/hammgen.c: Minor typo.
+
+	* src/ccfont2.xbm: Added a LGPLv2+ notice.
+	* test/cc-test-stream.dtd: Changed the license to GPLv2+.
+	* test/proxy-test.c, daemon/proxyd.c, daemon/chains.c: 
+	  Changed the license to GPLv2+ with Tom's permission.
+
+	* test/unicode-out-ref.txt: vbi_caption_unicode() fix.
+	* src/lang.c (vbi_caption_unicode): Fixed conversion of latin
+	  small letter i with diaresis.
+
+	* README: Line feed cosmetics.
+	* configure.in: Bumped version to 0.2.31, incremented .so
+	  revision.
+	
 2008-03-05    <mschimek@users.sf.net>
 
 	* Release 0.2.30.

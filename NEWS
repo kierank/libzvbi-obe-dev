@@ -1,3 +1,12 @@
+libzvbi 0.2.31, 2008-07-26
+--------------------------
+The vbi_caption_unicode() function did not correctly translate
+the small letter i with diaresis.
+
+The files daemon/chains.c, daemon/proxyd.c,
+test/proxy-test.c and test/cc-test-stream.dtd are now licensed
+under GPLv2 or later as stated in the top README file.
+
 libzvbi 0.2.30, 2008-03-05
 --------------------------
 This is a bugfix release restoring the functions vbi_unref_page(),
