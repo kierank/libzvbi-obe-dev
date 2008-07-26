@@ -19,7 +19,7 @@
  *  MA 02110-1301, USA.
  */
 
-/* $Id: hammgen.c,v 1.1 2008/02/19 00:35:20 mschimek Exp $ */
+/* $Id: hammgen.c,v 1.2 2008/07/26 06:22:00 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -61,7 +61,7 @@ generate_hamm24_inv_tables	(void)
 	   // Correct single bit error, set bit 31 on double bit error.
 	   d ^= _vbi_hamm24_inv_err[ABCDEF];
 
-	   This algorithm is based on an idea by R. Ganzarz in
+	   This algorithm is based on an idea by R. Gancarz in
 	   AleVT 1.5.1. */
 
 	for (i = 0; i < 256; ++i) {
