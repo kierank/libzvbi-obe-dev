@@ -1,12 +1,17 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = zvbi-ntsc-cc
+bin_PROGRAMS = \
+	zvbi-atsc-cc \
+	zvbi-ntsc-cc 
+
+zvbi_atsc_cc_SOURCES = atsc-cc.c
 
 zvbi_ntsc_cc_SOURCES = ntsc-cc.c
 
 noinst_PROGRAMS = x11font
 
 man_MANS = \
+	zvbi-atsc-cc.1 \
 	zvbi-ntsc-cc.1
 
 EXTRA_DIST = \
