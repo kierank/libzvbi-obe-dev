@@ -31,3 +31,13 @@ ntsc-cc by various authors
 This is a copy of the ntsc-cc tool from the Xawtv package using
 libzvbi for driver access and bit slicing. Can be used to record
 and display Closed Caption and eXtended Data Service data.
+
+atsc-cc by Michael Schimek et al
+--------------------------------
+
+This is an ATSC (digital TV) version of ntsc-cc. Unlike ntsc-cc
+this program also tunes in a station, and it can capture data from
+all stations sharing a transponder frequency at one. The Closed
+Caption decoder has been greatly improved (this code will be
+integrated into the library and ntsc-cc after more tests) and a
+basic DTVCC (CEA 708-C) decoder has been added.
