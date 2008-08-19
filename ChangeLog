@@ -1,3 +1,18 @@
+2008-08-19    <mschimek@users.sf.net>
+
+	* test/capture.c (main): If we output PES or TS, capture only
+	  the services we can actually encode, so we don't get an error from
+	  vbi_dvb_mux.
+
+2008-08-17    <mschimek@users.sf.net>
+
+	* src/dvb/frontend.h, src/dvb/dmx.h: Updated.
+	* contrib/README: Added atsc-cc info.
+	* contrib/atsc-cc.c: Added.
+	* contrib/Makefile.am (bin_PROGRAMS): Added atsc-cc.c.
+	
+	* configure.in: Bumped version to 0.2.32.
+	
 2008-07-26    <mschimek@users.sf.net>
 
 	* Release 0.2.31.
