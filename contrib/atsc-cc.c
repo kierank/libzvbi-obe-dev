@@ -8863,14 +8863,6 @@ long_options [] = {
 static int			option_index;
 
 static void
-pes_option_error_exit		(void)
-{
-	error_exit ("Sorry, only one program can be decoded with "
-		    "the --cc-data, --es or\n"
-		    "--pes option.\n");
-}
-
-static void
 list_programs			(void)
 {
 	const unsigned int ll = 1; /* log level */
@@ -9518,16 +9510,16 @@ parse_args			(int			argc,
 	if (NULL == pr->option_station_name) {
 		if (0 == n_program_options) {
 			--n_programs;
+			if (SOURCE_DVB_DEVICE == option_source
+			    || SOURCE_STDIN_TS == option_source) {
+				if (0 == n_programs)
+					goto no_station;
+			}
 		} else {
 			if (SOURCE_DVB_DEVICE == option_source
 			    || SOURCE_STDIN_TS == option_source) {
-				if (optind == argc) {
-					error_exit ("Please give a "
-						    "station name. "
-						    "List all "
-						    "stations with "
-						    "the -L option.\n");
-				}
+				if (optind == argc)
+					goto no_station;
 
 				pr->option_station_name = argv[optind];
 			}
@@ -9547,11 +9539,22 @@ parse_args			(int			argc,
 		look_up_station_names ();
 	} else {
 		if (n_programs > 1) {
-			pes_option_error_exit ();
+			goto too_many_stations;
 		} else if (NULL != program_table[0].option_station_name) {
 			log (1, "Ignoring station name.\n");
 		}
 	}
+
+	return;
+
+ no_station:
+	error_exit ("Please give a station name. "
+		    "List all stations with the -L option.\n");
+
+ too_many_stations:
+	error_exit ("Sorry, only one program can be decoded with "
+		    "the --cc-data, --es or\n"
+		    "--pes option.\n");
 }
 
 int
