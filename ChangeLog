@@ -1,5 +1,7 @@
 2008-08-19    <mschimek@users.sf.net>
 
+	* contrib/atsc-cc.c: Fix: Segfaulted if no station name was given.
+
 	* test/capture.c (main): If we output PES or TS, capture only
 	  the services we can actually encode, so we don't get an error from
 	  vbi_dvb_mux.
