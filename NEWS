@@ -1,4 +1,4 @@
-libzvbi 0.2.32, 2008-08-19
+libzvbi 0.2.32, 2008-08-20
 --------------------------
 This version adds a new tool named zvbi-atsc-cc to record Closed
 Caption from ATSC digital TV. It supports legacy NTSC caption
