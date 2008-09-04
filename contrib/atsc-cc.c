@@ -60,7 +60,7 @@
 #  include <getopt.h>
 #endif
 
-#include <libzvbi.h>
+#include "src/libzvbi.h"
 
 /* Linux DVB driver interface. */
 #include "src/dvb/dmx.h"
