@@ -277,7 +277,7 @@ AC_MSG_RESULT($enable_dvb)
 if test "x$enable_dvb" = xyes; then
   AC_DEFINE(ENABLE_DVB, 1, [Define to build DVB interface])
 fi
-AM_CONDITIONAL(ENABLE_DVB, [test "x$enable_proxy" = xyes])
+AM_CONDITIONAL(ENABLE_DVB, [test "x$enable_dvb" = xyes])
 
 AC_MSG_CHECKING([whether to build the *BSD bktr driver interface])
 AC_ARG_ENABLE(bktr,

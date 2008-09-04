@@ -17,6 +17,8 @@ endif
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	atsc-cc.c \
+	zvbi-atsc-cc.1 \
 	README
 
 AM_CPPFLAGS = \
