@@ -1,3 +1,15 @@
+2008-09-03    <mschimek@users.sf.net>
+
+	* Release 0.2.33.
+
+2008-09-03    <mschimek@users.sf.net>
+
+	* contrib/atsc-cc.c: Include our libzvbi.h, not the installed one.
+	* contrib/Makefile.am (bin_PROGRAMS): Compile zvbi-atsc-cc only if
+	  the Linux DVB interface is available.
+	* configure.in: Added an ENABLE_DVB conditional to disable
+	  zvbi-atsc-cc in contrib/Makefile.am. Bumped version to 0.2.33.
+	
 2008-08-20    <mschimek@users.sf.net>
 
 	* Release 0.2.32.
