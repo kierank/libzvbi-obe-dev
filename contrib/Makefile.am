@@ -1,18 +1,19 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = \
-	zvbi-atsc-cc \
-	zvbi-ntsc-cc 
-
-zvbi_atsc_cc_SOURCES = atsc-cc.c
+bin_PROGRAMS = zvbi-ntsc-cc 
 
 zvbi_ntsc_cc_SOURCES = ntsc-cc.c
 
 noinst_PROGRAMS = x11font
 
-man_MANS = \
-	zvbi-atsc-cc.1 \
-	zvbi-ntsc-cc.1
+man_MANS = zvbi-ntsc-cc.1
+
+# This program works only with Linux DVB drivers.
+if ENABLE_DVB
+bin_PROGRAMS += zvbi-atsc-cc
+zvbi_atsc_cc_SOURCES = atsc-cc.c
+man_MANS += zvbi-atsc-cc.1
+endif
 
 EXTRA_DIST = \
 	$(man_MANS) \
