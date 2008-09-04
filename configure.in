@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(zvbi, 0.2.32)
+AC_INIT(zvbi, 0.2.33)
 AC_CONFIG_SRCDIR(src/vbi.c)
 
 AM_INIT_AUTOMAKE([1.9 check-news dist-bzip2])
@@ -277,6 +277,7 @@ AC_MSG_RESULT($enable_dvb)
 if test "x$enable_dvb" = xyes; then
   AC_DEFINE(ENABLE_DVB, 1, [Define to build DVB interface])
 fi
+AM_CONDITIONAL(ENABLE_DVB, [test "x$enable_proxy" = xyes])
 
 AC_MSG_CHECKING([whether to build the *BSD bktr driver interface])
 AC_ARG_ENABLE(bktr,
@@ -287,6 +288,7 @@ AC_MSG_RESULT($enable_bktr)
 if test "x$enable_bktr" = xyes; then
   AC_DEFINE(ENABLE_BKTR, 1, [Define to build bktr driver interface])
 fi
+
 
 if test "x$enable_v4l" = xyes -o "x$enable_dvb" = xyes; then
   dnl Linux 2.6.x asm/types.h defines __s64 and __u64 only
