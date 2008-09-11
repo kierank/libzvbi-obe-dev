@@ -19,7 +19,7 @@
  *  MA 02110-1301, USA.
  */
 
-/* $Id: unicode.c,v 1.12 2008/03/01 07:35:35 mschimek Exp $ */
+/* $Id: unicode.c,v 1.13 2008/09/11 02:47:12 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -78,6 +78,85 @@ print_set			(const char *		name,
 	for (i = 0; i < 16; ++i) {
 		for (j = 2; j < 8; ++j) {
 			putwchar (vbi_teletext_unicode (s, 0, j * 16 + i));
+			putwchar (' ');
+		}
+
+		putwchar ('\n');
+	}
+
+	putwchar ('\n');
+}
+
+static void
+teletext_composed		(vbi_bool		upper_case)
+{
+	unsigned int offs;
+	unsigned int i, j;
+
+	offs = upper_case ? 0x00 : 0x20;
+
+	putwstr ("Teletext composed glyphs\n\n   ");
+
+	for (i = 0x40; i < 0x60; ++i)
+		putwchar (vbi_teletext_unicode (1, 0, i | offs));
+
+	putwstr ("\n\n");
+
+	for (i = 0; i < 16; ++i) {
+		putwchar (vbi_teletext_unicode (2, 0, 0x40 + i));
+		putwstr ("  ");
+
+		for (j = 0x40; j < 0x60; ++j) {
+			unsigned int c;
+
+			c = vbi_teletext_composed_unicode (i, j | offs);
+			putwchar ((0 == c) ? '-' : c);
+		}
+
+		putwchar ('\n');
+	}
+
+	putwchar ('\n');
+}
+
+static int
+is_teletext_composed		(unsigned int		uc)
+{
+	unsigned int i, j;
+
+	for (i = 0; i < 16; ++i) {
+		for (j = 0x20; j < 0x80; ++j) {
+			if (uc == vbi_teletext_composed_unicode (i, j))
+				return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+static void
+teletext_composed_inv		(void)
+{
+	unsigned int i, j;
+
+	putwstr ("Teletext composed glyphs (Unicode U+0080 ... U+00FF)\n\n");
+
+	for (i = 0; i < 16; ++i) {
+		for (j = 0x080; j < 0x100; j += 0x10) {
+			putwchar (is_teletext_composed (i + j) ? i + j : '-');
+			putwchar (' ');
+		}
+
+		putwchar ('\n');
+	}
+
+	putwchar ('\n');
+
+	putwstr ("Teletext composed glyphs (Unicode U+0100 ... U+017F)\n\n");
+
+	for (i = 0; i < 16; ++i) {
+		for (j = 0x100; j < 0x180; j += 0x10) {
+			putwchar (is_teletext_composed (i + j) ? i + j : '-');
 			putwchar (' ');
 		}
 
@@ -146,47 +225,10 @@ main				(int			argc,
 	print_set ("ETS 300 706 Table 48: G3 Smooth Mosaics and "
 		   "Line Drawing Set\n", 13);
 
-	putwstr ("Teletext composed glyphs\n\n   ");
+	teletext_composed (/* upper_case */ TRUE);
+	teletext_composed (/* upper_case */ FALSE);
 
-	for (i = 0x40; i < 0x60; ++i)
-		putwchar (vbi_teletext_unicode (1, 0, i));
-
-	putwstr ("\n\n");
-
-	for (i = 0; i < 16; ++i) {
-		putwchar (vbi_teletext_unicode (2, 0, 0x40 + i));
-		putwstr ("  ");
-
-		for (j = 0x40; j < 0x60; ++j) {
-			unsigned int c;
-
-			c = vbi_teletext_composed_unicode (i, j);
-			putwchar ((0 == c) ? '-' : c);
-		}
-
-		putwchar ('\n');
-	}
-
-	putwstr ("\nTeletext composed glyphs\n\n   ");
-
-	for (i = 0x60; i < 0x80; ++i)
-		putwchar (vbi_teletext_unicode (1, 0, i));
-
-	putwstr ("\n\n");
-
-	for (i = 0; i < 16; ++i) {
-		putwchar (vbi_teletext_unicode (2, 0, 0x40 + i));
-		putwstr ("  ");
-
-		for (j = 0x60; j < 0x80; ++j) {
-			unsigned int c;
-
-			c = vbi_teletext_composed_unicode (i, j);
-			putwchar ((0 == c) ? '-' : c);
-		}
-
-		putwchar ('\n');
-	}
+	teletext_composed_inv ();
 
 	putwstr ("\nEIA 608 Closed Caption Basic Character Set\n\n");
 
