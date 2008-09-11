@@ -1,3 +1,11 @@
+2008-09-11    <mschimek@users.sf.net>
+
+	* test/unicode-out-ref.txt: Updated.
+	* test/unicode.c: Print two more tables to reveal gaps
+	  in the Teletext composed character conversion.
+	* src/lang.c: Bug fix: Teletext composed character table
+	  was incomplete, patch by Marian Ďurkovič.
+
 2008-09-03    <mschimek@users.sf.net>
 
 	* Release 0.2.33.
