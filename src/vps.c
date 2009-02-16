@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vps.c,v 1.7 2008/02/19 00:35:22 mschimek Exp $ */
+/* $Id: vps.c,v 1.8 2009/02/16 13:41:38 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -78,8 +78,6 @@ vbi_decode_vps_cni		(unsigned int *		cni,
 	return TRUE;
 }
 
-#if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
-
 /**
  * @param pid PDC data will be stored here.
  * @param buffer VPS packet as defined for @c VBI_SLICED_VPS,
@@ -93,7 +91,7 @@ vbi_decode_vps_cni		(unsigned int *		cni,
  * @a pid remains unmodified.
  */
 vbi_bool
-vbi_decode_vps_pdc		(vbi_program_id *	pid,
+_vbi_decode_vps_pdc		(vbi_program_id *	pid,
 				 const uint8_t		buffer[13])
 {
 	vbi_pil pil;
@@ -108,7 +106,7 @@ vbi_decode_vps_pdc		(vbi_program_id *	pid,
 	switch (pil) {
 	case VBI_PIL_TIMER_CONTROL:
 	case VBI_PIL_INHIBIT_TERMINATE:
-	case VBI_PIL_INTERRUPT:
+	case VBI_PIL_INTERRUPTION:
 	case VBI_PIL_CONTINUE:
 		break;
 
@@ -125,16 +123,13 @@ vbi_decode_vps_pdc		(vbi_program_id *	pid,
 
 	pid->channel	= VBI_PID_CHANNEL_VPS;
 
+#if 3 == VBI_VERSION_MINOR
 	pid->cni_type	= VBI_CNI_TYPE_VPS;
+#endif
 
 	vbi_decode_vps_cni (&pid->cni, buffer);
 
 	pid->pil	= pil;
-
-	pid->month	= VBI_PIL_MONTH (pil);
-	pid->day	= VBI_PIL_DAY (pil);
-	pid->hour	= VBI_PIL_HOUR (pil); 
-	pid->minute	= VBI_PIL_MINUTE (pil);
 
 	pid->pcs_audio	= buffer[2] >> 6;
 
@@ -142,6 +137,8 @@ vbi_decode_vps_pdc		(vbi_program_id *	pid,
 
 	return TRUE;
 }
+
+#if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
 
 /**
  * @param pid PDC data will be stored here.

@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vps.h,v 1.7 2008/02/24 14:16:53 mschimek Exp $ */
+/* $Id: vps.h,v 1.8 2009/02/16 13:41:42 mschimek Exp $ */
 
 #ifndef __ZVBI_VPS_H__
 #define __ZVBI_VPS_H__
@@ -53,14 +53,14 @@ vbi_encode_vps_cni		(uint8_t		buffer[13],
 
 /* Private */
 
-#if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
 extern vbi_bool
-vbi_decode_vps_pdc		(vbi_program_id *	pid,
+_vbi_decode_vps_pdc		(vbi_program_id *	pid,
 				 const uint8_t		buffer[13])
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
   _vbi_nonnull ((1, 2))
 #endif
   ;
+#if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
 extern vbi_bool
 vbi_encode_vps_pdc		(uint8_t		buffer[13],
 				 const vbi_program_id *pid)
