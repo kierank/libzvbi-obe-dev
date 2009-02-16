@@ -87,7 +87,9 @@ libzvbi_la_SOURCES = \
 	macros.h \
 	misc.c misc.h \
 	packet.c teletext.c teletext_decoder.h vt.h \
+	packet-830.c packet-830.h \
 	page_table.c page_table.h \
+	pdc.c pdc.h \
 	pfc_demux.c pfc_demux.h \
 	proxy-client.c proxy-client.h \
 	raw_decoder.c raw_decoder.h \
@@ -97,7 +99,7 @@ libzvbi_la_SOURCES = \
 	tables.c tables.h network-table.h \
 	trigger.c trigger.h \
 	vbi.c vbi.h event.h \
-	vps.c vps.h pdc.h \
+	vps.c vps.h \
 	wss.c wss.h \
 	xds_demux.c xds_demux.h \
 	$(proxy_sources)
