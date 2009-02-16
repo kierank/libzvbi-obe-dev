@@ -20,7 +20,7 @@
  *  MA 02110-1301, USA.
  */
 
-/* $Id: decode.c,v 1.32 2008/03/01 07:36:59 mschimek Exp $ */
+/* $Id: decode.c,v 1.33 2009/02/16 13:41:35 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -47,13 +47,14 @@
 #if 2 == VBI_VERSION_MINOR
 #  include "src/bcd.h"
 #  include "src/conv.h"
-#  include "src/pfc_demux.h"
 #  include "src/dvb_demux.h"
-#  include "src/idl_demux.h"
-#  include "src/xds_demux.h"
-#  include "src/vps.h"
 #  include "src/hamm.h"
+#  include "src/idl_demux.h"
 #  include "src/lang.h"
+#  include "src/packet-830.h"
+#  include "src/pfc_demux.h"
+#  include "src/vps.h"
+#  include "src/xds_demux.h"
 #elif 3 == VBI_VERSION_MINOR
 #  include "src/zvbi.h"
 #  include "src/misc.h"		/* _vbi_to_ascii() */
@@ -431,6 +432,8 @@ packet_8301			(const uint8_t		buffer[42],
 		dump_cni (VBI_CNI_TYPE_8301, cni);
 }
 
+#endif /* 3 == VBI_VERSION_MINOR */
+
 static void
 packet_8302			(const uint8_t		buffer[42],
 				 unsigned int		designation)
@@ -459,11 +462,11 @@ packet_8302			(const uint8_t		buffer[42],
 
 	putchar ('\n');
 
+#if 3 == VBI_VERSION_MINOR
 	if (0 != pi.cni)
 		dump_cni (pi.cni_type, pi.cni);
+#endif
 }
-
-#endif /* 3 == VBI_VERSION_MINOR */
 
 static vbi_bool
 page_function_clear_cb		(vbi_pfc_demux *	dx,
@@ -673,9 +676,7 @@ teletext			(const uint8_t		buffer[42],
 		}
 
 		if (designation >= 2 && designation <= 3) {
-#if 3 == VBI_VERSION_MINOR /* XXX port me back */
 			packet_8302 (buffer, designation);
-#endif
 			return;
 		}
 	}
@@ -707,7 +708,7 @@ vps				(const uint8_t		buffer[13],
 {
 	if (option_decode_vps) {
 		unsigned int cni;
-#if 3 == VBI_VERSION_MINOR
+#if 1
 		vbi_program_id pi;
 #endif
 		if (option_dump_bin) {
@@ -722,20 +723,22 @@ vps				(const uint8_t		buffer[13],
 			return;
 		}
 
-#if 3 == VBI_VERSION_MINOR
-		if (!vbi_decode_vps_pdc (&pi, buffer)) {
+#if 1
+		if (!_vbi_decode_vps_pdc (&pi, buffer)) {
 			printf ("Error in VPS packet PDC data.\n");
 			return;
 		}
-		
+
 		printf ("VPS line=%3u ", line);
 
 		_vbi_program_id_dump (&pi, stdout);
 
 		putchar ('\n');
 
+#if 3 == VBI_VERSION_MINOR
 		if (0 != pi.cni)
 			dump_cni (pi.cni_type, pi.cni);
+#endif
 #else
 		printf ("VPS line=%3u CNI=%x\n", line, cni);
 #endif
@@ -899,10 +902,10 @@ Input options:\n\
 -T | --ts pid          Source is a DVB TS stream\n\
 Decoding options:\n"
 #if 3 == VBI_VERSION_MINOR /* XXX port me back */
-"-1 | --8301            Teletext packet 8/30 format 1 (local time)\n\
--2 | --8302            Teletext packet 8/30 format 2 (PDC)\n"
+"-1 | --8301            Teletext packet 8/30 format 1 (local time)\n\"
 #endif
-"-c | --cc              Closed Caption\n\
+"-2 | --8302            Teletext packet 8/30 format 2 (PDC)\n\
+-c | --cc              Closed Caption\n\
 -j | --idl             Any Teletext IDL packets (M/30, M/31)\n\
 -t | --ttx             Decode any Teletext packet\n\
 -v | --vps             Video Programming System (PDC)\n"
