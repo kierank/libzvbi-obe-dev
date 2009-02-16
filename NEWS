@@ -1,3 +1,6 @@
+libzvbi 0.2.34, 2009-02-00
+--------------------------
+
 libzvbi 0.2.33, 2008-09-03
 --------------------------
 Fixes two zvbi-atsc-cc compile problems.

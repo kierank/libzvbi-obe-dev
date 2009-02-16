@@ -1,3 +1,27 @@
+2009-02-16    <mschimek@users.sf.net>
+
+	* test/decode.c: Enabled VPS and Teletext 8/30-2 PDC decoding.
+	* src/vps.c, src/vps.h: Enabled PDC decoding for tests.
+	* src/packet-830.c, src/packet-830.h, src/pdc.c, src/pdc.h:
+	  Added for PDC tests.
+	* src/Makefile.am (libzvbi_la_SOURCES): Added packet-830.c,
+	  packet-830.h, pdc.c for tests.
+
+2009-02-11    <mschimek@users.sf.net>
+
+	* test/exp-test.sh: Removed the VTX check because the VTX
+	  module was disabled in 0.2.28.
+
+	* src/exp-txt.c (vbi_print_page_region): A debugging printf was
+	  accidentally enabled.
+	* src/caption.c (update): Bug fix: Buffer overflow, patch by
+	  Helen Buus.
+
+	* contrib/atsc-cc.c (init_capture_state): Use posix_memalign(),
+	  memalign() or malloc() as available.
+	* configure.in: Added a memalign() and posix_memalign()
+	  check. Bumped version to 0.2.34, incremented .so revision.
+
 2008-09-11    <mschimek@users.sf.net>
 
 	* test/unicode-out-ref.txt: Updated.
