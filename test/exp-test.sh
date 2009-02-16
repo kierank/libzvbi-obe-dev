@@ -42,7 +42,8 @@ fi
 
 rm -f exp-test-out-*
 
-for module in html text vtx ; do
+# Module vtx has been disabled in 0.2.28.
+for module in html text ; do
   target_loop
 done
 for module in png ppm xpm ; do
