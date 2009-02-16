@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: caption.c,v 1.28 2008/02/24 14:18:03 mschimek Exp $ */
+/* $Id: caption.c,v 1.29 2009/02/16 13:41:51 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -778,7 +778,8 @@ roll_up(vbi_page *pg, int first_row, int last_row)
 static inline void
 update(cc_channel *ch)
 {
-	vbi_char *acp = ch->line - ch->pg[0].text + ch->pg[1].text;
+	vbi_char *acp = ch->line - ch->pg[ch->hidden].text
+		+ ch->pg[ch->hidden ^ 1].text;
 
 	memcpy(acp, ch->line, sizeof(*acp) * COLUMNS);
 }
