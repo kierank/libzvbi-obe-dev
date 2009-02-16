@@ -7875,11 +7875,43 @@ destroy_capture_state		(void)
 	ct_buffer_capacity = 0;
 }
 
+#ifdef HAVE_POSIX_MEMALIGN
+
+/* posix_memalign() was introduced in POSIX 1003.1d and may not be
+   implemented on all systems. */
+static void *
+my_memalign			(size_t			boundary,
+				 size_t			size)
+{
+	void *p;
+	int err;
+
+	/* boundary must be a power of two. */
+	if (0 != (boundary & (boundary - 1)))
+		return malloc (size);
+
+	err = posix_memalign (&p, boundary, size);
+	if (0 == err)
+		return p;
+
+	errno = err;
+	return NULL;
+}
+
+#elif defined HAVE_MEMALIGN
+/* memalign() is a GNU extension. Due to the DVB driver interface
+   this program currently runs on Linux only, but it can't hurt
+   to be prepared. */
+#  define my_memalign memalign
+#else
+#  define my_memalign(boundary, size) malloc (size)
+#endif
+
 static void
 init_capture_state		(void)
 {
 	ct_buffer_capacity = 32 * 1024;
-	ct_buffer = memalign (4096, ct_buffer_capacity);
+	ct_buffer = my_memalign (4096, ct_buffer_capacity);
 
 	if (NULL == ct_buffer) {
 		no_mem_exit ();
