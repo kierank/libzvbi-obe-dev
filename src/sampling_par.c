@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: sampling_par.c,v 1.10 2008/02/19 00:35:21 mschimek Exp $ */
+/* $Id: sampling_par.c,v 1.11 2009/02/18 15:37:11 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -297,7 +297,7 @@ _vbi_sampling_par_permit_service
 	samples_per_line = sp->samples_per_line;
 #endif
 
-	if (sp->offset > 0 && strict > 0) {
+	if (0 && sp->offset > 0 && strict > 0) {
 		double sampling_rate;
 		double offset;
 		double end;
