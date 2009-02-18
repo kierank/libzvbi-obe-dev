@@ -1,3 +1,8 @@
+2009-02-18    <mschimek@users.sf.net>
+
+	* src/sampling_par.c (_vbi_sampling_par_permit_service): Offset
+	  check disabled, pending repair.
+
 2009-02-16    <mschimek@users.sf.net>
 
 	* test/decode.c: Enabled VPS and Teletext 8/30-2 PDC decoding.
