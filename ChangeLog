@@ -1,3 +1,62 @@
+2009-03-04    <mschimek@users.sf.net>
+
+	* test/Makefile.am (noinst_PROGRAMS): Added date tool.
+	* configure.in: Added tm_gmtoff check for test/date.c.
+	* test/date.c: New test/demo/example of VBI_EVENT_LOCAL_TIME
+	  from branch 0.3.
+	* examples/Makefile.am (noinst_PROGRAMS): Added pdc1.
+	* examples/pdc1.c: New example for VBI_EVENT_PROG_ID.
+	* src/vbi.h (vbi_decoder): Added a vps_pid field to check for
+	  PDC transmission errors.
+	* src/vbi.c (vbi_event_enable, vbi_decode): The function now
+	  supports VBI_EVENT_LOCAL_TIME and VBI_EVENT_PROG_ID.
+	* src/packet.c (station_lookup): The vbi_cni_type definition
+	  moved into network.h.
+	(vbi_decode_vps): The function now sends a VBI_EVENT_PROG_ID if
+	  requested.
+	(vbi_decode_teletext, parse_8_30): The function now sends a
+	  VBI_EVENT_LOCAL_TIME and VBI_EVENT_PROG_ID if requested.
+	* src/event.h: Added VBI_EVENT_LOCAL_TIME, VBI_EVENT_PROG_ID,
+	  enum vbi_dst_state, struct vbi_local_time. Added local_time
+	  and prog_id fields to struct vbi_event.
+
+	* test/decode.c: Permanently enabled VPS PDC decoding with
+	  vbi_decode_vps_pdc(). 
+	* test/Makefile.am (TESTS, check_PROGRAMS): Added test-packet-830.
+	(test_vps_SOURCES): Replaced test-vps.c by test-vps.cc.
+	* test/test-common.h, test/test-common.cc (memcmp_zero):
+	  Function added for test-packet-830.cc.
+	* test/test-vps.cc, test/test-packet-830.cc: New unit tests
+	  from branch 0.3.
+	* test/test-vps.c: Replaced by test-vps.cc.
+	* doc/Doxyfile, doc/Doxyfile.in (FILE_PATTERNS):
+	  Added packet-830.h, pdc.h.
+	* src/Makefile.am (libzvbi_la_SOURCES): Added network.h
+	(LIBZVBI_HDRS): Added network.h, pdc.h, packet-830.h.
+	* src/vps.h: A few modifications to make Doxygen happy. Renamed
+	  _vbi_decode_vps_pdc() to vbi_decode_vps_pdc(). All VPS
+	  functions are public now.
+	* src/vps.c: Updated the doxumentation.
+	(vbi_decode_vps_cni): Bug fix: Translation of CNI 0x0DC3 was
+	  backwards.
+	(vbi_decode_vps_pdc, vbi_decode_dvb_pdc_descriptor): Removed
+	  the PIL check to support unreal dates and times.
+	  vbi_program_id.mi flag wasn't initialized.
+	(vbi_encode_vps_pdc, vbi_encode_dvb_pdc_descriptor):
+	  vbi_program_id does not contain a broken down	date and time
+	  anymore. Changed the PIL check to support unreal dates and
+	  times.
+	* src/packet-830.h: A few modifications to make Doxygen happy.
+	* src/packet-830.c: Updated the doxumentation and added a brief
+	  explanation of Packet 8/30. Replaced a vbi_bcd2bin() call
+	  because the function has insufficient precision in libzvbi 0.2.
+	* src/misc.h: Added TIME_MIN and TIME_MAX macros for the PDC
+	  helper functions.
+	* src/pdc.h: Updated the doxumentation. vbi_program_id.cni_type is
+	  back. 
+	* src/pdc.c: Updated the doxumentation. Commented out some code
+	  that would return not yet defined error codes.
+
 2009-02-18    <mschimek@users.sf.net>
 
 	* src/sampling_par.c (_vbi_sampling_par_permit_service): Offset

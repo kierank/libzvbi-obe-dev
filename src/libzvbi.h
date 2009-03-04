@@ -249,6 +249,167 @@ vbi_locale_codeset		(void);
 
 
 
+/* network.h */
+
+typedef enum {
+	VBI_CNI_TYPE_NONE,
+	VBI_CNI_TYPE_UNKNOWN = VBI_CNI_TYPE_NONE,
+
+	VBI_CNI_TYPE_VPS,
+
+	VBI_CNI_TYPE_8301,
+
+	VBI_CNI_TYPE_8302,
+
+	VBI_CNI_TYPE_PDC_A,
+
+	VBI_CNI_TYPE_PDC_B
+} vbi_cni_type;
+
+/* pdc.h */
+
+#include <time.h>		/* time_t */
+
+
+typedef unsigned int vbi_pil;
+
+#define VBI_PIL(month, day, hour, minute)				\
+	(((day) << 15) | ((month) << 11) | ((hour) << 6) | (minute))
+
+
+#define VBI_PIL_MONTH(pil)	(((pil) >> 11) & 15)
+
+
+#define VBI_PIL_DAY(pil)	(((pil) >> 15) & 31)
+
+
+#define VBI_PIL_HOUR(pil)	(((pil) >> 6) & 31)
+
+
+#define VBI_PIL_MINUTE(pil)	((pil) & 63)
+
+enum {
+	VBI_PIL_TIMER_CONTROL		= VBI_PIL (15, 0, 31, 63),
+
+	VBI_PIL_INHIBIT_TERMINATE	= VBI_PIL (15, 0, 30, 63),
+
+	VBI_PIL_INTERRUPTION		= VBI_PIL (15, 0, 29, 63),
+
+	VBI_PIL_CONTINUE		= VBI_PIL (15, 0, 28, 63),
+
+	VBI_PIL_NSPV			= VBI_PIL (15, 15, 31, 63),
+
+	VBI_PIL_END			= VBI_PIL (15, 15, 31, 63)
+};
+
+extern vbi_bool
+vbi_pil_is_valid_date		(vbi_pil		pil);
+extern time_t
+vbi_pil_to_time			(vbi_pil		pil,
+				 time_t			start,
+				 const char *		tz);
+extern time_t
+vbi_pil_lto_to_time		(vbi_pil		pil,
+				 time_t			start,
+				 int			seconds_east);
+extern vbi_bool
+vbi_pty_validity_window		(time_t *		begin,
+				 time_t *		end,
+				 time_t			time,
+				 const char *		tz)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+;
+extern vbi_bool
+vbi_pil_validity_window		(time_t *		begin,
+				 time_t *		end,
+				 vbi_pil		pil,
+				 time_t			start,
+				 const char *		tz)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+;
+extern vbi_bool
+vbi_pil_lto_validity_window	(time_t *		begin,
+				 time_t *		end,
+				 vbi_pil		pil,
+				 time_t			start,
+				 int			seconds_east)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+;
+
+
+typedef enum {
+	VBI_PID_CHANNEL_LCI_0 = 0,
+
+	
+	VBI_PID_CHANNEL_LCI_1,
+
+	
+	VBI_PID_CHANNEL_LCI_2,
+
+	
+	VBI_PID_CHANNEL_LCI_3,
+
+	VBI_PID_CHANNEL_VPS,
+
+	VBI_PID_CHANNEL_PDC_DESCRIPTOR,
+
+	VBI_PID_CHANNEL_XDS_CURRENT,
+
+	VBI_PID_CHANNEL_XDS_FUTURE,
+
+	
+	VBI_MAX_PID_CHANNELS
+} vbi_pid_channel;
+
+typedef enum {
+	
+	VBI_PCS_AUDIO_UNKNOWN = 0,
+
+	
+	VBI_PCS_AUDIO_MONO,
+
+	
+	VBI_PCS_AUDIO_STEREO,
+
+	 
+	VBI_PCS_AUDIO_BILINGUAL
+} vbi_pcs_audio;
+
+typedef struct {
+	
+	vbi_pid_channel		channel;
+
+	vbi_cni_type			cni_type;
+
+	unsigned int			cni;
+
+	vbi_pil			pil;
+
+	vbi_bool			luf;
+
+	vbi_bool			mi;
+
+	vbi_bool			prf;
+
+	
+	vbi_pcs_audio			pcs_audio;
+
+	unsigned int			pty;
+
+	vbi_bool			tape_delayed;
+
+	void *				_reserved2[2];
+	int				_reserved3[4];
+} vbi_program_id;
+
+
+
 /* event.h */
 
 #include <inttypes.h>
@@ -508,7 +669,33 @@ extern void		vbi_reset_prog_info(vbi_program_info *pi);
 #define	VBI_EVENT_ASPECT	0x0040
 #define	VBI_EVENT_PROG_INFO	0x0080
 #define	VBI_EVENT_NETWORK_ID	0x0100
+#define VBI_EVENT_LOCAL_TIME	0x0400
+#define VBI_EVENT_PROG_ID	0x0800
 
+
+typedef enum {
+	
+	VBI_DST_UNKNOWN = 0,
+
+	VBI_DST_INCLUDED,
+
+	
+	VBI_DST_INACTIVE,
+
+	VBI_DST_ACTIVE
+} vbi_dst_state;
+
+typedef struct {
+	
+	time_t			time;
+
+	int			seconds_east;
+
+	
+	vbi_bool		seconds_east_valid;
+
+	vbi_dst_state		dst_state;
+} vbi_local_time;
 
 
 #include <inttypes.h>
@@ -535,6 +722,8 @@ typedef struct vbi_event {
                 vbi_link *		trigger;
                 vbi_aspect_ratio	aspect;
 		vbi_program_info *	prog_info;
+		vbi_local_time *	local_time;
+		vbi_program_id *	prog_id;
 	}			ev;
 } vbi_event;
 
@@ -1843,6 +2032,40 @@ extern const char *	vbi_rating_string(vbi_rating_auth auth, int id);
 extern const char *	vbi_prog_type_string(vbi_prog_classf classf, int id);
 
 
+/* packet-830.h */
+
+extern vbi_bool
+vbi_decode_teletext_8301_cni	(unsigned int *		cni,
+				 const uint8_t		buffer[42])
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+  ;
+extern vbi_bool
+vbi_decode_teletext_8301_local_time
+				(time_t *		utc_time,
+				 int *			seconds_east,
+				 const uint8_t		buffer[42])
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2, 3))
+#endif
+  ;
+extern vbi_bool
+vbi_decode_teletext_8302_cni	(unsigned int *		cni,
+				 const uint8_t		buffer[42])
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+  ;
+extern vbi_bool
+vbi_decode_teletext_8302_pdc	(vbi_program_id *	pid,
+				 const uint8_t		buffer[42])
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+  ;
+
+
 /* vps.h */
 
 extern vbi_bool
@@ -1856,6 +2079,36 @@ extern vbi_bool
 vbi_encode_vps_cni		(uint8_t		buffer[13],
 				 unsigned int		cni)
   _vbi_nonnull ((1));
+extern vbi_bool
+vbi_decode_vps_pdc		(vbi_program_id *	pid,
+				 const uint8_t		buffer[13])
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+  ;
+extern vbi_bool
+vbi_encode_vps_pdc		(uint8_t		buffer[13],
+				 const vbi_program_id *	pid)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+  ;
+vbi_bool
+vbi_decode_dvb_pdc_descriptor	(vbi_program_id *	pid,
+				 const uint8_t		buffer[5])
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+  ;
+vbi_bool
+vbi_encode_dvb_pdc_descriptor	(uint8_t		buffer[5],
+				 const vbi_program_id *	pid)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+  ;
+
+
 
 /* vbi.h */
 
