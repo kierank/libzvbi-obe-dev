@@ -17,25 +17,24 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pdc.h,v 1.4 2009/02/16 13:40:45 mschimek Exp $ */
+/* $Id: pdc.h,v 1.5 2009/03/04 21:48:49 mschimek Exp $ */
 
 #ifndef __ZVBI_PDC_H__
 #define __ZVBI_PDC_H__
 
 #include <stdio.h>		/* FILE */
 #include <inttypes.h>		/* uint8_t */
-#include <time.h>		/* time_t */
 
 #include "version.h"
 #include "macros.h"
 #include "bcd.h"		/* vbi_pgno */
-#if 3 == VBI_VERSION_MINOR
-#  include "network.h"		/* vbi_cni_type */
-#endif
+#include "network.h"		/* vbi_cni_type */
 
 VBI_BEGIN_DECLS
 
 /* Public */
+
+#include <time.h>		/* time_t */
 
 /**
  * @addtogroup ProgramID
@@ -48,6 +47,8 @@ VBI_BEGIN_DECLS
  * This is a packed representation of the originally announced start
  * date and time ("AT-2" in EN 300 231 parlance, "Scheduled Start
  * Time" in EIA 608-B) of a program.
+ *
+ * @since 0.2.34
  */
 typedef unsigned int vbi_pil;
 
@@ -58,8 +59,11 @@ typedef unsigned int vbi_pil;
  * @a hour 0 ... 23 and for @a minute 0 ... 59.
  *
  * Note in the PDC system (EN 300 231) networks may also transmit
- * unreal dates or times. You can determine if a PIL represents a
- * valid date and time with the vbi_pil_is_valid_date() function.
+ * unreal dates or times like 14-00 25:63. You can determine if a PIL
+ * represents a valid date and time with the vbi_pil_is_valid_date()
+ * function.
+ *
+ * @since 0.2.34
  */
 #define VBI_PIL(month, day, hour, minute)				\
 	(((day) << 15) | ((month) << 11) | ((hour) << 6) | (minute))
@@ -80,11 +84,14 @@ typedef unsigned int vbi_pil;
  * @brief PIL Service Codes.
  *
  * PILs can be zero, or specify a valid date and time, or an unreal
- * time such as 31:00 if no transmission time has been decided yet.
- * Some PILs with unreal date and time have a special meaning.
+ * time such as 31:00 if a new label has been assigned to a program
+ * but no transmission time has been decided yet. Some PILs with
+ * unreal date and time have a special meaning.
  *
  * These codes are defined in EN 300 231 Section 6.2, Annex E.3 and
  * Annex F, and in EIA 608-B Section 9.5.1.1.
+ *
+ * @since 0.2.34
  */
 enum {
 	/**
@@ -103,9 +110,8 @@ enum {
 	 * VBI_PIL_INHIBIT_TERMINATE the current program has ended and
 	 * the next program has not started yet. VCRs recording the
 	 * current program shall stop recording and remove the program
-	 * from their schedule.
-	 *
-	 * VCRs waiting for a new PIL shall continue waiting.
+	 * from their schedule. VCRs waiting for a new PIL shall
+	 * continue waiting.
 	 */
 	VBI_PIL_INHIBIT_TERMINATE	= VBI_PIL (15, 0, 30, 63),
 
@@ -118,10 +124,9 @@ enum {
 	 * at the start of a halftime pause or at a film break. VCRs
 	 * recording the current program shall stop recording, but not
 	 * delete the program from their schedule. The network may
-	 * show other programs with different PILs before the
-	 * interrupted program continues.
-	 *
-	 * VCRs waiting for a new PIL shall continue waiting.
+	 * broadcast other programs with different PILs before the
+	 * interrupted program continues. VCRs waiting for a new PIL
+	 * shall continue waiting.
 	 */
 	VBI_PIL_INTERRUPTION		= VBI_PIL (15, 0, 29, 63),
 
@@ -147,7 +152,8 @@ enum {
 	/**
 	 * Only in XDS Current Program ID packets:
 	 *
-	 * The current program has ended.
+	 * The current program has ended and the next program not
+	 * started yet.
 	 */
 	VBI_PIL_END			= VBI_PIL (15, 15, 31, 63)
 };
@@ -167,32 +173,56 @@ vbi_pty_validity_window		(time_t *		begin,
 				 time_t *		end,
 				 time_t			time,
 				 const char *		tz)
-  _vbi_nonnull ((1, 2));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+;
 extern vbi_bool
 vbi_pil_validity_window		(time_t *		begin,
 				 time_t *		end,
 				 vbi_pil		pil,
 				 time_t			start,
 				 const char *		tz)
-  _vbi_nonnull ((1, 2));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+;
 extern vbi_bool
 vbi_pil_lto_validity_window	(time_t *		begin,
 				 time_t *		end,
 				 vbi_pil		pil,
 				 time_t			start,
 				 int			seconds_east)
-  _vbi_nonnull ((1, 2));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+;
 
 /* Private */
+
+/** @} */
 
 extern void
 _vbi_pil_dump			(vbi_pil		pil,
 				 FILE *			fp)
-  _vbi_nonnull ((2));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((2))
+#endif
+;
 extern vbi_bool
 _vbi_pil_from_string		(vbi_pil *		pil,
 				 const char **		inout_s)
-  _vbi_nonnull ((1, 2));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+;
+
+/**
+ * @addtogroup ProgramID
+ * @{
+ */
+
+/* Public */
 
 /**
  * @brief Sources of PIDs.
@@ -201,6 +231,13 @@ _vbi_pil_from_string		(vbi_pil *		pil,
  * channels. Teletext packet 8/30 format 2 contains a Label Channel
  * Identifier. XDS Program ID packets can refer to the current or next
  * program.
+ *
+ * This information is returned in struct @a vbi_program_id by the low
+ * level functions vbi_decode_teletext_8302_pdc(),
+ * vbi_decode_vps_pdc(), vbi_decode_dvb_pdc_descriptor() and the @a
+ * vbi_decoder event @c VBI_EVENT_PROG_ID.
+ *
+ * @since 0.2.34
  */
 typedef enum {
 	/**
@@ -212,8 +249,8 @@ typedef enum {
 	 * Channel in use.
 	 *
 	 * The purpose of Label Channels is to transmit overlapping
-	 * PIDs, for example one about the current program and another
-	 * announcing the impending start of the next
+	 * PIDs, for example one referring the current program and
+	 * another announcing the imminent start of the next
 	 * program. Programs can also have multiple PIDs, for example
 	 * a sports magazine with several segments, where the entire
 	 * program has a PID and each segment has its own PID,
@@ -253,10 +290,13 @@ typedef enum {
 	 * Data from an XDS Current Program ID packet (EIA 608-B
 	 * Section 9).
 	 *
-	 * XDS Current/Future Program ID packets contains a PIL and
+	 * XDS Current/Future Program ID packets contain a PIL and
 	 * tape-delayed flag. Current class packets refer to the
 	 * currently transmitted program, Future class packets to the
 	 * next program.
+	 *
+	 * Decoding of XDS Current/Future Program ID packets is not
+	 * implemented yet.
 	 */
 	VBI_PID_CHANNEL_XDS_CURRENT,
 
@@ -265,12 +305,19 @@ typedef enum {
 	 */
 	VBI_PID_CHANNEL_XDS_FUTURE,
 
-	/** This value may change. */
+	/** Note this value may change. */
 	VBI_MAX_PID_CHANNELS
 } vbi_pid_channel;
 
 /**
  * @brief PDC Program Control Status - Audio.
+ *
+ * This information is available with Teletext and VPS program IDs and
+ * returned in struct vbi_program_id by the low level functions
+ * vbi_decode_teletext_8302_pdc(), vbi_decode_vps_pdc() and the @a
+ * vbi_decoder event @c VBI_EVENT_PROG_ID.
+ *
+ * @since 0.2.34
  */
 typedef enum {
 	/** Nothing known about audio channels. */
@@ -290,27 +337,24 @@ typedef enum {
  * @brief Program Identification.
  *
  * This structure contains a Program ID received via Teletext packet
- * 8/30 format 2, VPS packet, DVB PDC descriptor or XDS Current/Future
+ * 8/30 format 2, VPS, a DVB PDC descriptor or an XDS Current/Future
  * Program ID packet. When the source does not provide all this
  * information, libzvbi initializes the respective fields with an
  * appropriate value.
+ *
+ * @since 0.2.34
  */
 typedef struct {
 	/** Source of this PID. */
 	vbi_pid_channel		channel;
 
-#if 3 == VBI_VERSION_MINOR
 	/**
 	 * Network identifier type, one of
-	 * - @c VBI_CNI_TYPE_UNKNOWN,
 	 * - @c VBI_CNI_TYPE_NONE,
 	 * - @c VBI_CNI_TYPE_8302 or
 	 * - @c VBI_CNI_TYPE_VPS.
 	 */
 	vbi_cni_type			cni_type;
-#else
-	int				reserved1;
-#endif
 
 	/**
 	 * Country and Network Identifier provided by Teletext packet
@@ -328,7 +372,7 @@ typedef struct {
 
 	/**
 	 * PDC Label Update Flag (only transmitted in Teletext
-	 * packets). When this flag is set, the PID is intented to
+	 * packets). When this flag is set, the PID is intended to
 	 * update VCR memory, it does not refer to the current
 	 * program. According to the examples in EN 300 231 Annex E.3
 	 * however VCRs should probably also handle the PID as if a @c
@@ -388,14 +432,18 @@ typedef struct {
 	int				_reserved3[4];
 } vbi_program_id;
 
+/** @} */
+
 /* Private */
 
 extern void
 _vbi_program_id_dump		(const vbi_program_id *	pid,
 				 FILE *			fp)
-  _vbi_nonnull ((1, 2));
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  _vbi_nonnull ((1, 2))
+#endif
+;
 
-/** @} */
 
 VBI_END_DECLS
 
