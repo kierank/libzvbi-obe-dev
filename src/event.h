@@ -19,12 +19,13 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: event.h,v 1.14 2008/02/19 00:35:15 mschimek Exp $ */
+/* $Id: event.h,v 1.15 2009/03/04 21:48:05 mschimek Exp $ */
 
 #ifndef EVENT_H
 #define EVENT_H
 
 #include "bcd.h"
+#include "pdc.h"
 
 #ifndef VBI_DECODER
 #define VBI_DECODER
@@ -93,7 +94,7 @@ typedef struct {
 	/**
 	 * The European Broadcasting Union (EBU) maintains several tables
 	 * of Country and Network Identification (CNI) codes. CNIs of type
-	 * VPS, 8/30-1 and 8/30-2 can be used to identify networks during
+	 * VPS, 8/30/1 and 8/30/2 can be used to identify networks during
 	 * a channel scan.
 	 *
 	 * This field contains the CNI of the network found in a VPS
@@ -109,7 +110,7 @@ typedef struct {
 	 * zero if unknown or not applicable. The country code is
 	 * stored in the MSB, the network code in the LSB (0xCCNN).
 	 * Note these CNIs may use different country and network codes
-	 * than the PDC (VPS, 8/30-2) CNIs.
+	 * than the PDC (VPS, 8/30/2) CNIs.
 	 *
 	 * For example BBC1: 0x447F, ZDF: 0x4902.
 	 */
@@ -652,7 +653,65 @@ extern void		vbi_reset_prog_info(vbi_program_info *pi);
  * @since 0.2.20
  */
 #define	VBI_EVENT_NETWORK_ID	0x0100
+/**
+ * A new local time has been received. ev.local_time points to a
+ * vbi_local_time structure with details.
+ */
+#define VBI_EVENT_LOCAL_TIME	0x0400
+/**
+ * A new Program ID (VPS or PDC) has been received. ev.prog_id points
+ * to a vbi_program_id structure with details.
+ */
+#define VBI_EVENT_PROG_ID	0x0800
 /** @} */
+
+/**
+ * Specifies if daylight-saving time is in effect in the time zone of
+ * the intended audience of the network.
+ */
+typedef enum {
+	/** The network does not provide any DST information. */
+	VBI_DST_UNKNOWN = 0,
+
+	/**
+	 * A DST offset (+0 or +1 hour) has been added to the time
+	 * zone offset.
+	 */
+	VBI_DST_INCLUDED,
+
+	/** Daylight-saving time is not in effect. */
+	VBI_DST_INACTIVE,
+
+	/**
+	 * Daylight-saving time is in effect, and +1 hour has been
+	 * added to the time zone offset.
+	 */
+	VBI_DST_ACTIVE
+} vbi_dst_state;
+
+typedef struct {
+	/** The current time in the UTC zone. */
+	time_t			time;
+
+	/**
+	 * The offset of the time zone of the intended audience of the
+	 * network in seconds east of UTC. For example the EST zone is
+	 * offset by -18000, GMT by 0, and CET by +3600 seconds. An
+	 * additional +3600 second daylight-saving time offset may
+	 * have been added as specified by @a dst_state, giving for
+	 * example an EDT offset of -14400 seconds.
+	 */
+	int			seconds_east;
+
+	/** If FALSE, the network does not provide a time zone offset. */
+	vbi_bool		seconds_east_valid;
+
+	/**
+	 * Whether daylight-saving time is currently in effect in the
+	 * time zone of the intended audience of the network.
+	 */
+	vbi_dst_state		dst_state;
+} vbi_local_time;
 
 /**
  * @example examples/network.c
@@ -687,6 +746,8 @@ typedef struct vbi_event {
                 vbi_link *		trigger;
                 vbi_aspect_ratio	aspect;
 		vbi_program_info *	prog_info;
+		vbi_local_time *	local_time;
+		vbi_program_id *	prog_id;
 	}			ev;
 } vbi_event;
 
