@@ -19,7 +19,7 @@
  *  MA 02110-1301, USA.
  */
 
-/* $Id: test-common.h,v 1.5 2008/03/01 07:36:13 mschimek Exp $ */
+/* $Id: test-common.h,v 1.6 2009/03/04 21:48:11 mschimek Exp $ */
 
 #include <string.h>
 #include <inttypes.h>
@@ -29,7 +29,11 @@
 #define RAND(var) memset_rand (&(var), sizeof (var))
 
 extern void *
-memset_rand			(void *			d1,
+memset_rand			(void *			dst,
+				 size_t			n)
+  _vbi_nonnull ((1));
+extern int
+memcmp_zero			(const void *		src,
 				 size_t			n)
   _vbi_nonnull ((1));
 extern void *
