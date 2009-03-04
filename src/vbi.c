@@ -23,7 +23,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vbi.c,v 1.24 2008/03/05 13:33:04 mschimek Exp $ */
+/* $Id: vbi.c,v 1.25 2009/03/04 21:47:59 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -160,6 +160,8 @@ vbi_event_enable(vbi_decoder *vbi, int mask)
 			vbi->aspect_source = 0;
 		}
 	}
+	if (activate & VBI_EVENT_PROG_ID)
+		CLEAR (vbi->vps_pid);
 
 	vbi->event_mask = mask;
 }
@@ -437,11 +439,15 @@ vbi_decode(vbi_decoder *vbi, vbi_sliced *sliced, int lines, double time)
 
 	  if (vbi->event_mask & (VBI_EVENT_TTX_PAGE |
 				 VBI_EVENT_NETWORK |
-				 VBI_EVENT_NETWORK_ID))
+				 VBI_EVENT_NETWORK_ID |
+				 VBI_EVENT_LOCAL_TIME |
+				 VBI_EVENT_PROG_ID))
 		  vbi_teletext_desync(vbi);
 	  if (vbi->event_mask & (VBI_EVENT_CAPTION |
 				 VBI_EVENT_NETWORK |
-				 VBI_EVENT_NETWORK_ID))
+				 VBI_EVENT_NETWORK_ID |
+				 VBI_EVENT_LOCAL_TIME |
+				 VBI_EVENT_PROG_ID))
 		  vbi_caption_desync(vbi);
 	} else {
 		pthread_mutex_lock(&vbi->chswcd_mutex);
