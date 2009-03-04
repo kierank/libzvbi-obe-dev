@@ -19,16 +19,13 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vps.h,v 1.8 2009/02/16 13:41:42 mschimek Exp $ */
+/* $Id: vps.h,v 1.9 2009/03/04 21:48:35 mschimek Exp $ */
 
 #ifndef __ZVBI_VPS_H__
 #define __ZVBI_VPS_H__
 
 #include <inttypes.h>		/* uint8_t */
 #include "macros.h"
-#ifndef ZAPPING8
-#  include "version.h"
-#endif
 #include "pdc.h"		/* vbi_program_id */
 
 VBI_BEGIN_DECLS
@@ -50,20 +47,16 @@ extern vbi_bool
 vbi_encode_vps_cni		(uint8_t		buffer[13],
 				 unsigned int		cni)
   _vbi_nonnull ((1));
-
-/* Private */
-
 extern vbi_bool
-_vbi_decode_vps_pdc		(vbi_program_id *	pid,
+vbi_decode_vps_pdc		(vbi_program_id *	pid,
 				 const uint8_t		buffer[13])
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
   _vbi_nonnull ((1, 2))
 #endif
   ;
-#if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
 extern vbi_bool
 vbi_encode_vps_pdc		(uint8_t		buffer[13],
-				 const vbi_program_id *pid)
+				 const vbi_program_id *	pid)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
   _vbi_nonnull ((1, 2))
 #endif
@@ -77,13 +70,15 @@ vbi_decode_dvb_pdc_descriptor	(vbi_program_id *	pid,
   ;
 vbi_bool
 vbi_encode_dvb_pdc_descriptor	(uint8_t		buffer[5],
-				 const vbi_program_id *pid)
+				 const vbi_program_id *	pid)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
   _vbi_nonnull ((1, 2))
 #endif
   ;
-#endif
+
 /** @} */
+
+/* Private */
 
 VBI_END_DECLS
 
