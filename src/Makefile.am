@@ -86,6 +86,7 @@ libzvbi_la_SOURCES = \
 	lang.c lang.h \
 	macros.h \
 	misc.c misc.h \
+	network.h \
 	packet.c teletext.c teletext_decoder.h vt.h \
 	packet-830.c packet-830.h \
 	page_table.c page_table.h \
@@ -139,6 +140,8 @@ LIBZVBI_HDRS = \
 	macros.h \
 	bcd.h \
 	conv.h \
+	network.h \
+	pdc.h \
 	event.h \
 	format.h \
 	lang.h \
@@ -163,6 +166,7 @@ LIBZVBI_HDRS = \
 	cc.h \
 	teletext_decoder.h \
 	tables.h \
+	packet-830.h \
 	vps.h \
 	vbi.h
 
