@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vps.c,v 1.8 2009/02/16 13:41:38 mschimek Exp $ */
+/* $Id: vps.c,v 1.9 2009/03/04 21:48:37 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -31,7 +31,7 @@
 #include "vps.h"
 
 /**
- * @addtogroup VPS Video Program System Decoder
+ * @addtogroup VPS Video Program System (VPS) Decoder
  * @ingroup LowDec
  * @brief Functions to decode and encode VPS packets (EN 300 231, EN 300 468).
  */
@@ -42,7 +42,7 @@
  *   i.e. 13 bytes without clock run-in and start code.
  *
  * Decodes a VPS packet according to EN 300 231, returning the
- * 12 bit Country and Network Identifier in @a cni.
+ * contained 12 bit Country and Network Identifier in @a *cni.
  *
  * The code 0xDC3 is translated according to TR 101 231: "As this
  * code is used for a time in two networks a distinction for automatic
@@ -51,7 +51,8 @@
  *
  * @returns
  * Always @c TRUE, no error checking possible. It may be prudent to
- * wait until two identical CNIs have been received.
+ * wait for a second transmission of the received CNI to ensure
+ * correct reception.
  *
  * @since 0.2.20
  */
@@ -71,7 +72,7 @@ vbi_decode_vps_cni		(unsigned int *		cni,
 
 	if (unlikely (0x0DC3 == cni_value))
 		cni_value = (buffer[2] & 0x10) ?
-			0x0DC2 /* ZDF */ : 0x0DC1 /* ARD */;
+			0x0DC1 /* ARD */ : 0x0DC2 /* ZDF */;
 
 	*cni = cni_value;
 
@@ -79,7 +80,7 @@ vbi_decode_vps_cni		(unsigned int *		cni,
 }
 
 /**
- * @param pid PDC data will be stored here.
+ * @param pid PDC program ID will be stored here.
  * @param buffer VPS packet as defined for @c VBI_SLICED_VPS,
  *   i.e. 13 bytes without clock run-in and start code.
  * 
@@ -89,9 +90,11 @@ vbi_decode_vps_cni		(unsigned int *		cni,
  * @returns
  * @c FALSE if the buffer contains incorrect data. In this case
  * @a pid remains unmodified.
+ *
+ * @since 0.2.34
  */
 vbi_bool
-_vbi_decode_vps_pdc		(vbi_program_id *	pid,
+vbi_decode_vps_pdc		(vbi_program_id *	pid,
 				 const uint8_t		buffer[13])
 {
 	vbi_pil pil;
@@ -103,33 +106,20 @@ _vbi_decode_vps_pdc		(vbi_program_id *	pid,
 	       +  (buffer[ 9]         << 6)
 	       +  (buffer[10]         >> 2));
 
-	switch (pil) {
-	case VBI_PIL_TIMER_CONTROL:
-	case VBI_PIL_INHIBIT_TERMINATE:
-	case VBI_PIL_INTERRUPTION:
-	case VBI_PIL_CONTINUE:
-		break;
-
-	default:
-		if (unlikely ((unsigned int) VBI_PIL_MONTH (pil) - 1 > 11
-			      || (unsigned int) VBI_PIL_DAY (pil) - 1 > 30
-			      || (unsigned int) VBI_PIL_HOUR (pil) > 23
-			      || (unsigned int) VBI_PIL_MINUTE (pil) > 59))
-			return FALSE;
-		break;
-	}
+	/* We cannot check the pil because unreal dates are valid
+	   too. */
 
 	CLEAR (*pid);
 
 	pid->channel	= VBI_PID_CHANNEL_VPS;
 
-#if 3 == VBI_VERSION_MINOR
 	pid->cni_type	= VBI_CNI_TYPE_VPS;
-#endif
 
 	vbi_decode_vps_cni (&pid->cni, buffer);
 
 	pid->pil	= pil;
+
+	pid->mi		= TRUE;
 
 	pid->pcs_audio	= buffer[2] >> 6;
 
@@ -138,12 +128,10 @@ _vbi_decode_vps_pdc		(vbi_program_id *	pid,
 	return TRUE;
 }
 
-#if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
-
 /**
- * @param pid PDC data will be stored here.
+ * @param pid PDC program ID will be stored here.
  * @param buffer A DVB PDC descriptor as defined in EN 300 468,
- *   including descriptor_tag and descriptor_length.
+ *   including the descriptor_tag and descriptor_length bytes.
  * 
  * Decodes a DVB PDC descriptor as defined in EN 300 468 and EN 300 231,
  * storing PDC recording-control data in @a pid.
@@ -151,6 +139,8 @@ _vbi_decode_vps_pdc		(vbi_program_id *	pid,
  * @returns
  * @c FALSE if the buffer contains an incorrect descriptor_tag,
  * descriptor_length or PIL. In this case @a pid remains unmodified.
+ *
+ * @since 0.2.34
  */
 vbi_bool
 vbi_decode_dvb_pdc_descriptor	(vbi_program_id *	pid,
@@ -167,30 +157,14 @@ vbi_decode_dvb_pdc_descriptor	(vbi_program_id *	pid,
 	   programme_identification_label [20] ->
 	     day [5], month [4], hour [5], minute [6] */
 
-	/* EN 300 468 section 6.1, 6.2. */
+	/* EN 300 468 Section 6.1, 6.2. */
 	if (unlikely (0x69 != buffer[0] || 3 != buffer[1]))
 		return FALSE;
 
-	/* EN 300 468 section 6.2.29. */
+	/* EN 300 468 Section 6.2.29. */
 	pil = (+ ((buffer[2] & 0x0F) << 16)
 	       +  (buffer[3]         << 8)
 	       +   buffer[4]);
-
-	switch (pil) {
-	case VBI_PIL_TIMER_CONTROL:
-	case VBI_PIL_INHIBIT_TERMINATE:
-	case VBI_PIL_INTERRUPT:
-	case VBI_PIL_CONTINUE:
-		break;
-
-	default:
-		if (unlikely ((unsigned int) VBI_PIL_MONTH (pil) - 1 > 11
-			      || (unsigned int) VBI_PIL_DAY (pil) - 1 > 30
-			      || (unsigned int) VBI_PIL_HOUR (pil) > 23
-			      || (unsigned int) VBI_PIL_MINUTE (pil) > 59))
-			return FALSE;
-		break;
-	}
 
 	CLEAR (*pid);
 
@@ -198,15 +172,10 @@ vbi_decode_dvb_pdc_descriptor	(vbi_program_id *	pid,
 
 	pid->pil	= pil;
 
-	pid->month	= VBI_PIL_MONTH (pil);
-	pid->day	= VBI_PIL_DAY (pil);
-	pid->hour	= VBI_PIL_HOUR (pil); 
-	pid->minute	= VBI_PIL_MINUTE (pil);
+	pid->mi		= TRUE;
 
 	return TRUE;
 }
-
-#endif /* 3 == VBI_VERSION_MINOR */
 
 /**
  * @param buffer VPS packet as defined for @c VBI_SLICED_VPS,
@@ -238,30 +207,24 @@ vbi_encode_vps_cni		(uint8_t		buffer[13],
 	return TRUE;
 }
 
-#if defined ZAPPING8 || 3 == VBI_VERSION_MINOR
-
 /**
  * @param buffer VPS packet as defined for @c VBI_SLICED_VPS,
  *   i.e. 13 bytes without clock run-in and start code.
  * @param pid PDC data to encode.
  * 
  * Stores PDC recording-control data (CNI, PIL, PCS audio, PTY) in
- * a VPS datagram according to EN 300 231. If non-zero the function
- * encodes @a pid->pil, otherwise it calculates the PIL from
- * @a pid->month, day, hour and minute.
+ * a VPS datagram according to EN 300 231.
  *
  * @returns
  * @c FALSE if any of the parameters to encode are invalid. In this
  * case @a buffer remains unmodified.
+ *
+ * @since 0.2.34
  */
 vbi_bool
 vbi_encode_vps_pdc		(uint8_t		buffer[13],
-				 const vbi_program_id *pid)
+				 const vbi_program_id *	pid)
 {
-	unsigned int month;
-	unsigned int day;
-	unsigned int hour;
-	unsigned int minute;
 	unsigned int pil;
 
 	assert (NULL != buffer);
@@ -275,36 +238,8 @@ vbi_encode_vps_pdc		(uint8_t		buffer[13],
 
 	pil = pid->pil;
 
-	switch (pil) {
-	case VBI_PIL_TIMER_CONTROL:
-	case VBI_PIL_INHIBIT_TERMINATE:
-	case VBI_PIL_INTERRUPT:
-	case VBI_PIL_CONTINUE:
-		break;
-
-	default:
-		if (0 == pil) {
-			month = pid->month;
-			day = pid->day;
-			hour = pid->hour;
-			minute = pid->minute;
-
-			pil = VBI_PIL (month, day, hour, minute);
-		} else {
-			month = VBI_PIL_MONTH (pil);
-			day = VBI_PIL_DAY (pil);
-			hour = VBI_PIL_HOUR (pil);
-			minute = VBI_PIL_MINUTE (pil);
-		}
-
-		if (unlikely ((month - 1) > 11
-			      || (day - 1) > 30
-			      || hour > 23
-			      || minute > 59))
-			return FALSE;
-
-		break;
-	}
+	if (pil > 0xFFFFF)
+		return FALSE;
 
 	if (!vbi_encode_vps_cni (buffer, pid->cni))
 		return FALSE;
@@ -320,26 +255,22 @@ vbi_encode_vps_pdc		(uint8_t		buffer[13],
 
 /**
  * @param buffer A DVB PDC descriptor as defined in EN 300 468,
- *   including descriptor_tag and descriptor_length.
+ *   including the descriptor_tag and descriptor_length bytes.
  * @param pid PDC data to encode.
  * 
  * Stores PDC recording-control data (PIL only) in a DVB PDC descriptor
- * as defined in EN 300 468 and EN 300 231. If non-zero the function
- * encodes @a pid->pil, otherwise it calculates the PIL from
- * @a pid->month, day, hour and minute.
+ * as defined in EN 300 468 and EN 300 231.
  *
  * @returns
  * @c FALSE if any of the parameters to encode are invalid. In this
  * case @a buffer remains unmodified.
+ *
+ * @since 0.2.34
  */
 vbi_bool
 vbi_encode_dvb_pdc_descriptor	(uint8_t		buffer[5],
-				 const vbi_program_id *pid)
+				 const vbi_program_id *	pid)
 {
-	unsigned int month;
-	unsigned int day;
-	unsigned int hour;
-	unsigned int minute;
 	unsigned int pil;
 
 	assert (NULL != buffer);
@@ -347,36 +278,8 @@ vbi_encode_dvb_pdc_descriptor	(uint8_t		buffer[5],
 
 	pil = pid->pil;
 
-	switch (pil) {
-	case VBI_PIL_TIMER_CONTROL:
-	case VBI_PIL_INHIBIT_TERMINATE:
-	case VBI_PIL_INTERRUPT:
-	case VBI_PIL_CONTINUE:
-		break;
-
-	default:
-		if (0 == pil) {
-			month = pid->month;
-			day = pid->day;
-			hour = pid->hour;
-			minute = pid->minute;
-
-			pil = VBI_PIL (month, day, hour, minute);
-		} else {
-			month = VBI_PIL_MONTH (pil);
-			day = VBI_PIL_DAY (pil);
-			hour = VBI_PIL_HOUR (pil);
-			minute = VBI_PIL_MINUTE (pil);
-		}
-
-		if (unlikely ((month - 1) > 11
-			      || (day - 1) > 30
-			      || hour > 23
-			      || minute > 59))
-			return FALSE;
-
-		break;
-	}
+	if (pil > 0xFFFFF)
+		return FALSE;
 
 	/* descriptor_tag [8],
 	   descriptor_length [8],
@@ -384,13 +287,13 @@ vbi_encode_dvb_pdc_descriptor	(uint8_t		buffer[5],
 	   programme_identification_label [20] ->
 	     day [5], month [4], hour [5], minute [6] */
 
-	/* EN 300 468 section 6.1, 6.2. */
+	/* EN 300 468 Section 6.1, 6.2. */
 	buffer[0] = 0x69;
 	buffer[1] = 3;
 
-	/* EN 300 468 section 6.2.29. */
+	/* EN 300 468 Section 6.2.29. */
 
-	/* EN 300 468 section 3.1: "Unless otherwise specified within
+	/* EN 300 468 Section 3.1: "Unless otherwise specified within
 	   the present document all 'reserved_future_use' bits shall
 	   be set to '1'." */
 	buffer[2] = 0xF0 | (pil >> 16);
@@ -400,8 +303,6 @@ vbi_encode_dvb_pdc_descriptor	(uint8_t		buffer[5],
 
 	return TRUE;
 }
-
-#endif /* 3 == VBI_VERSION_MINOR */
 
 /*
 Local variables:
