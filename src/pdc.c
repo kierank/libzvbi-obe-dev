@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pdc.c,v 1.2 2009/02/16 13:40:45 mschimek Exp $ */
+/* $Id: pdc.c,v 1.3 2009/03/04 21:48:52 mschimek Exp $ */
 
 #include "../site_def.h"
 
@@ -36,47 +36,49 @@
 #include "conv.h"
 
 /**
- * @addtogroup ProgramID VPS/PDC/XDS Program ID
+ * @addtogroup ProgramID VPS/PDC Program ID
  * @ingroup LowDec
- * @brief Functions to decode VPS/PDC/XDS Program IDs and useful
- *   helper functions.
+ * @brief Functions to decode VPS/PDC Program IDs and helper functions.
  *
  * Program IDs are transmitted by networks to remotely control video
  * recorders. They can be used to
  * - start and stop recording exactly when a program starts and ends,
  *   even when the program is early or late or overruns,
  * - pause recording during a planned or unplanned interruption
- *   (program IDs could be used to skip commercial breaks, but you
- *   can safely assume that no station transmits a pause code for
- *   this purpose),
+ *   (you can safely assume that no station transmits a pause code
+ *   during commercial breaks),
  * - keep recording a program which continues on a different channel,
  * - record a program after it has been postponed to a later date
  *   and possibly a different channel,
  * - record all episodes of a series without prior knowledge of the
- *   transmission times,
+ *   broadcast times,
  * - alert the user about emergency messages.
  *
- * The basic principle is to transmit a label along with the program,
- * containing the originally announced starting date and time. When
+ * The basic principle is to transmit a label along with the program
+ * containing the originally announced start date and time. When
  * the label is no longer transmitted the program has ended. When two
  * programs on different channels are scheduled for recording the
- * recorder may have to scan the channels alternately. For this and
- * other reasons you can expect an accuracy of a few seconds.
+ * recorder may have to scan the channels alternately. Better accuracy
+ * than a few seconds within the actual start should not be expected.
  *
- * Libzvbi supports Program IDs transmitted through Teletext packet
- * 8/30 format 2 and VPS as defined in EN 300 231 "Television systems;
- * Specification of the domestic video Programme Delivery Control
- * system (PDC)", DVB PDC descriptors as defined in EN 300 468
- * "Specification for Service Information (SI) in DVB systems" and XDS
- * Current/Future Program ID packets as defined in EIA 608-B
- * "Recommended Practice for Line 21 Data Service".
+ * Libzvbi supports Program IDs transmitted in Teletext packet 8/30
+ * format 2 and in VPS packets as defined in EN 300 231 "Television
+ * systems; Specification of the domestic video Programme Delivery
+ * Control system (PDC)", and DVB PDC descriptors as defined in EN 300
+ * 468 "Specification for Service Information (SI) in DVB systems".
+ * Support for XDS Current/Future Program ID packets as defined in EIA
+ * 608-B "Recommended Practice for Line 21 Data Service" is planned
+ * but not implemented yet.
  *
- * To fully appreciate the squiggles of the PDC system I recommend our
- * example:
- * @example examples/pdc.c
+ * Program IDs are available through the low level functions
+ * vbi_decode_teletext_8302_pdc(), vbi_decode_vps_pdc(),
+ * vbi_decode_dvb_pdc_descriptor() and the @a vbi_decoder event @c
+ * VBI_EVENT_PROG_ID.
+ *
+ * @example examples/pdc1.c
  */
 
-/* XXX Preliminary. */
+/* XXX Preliminary, will not be returned to clients. */
 enum {
 	VBI_ERR_NO_TIME		= 0x7081900,
 	VBI_ERR_INVALID_PIL,
@@ -284,8 +286,6 @@ _vbi_pil_from_string		(vbi_pil *		pil,
 	return TRUE;
 }
 
-#if 0
-
 static const uint8_t
 month_days[12] = {
 	31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
@@ -296,7 +296,7 @@ month_days[12] = {
  *
  * Determines if @a pil represents a valid date and time.
  *
- * Since PILs have no year field February 29 is considered valid.
+ * Since PILs have no year field February 29th is considered valid.
  * You can find out if this date is valid in a given year with the
  * vbi_pil_to_time() function.
  *
@@ -307,6 +307,8 @@ month_days[12] = {
  * @c TRUE if @a pil represents a valid date and time, @c FALSE
  * if @a pil contains an unreal date or time (e.g. Jan 0 27:61),
  * a service code or unallocated code.
+ *
+ * @since 0.2.34
  */
 vbi_bool
 vbi_pil_is_valid_date		(vbi_pil		pil)
@@ -493,6 +495,9 @@ localtime_tz			(struct tm *		tm,
 #undef mktime
 #undef timegm
 
+time_t
+_vbi_mktime			(struct tm *		tm);
+
 /**
  * @internal
  * GNU libc mktime() appears to clamp its result, but it will be used
@@ -548,6 +553,9 @@ _vbi_timegm			(struct tm *		tm)
 
 #else
 
+time_t
+_vbi_timegm			(struct tm *		tm);
+
 /**
  * @internal
  *
@@ -569,8 +577,8 @@ _vbi_timegm			(struct tm *		tm)
 		return (time_t) -1;
 
 	result = mktime (tm);
-	if (unlikely (result <= time_min ()
-		      || result >= time_max ())) {
+	if (unlikely (result <= TIME_MIN
+		      || result >= TIME_MAX)) {
 		saved_errno = EOVERFLOW;
 		result = (time_t) -1;
 	} else {
@@ -667,8 +675,8 @@ valid_pil_lto_to_time		(vbi_pil		pil,
 
 /**
  * @param pil Program Identification Label (PIL) to convert.
- * @param start The announced start time of the program. If zero the
- *   current system time will be used.
+ * @param start The most recently announced start time of the
+ *   program. If zero the current system time will be used.
  * @param seconds_east A time zone specified as an offset in seconds
  *   east of UTC, for example +1 * 60 * 60 for CET. @a seconds_east
  *   may include a daylight-saving time (DST) offset.
@@ -676,31 +684,33 @@ valid_pil_lto_to_time		(vbi_pil		pil,
  * This function converts a PIL to a time_t in the same manner
  * localtime() converts a broken-down time to time_t.
  *
- * Since PILs do not contain a year field, the year is determined, in
- * the same time zone as @a pil, from the last announced @a start time
- * of the program ("AT-1" in EN 300 231 parlance). If @a pil
- * contains a month more than five months after @a start time, @a
- * pil is assumed to refer to an earlier date than @a start.
+ * Since PILs do not contain a year field, the year is determined from
+ * the @a start parameter, that is the most recently announced start
+ * time of the program or "AT-1" in EN 300 231 parlance. If @a pil
+ * contains a month more than five months after @a start, @a pil is
+ * assumed to refer to an earlier date than @a start.
  *
  * @a pil is assumed to be a time in the time zone specified by @a
- * seconds_east.
+ * seconds_east. @a start will be converted to a local time in the
+ * same time zone to determine the correct year.
  *
  * Teletext packet 8/30 format 2, VPS and DVB PDC descriptors give a
  * PIL relative to the time zone of the intended audience of the
  * program. An offset from UTC including the DST offset in effect at
  * the specified date may be available on Teletext program
  * announcement pages (see struct vbi_preselection). Another offset
- * from UTC including the current DST offset is available as @c
+ * from UTC including the @em current DST offset is available as @c
  * VBI_EVENT_LOCAL_TIME, but of course that information is
  * insufficient to determine if DST is in effect at other dates.
  *
- * XDS Current/Future Program ID packets give a PIL relative to UTC.
+ * XDS Current/Future Program ID packets give a PIL relative to UTC,
+ * so @a seconds_east should be zero.
  *
  * @returns
  * The PIL as a time_t, that is the number of seconds since
- * 1970-01-01T00:00:00Z. On error the function
+ * 1970-01-01 00:00 UTC. On error the function
  * returns (time_t) -1:
- * - @a pil does not contain a valid date or time. February 29 is
+ * - @a pil does not contain a valid date or time. February 29th is
  *   a valid date only if the estimated year is a leap year.
  * - @a start is zero and the current system time could not be
  *   determined.
@@ -708,7 +718,9 @@ valid_pil_lto_to_time		(vbi_pil		pil,
  *   cannot be represented as a time_t value (2038 is closer than
  *   you think!).
  *
- * @bugs
+ * @since 0.2.34
+ *
+ * @bug
  * This function is not thread safe. That is a limitation of the C
  * library which permits the conversion of a broken-down time in an
  * arbitrary time zone only by setting the TZ environment variable.
@@ -720,31 +732,43 @@ vbi_pil_lto_to_time		(vbi_pil		pil,
 				 time_t			start,
 				 int			seconds_east)
 {
+	time_t t;
+
 	if (unlikely (!vbi_pil_is_valid_date (pil))) {
+#if 3 == VBI_VERSION_MINOR
 		errno = VBI_ERR_INVALID_PIL;
+#else
+		errno = 0;
+#endif
 		return (time_t) -1;
 	}
 
-	return valid_pil_lto_to_time (pil, start, seconds_east);
+	t = valid_pil_lto_to_time (pil, start, seconds_east);
+#if 2 == VBI_VERSION_MINOR
+	errno = 0;
+#endif
+	return t;
 }
 
 /**
  * @param pil Program Identification Label (PIL) to convert.
- * @param start The announced start time of the program. If zero the
- *   current system time will be used.
+ * @param start The most recently announced start time of the
+ *   program. If zero the current system time will be used.
  * @param tz A time zone name in the same format as the TZ environment
  *   variable. If @c NULL the current value of TZ will be used.
  *
  * This function converts a PIL to a time_t in the same manner
  * localtime() converts a broken-down time to time_t.
  *
- * Since PILs do not contain a year field, the year is determined, in
- * the same time zone as @a pil, from the last announced @a start time
- * of the program ("AT-1" in EN 300 231 parlance). If @a pil contains
- * a month more than five months after @a start time, @a pil is
+ * Since PILs do not contain a year field, the year is determined from
+ * the @a start parameter, that is the most recently announced start
+ * time of the program or "AT-1" in EN 300 231 parlance. If @a pil
+ * contains a month more than five months after @a start, @a pil is
  * assumed to refer to an earlier date than @a start.
  *
- * @a pil is assumed to be a time in the time zone @a tz.
+ * @a pil is assumed to be a time in the time zone @a tz. @a start
+ * will be converted to a local time in the same time zone to
+ * determine the correct year.
  *
  * Teletext packet 8/30 format 2, VPS and DVB PDC descriptors give a
  * PIL relative to the time zone of the intended audience of the
@@ -759,9 +783,9 @@ vbi_pil_lto_to_time		(vbi_pil		pil,
  *
  * @returns
  * The PIL as a time_t, that is the number of seconds since
- * 1970-01-01T00:00:00Z. On error the function
+ * 1970-01-01 00:00 UTC. On error the function
  * returns (time_t) -1:
- * - @a pil does not contain a valid date or time. February 29 is
+ * - @a pil does not contain a valid date or time. February 29th is
  *   a valid date only if the estimated year is a leap year.
  * - @a tz is empty or contains an equal sign '='.
  * - @a start is zero and the current system time could not be
@@ -770,7 +794,9 @@ vbi_pil_lto_to_time		(vbi_pil		pil,
  *   represented as a time_t value.
  * - Insufficient memory was available.
  *
- * @bugs
+ * @since 0.2.34
+ *
+ * @bug
  * This function is not thread safe unless @a tz is @c NULL. That is
  * a limitation of the C library which permits the conversion of a
  * broken-down time in an arbitrary time zone only by setting the TZ
@@ -778,7 +804,7 @@ vbi_pil_lto_to_time		(vbi_pil		pil,
  * value of TZ if insufficient memory is available.
  */
 time_t
-vbi_pil_to_time		(vbi_pil		pil,
+vbi_pil_to_time			(vbi_pil		pil,
 				 time_t			start,
 				 const char *		tz)
 {
@@ -788,17 +814,31 @@ vbi_pil_to_time		(vbi_pil		pil,
 	int saved_errno;
 
 	if (unlikely (!vbi_pil_is_valid_date (pil))) {
+#if 3 == VBI_VERSION_MINOR
 		errno = VBI_ERR_INVALID_PIL;
+#else
+		errno = 0;
+#endif
 		return (time_t) -1;
 	}
 
 	if (NULL != tz && 0 == strcmp (tz, "UTC")) {
-		return valid_pil_lto_to_time (pil, start,
-					      /* seconds_east */ 0);
+		time_t t;
+
+		t = valid_pil_lto_to_time (pil, start,
+					   /* seconds_east */ 0);
+#if 2 == VBI_VERSION_MINOR
+		errno = 0;
+#endif
+		return t;
 	}
 
-	if (unlikely (!localtime_tz (&tm, &old_tz, start, tz)))
+	if (unlikely (!localtime_tz (&tm, &old_tz, start, tz))) {
+#if 2 == VBI_VERSION_MINOR
+		errno = 0;
+#endif
 		return (time_t) -1;
+	}
 
 	if (unlikely (!tm_mon_mday_from_pil (&tm, pil))) {
 		saved_errno = EOVERFLOW;
@@ -820,16 +860,28 @@ vbi_pil_to_time		(vbi_pil		pil,
 	if (unlikely ((time_t) -1 == result))
 		goto failed;
 
-	if (unlikely (!restore_tz (&old_tz, tz)))
+	if (unlikely (!restore_tz (&old_tz, tz))) {
+#if 2 == VBI_VERSION_MINOR
+		errno = 0;
+#endif
 		return (time_t) -1;
+	}
 
 	return result;
 
  failed:
-	if (unlikely (!restore_tz (&old_tz, tz)))
+	if (unlikely (!restore_tz (&old_tz, tz))) {
+#if 2 == VBI_VERSION_MINOR
+		errno = 0;
+#endif
 		return (time_t) -1;
+	}
 
+#if 3 == VBI_VERSION_MINOR
 	errno = saved_errno;
+#else
+	errno = 0;
+#endif
 	return (time_t) -1;
 }
 
@@ -894,19 +946,20 @@ pty_utc_validity_window		(time_t *		begin,
 
 /**
  * @param begin The begin of the validity of the PTY will be stored
- *   here, actually a copy of the @a last_transm parameter.
+ *   here.
  * @param end The end of the validity of the PTY will be stored here.
- * @param last_transm The last time when the PTY was transmitted by
- *   the network.
+ * @param last_transm The last time when a program ID with the PTY
+ *   in question was broadcast by the network.
  * @param tz A time zone name in the same format as the TZ environment
  *   variable. If @c NULL the current value of TZ will be used.
  *
- * Calculates the validity time window of a Program Type (PTY) code
- * according to EN 300 231. That is the time window where a network
- * can be expected to transmit another program with a certain PTY,
- * approximately four weeks after its last transmission. When the PTY
- * is a series code (>= 0x80) and not transmitted again before @a end,
- * the network may assign the code to another series.
+ * This function calculates the validity time window of a Program Type
+ * (PTY) code according to EN 300 231. That is the time window where a
+ * network can be expected to broadcast another program with the same
+ * PTY, approximately up to four weeks after its last
+ * transmission. When the PTY is a series code (>= 0x80) and not
+ * transmitted again before @a end, the network may assign the code to
+ * another series.
  *
  * @a tz is the time zone of the intended audience of the program.
  * Ideally the time zone would be specified as a geographic area like
@@ -918,14 +971,16 @@ pty_utc_validity_window		(time_t *		begin,
  * @a end time may be off by one hour in this case.
  *
  * @returns
- * @c FALSE on error. In these case @a *begin and @a *end remain
- * unchanged. Possibly error causes:
+ * On error the function returns @c FALSE and @a *begin and @a *end
+ * remain unchanged:
  * - @a tz is empty or contains an equal sign '='.
  * - The @a end time cannot be represented as a time_t value
  *   (December 2037 is closer than you think!).
  * - Insufficient memory was available.
  *
- * @bugs
+ * @since 0.2.34
+ *
+ * @bug
  * This function is not thread safe unless @a tz is @c NULL.
  * That is a limitation of the C library which permits the conversion
  * of a broken-down time in an arbitrary time zone only by setting
@@ -933,7 +988,7 @@ pty_utc_validity_window		(time_t *		begin,
  * the value of TZ if insufficient memory is available.
  */
 vbi_bool
-vbi_pty_validity_window	(time_t *		begin,
+vbi_pty_validity_window		(time_t *		begin,
 				 time_t *		end,
 				 time_t			last_transm,
 				 const char *		tz)
@@ -946,11 +1001,19 @@ vbi_pty_validity_window	(time_t *		begin,
 	assert (NULL != begin);
 	assert (NULL != end);
 
-	if (NULL != tz && 0 == strcmp (tz, "UTC"))
-		return pty_utc_validity_window (begin, end, last_transm);
+	if (NULL != tz && 0 == strcmp (tz, "UTC")) {
+		vbi_bool success;
+
+		success = pty_utc_validity_window (begin, end,
+						   last_transm);
+#if 2 == VBI_VERSION_MINOR
+		errno = 0;
+#endif
+		return success;
+	}
 
 	if (unlikely (!localtime_tz (&tm, &old_tz, last_transm, tz)))
-		return FALSE;
+		goto failed;
 
 	tm.tm_mday += 4 * 7 + 1;
 	tm.tm_hour = 4;
@@ -965,17 +1028,27 @@ vbi_pty_validity_window	(time_t *		begin,
 		if (unlikely (!restore_tz (&old_tz, tz)))
 			return FALSE;
 
+#if 3 == VBI_VERSION_MINOR
 		errno = saved_errno;
+#else
+		errno = 0;
+#endif
 		return FALSE;
 	}
 
 	if (unlikely (!restore_tz (&old_tz, tz)))
-		return FALSE;
+		goto failed;
 
 	*begin = last_transm;
 	*end = stop;
 
 	return TRUE;
+
+ failed:
+#if 2 == VBI_VERSION_MINOR
+	errno = 0;
+#endif
+	return FALSE;
 }
 
 static vbi_bool
@@ -1038,25 +1111,26 @@ valid_pil_lto_validity_window	(time_t *		begin,
  *   here.
  * @param end The end of the validity of the PIL will be stored here.
  * @param pil Program Identification Label (PIL).
- * @param start The announced start time of the program. If zero the
- *   current system time will be used.
+ * @param start The most recently announced start time of the
+ *   program. If zero the current system time will be used.
  * @param seconds_east A time zone specified as an offset in seconds
  *   east of UTC, for example +1 * 60 * 60 for CET. @a seconds_east
  *   may include a daylight-saving time (DST) offset.
  *
- * Calculates the validity time window of a PIL according to EN
- * 300 231. That is the time window where a network can be expected
- * to transmit this PIL, usually from 00:00 on the same day until
- * exclusive 04:00 on the next day.
+ * This function calculates the validity time window of a PIL
+ * according to EN 300 231. That is the time window where a network
+ * can be expected to broadcast this PIL, usually from 00:00 on the
+ * same day until exclusive 04:00 on the next day.
  *
- * Since PILs do not contain a year field, the year is determined, in
- * the same time zone as @a pil, from the last announced @a start time
- * of the program ("AT-1" in EN 300 231 parlance). If @a pil contains
- * a month more than five months after @a start time, @a pil is
+ * Since PILs do not contain a year field, the year is determined from
+ * the @a start parameter, that is the most recently announced start
+ * time of the program or "AT-1" in EN 300 231 parlance. If @a pil
+ * contains a month more than five months after @a start, @a pil is
  * assumed to refer to an earlier date than @a start.
  *
- * @a pil is assumed to be a time in the time zone specified by
- * @a seconds_east.
+ * @a pil is assumed to be a time in the time zone specified by @a
+ * seconds_east. @a start will be converted to a local time in the
+ * same time zone to determine the correct year.
  *
  * Teletext packet 8/30 format 2, VPS and DVB PDC descriptors give a
  * PIL relative to the time zone of the intended audience of the
@@ -1067,8 +1141,7 @@ valid_pil_lto_validity_window	(time_t *		begin,
  * VBI_EVENT_LOCAL_TIME. But of course these offsets are insufficient
  * to determine if DST is in effect at any given date, so the returned
  * @a begin or @a end may be off by one hour if the validity window
- * straddles a DST discontinuity. The duration of the validity
- * window returned by this function, however, is always the same.
+ * straddles a DST discontinuity.
  *
  * If @a pil is @c VBI_PIL_NSPV this function ignores @a seconds_east
  * and returns the same values as vbi_pty_validity_window().
@@ -1076,14 +1149,16 @@ valid_pil_lto_validity_window	(time_t *		begin,
  * @returns
  * On error the function returns @c FALSE:
  * - @a pil is not @c VBI_PIL_NSPV and does not contain a
- *   valid date or time. February 29 is a valid date only if the
+ *   valid date or time. February 29th is a valid date only if the
  *   estimated year is a leap year.
  * - @a start is zero and the current system time could not be
  *   determined.
  * - The time specified by @a pil, @a start and @a seconds_east cannot
  *   be represented as a time_t value.
  *
- * @bugs
+ * @since 0.2.34
+ *
+ * @bug
  * This function is not thread safe. That is a limitation of the C
  * library which permits the conversion of a broken-down time in an
  * arbitrary time zone only by setting the TZ environment variable.
@@ -1105,10 +1180,15 @@ vbi_pil_lto_validity_window	(time_t *		begin,
 	month = VBI_PIL_MONTH (pil);
 	if (0 == month) {
 		/* EN 300 231 Annex F: "Unallocated". */
+#if 3 == VBI_VERSION_MINOR
 		errno = VBI_ERR_INVALID_PIL;
+#else
+		errno = 0;
+#endif
 		return FALSE;
 	} else if (month <= 12) {
 		unsigned int day;
+		vbi_bool success;
 
 		day = VBI_PIL_DAY (pil);
 		if (day - 1 >= month_days[month - 1]) {
@@ -1119,14 +1199,20 @@ vbi_pil_lto_validity_window	(time_t *		begin,
 			return TRUE;
 		}
 
-		return valid_pil_lto_validity_window
+		success = valid_pil_lto_validity_window
 			(begin, end, pil, start, seconds_east);
+#if 2 == VBI_VERSION_MINOR
+		errno = 0;
+#endif
+		return success;
 	} else if (month <= 14) {
 		/* Annex F: "Indefinite time window". */
 		*begin = TIME_MIN;
 		*end = TIME_MAX;
 		return TRUE;
 	} else {
+		vbi_bool success;
+
 		/* Annex F: "Unallocated except for the following
 		 * service codes (for which there is no restriction to
 		 * the time window of validity)". */
@@ -1141,10 +1227,19 @@ vbi_pil_lto_validity_window	(time_t *		begin,
 
 		/* EN 300 231 Section 9.3, Annex E.3. */
 		case VBI_PIL_NSPV:
-			return pty_utc_validity_window (begin, end, start);
+			success = pty_utc_validity_window (begin, end,
+							   start);
+#if 2 == VBI_VERSION_MINOR
+			errno = 0;
+#endif
+			return success;
 
 		default:
+#if 3 == VBI_VERSION_MINOR
 			errno = VBI_ERR_INVALID_PIL;
+#else
+			errno = 0;
+#endif
 			return FALSE;
 		}
 	}
@@ -1233,23 +1328,25 @@ valid_pil_validity_window	(time_t *		begin,
  *   here.
  * @param end The end of the validity of the PIL will be stored here.
  * @param pil Program Identification Label (PIL).
- * @param start The announced start time of the program. If zero the
- *   current system time will be used.
+ * @param start The most recently announced start time of the program.
+ *   If zero the current system time will be used.
  * @param tz A time zone name in the same format as the TZ environment
  *   variable. If @c NULL the current value of TZ will be used.
  *
- * Calculates the validity time window of a PIL according to EN
- * 300 231. That is the time window where a network can be expected
- * to transmit this PIL, usually from 00:00 on the same day until
- * exclusive 04:00 on the next day.
+ * This function calculates the validity time window of a PIL
+ * according to EN 300 231. That is the time window where a network
+ * can be expected to broadcast this PIL, usually from 00:00 on the
+ * same day until 04:00 on the next day.
  *
- * Since PILs do not contain a year field, the year is determined, in
- * the same time zone as @a pil, from the last announced @a start time
- * of the program ("AT-1" in EN 300 231 parlance). If @a pil contains
- * a month more than five months after @a start time, @a pil is
+ * Since PILs do not contain a year field, the year is determined from
+ * the @a start parameter, that is the most recently announced start
+ * time of the program or "AT-1" in EN 300 231 parlance. If @a pil
+ * contains a month more than five months after @a start, @a pil is
  * assumed to refer to an earlier date than @a start.
  *
- * @a pil is assumed to be a time in the time zone @a tz.
+ * @a pil is assumed to be a time in the time zone specified by @a
+ * seconds_east. @a start will be converted to a local time in the
+ * same time zone to determine the correct year.
  *
  * Teletext packet 8/30 format 2, VPS and DVB PDC descriptors give a
  * PIL relative to the time zone of the intended audience of the
@@ -1265,7 +1362,7 @@ valid_pil_validity_window	(time_t *		begin,
  * @returns
  * On error the function returns @c FALSE:
  * - @a pil is not @c VBI_PIL_NSPV and does not contain a
- *   valid date or time. February 29 is a valid date only if the
+ *   valid date or time. February 29th is a valid date only if the
  *   estimated year is a leap year.
  * - @a tz is empty or contains an equal sign '='.
  * - @a start is zero and the current system time could not be
@@ -1274,7 +1371,9 @@ valid_pil_validity_window	(time_t *		begin,
  *   represented as a time_t value.
  * - Insufficient memory was available.
  *
- * @bugs
+ * @since 0.2.34
+ *
+ * @bug
  * This function is not thread safe unless @a tz is @c NULL.
  * That is a limitation of the C library which permits the conversion
  * of a broken-down time in an arbitrary time zone only by setting
@@ -1282,7 +1381,7 @@ valid_pil_validity_window	(time_t *		begin,
  * the value of TZ if insufficient memory is available.
  */
 vbi_bool
-vbi_pil_validity_window	(time_t *		begin,
+vbi_pil_validity_window		(time_t *		begin,
 				 time_t *		end,
 				 vbi_pil		pil,
 				 time_t			start,
@@ -1296,10 +1395,15 @@ vbi_pil_validity_window	(time_t *		begin,
 	month = VBI_PIL_MONTH (pil);
 	if (0 == month) {
 		/* EN 300 231 Annex F: "Unallocated". */
+#if 3 == VBI_VERSION_MINOR
 		errno = VBI_ERR_INVALID_PIL;
+#else
+		errno = 0;
+#endif
 		return FALSE;
 	} else if (month <= 12) {
 		unsigned int day;
+		vbi_bool success;
 
 		day = VBI_PIL_DAY (pil);
 		if (day - 1 >= month_days[month - 1]) {
@@ -1310,14 +1414,20 @@ vbi_pil_validity_window	(time_t *		begin,
 			return TRUE;
 		}
 
-		return valid_pil_validity_window
+		success = valid_pil_validity_window
 			(begin, end, pil, start, tz);
+#if 2 == VBI_VERSION_MINOR
+		errno = 0;
+#endif
+		return success;
 	} else if (month <= 14) {
 		/* Annex F: "Indefinite time window". */
 		*begin = TIME_MIN;
 		*end = TIME_MAX;
 		return TRUE;
 	} else {
+		vbi_bool success;
+
 		/* Annex F: "Unallocated except for the following
 		 * service codes (for which there is no restriction to
 		 * the time window of validity)". */
@@ -1332,17 +1442,23 @@ vbi_pil_validity_window	(time_t *		begin,
 
 		/* EN 300 231 Section 9.3, Annex E.3. */
 		case VBI_PIL_NSPV:
-			return vbi_pty_validity_window
+			success = vbi_pty_validity_window
 				(begin, end, start, tz);
+#if 2 == VBI_VERSION_MINOR
+			errno = 0;
+#endif
+			return success;
 
 		default:
+#if 3 == VBI_VERSION_MINOR
 			errno = VBI_ERR_INVALID_PIL;
+#else
+			errno = 0;
+#endif
 			return FALSE;
 		}
 	}
 }
-
-#endif /* 0 */
 
 /*
 Local variables:
