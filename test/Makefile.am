@@ -49,6 +49,7 @@ TESTS = \
 	test-dvb_demux \
 	test-dvb_mux \
 	test-hamm \
+	test-packet-830 \
 	test-raw_decoder \
 	test-unicode \
 	test-vps
@@ -58,6 +59,7 @@ check_PROGRAMS = \
 	test-dvb_demux \
 	test-dvb_mux \
 	test-hamm \
+	test-packet-830 \
 	test-raw_decoder \
 	test-vps
 
@@ -75,11 +77,19 @@ test_dvb_mux_SOURCES = \
 
 test_hamm_SOURCES = test-hamm.cc
 
+test_packet_830_SOURCES = \
+	test-packet-830.cc \
+	test-pdc.h \
+	test-common.cc test-common.h
+
 test_raw_decoder_SOURCES = \
 	test-raw_decoder.cc \
 	test-common.cc test-common.h
 
-test_vps_SOURCES = test-vps.c
+test_vps_SOURCES = \
+	test-vps.cc \
+	test-pdc.h \
+	test-common.cc test-common.h
 
 exoptest: explist
 
@@ -99,6 +109,7 @@ endif
 
 noinst_PROGRAMS = \
 	capture \
+	date \
 	decode \
 	explist \
 	export \
@@ -116,6 +127,10 @@ capture_SOURCES = \
 
 caption_SOURCES = \
 	caption.c \
+	sliced.c sliced.h
+
+date_SOURCES = \
+	date.c \
 	sliced.c sliced.h
 
 decode_SOURCES = \
