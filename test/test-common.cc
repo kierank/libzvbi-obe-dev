@@ -19,7 +19,7 @@
  *  MA 02110-1301, USA.
  */
 
-/* $Id: test-common.cc,v 1.6 2008/03/01 07:36:20 mschimek Exp $ */
+/* $Id: test-common.cc,v 1.7 2009/03/04 21:48:14 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -81,6 +81,20 @@ memset_rand			(void *			dst,
 	return dst;
 }
 
+int
+memcmp_zero			(const void *		src,
+				 size_t			n_bytes)
+{
+	const uint8_t *s;
+
+	for (s = (const uint8_t *) src; n_bytes > 0; ++s, --n_bytes) {
+		if (0 != *s)
+			return 1;
+	}
+
+	return 0;
+}
+
 void *
 xmalloc				(size_t			n_bytes)
 {
@@ -115,10 +129,10 @@ xmemdup				(const void *		src,
 	return dst;
 }
 
+#if 3 == VBI_VERSION_MINOR
 static unsigned int		malloc_count;
 static unsigned int		malloc_fail_cycle;
 
-#if 3 == VBI_VERSION_MINOR
 static void *
 my_malloc			(size_t			n_bytes)
 {
