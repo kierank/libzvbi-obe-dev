@@ -22,7 +22,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: vbi.h,v 1.16 2008/02/24 14:16:19 mschimek Exp $ */
+/* $Id: vbi.h,v 1.17 2009/03/04 21:47:56 mschimek Exp $ */
 
 #ifndef VBI_H
 #define VBI_H
@@ -36,6 +36,7 @@
 #include "cache-priv.h"
 #include "trigger.h"
 #include "pfc_demux.h"
+#include "pdc.h"
 
 struct event_handler {
 	struct event_handler *	next;
@@ -81,6 +82,8 @@ struct vbi_decoder {
 	unsigned char		wss_last[2];
 	int			wss_rep_ct;
 	double			wss_time;
+
+	vbi_program_id		vps_pid;
 };
 
 #ifndef VBI_DECODER
