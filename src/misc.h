@@ -20,7 +20,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: misc.h,v 1.22 2008/03/01 07:37:38 mschimek Exp $ */
+/* $Id: misc.h,v 1.23 2009/03/04 21:48:46 mschimek Exp $ */
 
 #ifndef MISC_H
 #define MISC_H
@@ -32,6 +32,7 @@
 #include <string.h>
 #include <inttypes.h>		/* (u)intXX_t */
 #include <sys/types.h>		/* (s)size_t */
+#include <float.h>		/* DBL_MAX */
 #include <limits.h>		/* (S)SIZE_MAX */
 #include <assert.h>
 
@@ -383,6 +384,41 @@ do {									\
 /* Should be defined in C99 limits.h? */
 #ifndef SIZE_MAX
 #  define SIZE_MAX ((size_t) -1)
+#endif
+
+#ifndef TIME_MIN
+#  define TIME_MIN (_vbi_time_min ())
+_vbi_inline time_t
+_vbi_time_min			(void)
+{
+	const time_t t = (time_t) -1.25;
+
+	if (t < -1) {
+		return (time_t)((sizeof (time_t) > 4) ? DBL_MIN : FLT_MIN);
+	} else if (t < 0) {
+		return ((uint64_t) 1) << (sizeof (time_t) * 8 - 1);
+	} else {
+		return 0;
+	}
+}
+#endif
+
+#ifndef TIME_MAX
+#  define TIME_MAX (_vbi_time_max ())
+_vbi_inline time_t
+_vbi_time_max			(void)
+{
+	const time_t t = (time_t) -1.25;
+
+	if (t < -1) {
+		return (time_t)((sizeof (time_t) > 4) ? DBL_MAX : FLT_MAX);
+	} else if (t < 0) {
+		/* Most likely signed 32 or 64 bit. */
+		return (((uint64_t) 1) << (sizeof (time_t) * 8 - 1)) - 1;
+	} else {
+		return -1;
+	}
+}
 #endif
 
 /* __va_copy is a GNU extension. */
