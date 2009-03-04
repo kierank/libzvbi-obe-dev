@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: packet.c,v 1.29 2008/02/19 00:35:20 mschimek Exp $ */
+/* $Id: packet.c,v 1.30 2009/03/04 21:48:03 mschimek Exp $ */
 
 #include "site_def.h"
 
@@ -42,6 +42,7 @@
 #include "vps.h"
 #include "vbi.h"
 #include "cache-priv.h"
+#include "packet-830.h"
 
 #ifndef FPC
 #  define FPC 0
@@ -1074,14 +1075,6 @@ vbi_convert_page(vbi_decoder *vbi, cache_page *vtp,
 	}
 }
 
-typedef enum {
-	CNI_NONE,
-	CNI_VPS,	/* VPS format */
-	CNI_8301,	/* Teletext packet 8/30 format 1 */
-	CNI_8302,	/* Teletext packet 8/30 format 2 */
-	CNI_X26		/* Teletext packet X/26 local enhancement */
-} vbi_cni_type;
-
 static unsigned int
 station_lookup(vbi_cni_type type, int cni, const char **country, const char **name)
 {
@@ -1091,7 +1084,7 @@ station_lookup(vbi_cni_type type, int cni, const char **country, const char **na
 		return 0;
 
 	switch (type) {
-	case CNI_8301:
+	case VBI_CNI_TYPE_8301:
 		for (p = vbi_cni_table; p->name; p++)
 			if (p->cni1 == cni) {
 				*country = p->country;
@@ -1100,7 +1093,7 @@ station_lookup(vbi_cni_type type, int cni, const char **country, const char **na
 			}
 		break;
 
-	case CNI_8302:
+	case VBI_CNI_TYPE_8302:
 		for (p = vbi_cni_table; p->name; p++)
 			if (p->cni2 == cni) {
 				*country = p->country;
@@ -1112,7 +1105,7 @@ station_lookup(vbi_cni_type type, int cni, const char **country, const char **na
 
 		/* fall through */
 
-	case CNI_VPS:
+	case VBI_CNI_TYPE_VPS:
 		/* if (cni == 0x0DC3) in decoder
 			cni = mark ? 0x0DC2 : 0x0DC1; */
 
@@ -1124,7 +1117,7 @@ station_lookup(vbi_cni_type type, int cni, const char **country, const char **na
 			}
 		break;
 
-	case CNI_X26:
+	case VBI_CNI_TYPE_PDC_B:
 		for (p = vbi_cni_table; p->name; p++)
 			if (p->cni3 == cni) {
 				*country = p->country;
@@ -1166,7 +1159,8 @@ unknown_cni(vbi_decoder *vbi, const char *dl, int cni)
  * 
  * Decode a VPS datagram (13 bytes) according to
  * ETS 300 231 and update decoder state. This may
- * send a @a VBI_EVENT_NETWORK or @a VBI_EVENT_NETWORK_ID.
+ * send a @a VBI_EVENT_NETWORK, @a VBI_EVENT_NETWORK_ID
+ * or @a VBI_EVENT_PROG_ID.
  */
 void
 vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
@@ -1180,10 +1174,14 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 	if (cni != (unsigned int) n->cni_vps) {
 		n->cni_vps = cni;
 		n->cycle = 1;
+
+		CLEAR (vbi->vps_pid);
+		/* May fail, leaving vbi->vps_pid unmodified. */
+		vbi_decode_vps_pdc (&vbi->vps_pid, buf);
 	} else if (n->cycle == 1) {
 		unsigned int id;
 
-		id = station_lookup(CNI_VPS, cni, &country, &name);
+		id = station_lookup(VBI_CNI_TYPE_VPS, cni, &country, &name);
 
 		if (0 == id) {
 			n->name[0] = 0;
@@ -1207,6 +1205,34 @@ vbi_decode_vps(vbi_decoder *vbi, uint8_t *buf)
 		vbi_send_event(vbi, &vbi->network);
 
 		n->cycle = 2;
+
+		if (vbi->event_mask & VBI_EVENT_PROG_ID) {
+			vbi_program_id pid;
+			vbi_event e;
+
+			CLEAR (pid);
+			if (!vbi_decode_vps_pdc (&pid, buf))
+				return;
+
+			/* VPS has no error protection so we send an
+			   event only after we receive a PID twice. */
+			if (0 != memcmp (&pid, &vbi->vps_pid,
+					 sizeof (pid))) {
+				vbi->vps_pid = pid;
+				return;
+			}
+
+			/* We also send an event if the PID did not
+			   change so the app can see if the signal is
+			   still present. */
+
+			CLEAR (e);
+
+			e.type = VBI_EVENT_PROG_ID;
+			e.ev.prog_id = &pid;
+
+			vbi_send_event (vbi, &e);
+		}
 	}
 }
 
@@ -1239,7 +1265,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 			} else if (n->cycle == 1) {
 				unsigned int id;
 
-				id = station_lookup(CNI_8301, cni, &country, &name);
+				id = station_lookup(VBI_CNI_TYPE_8301, cni, &country, &name);
 
 				if (!id) {
 					n->name[0] = 0;
@@ -1267,7 +1293,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 			}
 #if 0
 			if (1) { /* country and network identifier */
-				if (station_lookup(CNI_8301, cni, &country, &name))
+				if (station_lookup(VBI_CNI_TYPE_8301, cni, &country, &name))
 					printf("... country: %s\n... station: %s\n", country, name);
 				else
 					printf("... unknown CNI %04x\n", cni);
@@ -1329,7 +1355,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 			} else if (n->cycle == 1) {
 				unsigned int id;
 
-				id = station_lookup(CNI_8302, cni, &country, &name);
+				id = station_lookup(VBI_CNI_TYPE_8302, cni, &country, &name);
 
 				if (!id) {
 					n->name[0] = 0;
@@ -1360,7 +1386,7 @@ parse_bsd(vbi_decoder *vbi, uint8_t *raw, int packet, int designation)
 			if (1) { /* country and network identifier */
 				const char *country, *name;
 
-				if (station_lookup(CNI_8302, cni, &country, &name))
+				if (station_lookup(VBI_CNI_TYPE_8302, cni, &country, &name))
 					printf("... country: %s\n... station: %s\n", country, name);
 				else
 					printf("... unknown CNI %04x\n", cni);
@@ -1973,14 +1999,17 @@ parse_28_29(vbi_decoder *vbi, uint8_t *p,
  *  Teletext packet 8/30, broadcast service data
  */
 static inline vbi_bool
-parse_8_30(vbi_decoder *vbi, uint8_t *p, int packet)
+parse_8_30(vbi_decoder *vbi, uint8_t *buffer, int packet)
 {
+	uint8_t *p;
 	int designation;
+
+	p = buffer + 2;
 
 	if ((designation = vbi_unham8 (*p)) < 0)
 		return FALSE;
 
-//	printf("Packet 8/30/%d\n", designation);
+	// printf("Packet 8/30/%d\n", designation);
 
 	if (designation > 4)
 		return TRUE; /* ignored */
@@ -1995,8 +2024,50 @@ parse_8_30(vbi_decoder *vbi, uint8_t *p, int packet)
 		}
 	}
 
-	if (vbi->event_mask & BSDATA_EVENTS)
-		return parse_bsd(vbi, p, packet, designation);
+	if (vbi->event_mask & BSDATA_EVENTS) {
+		if (!parse_bsd(vbi, p, packet, designation))
+			return FALSE;
+	}
+
+	if (designation < 2) {
+		/* 8/30 format 1 */
+
+		if (vbi->event_mask & VBI_EVENT_LOCAL_TIME) {
+			vbi_local_time lt;
+			vbi_event e;
+
+			CLEAR (e);
+
+			if (!vbi_decode_teletext_8301_local_time
+			    (&lt.time, &lt.seconds_east, buffer))
+				return FALSE;
+
+			lt.seconds_east_valid = TRUE;
+			lt.dst_state = VBI_DST_INCLUDED;
+
+			e.type = VBI_EVENT_LOCAL_TIME;
+			e.ev.local_time	= &lt;
+
+			vbi_send_event (vbi, &e);
+		}
+	} else {
+		/* 8/30 format 2 */
+
+		if (vbi->event_mask & VBI_EVENT_PROG_ID) {
+			vbi_program_id pid;
+			vbi_event e;
+			
+			if (!vbi_decode_teletext_8302_pdc (&pid, buffer))
+				return FALSE;
+
+			CLEAR (e);
+
+			e.type = VBI_EVENT_PROG_ID;
+			e.ev.prog_id = &pid;
+
+			vbi_send_event (vbi, &e);
+		}
+	}
 
 	return TRUE;
 }
@@ -2013,12 +2084,15 @@ parse_8_30(vbi_decoder *vbi, uint8_t *p, int packet)
  * FALSE if the packet contained incorrectable errors. 
  */
 vbi_bool
-vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
+vbi_decode_teletext(vbi_decoder *vbi, uint8_t *buffer)
 {
 	cache_page *cvtp;
 	struct raw_page *rvtp;
 	int pmag, mag0, mag8, packet;
 	struct ttx_magazine *mag;
+	uint8_t *p;
+
+	p = buffer;
 
 	if ((pmag = vbi_unham16p (p)) < 0)
 		return FALSE;
@@ -2495,7 +2569,7 @@ vbi_decode_teletext(vbi_decoder *vbi, uint8_t *p)
 		 */
 		switch (/* Channel */ pmag & 15) {
 		case 0: /* Packet 8/30 (ETS 300 706) */
-			if (!parse_8_30(vbi, p, packet))
+			if (!parse_8_30(vbi, buffer, packet))
 				return FALSE;
 			break;
 
