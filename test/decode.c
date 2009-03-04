@@ -20,7 +20,7 @@
  *  MA 02110-1301, USA.
  */
 
-/* $Id: decode.c,v 1.33 2009/02/16 13:41:35 mschimek Exp $ */
+/* $Id: decode.c,v 1.34 2009/03/04 21:48:08 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -723,8 +723,7 @@ vps				(const uint8_t		buffer[13],
 			return;
 		}
 
-#if 1
-		if (!_vbi_decode_vps_pdc (&pi, buffer)) {
+		if (!vbi_decode_vps_pdc (&pi, buffer)) {
 			printf ("Error in VPS packet PDC data.\n");
 			return;
 		}
@@ -738,9 +737,6 @@ vps				(const uint8_t		buffer[13],
 #if 3 == VBI_VERSION_MINOR
 		if (0 != pi.cni)
 			dump_cni (pi.cni_type, pi.cni);
-#endif
-#else
-		printf ("VPS line=%3u CNI=%x\n", line, cni);
 #endif
 	}
 
