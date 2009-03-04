@@ -25,7 +25,7 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: network.c,v 1.5 2008/02/19 00:51:51 mschimek Exp $ */
+/* $Id: network.c,v 1.6 2009/03/04 16:11:30 mschimek Exp $ */
 
 /* This example shows how to identify a network from data transmitted
    in XDS packets, Teletext packet 8/30 format 1 and 2, and VPS packets.
@@ -96,7 +96,7 @@ handler				(vbi_event *		ev,
 		call_sign = ev->ev.network.call;
 
 	printf ("%s: receiving: \"%s\" call sign: \"%s\" "
-	        "CNI VPS: 0x%x 8/30-1: 0x%x 8/30-2: 0x%x\n",
+	        "CNI VPS: 0x%x 8/30/1: 0x%x 8/30/2: 0x%x\n",
 		event_name,
 		(NULL == locale_network_name) ?
 		"iconv-error" : locale_network_name,
