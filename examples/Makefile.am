@@ -2,6 +2,7 @@
 
 noinst_PROGRAMS = \
 	network \
+	pdc1 \
 	rawout \
 	wss
 
