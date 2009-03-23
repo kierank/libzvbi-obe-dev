@@ -20,7 +20,7 @@
  *  MA 02110-1301, USA.
  */
 
-/* $Id: decode.c,v 1.34 2009/03/04 21:48:08 mschimek Exp $ */
+/* $Id: decode.c,v 1.35 2009/03/23 01:30:25 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -393,8 +393,6 @@ dump_bytes			(const uint8_t *	buffer,
 	puts ("<");
 }
 
-#if 3 == VBI_VERSION_MINOR /* XXX port me back */
-
 static void
 packet_8301			(const uint8_t		buffer[42],
 				 unsigned int		designation)
@@ -428,11 +426,11 @@ packet_8301			(const uint8_t		buffer[42],
 		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 		tm.tm_hour, tm.tm_min, tm.tm_sec);
 
+#if 3 == VBI_VERSION_MINOR
 	if (0 != cni)
 		dump_cni (VBI_CNI_TYPE_8301, cni);
+#endif
 }
-
-#endif /* 3 == VBI_VERSION_MINOR */
 
 static void
 packet_8302			(const uint8_t		buffer[42],
@@ -669,9 +667,7 @@ teletext			(const uint8_t		buffer[42],
 		}
 
 		if (designation >= 0 && designation <= 1) {
-#if 3 == VBI_VERSION_MINOR /* XXX port me back */
 			packet_8301 (buffer, designation);
-#endif
 			return;
 		}
 
@@ -896,11 +892,9 @@ Input options:\n\
                        standard input\n\
 -P | --pes             Source is a DVB PES stream\n\
 -T | --ts pid          Source is a DVB TS stream\n\
-Decoding options:\n"
-#if 3 == VBI_VERSION_MINOR /* XXX port me back */
-"-1 | --8301            Teletext packet 8/30 format 1 (local time)\n\"
-#endif
-"-2 | --8302            Teletext packet 8/30 format 2 (PDC)\n\
+Decoding options:\n\
+-1 | --8301            Teletext packet 8/30 format 1 (local time)\n\
+-2 | --8302            Teletext packet 8/30 format 2 (PDC)\n\
 -c | --cc              Closed Caption\n\
 -j | --idl             Any Teletext IDL packets (M/30, M/31)\n\
 -t | --ttx             Decode any Teletext packet\n\
