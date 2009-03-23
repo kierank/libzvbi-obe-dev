@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pdc.h,v 1.5 2009/03/04 21:48:49 mschimek Exp $ */
+/* $Id: pdc.h,v 1.6 2009/03/23 01:30:19 mschimek Exp $ */
 
 #ifndef __ZVBI_PDC_H__
 #define __ZVBI_PDC_H__
@@ -346,7 +346,7 @@ typedef enum {
  */
 typedef struct {
 	/** Source of this PID. */
-	vbi_pid_channel		channel;
+	vbi_pid_channel			channel;
 
 	/**
 	 * Network identifier type, one of
@@ -368,7 +368,7 @@ typedef struct {
 	 * Program Identification Label. This is the only information
 	 * available from all PID sources.
 	 */
-	vbi_pil			pil;
+	vbi_pil				pil;
 
 	/**
 	 * PDC Label Update Flag (only transmitted in Teletext
