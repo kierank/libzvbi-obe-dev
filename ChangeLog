@@ -1,3 +1,39 @@
+2009-03-21    <mschimek@users.sf.net>
+
+	* src/cc608_decoder.c, src/cc608_decoder.h: New Closed Caption
+	  decoder based on contrib/atsc-cc.c added to CVS.
+
+2009-03-13    <mschimek@users.sf.net>
+
+	* src/pdc.h, examples/network.c (main): Cosmetical changes.
+	
+	* test/decode.c: Enabled Teletext packet 8/30/1 decoding
+	  because the required low-level functions are in the
+	  library now. 
+
+	* test/Makefile.am: Commented out the exoptest on explist and
+	  test-unicode on unicode dependencies because of problems
+	  with make distcheck.
+
+	* examples/Makefile.am (noinst_PROGRAMS): Added pdc2.
+	(TESTS): Added pdc2-test1.sh.
+	* src/pdc.c: Doxumented examples/pdc2.c.
+	* examples/pdc2-test1.sh: New test for pdc2.c.
+	* examples/pdc2.c: Renamed from pdc1.c, improved and checked
+	  against the examples in EN 300 231.
+	* examples/pdc1.c: Renamed to pdc2.c and replaced by a simpler
+	  example just demonstrating how to capture Program IDs.
+
+2009-03-07    <mschimek@users.sf.net>
+
+	* test/decode.c: Corrected usage message, enabled packet 8/30/1
+	  decoding.
+
+2009-03-05    <mschimek@users.sf.net>
+
+	* test/test-pdc.cc: Replace time_min()/time_max() by macros.
+	* test/Makefile.am (TESTS, check_PROGRAMS): Added test-pdc.
+
 2009-03-04    <mschimek@users.sf.net>
 
 	* test/Makefile.am (noinst_PROGRAMS): Added date tool.

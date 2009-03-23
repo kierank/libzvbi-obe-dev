@@ -383,13 +383,13 @@ typedef enum {
 
 typedef struct {
 	
-	vbi_pid_channel		channel;
+	vbi_pid_channel			channel;
 
 	vbi_cni_type			cni_type;
 
 	unsigned int			cni;
 
-	vbi_pil			pil;
+	vbi_pil				pil;
 
 	vbi_bool			luf;
 
