@@ -19,7 +19,7 @@
  *  MA 02110-1301, USA.
  */
 
-/* $Id: test-pdc.cc,v 1.1 2009/03/04 21:48:57 mschimek Exp $ */
+/* $Id: test-pdc.cc,v 1.2 2009/03/23 01:30:45 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -355,23 +355,27 @@ test_pty_validity_window	(void)
 		assert_pty_validity_window (t, "CET=", FALSE, EINVAL);
 	}
 
-	/* 'begin' and 'end' cannot be smaller than 'time' (unless
-	   there was a negative DST offset). */
-	assert_pty_validity_window (time_min (), "UTC",
-				    TRUE, 0, time_min ());
-	assert_pty_validity_window (time_min (), "CET",
-				    TRUE, 0, time_min ());
+	if (TIME_MIN >= 0) {
+		/* 'begin' and 'end' cannot be smaller than 'time'
+		   (unless there was a negative DST offset). */
+		assert_pty_validity_window (TIME_MIN, "UTC",
+					    TRUE, 0, TIME_MIN);
+		assert_pty_validity_window (TIME_MIN, "CET",
+					    TRUE, 0, TIME_MIN);
+	}
 
-	t = time_max () - 30 * 24 * 60 * 60;
-	assert_pty_validity_window (t, "UTC", TRUE, 0, t);
-	assert_pty_validity_window (t, "CET", TRUE, 0, t);
-	t = time_max () - 26 * 24 * 60 * 60;
-	assert_pty_validity_window (t, "UTC", FALSE, EOVERFLOW);
-	assert_pty_validity_window (t, "CET", FALSE, EOVERFLOW);
-	assert_pty_validity_window (time_max (), "UTC",
-				    FALSE, EOVERFLOW);
-	assert_pty_validity_window (time_max (), "CET",
-				    FALSE, EOVERFLOW);
+	if (TIME_MAX <= 0x7FFFFFFF) {
+		t = TIME_MAX - 30 * 24 * 60 * 60;
+		assert_pty_validity_window (t, "UTC", TRUE, 0, t);
+		assert_pty_validity_window (t, "CET", TRUE, 0, t);
+		t = TIME_MAX - 26 * 24 * 60 * 60;
+		assert_pty_validity_window (t, "UTC", FALSE, EOVERFLOW);
+		assert_pty_validity_window (t, "CET", FALSE, EOVERFLOW);
+		assert_pty_validity_window (TIME_MAX, "UTC",
+					    FALSE, EOVERFLOW);
+		assert_pty_validity_window (TIME_MAX, "CET",
+					    FALSE, EOVERFLOW);
+	}
 
 	t = ztime ("20010101T000000");
 	assert_pty_validity_window (t, "UTC", TRUE, 0, t,
@@ -594,18 +598,18 @@ test_pil_validity_window	(void)
 		vbi_pil p = indefinite_dates[i];
 
 		assert_pil_validity_window (p, t1, "UTC", TRUE, 0,
-					    time_min (), time_max ());
+					    TIME_MIN, TIME_MAX);
 		assert_pil_validity_window (p, t1, "CET", TRUE, 0,
-					    time_min (), time_max ());
+					    TIME_MIN, TIME_MAX);
 		assert_pil_validity_window (p, t1, NULL, TRUE, 0,
-					    time_min (), time_max ());
+					    TIME_MIN, TIME_MAX);
 	}
 
 	/* Invalid day in year 2001, therefore indefinite time window. */
 	assert_pil_validity_window (VBI_PIL (2, 29, 12, 0), t1, "UTC",
-				    TRUE, 0, time_min (), time_max ());
+				    TRUE, 0, TIME_MIN, TIME_MAX);
 	assert_pil_validity_window (VBI_PIL (2, 29, 12, 0), t1, "CET",
-				    TRUE, 0, time_min (), time_max ());
+				    TRUE, 0, TIME_MIN, TIME_MAX);
 	/* Valid day in year 2004. */
 	assert_pil_validity_window (VBI_PIL (2, 29, 12, 0),
 				    ztime ("20040101T000000"), "UTC");
@@ -620,25 +624,25 @@ test_pil_validity_window	(void)
 		assert_pil_validity_window (p1, t1, "CET=", FALSE, EINVAL);
 	}
 
-	/* +1 because GNU libc timegm() appears to clamp against
-	   time_min(), which is catched by libzvbi. */
-	t = time_min () + 1;
-	assert (NULL != gmtime_r (&t, &tm_min));
-	assert (t == timegm (&tm_min));
-	p = VBI_PIL (tm_min.tm_mon + 1, tm_min.tm_mday,
-		      tm_min.tm_hour, 59),
-	assert_pil_validity_window (p, time_min (), "UTC",
-				    FALSE, EOVERFLOW);
+	if (TIME_MIN >= 0) {
+		t = TIME_MIN;
+		assert (NULL != gmtime_r (&t, &tm_min));
+		assert (t == timegm (&tm_min));
+		p = VBI_PIL (tm_min.tm_mon + 1, tm_min.tm_mday,
+			     tm_min.tm_hour, /* minute */ 59),
+			assert_pil_validity_window (p, TIME_MIN, "UTC",
+						    FALSE, EOVERFLOW);
+	}
 
-	/* -1 because GNU libc timegm() appears to clamp against
-	   time_max(), which is catched by libzvbi. */
-	t = time_max () - 1;
-	assert (NULL != gmtime_r (&t, &tm_max));
-	assert (t == timegm (&tm_max));
-	p = VBI_PIL (tm_max.tm_mon + 1, tm_max.tm_mday,
-		      tm_max.tm_hour, 0),
-	assert_pil_validity_window (p, time_max (), "UTC",
-				    FALSE, EOVERFLOW);
+	if (TIME_MAX <= 0x7FFFFFFF) {
+		t = TIME_MAX;
+		assert (NULL != gmtime_r (&t, &tm_max));
+		assert (t == timegm (&tm_max));
+		p = VBI_PIL (tm_max.tm_mon + 1, tm_max.tm_mday,
+			     tm_max.tm_hour, 0),
+			assert_pil_validity_window (p, TIME_MAX, "UTC",
+						    FALSE, EOVERFLOW);
+	}
 
 	t = ztime ("20010101T000000");
 	assert_pil_validity_window (VBI_PIL (6, 30, 23, 59), t,
@@ -951,72 +955,84 @@ test_pil_to_time		(void)
 	assert_pil_to_time (p1, (time_t) -1, "UTC");
 	assert_pil_to_time (p1, (time_t) -1, "CET");
 
-	/* +1 because GNU libc timegm() appears to clamp against
-	   time_min(), which is catched by libzvbi. */
-	t = time_min () + 1;
-	assert (NULL != gmtime_r (&t, &tm_min));
-	assert (t == timegm (&tm_min));
-	p = VBI_PIL (tm_min.tm_mon + 1, tm_min.tm_mday,
-		      tm_min.tm_hour, 59),
-	assert_pil_to_time (p, time_min (), "UTC");
-	assert_pil_to_time (p, time_min (), "UTC-1",
-			    /* exp_result */ -1, EOVERFLOW);
+	if (TIME_MIN >= 0) {
+		t = TIME_MIN;
 
-	assert ((time_t) -1 == vbi_pil_lto_to_time
-		(p, time_min (), /* seconds_east */ -3600));
-	assert_errno (EOVERFLOW);
-	if (tm_min.tm_hour > 0) {
-		assert_pil_to_time (VBI_PIL (tm_min.tm_mon + 1,
-					      tm_min.tm_mday,
-					      tm_min.tm_hour - 1, 59),
-				    time_min (), "UTC",
+		assert (NULL != gmtime_r (&t, &tm_min));
+
+		assert (t == timegm (&tm_min));
+		p = VBI_PIL (tm_min.tm_mon + 1, tm_min.tm_mday,
+			     tm_min.tm_hour, 59),
+			assert_pil_to_time (p, TIME_MIN, "UTC");
+		assert_pil_to_time (p, TIME_MIN, "UTC-1",
 				    /* exp_result */ -1, EOVERFLOW);
-	} else if (tm_min.tm_mday > 1) {
-		assert_pil_to_time (VBI_PIL (tm_min.tm_mon + 1,
-					      tm_min.tm_mday - 1,
-					      tm_min.tm_hour, 59),
-				    time_min (), "UTC",
-				    /* exp_result */ -1, EOVERFLOW);
-	} else if (tm_min.tm_mon > 0) {
-		assert_pil_to_time (VBI_PIL (tm_min.tm_mon + 1 - 1,
-					      tm_min.tm_mday - 1,
-					      tm_min.tm_hour, 59),
-				    time_min (), "UTC",
-				    /* exp_result */ -1, EOVERFLOW);
+
+		assert ((time_t) -1 == vbi_pil_lto_to_time
+			(p, TIME_MIN, /* seconds_east */ -3600));
+		assert_errno (EOVERFLOW);
+		if (tm_min.tm_hour > 0) {
+			assert_pil_to_time (VBI_PIL (tm_min.tm_mon + 1,
+						     tm_min.tm_mday,
+						     tm_min.tm_hour - 1,
+						     /* minute */ 59),
+					    TIME_MIN, "UTC",
+					    /* exp_result */ -1,
+					    EOVERFLOW);
+		} else if (tm_min.tm_mday > 1) {
+			assert_pil_to_time (VBI_PIL (tm_min.tm_mon + 1,
+						     tm_min.tm_mday - 1,
+						     tm_min.tm_hour, 59),
+					    TIME_MIN, "UTC",
+					    /* exp_result */ -1,
+					    EOVERFLOW);
+		} else if (tm_min.tm_mon > 0) {
+			assert_pil_to_time (VBI_PIL (tm_min.tm_mon + 1 - 1,
+						     tm_min.tm_mday - 1,
+						     tm_min.tm_hour, 59),
+					    TIME_MIN, "UTC",
+					    /* exp_result */ -1,
+					    EOVERFLOW);
+		}
 	}
 
-	/* -1 because GNU libc timegm() appears to clamp against
-	   time_max(), which is catched by libzvbi. */
-	t = time_max () - 1;
-	assert (NULL != gmtime_r (&t, &tm_max));
-	assert (t == timegm (&tm_max));
-	p = VBI_PIL (tm_max.tm_mon + 1, tm_max.tm_mday,
-		      tm_max.tm_hour, 0),
-	assert_pil_to_time (p, time_max (), "UTC");
-	assert_pil_to_time (p, time_max (), "UTC+1",
-			    /* exp_result */ -1, EOVERFLOW);
+	if (TIME_MAX <= 0x7FFFFFFF) {
+		/* -1 because GNU libc timegm() appears to clamp
+		   against TIME_MAX, which is catched by libzvbi. */
+		t = TIME_MAX - 1;
+		assert (NULL != gmtime_r (&t, &tm_max));
+		assert (t == timegm (&tm_max));
+		p = VBI_PIL (tm_max.tm_mon + 1, tm_max.tm_mday,
+			     tm_max.tm_hour, 0),
+			assert_pil_to_time (p, TIME_MAX, "UTC");
+		assert_pil_to_time (p, TIME_MAX, "UTC+1",
+				    /* exp_result */ -1, EOVERFLOW);
 
-	assert ((time_t) -1 == vbi_pil_lto_to_time
-		(p, time_max (), /* seconds_east */ 3600));
-	assert_errno (EOVERFLOW);
-	if (tm_max.tm_hour < 23) {
-		assert_pil_to_time (VBI_PIL (tm_max.tm_mon + 1,
-					      tm_max.tm_mday,
-					      tm_max.tm_hour + 1, 0),
-				    time_max (), "UTC",
-				    /* exp_result */ -1, EOVERFLOW);
-	} else if (tm_max.tm_mday < 28) {
-		assert_pil_to_time (VBI_PIL (tm_max.tm_mon + 1,
-					      tm_max.tm_mday + 1,
-					      tm_max.tm_hour, 0),
-				    time_max (), "UTC",
-				    /* exp_result */ -1, EOVERFLOW);
-	} else if (tm_max.tm_mon < 11) {
-		assert_pil_to_time (VBI_PIL (tm_max.tm_mon + 1 + 1,
-					      tm_max.tm_mday + 1,
-					      tm_max.tm_hour, 0),
-				    time_max (), "UTC",
-				    /* exp_result */ -1, EOVERFLOW);
+		assert ((time_t) -1 == vbi_pil_lto_to_time
+			(p, TIME_MAX, /* seconds_east */ 3600));
+		assert_errno (EOVERFLOW);
+		if (tm_max.tm_hour < 23) {
+			assert_pil_to_time (VBI_PIL (tm_max.tm_mon + 1,
+						     tm_max.tm_mday,
+						     tm_max.tm_hour + 1,
+						     /* minute */ 0),
+					    TIME_MAX, "UTC",
+					    /* exp_result */ -1,
+					    EOVERFLOW);
+		} else if (tm_max.tm_mday < 28) {
+			assert_pil_to_time (VBI_PIL (tm_max.tm_mon + 1,
+						     tm_max.tm_mday + 1,
+						     tm_max.tm_hour, 0),
+					    TIME_MAX, "UTC",
+					    /* exp_result */ -1,
+					    EOVERFLOW);
+		} else if (tm_max.tm_mon < 11) {
+			assert_pil_to_time (VBI_PIL (tm_max.tm_mon + 1 + 1,
+						     tm_max.tm_mday + 1,
+						     tm_max.tm_hour, 0),
+					    TIME_MAX, "UTC",
+					    /* exp_result */ -1,
+					    EOVERFLOW);
+		}
 	}
 
 	t = ztime ("20010101T000000");
@@ -1053,32 +1069,32 @@ test_pil_to_time		(void)
 	/* GMT */
 	assert (ztime ("20010215T200000")
 		== vbi_pil_to_time (VBI_PIL (2, 15, 20, 0), t1,
-				     "Europe/London"));
+				    "Europe/London"));
 	assert (ztime ("20010215T200000")
 		== vbi_pil_lto_to_time (VBI_PIL (2, 15, 20, 0), t1, 0));
 	/* CET (UTC + 1h) */
 	assert (ztime ("20010215T190000")
 		== vbi_pil_to_time (VBI_PIL (2, 15, 20, 0), t1,
-				     "Europe/Paris"));
+				    "Europe/Paris"));
 	assert (ztime ("20010215T190000")
 		== vbi_pil_lto_to_time (VBI_PIL (2, 15, 20, 0), t1, 3600));
 	/* CEST (UTC + 2h) */
 	assert (ztime ("20010715T180000")
 		== vbi_pil_to_time (VBI_PIL (7, 15, 20, 0),
-				     ztime ("20010701T000000"),
-				     "Europe/Paris"));
+				    ztime ("20010701T000000"),
+				    "Europe/Paris"));
 	/* CET because PIL month 2; year 2001 because 8 - 2 <= 6. */
 	assert (ztime ("20010215T190000")
 		== vbi_pil_to_time (VBI_PIL (2, 15, 20, 0),
-				     ztime ("20010831T210000"),
-				     "Europe/Paris"));
+				    ztime ("20010831T210000"),
+				    "Europe/Paris"));
 	/* CET because PIL month 2; year 2002 because 'start' is
 	   already 2001-09-01 01:00 in CEST zone. */
 	assert (ztime ("20020215T190000")
 		== vbi_pil_to_time (VBI_PIL (2, 15, 20, 0),
-				     ztime ("20010831T230000"),
-				     "Europe/Paris"));
-
+				    ztime ("20010831T230000"),
+				    "Europe/Paris"));
+	
 	/* XXX Maybe other DST conventions should be tested:
 	   http://en.wikipedia.org/wiki/Daylight_saving_time_around_the_world
 	*/
