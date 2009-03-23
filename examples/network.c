@@ -25,7 +25,7 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: network.c,v 1.6 2009/03/04 16:11:30 mschimek Exp $ */
+/* $Id: network.c,v 1.7 2009/03/23 01:30:22 mschimek Exp $ */
 
 /* This example shows how to identify a network from data transmitted
    in XDS packets, Teletext packet 8/30 format 1 and 2, and VPS packets.
@@ -140,11 +140,11 @@ mainloop			(void)
 			fprintf (stderr, "VBI read error %d (%s)\n",
 				 errno, strerror (errno));
 			/* Could be ignored, esp. EIO with some drivers. */
-			exit(EXIT_FAILURE);
+			exit (EXIT_FAILURE);
 
 		case 0: 
 			fprintf (stderr, "VBI read timeout\n");
-			exit(EXIT_FAILURE);
+			exit (EXIT_FAILURE);
 
 		case 1: /* success */
 			break;
@@ -192,7 +192,6 @@ main				(void)
 			 errstr);
 
 		free (errstr);
-		errstr = NULL;
 
 		exit (EXIT_FAILURE);
 	}
@@ -210,10 +209,8 @@ main				(void)
 	mainloop ();
 
 	vbi_decoder_delete (dec);
-	dec = NULL;
 
 	vbi_capture_delete (cap);
-	cap = NULL;
 
 	exit (EXIT_SUCCESS);
 }
