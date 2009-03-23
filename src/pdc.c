@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* $Id: pdc.c,v 1.3 2009/03/04 21:48:52 mschimek Exp $ */
+/* $Id: pdc.c,v 1.4 2009/03/23 01:30:33 mschimek Exp $ */
 
 #include "../site_def.h"
 
@@ -76,6 +76,7 @@
  * VBI_EVENT_PROG_ID.
  *
  * @example examples/pdc1.c
+ * @example examples/pdc2.c
  */
 
 /* XXX Preliminary, will not be returned to clients. */
