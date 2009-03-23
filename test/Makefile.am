@@ -50,6 +50,7 @@ TESTS = \
 	test-dvb_mux \
 	test-hamm \
 	test-packet-830 \
+	test-pdc \
 	test-raw_decoder \
 	test-unicode \
 	test-vps
@@ -60,6 +61,7 @@ check_PROGRAMS = \
 	test-dvb_mux \
 	test-hamm \
 	test-packet-830 \
+	test-pdc \
 	test-raw_decoder \
 	test-vps
 
@@ -82,6 +84,10 @@ test_packet_830_SOURCES = \
 	test-pdc.h \
 	test-common.cc test-common.h
 
+test_pdc_SOURCES = \
+	test-pdc.cc test-pdc.h \
+	test-common.cc test-common.h
+
 test_raw_decoder_SOURCES = \
 	test-raw_decoder.cc \
 	test-common.cc test-common.h
@@ -91,9 +97,9 @@ test_vps_SOURCES = \
 	test-pdc.h \
 	test-common.cc test-common.h
 
-exoptest: explist
+# exoptest: explist
 
-test-unicode: unicode
+# test-unicode: unicode
 
 if ENABLE_PROXY
 proxy_programs = proxy-test
