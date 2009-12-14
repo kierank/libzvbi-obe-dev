@@ -22,7 +22,7 @@
  */
 
 static const char rcsid [] =
-"$Id: io-v4l2k.c,v 1.49 2008/02/19 00:35:20 mschimek Exp $";
+"$Id: io-v4l2k.c,v 1.50 2009/12/14 23:43:20 mschimek Exp $";
 
 /*
  *  Around Oct-Nov 2002 the V4L2 API was revised for inclusion into
@@ -830,8 +830,11 @@ print_vfmt			(vbi_capture_v4l2 *	v,
 	if (0 == (v->log.mask & VBI_LOG_INFO))
 		return;
 
-	_vbi_log_printf (v->log.fn, v->log.user_data,
-			 VBI_LOG_INFO, __FUNCTION__,
+	_vbi_log_printf (v->log.fn,
+			 v->log.user_data,
+			 VBI_LOG_INFO,
+			 __FILE__,
+			 __FUNCTION__,
 			 "%sformat %08x [%c%c%c%c], %d Hz, %d bpl, offs %d, "
 			 "F1 %d...%d, F2 %d...%d, flags %08x.", s,
 			 vfmt->fmt.vbi.sample_format,
@@ -1313,6 +1316,7 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 	char *guess = NULL;
 	char *error = NULL;
 	vbi_capture_v4l2 *v;
+	_vbi_log_hook log;
 
 	pthread_once (&vbi_init_once, vbi_init);
 
@@ -1325,18 +1329,23 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 		errstr = &error;
 	*errstr = NULL;
 
+	CLEAR (log);
+	if (trace) {
+		log.fn = vbi_log_on_stderr;
+		log.mask = VBI_LOG_INFO * 2 - 1;
+	}
+
 	if (!(v = calloc(1, sizeof(*v)))) {
 		asprintf(errstr, _("Virtual memory exhausted."));
 		errno = ENOMEM;
 		goto failure;
 	}
 
+	v->log = log;
+
 	_vbi3_raw_decoder_init (&v->rd, /* sampling_par */ NULL);
 
 	if (trace) {
-		v->log.fn = vbi_log_on_stderr;
-		v->log.mask = VBI_LOG_INFO * 2 - 1;
-
 		vbi3_raw_decoder_set_log_fn (&v->rd,
 					     vbi_log_on_stderr,
 					     /* user_data */ NULL,
@@ -1479,12 +1488,12 @@ vbi_capture_v4l2k_new		(const char *		dev_name,
 
  io_error:
  failure:
-	if (v)
-		v4l2_delete (&v->capture);
-
-	info (&v->log,
+	info ((NULL != v) ? &v->log : &log,
 	      "Failed with errno %d, errmsg '%s'.",
 	      errno, *errstr);
+
+	if (NULL != v)
+		v4l2_delete (&v->capture);
 
 	if (errstr == &error) {
 		free (error);
