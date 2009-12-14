@@ -64,10 +64,12 @@ libzvbi_la_SOURCES = \
 	bit_slicer.c bit_slicer.h \
 	cache.c cache.h cache-priv.h dlist.h \
 	caption.c cc.h \
+	cc608_decoder.c cc608_decoder.h \
 	conv.c conv.h \
 	dvb.h \
 	dvb_mux.c dvb_mux.h \
 	dvb_demux.c dvb_demux.h \
+	event.c event.h event-priv.h \
 	exp-html.c \
 	exp-templ.c \
 	exp-txt.c exp-txt.h \
@@ -99,7 +101,7 @@ libzvbi_la_SOURCES = \
 	sliced_filter.c sliced_filter.h \
 	tables.c tables.h network-table.h \
 	trigger.c trigger.h \
-	vbi.c vbi.h event.h \
+	vbi.c vbi.h \
 	vps.c vps.h \
 	wss.c wss.h \
 	xds_demux.c xds_demux.h \
