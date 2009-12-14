@@ -1,3 +1,42 @@
+2009-12-14    <mschimek@users.sf.net>
+
+	* contrib/Makefile.am (noinst_PROGRAMS): Added zvbi-dvbsubs.
+	* contrib/dvbsubs.c, contrib/dvbsubs.h: Added. 
+
+2009-06-10    <mschimek@users.sf.net>
+
+	* src/io-v4l2k.c (vbi_capture_v4l2k_new): Bug fix: Attempt to
+	  log error after deleting capture struct with pointer to log
+	  function.
+	* src/io-v4l2k.c (print_vfmt): Bug fix: Missing _vbi_log_printf()
+	  parameter.
+
+2009-05-27    <mschimek@users.sf.net>
+
+	* src/cc608_decoder.c: Renamed a few public symbols to reflect the
+	  experimental nature of the module.
+	(stream_event, display_event): The event structs changed slightly.
+	(CC608_DECODER_LOG_INPUT): New test switch.
+	* src/cc608_decoder.h: Added experimental _vbi_event_cc608_page and
+	  _vbi_event_cc608_stream structs.
+	* src/event.h: Added experimental _VBI_EVENT_CC608 and
+	  _VBI_EVENT_CC608_STREAM for test/caption.c. 
+	* src/Makefile.am (libzvbi_la_SOURCES): Added cc608_decoder.c,
+	  cc608_decoder.h.
+	(libzvbi_la_SOURCES): Added event.c, event-priv.h.
+	* src/event.c, src/event-priv.h: New helper functions for
+	  cc608_decoder.c.
+	* src/io-sim.c (vbi_capture_sim_load_caption),
+	  test/cc608-test-stream.dtd: Removed the
+	  unneeded long element names. Changed channel numbers to base
+	  one as in EIA 608. Added a ts entity.
+	* test/cc-test-stream.dtd: Renamed to cc608-test-stream.dtd.
+	* test/sliced.c (capture_stream_sim_load_caption): Now available
+	  in libzvbi 0.2 too.
+	* test/caption.c: Rewrote the whole thing and added an option to
+	  test the new _vbi_cc608 decoder.
+	* test/decode.c (caption): CC dump code replaced by _vbi_cc608_dump().
+
 2009-03-21    <mschimek@users.sf.net>
 
 	* src/cc608_decoder.c, src/cc608_decoder.h: New Closed Caption

@@ -697,6 +697,12 @@ typedef struct {
 	vbi_dst_state		dst_state;
 } vbi_local_time;
 
+/* Experimental CC608 decoder. */
+#define _VBI_EVENT_CC608 0x1000
+#define _VBI_EVENT_CC608_STREAM 0x2000
+struct _vbi_event_cc608_page;
+struct _vbi_event_cc608_stream;
+
 
 #include <inttypes.h>
 
@@ -724,6 +730,10 @@ typedef struct vbi_event {
 		vbi_program_info *	prog_info;
 		vbi_local_time *	local_time;
 		vbi_program_id *	prog_id;
+
+		/* Experimental. */
+		struct _vbi_event_cc608_page *		_cc608;
+		struct _vbi_event_cc608_stream *	_cc608_stream;
 	}			ev;
 } vbi_event;
 
