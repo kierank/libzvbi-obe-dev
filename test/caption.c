@@ -19,7 +19,7 @@
  *  MA 02110-1301, USA.
  */
 
-/* $Id: caption.c,v 1.19 2008/03/01 07:37:20 mschimek Exp $ */
+/* $Id: caption.c,v 1.20 2009/12/14 23:43:49 mschimek Exp $ */
 
 #undef NDEBUG
 
@@ -32,6 +32,9 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#ifdef HAVE_GETOPT_LONG
+#  include <getopt.h>
+#endif
 
 #ifndef X_DISPLAY_MISSING
 
@@ -43,275 +46,564 @@
 #include "src/exp-gfx.h"
 #include "src/hamm.h"
 #include "src/dvb_demux.h"
+#include "src/cc608_decoder.h"
 #include "sliced.h"
 
-vbi_decoder *		vbi;
-vbi_pgno		pgno = -1;
-vbi_dvb_demux *		dx;
+#define PROGRAM_NAME "caption"
 
-/*
- *  Rudimentary render code for CC test.
- *  Attention: RGB 5:6:5 little endian only.
- */
+static const char *		option_in_file_name;
+static enum file_format		option_in_file_format;
+static unsigned int		option_in_ts_pid;
+static vbi_bool			option_use_cc608_decoder;
+static vbi_bool			option_use_cc608_event;
+static double			option_frame_rate;
 
-#define DISP_WIDTH	640
-#define DISP_HEIGHT	480
+static struct stream *		rst;
 
+/* For real time playback of recorded streams. */
+static double			wait_until;
+static double			frame_period;
+
+/* Teletext/CC/VPS/WSS decoder. */
+static vbi_decoder *		vbi;
+
+/* Closed Caption decoder. */
+static _vbi_cc608_decoder *	cd;
+
+
+#define WINDOW_WIDTH	640
+#define WINDOW_HEIGHT	480
+
+/* Character cell size. */
 #define CELL_WIDTH	16
 #define CELL_HEIGHT	26
 
-Display *		display;
-int			screen;
-Colormap		cmap;
-Window			window;
-GC			gc;
-XEvent			event;
-XImage *		ximage;
-ushort *		ximgdata;
+/* Maximum text size in characters. TEXT_COLUMNS includes two spaces
+   added for legibility. */
+#define TEXT_COLUMNS	34
+#define TEXT_ROWS	15
 
-int			shift = 0, step = 3;
-int			sh_first, sh_last;
+/* Maximum text size in pixels, not counting the vertical offset for
+   smooth rolling. */
+#define TEXT_WIDTH	(TEXT_COLUMNS * CELL_WIDTH)
+#define TEXT_HEIGHT	(TEXT_ROWS * CELL_HEIGHT)
 
-vbi_rgba		row_buffer[64 * CELL_WIDTH * CELL_HEIGHT];
+static Display *		display;
+static int			screen;
+static Colormap			cmap;
+static Window			window;
+static GC			gc;
+static uint8_t *		ximgdata;
 
-#define COLORKEY 0x80FF80 /* where video looks through */
+/* Color of the "video pixels" we overlay. */
+static const vbi_rgba		video_color = 0x80FF80; /* 0xBBGGRR */
+static XColor			video_xcolor;
 
-#define RGB565(rgba)							\
-	(((((rgba) >> 16) & 0xF8) << 8) | ((((rgba) >> 8) & 0xFC) << 3)	\
-	 | (((rgba) & 0xF8) >> 3))
+/* Color of the border around the text, if any. */
+static const vbi_rgba		border_color = 0xFF8080;
+static XColor			border_xcolor;
+
+/* Display and ximage color depth: 15, 16, 24, 32 bits */
+static unsigned int		color_depth;
+
+static XImage *			ximage;
+
+/* Current vertical offset for smooth rolling, 0 ... CELL_HEIGHT - 1. */
+static unsigned int		vert_offset;
+
+/* Draw the ximage into the window. */
+static vbi_bool			update_display;
+
+/* The currently displayed page. */
+static vbi_page			curr_page;
+
+/* Draw characters with flash attribute in on or off state. */
+static vbi_bool			flash_on;
+static unsigned int		flash_count;
+
+/* Get a new copy of the current page from the Caption decoder and
+   redraw the ximage. */
+static vbi_bool			redraw_page;
+
+
+/* Switches. */
+
+/* Currently selected Caption channel. */
+static vbi_pgno			channel;
+
+/* Add spaces for legibility. */
+static vbi_bool			padding;
+
+/* Show a border around the text area. */
+static vbi_bool			show_border;
+
+static vbi_bool			smooth_rolling;
+
 
 static void
-draw_video			(int			x0,
-				 int			y0,
-				 int			w,
-				 int			h)
+put_image			(void)
 {
-	ushort *canvas = ximgdata + x0 + y0 * DISP_WIDTH;
-	int x, y;
+	unsigned int x;
+	unsigned int y;
+	unsigned int width;
 
-	for (y = 0; y < h; y++) {
-		for (x = 0; x < w; x++)
-			canvas[x] = RGB565(COLORKEY);
-		canvas += DISP_WIDTH;
+	/* 32 or with padding 34 columns. */
+	width = curr_page.columns * CELL_WIDTH;
+
+	x = (WINDOW_WIDTH - width) / 2;
+
+	/* vert_offset is between 0 ... CELL_HEIGHT - 1. */
+	y = vert_offset + (WINDOW_HEIGHT
+			   - (TEXT_HEIGHT + CELL_HEIGHT)) / 2;
+
+	if (show_border)
+		XSetForeground (display, gc, border_xcolor.pixel);
+	else
+		XSetForeground (display, gc, video_xcolor.pixel);
+
+	XFillRectangle (display, (Drawable) window, gc,
+			/* x, y */ 0, 0,
+			WINDOW_WIDTH, /* height */ y);
+
+	XFillRectangle (display, (Drawable) window, gc,
+			/* x, y */ 0, y,
+			x, TEXT_HEIGHT);
+
+	XPutImage (display, window, gc, ximage,
+		   /* src_x, src_y */ 0, 0,
+		   /* dest_x, dest_y */ x, y,
+		   width, TEXT_HEIGHT);
+
+	XFillRectangle (display, (Drawable) window, gc,
+			/* x, y */ x + width, y,
+			x, TEXT_HEIGHT);
+
+	XFillRectangle (display, (Drawable) window, gc,
+			/* x, y */ 0, y + TEXT_HEIGHT,
+			WINDOW_WIDTH, WINDOW_HEIGHT - (y + TEXT_HEIGHT));
+}
+
+static void
+draw_transparent_spaces		(unsigned int		column,
+				 unsigned int		row,
+				 unsigned int		n_columns)
+{
+	uint8_t *d;
+	const uint8_t *s;
+	unsigned int i;
+	unsigned int j;
+
+	switch (color_depth) {
+	case 32: /* assumed to be B G R A in memory */
+		d = ximgdata + column * CELL_WIDTH * 4
+			+ row * CELL_HEIGHT * TEXT_WIDTH * 4;
+
+		for (j = 0; j < CELL_HEIGHT; ++j) {
+			uint32_t *d32 = (uint32_t *) d;
+
+			for (i = 0; i < n_columns * CELL_WIDTH; ++i)
+				d32[i] = video_xcolor.pixel;
+
+			d += TEXT_WIDTH * 4;
+		}
+
+		break;
+
+	case 24: /* assumed to be B G R in memory */
+		d = ximgdata + column * CELL_WIDTH * 3
+			+ row * CELL_HEIGHT * TEXT_WIDTH * 3;
+
+		s = (const uint8_t *) &video_xcolor.pixel;
+		if (Z_BYTE_ORDER == Z_BIG_ENDIAN)
+			s += sizeof (video_xcolor.pixel) - 3;
+
+		for (j = 0; j < CELL_HEIGHT; ++j) {
+			for (i = 0; i < n_columns * CELL_WIDTH; ++i)
+				memcpy (d + i * 3, s, 3);
+
+			d += TEXT_WIDTH * 3;
+		}
+
+		break;
+
+	case 16: /* assumed to be gggbbbbb rrrrrggg in memory */
+	case 15: /* assumed to be gggbbbbb arrrrrgg in memory */
+		d = ximgdata + column * CELL_WIDTH * 2
+			+ row * CELL_HEIGHT * TEXT_WIDTH * 2;
+
+		for (j = 0; j < CELL_HEIGHT; ++j) {
+			uint16_t *d16 = (uint16_t *) d;
+
+			for (i = 0; i < n_columns * CELL_WIDTH; ++i)
+				d16[i] = video_xcolor.pixel;
+
+			d += TEXT_WIDTH * 2;
+		}
+
+		break;
+
+	default:		
+		assert (0);
 	}
 }
 
 static void
-draw_blank			(int			column,
-				 int			width)
+draw_character			(vbi_page *		pg,
+				 unsigned int		column,
+				 unsigned int		row)
 {
-	vbi_rgba *canvas = row_buffer + column * CELL_WIDTH;
-	int x, y;
+	vbi_rgba buffer[CELL_WIDTH * CELL_HEIGHT];
+	const vbi_rgba *s;
+	uint8_t *p;
+	unsigned int i;
+	unsigned int j;
 
-	for (y = 0; y < CELL_HEIGHT; y++) {
-		for (x = 0; x < CELL_WIDTH * width; x++)
-			canvas[x] = COLORKEY;
-		canvas += sizeof(row_buffer) / sizeof(row_buffer[0])
-			/ CELL_HEIGHT;
+	/* Regrettably at the moment this function supports only one
+	   pixel format. */
+	vbi_draw_cc_page_region (pg, VBI_PIXFMT_RGBA32_LE, buffer,
+				 /* bytes_per_line */
+				 sizeof (buffer) / CELL_HEIGHT,
+				 column, row,
+				 /* n_columns, n_rows */ 1, 1);
+
+	/* Alpha blending. */
+
+	if (option_use_cc608_decoder) {
+		for (i = 0; i < CELL_WIDTH * CELL_HEIGHT; ++i) {
+			uint8_t alpha;
+
+			/* (text * alpha + video * (0xFF - alpha)) / 0xFF. */
+
+			alpha = buffer[i] >> 24;
+
+			if (alpha >= 0xFF) {
+				/* Most likely case, nothing to do. */
+			} else if (0 == alpha) {
+				buffer[i] = video_color;
+			} else {
+				unsigned int text;
+
+				/* There are really just three alpha levels:
+				   0x00, 0x80, and 0xFF so we take a (not
+				   quite correct) shortcut. */
+
+				text = (((buffer[i] & 0xFF00FF)
+					 + (video_color & 0xFF00FF))
+					>> 1) & 0xFF00FF;
+				text |= (((buffer[i] & 0xFF00)
+					  + (video_color & 0xFF00))
+					 >> 1) & 0xFF00;
+				buffer[i] = text;
+			}
+		}
+	}
+
+	s = buffer;
+
+	switch (color_depth) {
+	case 32: /* assumed to be B G R A in memory */
+		p = ximgdata + column * CELL_WIDTH * 4
+			+ row * CELL_HEIGHT * TEXT_WIDTH * 4;
+
+		for (j = 0; j < CELL_HEIGHT; ++j) {
+			for (i = 0; i < CELL_WIDTH; ++i) {
+				p[i * 4 + 0] = *s >> 16;
+				p[i * 4 + 1] = *s >> 8;
+				p[i * 4 + 2] = *s;
+				p[i * 4 + 3] = 0xFF;
+				++s;
+			}
+
+			p += TEXT_WIDTH * 4;
+		}
+
+		break;
+
+	case 24: /* assumed to be B G R in memory */
+		p = ximgdata + column * CELL_WIDTH * 3
+			+ row * CELL_HEIGHT * TEXT_WIDTH * 3;
+
+		for (j = 0; j < CELL_HEIGHT; ++j) {
+			for (i = 0; i < CELL_WIDTH; ++i) {
+				p[i * 3 + 0] = *s >> 16;
+				p[i * 3 + 1] = *s >> 8;
+				p[i * 3 + 2] = *s;
+				++s;
+			}
+
+			p += TEXT_WIDTH * 3;
+		}
+
+		break;
+
+	case 16: /* assumed to be gggbbbbb rrrrrggg in memory */
+		p = ximgdata + column * CELL_WIDTH * 2
+			+ row * CELL_HEIGHT * TEXT_WIDTH * 2;
+
+		for (j = 0; j < CELL_HEIGHT; ++j) {
+			for (i = 0; i < CELL_WIDTH; ++i) {
+				unsigned int n;
+
+				n = (*s >> 19) & 0x001F;
+				n |= (*s >> 5) & 0x07E0;
+				n |= (*s << 8) & 0xF800;
+				++s;
+				p[i * 2 + 0] = n;
+				p[i * 2 + 1] = n >> 8;
+
+			}
+
+			p += TEXT_WIDTH * 2;
+		}
+
+		break;
+
+	case 15: /* assumed to be gggbbbbb arrrrrgg in memory */
+		p = ximgdata + column * CELL_WIDTH * 2
+			+ row * CELL_HEIGHT * TEXT_WIDTH * 2;
+
+		for (j = 0; j < CELL_HEIGHT; ++j) {
+			for (i = 0; i < CELL_WIDTH; ++i) {
+				unsigned int n;
+
+				n = (*s >> 19) & 0x001F;
+				n |= (*s >> 6) & 0x03E0;
+				n |= (*s << 7) & 0x7C00;
+				n |= 0x8000;
+				++s;
+				p[i * 2 + 0] = n;
+				p[i * 2 + 1] = n >> 8;
+
+			}
+
+			p += TEXT_WIDTH * 2;
+		}
+
+		break;
 	}
 }
 
-/* Not exactly efficient, but this is only a test */
 static void
-draw_row			(ushort *		canvas,
-				 vbi_page *		pg,
-				 int			row)
+draw_row			(vbi_page *		pg,
+				 unsigned int		row)
 {
-	int i, j, num_tspaces = 0;
-	vbi_rgba *s = row_buffer;
+	const vbi_char *cp;
+	unsigned int n_tspaces;
+	int column;
 
-	for (i = 0; i < pg->columns; ++i) {
-		if (pg->text[row * pg->columns + i].opacity
-		    == VBI_TRANSPARENT_SPACE) {
-			num_tspaces++;
+	cp = pg->text + row * pg->columns;
+
+	n_tspaces = 0;
+
+	for (column = 0; column < pg->columns; ++column) {
+		if (VBI_TRANSPARENT_SPACE == cp[column].opacity) {
+			++n_tspaces;
 			continue;
 		}
 
-		if (num_tspaces > 0) {
-			draw_blank(i - num_tspaces, num_tspaces);
-			num_tspaces = 0; 
+		if (n_tspaces > 0) {
+			draw_transparent_spaces (column - n_tspaces,
+						 row, n_tspaces);
+			n_tspaces = 0;
 		}
 
-		vbi_draw_cc_page_region (pg, VBI_PIXFMT_RGBA32_LE,
-					 row_buffer + i * CELL_WIDTH,
-					 sizeof(row_buffer) / CELL_HEIGHT,
-					 i, row, 1, 1);
+		draw_character (pg, column, row);
 	}
 
-	if (num_tspaces > 0)
-		draw_blank(i - num_tspaces, num_tspaces);
-
-	for (i = 0; i < CELL_HEIGHT; i++) {
-		for (j = 0; j < pg->columns * CELL_WIDTH; j++)
-			canvas[j] = RGB565(s[j]);
-		s += sizeof(row_buffer) / sizeof(row_buffer[0]) / CELL_HEIGHT;
-		canvas += DISP_WIDTH;
+	if (n_tspaces > 0) {
+		draw_transparent_spaces (column - n_tspaces,
+					 row, n_tspaces);
 	}
 }
 
-static void
-bump				(int			n,
-				 vbi_bool		draw)
+static vbi_bool
+same_text			(vbi_page *		pg1,
+				 unsigned int		row1,
+				 vbi_page *		pg2,
+				 unsigned int		row2)
 {
-	ushort *canvas = ximgdata + 45 * DISP_WIDTH;
+	if (pg1->columns != pg2->columns)
+		return FALSE;
 
-	if (shift < n)
-		n = shift;
-
-	if (shift <= 0 || n <= 0)
-		return;
-
-	memmove (canvas + (sh_first * CELL_HEIGHT) * DISP_WIDTH,
-		 canvas + (sh_first * CELL_HEIGHT + n) * DISP_WIDTH,
-		 ((sh_last - sh_first + 1) * CELL_HEIGHT - n)
-		 * DISP_WIDTH * 2);
-
-	if (draw)
-		XPutImage (display, window, gc, ximage,
-			   0, 0, 0, 0, DISP_WIDTH, DISP_HEIGHT);
-
-	shift -= n;
+	return (0 == memcmp (pg1->text + row1 * pg1->columns,
+			     pg2->text + row2 * pg2->columns,
+			     pg1->columns * sizeof (pg1->text[0])));
 }
 
 static void
-render				(vbi_page *		pg,
-				 int			row)
+new_draw_page			(vbi_page *		pg)
 {
-	/* ushort *canvas = ximgdata + 48 + 45 * DISP_WIDTH; */
+	int row;
 
-	if (shift > 0) {
-		bump(shift, FALSE);
-		draw_video (48, 45 + sh_last * CELL_HEIGHT,
-			    DISP_WIDTH - 48, CELL_HEIGHT);
-	}
+	assert (0 == pg->dirty.y0);
+	assert ((pg->rows - 1) == pg->dirty.y1);
 
-	draw_row (ximgdata + 48 + (45 + row * CELL_HEIGHT) * DISP_WIDTH,
-		  pg, row);
+	for (row = 0; row < pg->rows; ++row) {
+		if (same_text (&curr_page, row, pg, row)) {
+			continue;
+		} else if (same_text (&curr_page, row + 1, pg, row)) {
+			unsigned int row_size;
 
-	XPutImage (display, window, gc, ximage,
-		   0, 0, 0, 0, DISP_WIDTH, DISP_HEIGHT);
-}
+			/* A shortcut for roll-up caption. */
 
-static void
-clear				(vbi_page *		pg)
-{
-	pg = pg;
+			row_size = TEXT_WIDTH * CELL_HEIGHT
+				* color_depth / 8;
 
-	draw_video (0, 0, DISP_WIDTH, DISP_HEIGHT);
-
-	XPutImage (display, window, gc, ximage,
-		   0, 0, 0, 0, DISP_WIDTH, DISP_HEIGHT);
-}
-
-static void
-roll_up				(vbi_page *		pg,
-				 int			first_row,
-				 int			last_row)
-{
-	ushort scol, *canvas = ximgdata + 45 * DISP_WIDTH;
-	vbi_rgba col;
-	int i, j;
-
-#if 1 /* soft */
-
-	sh_first = first_row;
-	sh_last = last_row;
-	shift = 26;
-	bump(step, FALSE);
-
-	canvas += 48 + (((last_row * CELL_HEIGHT) + CELL_HEIGHT - step)
-			* DISP_WIDTH);
-	col = pg->color_map[pg->text[last_row * pg->columns].background];
-	scol = RGB565 (col);
-
-	for (j = 0; j < step; ++j) {
-		if (pg->text[last_row * pg->columns].opacity
-		    == VBI_TRANSPARENT_SPACE) {
-			for (i = 0; i < CELL_WIDTH * pg->columns; ++i)
-				canvas[i] = RGB565 (COLORKEY);
+			memmove (ximgdata + row * row_size,
+				 ximgdata + (row + 1) * row_size,
+				 row_size);
 		} else {
-			for (i = 0; i < CELL_WIDTH * pg->columns; ++i)
-				canvas[i] = scol;
+			draw_row (pg, row);
 		}
-
-		canvas += DISP_WIDTH;
 	}
 
-#else /* at once */
-
-	memmove (canvas + first_row * CELL_HEIGHT * DISP_WIDTH,
-		 canvas + (first_row + 1) * CELL_HEIGHT * DISP_WIDTH,
-		 (last_row - first_row) * CELL_HEIGHT * DISP_WIDTH * 2);
-
-	draw_video (48, 45 + last_row * CELL_HEIGHT,
-		    DISP_WIDTH - 48, CELL_HEIGHT);
-
-#endif
-
-	XPutImage (display, window, gc, ximage,
-		   0, 0, 0, 0, DISP_WIDTH, DISP_HEIGHT);
+	curr_page = *pg;
 }
 
 static void
-xevent				(int			nap_usec);
+old_draw_page			(vbi_page *		pg)
+{
+	int row;
+
+	for (row = pg->dirty.y0; row <= pg->dirty.y1; ++row)
+		draw_row (pg, row);
+
+	/* For put_image(). */
+	curr_page.columns = pg->columns;
+}
 
 static void
-cc_handler			(vbi_event *		ev,
+old_roll_up			(unsigned int		first_row,
+				 unsigned int		last_row)
+{
+	unsigned int row_size;
+
+	/* In the window first_row ... last_row shift all rows up by
+	   one row (may be faster than redrawing all characters). */
+
+	assert (first_row < last_row);
+	assert (last_row < TEXT_ROWS);
+
+	row_size = TEXT_WIDTH * CELL_HEIGHT * color_depth / 8;
+
+	memmove (ximgdata + first_row * row_size,
+		 ximgdata + (first_row + 1) * row_size,
+		 (last_row - first_row) * row_size);
+}
+
+static void
+old_clear_display		(void)
+{
+	unsigned int row;
+
+	for (row = 0; row < TEXT_ROWS; ++row) {
+		draw_transparent_spaces (/* column */ 0, row,
+					 TEXT_COLUMNS);
+	}
+}
+
+static void
+get_and_draw_page		(void)
+{
+	vbi_page page;
+	vbi_bool success;
+
+	if (option_use_cc608_decoder) {
+		success = _vbi_cc608_decoder_get_page (cd, &page,
+						       channel, padding);
+	} else {
+		success = vbi_fetch_cc_page (vbi, &page, channel,
+					     /* reset dirty flags */ TRUE);
+	}
+
+	assert (success);
+
+	if (!flash_on) {
+		int i;
+
+		for (i = 0; i < page.rows * page.columns; ++i) {
+			if (page.text[i].flash) {
+				page.text[i].foreground =
+					page.text[i].background;
+			}
+		}
+	}
+
+	if (option_use_cc608_decoder) {
+		new_draw_page (&page);
+	} else {
+		old_draw_page (&page);
+	}
+}
+
+static void
+event_handler			(vbi_event *		ev,
 				 void *			user_data)
 {
 	vbi_page page;
 	vbi_bool success;
-	int row;
 
 	user_data = user_data;
 
-	if (pgno != -1 && ev->ev.caption.pgno != pgno)
-		return;
+	switch (ev->type) {
+	case VBI_EVENT_CAPTION:
+		if (channel != ev->ev.caption.pgno)
+			return;
 
-	/* Fetching & rendering in the handler
-           is a bad idea, but this is only a test */
+		success = vbi_fetch_cc_page (vbi, &page, channel,
+					     /* reset dirty flags */ TRUE);
+		assert (success);
 
-	success = vbi_fetch_cc_page (vbi, &page, ev->ev.caption.pgno, TRUE);
-	assert (success);
+		if (abs (page.dirty.roll) > page.rows) {
+			old_clear_display ();
+			update_display = TRUE;
+		} else if (page.dirty.roll == -1) {
+			old_roll_up (page.dirty.y0, page.dirty.y1);
+			if (smooth_rolling) {
+				vert_offset = CELL_HEIGHT
+					- 2; /* field lines */
+			}
+			update_display = TRUE;
+		} else {
+			old_draw_page (&page);
+			update_display = TRUE;
+		}
 
-#if 1 /* optional */
-	if (abs (page.dirty.roll) > page.rows) {
-		clear (&page);
-	} else if (page.dirty.roll == -1) {
-		roll_up (&page, page.dirty.y0, page.dirty.y1);
-	} else {
-#endif
-		for (row = page.dirty.y0; row <= page.dirty.y1; ++row)
-			render (&page, row);
+		break;
+
+	case _VBI_EVENT_CC608:
+		if (channel != ev->ev._cc608->channel)
+			return;
+
+		success = _vbi_cc608_decoder_get_page (cd, &page,
+						       channel, padding);
+		assert (success);
+
+		/* XXX Perhaps the decoder should pass a roll_offset,
+		   first_row, last_row, cc_mode? */
+		if (smooth_rolling
+		    && 0 != (ev->ev._cc608->flags
+			     & _VBI_CC608_START_ROLLING)) {
+			vert_offset = CELL_HEIGHT - 2; /* field lines */
+		}
+
+		new_draw_page (&page);
+
+		update_display = TRUE;
+
+		break;
+
+	default:
+		assert (0);
 	}
-
-	vbi_unref_page (&page);
 }
 
 static void
-reset				(void)
-{
-	vbi_page page;
-	vbi_bool success;
-	int row;
-
-	success = vbi_fetch_cc_page (vbi, &page, pgno, TRUE);
-	assert (success);
-
-	for (row = 0; row <= page.rows; ++row)
-		render (&page, row);
-
-	vbi_unref_page (&page);
-}
-
-/*
- *  X11 stuff
- */
-
-static void
-xevent				(int			nap_usec)
+x_event				(void)
 {
 	while (XPending (display)) {
+		XEvent event;
+
 		XNextEvent (display, &event);
 
 		switch (event.type) {
@@ -320,112 +612,189 @@ xevent				(int			nap_usec)
 			int c = XLookupKeysym (&event.xkey, 0);
 
 			switch (c) {
-			case 'q':
+			case 'b':
+				show_border ^= TRUE;
+				update_display = TRUE;
+				break;
+
 			case 'c':
+			case 'q':
 				exit (EXIT_SUCCESS);
 
+			case 'p':
+				padding ^= TRUE;
+				redraw_page = TRUE;
+				break;
+
+			case 's':
+				smooth_rolling ^= TRUE;
+				if (vert_offset > 0) {
+					vert_offset = 0;
+					update_display = TRUE;
+				}
+				break;
+
 			case '1' ... '8':
-				pgno = c - '1' + 1;
-				reset ();
-				return;
+				channel = c - '1' + VBI_CAPTION_CC1;
+				vert_offset = 0;
+				redraw_page = TRUE;
+				break;
 
 			case XK_F1 ... XK_F8:
-				pgno = c - XK_F1 + 1;
-				reset ();
-				return;
+				channel = c - XK_F1 + VBI_CAPTION_CC1;
+				vert_offset = 0;
+				redraw_page = TRUE;
+				break;
 			}
 
 			break;
 		}
 
 		case Expose:
-			XPutImage (display, window, gc, ximage,
-				   0, 0, 0, 0, DISP_WIDTH, DISP_HEIGHT);
+			update_display = TRUE;
 			break;
 
 		case ClientMessage:
+			/* WM_DELETE_WINDOW. */
 			exit (EXIT_SUCCESS);
 		}
 	}
 
-	bump (step, TRUE);
+	if (redraw_page) {
+		get_and_draw_page ();
+		redraw_page = FALSE;
+		update_display = TRUE;
+	}
 
-	usleep (nap_usec / 4);
+	if (update_display) {
+		put_image ();
+		update_display = FALSE;
+	}
+
+	if (0 == flash_count) {
+		flash_on ^= 1;
+		flash_count = flash_on ? 20 : 10;
+		redraw_page = TRUE;
+	} else {
+		--flash_count;
+	}
+
+	if (vert_offset > 0) {
+		vert_offset -= 2 /* field lines */;
+		update_display = TRUE;
+	}
 }
 
-static vbi_bool
+static void
+alloc_color			(XColor *		xc,
+				 vbi_rgba		rgba)
+{
+	xc->red   = VBI_R (rgba) * 0x0101;
+	xc->green = VBI_G (rgba) * 0x0101;
+	xc->blue  = VBI_B (rgba) * 0x0101;
+
+	XAllocColor (display, cmap, xc);
+}
+
+static void
 init_window			(int			ac,
 				 char **		av)
 {
 	Atom delete_window_atom;
 	XWindowAttributes wa;
-	int i;
+	unsigned int row;
+	unsigned int image_size;
 
-	ac = ac;
+	ac = ac; /* unused */
 	av = av;
 
-	if (!(display = XOpenDisplay (NULL))) {
-		return FALSE;
+	display = XOpenDisplay (NULL);
+	if (NULL == display) {
+		error_exit ("Cannot open X display.");
 	}
 
 	screen = DefaultScreen (display);
 	cmap = DefaultColormap (display, screen);
- 
+
+	alloc_color (&video_xcolor, video_color);
+	alloc_color (&border_xcolor, border_color);
+
+	assert (TEXT_WIDTH <= WINDOW_WIDTH);
+	assert (TEXT_HEIGHT <= WINDOW_HEIGHT);
+
 	window = XCreateSimpleWindow (display,
 				      RootWindow (display, screen),
 				      /* x, y */ 0, 0,
-				      DISP_WIDTH, DISP_HEIGHT,
+				      WINDOW_WIDTH, WINDOW_HEIGHT,
 				      /* borderwidth */ 2,
-				      /* foreground */ 0xffffffff,
-				      /* background */ 0x00000000);
-	if (!window) {
-		return FALSE;
+				      /* border color */ video_xcolor.pixel,
+				      /* bg color */ video_xcolor.pixel);
+	if (0 == window) {
+		error_exit ("Cannot open X window.");
 	}
 
 	XGetWindowAttributes (display, window, &wa);
-			
-	if (16 != wa.depth) {
-		fprintf (stderr, "Can only run at "
-			 "color depth 16 (5:6:5) LE\n");
-		return FALSE;
+
+	/* FIXME determine the R/B order and endianess.
+	   Currently we assume lsb == blue, little endian. */
+	color_depth = wa.depth;
+
+	switch (wa.depth) {
+	case 32:
+	case 24:
+	case 16:
+	case 15:
+		break;
+
+	default:
+		error_exit ("Sorry, this program cannot run "
+			    "on a screen with color depth %u.",
+			    wa.depth);
 	}
 
-	if (!(ximgdata = malloc (DISP_WIDTH * DISP_HEIGHT * 2))) {
-		return FALSE;
+	image_size = TEXT_WIDTH * TEXT_HEIGHT * wa.depth / 8;
+
+	ximgdata = malloc (image_size);
+	if (NULL == ximgdata) {
+		no_mem_exit ();
 	}
 
-	for (i = 0; i < DISP_WIDTH * DISP_HEIGHT; ++i)
-		ximgdata[i] = RGB565 (COLORKEY);
-
-	ximage = XCreateImage(display,
-			      DefaultVisual (display, screen),
-			      DefaultDepth (display, screen),
-			      ZPixmap, 0, (char *) ximgdata,
-			      DISP_WIDTH, DISP_HEIGHT,
-			      8, 0);
-	if (!ximage) {
-		return FALSE;
+	for (row = 0; row < TEXT_ROWS; ++row) {
+		draw_transparent_spaces (/* column */ 0, row,
+					 TEXT_COLUMNS);
 	}
 
-	delete_window_atom = XInternAtom (display, "WM_DELETE_WINDOW", False);
+	ximage = XCreateImage (display,
+			       DefaultVisual (display, screen),
+			       DefaultDepth (display, screen),
+			       /* format */ ZPixmap,
+			       /* x offset */ 0,
+			       (char *) ximgdata,
+			       TEXT_WIDTH, TEXT_HEIGHT,
+			       /* bitmap_pad */ 8,
+			       /* bytes_per_line: contiguous */ 0);
+	if (NULL == ximage) {
+		no_mem_exit ();
+	}
 
-	XSelectInput (display, window,
-		      KeyPressMask |
-		      ExposureMask |
-		      StructureNotifyMask);
-	XSetWMProtocols (display, window, &delete_window_atom, 1);
-	XStoreName (display, window, "Caption Test - [Q], [F1]..[F8]");
+	delete_window_atom = XInternAtom (display, "WM_DELETE_WINDOW",
+					  /* only_if_exists */ False);
 
-	gc = XCreateGC (display, window, 0, NULL);
+	XSelectInput (display, window, (KeyPressMask |
+					ExposureMask |
+					StructureNotifyMask));
+	XSetWMProtocols (display, window,
+			 &delete_window_atom, /* n_atoms */ 1);
+	XStoreName (display, window,
+		    "Caption Test - [B|P|Q|S|F1..F8]");
+
+	gc = XCreateGC (display, window,
+			/* valuemask */ 0,
+			/* values */ NULL);
 
 	XMapWindow (display, window);
 	       
-	XSync (display, False);
-
-	XPutImage (display, window, gc, ximage,
-		   0, 0, 0, 0, DISP_WIDTH, DISP_HEIGHT);
-
-	return TRUE;
+	XSync (display, /* discard events */ False);
 }
 
 static vbi_bool
@@ -438,212 +807,81 @@ decode_frame			(const vbi_sliced *	sliced,
 {
 	raw = raw;
 	sp = sp;
-	stream_time = stream_time; /* unused */
 
-	vbi_decode (vbi, sliced, n_lines, sample_time);
+	if (option_frame_rate < 1e9) {
+		for (;;) {
+			struct timeval tv;
+			double now;
 
-	/* xevent (1e6 / 30); */
+			gettimeofday (&tv, /* tz */ NULL);
+			now = tv.tv_sec + tv.tv_usec * (1 / 1e6);
+
+			if (now >= wait_until) {
+				if (wait_until <= 0.0)
+					wait_until = now;
+
+				wait_until += 1 / option_frame_rate;
+
+				break;
+			}
+
+			usleep ((wait_until - now) * 1e6);
+		}
+	}
+
+	if (option_use_cc608_decoder) {
+		_vbi_cc608_decoder_feed_frame (cd, sliced, n_lines,
+					       sample_time, stream_time);
+	} else {
+		vbi_decode (vbi, sliced, n_lines, sample_time);
+	}
+
+	x_event ();
 
 	return TRUE;
 }
 
-/*
- *  Feed artificial caption
- */
-
 static void
-cmd				(unsigned int		n)
+usage				(FILE *			fp)
 {
-	vbi_sliced sliced;
-	static double time = 0.0;
-
-	sliced.id = VBI_SLICED_CAPTION_525;
-	sliced.line = 21;
-	sliced.data[0] = vbi_par8 (n >> 8);
-	sliced.data[1] = vbi_par8 (n & 0x7F);
-
-	vbi_decode (vbi, &sliced, 1, time);
-
-	xevent (33333);
-
-	time += 1 / 29.97;
+	fprintf (fp, _("\
+%s %s\n\n\
+Copyright (C) 2000, 2001, 2007, 2008, 2009 Michael H. Schimek\n\
+This program is licensed under GPLv2 or later. NO WARRANTIES.\n\n\
+Usage: %s [options] < sliced VBI data\n\
+-h | --help | --usage  Print this message and exit\n\
+-i | --input name      Read the VBI data from this file instead\n\
+                       of standard input\n\
+-c | --cc608-decoder   Use new cc608_decoder\n\
+-P | --pes             Source is a DVB PES stream\n\
+-T | --ts pid          Source is a DVB TS stream\n\
+-V | --version         Print the program version and exit\n\
+"),
+		 PROGRAM_NAME, VERSION, program_invocation_name);
 }
 
-static void
-printc				(int			c)
-{
-	cmd (c * 256 + 0x80);
+static const char
+short_options [] = "cehi:r:PT:V";
 
-	xevent (33333);
-}
-
-static void
-prints				(const char *		s)
-{
-	for (; s[0] && s[1]; s += 2)
-		cmd (s[0] * 256 + s[1]);
-
-	if (s[0])
-		cmd (s[0] * 256 + 0x80);
-
-	xevent (33333);
-}
-
-enum {
-	white, green, red, yellow, blue, cyan, magenta, black
+#ifdef HAVE_GETOPT_LONG
+static const struct option
+long_options [] = {
+	{ "cc608-decoder",	no_argument,		NULL,	'c' },
+	{ "help",		no_argument,		NULL,	'h' },
+	{ "usage",		no_argument,		NULL,	'h' },
+	{ "cc608-event",	no_argument,		NULL,	'e' },
+	{ "input",		required_argument,	NULL,	'i' },
+	{ "frame-rate",		required_argument,	NULL,	'r' },
+	{ "pes",		no_argument,		NULL,	'P' },
+	{ "ts",			required_argument,	NULL,	'T' },
+	{ "version",		no_argument,		NULL,	'V' },
+	{ NULL, 0, 0, 0 }
 };
+#else
+#  define getopt_long(ac, av, s, l, i) getopt(ac, av, s)
+#endif
 
-static int
-mapping_row [] = {
-	2, 3, 4, 5,  10, 11, 12, 13, 14, 15,  0, 6, 7, 8, 9, -1
-};
-
-#define italic 7
-#define underline 1
-#define opaque 0
-#define semi_transp 1
-
-#define BACKG(bg, t)							\
-	(cmd (0x2000), cmd (0x1020 + ((ch & 1) << 11) + (bg << 1) + t))
-#define PREAMBLE(r, fg, u)						\
-	cmd (0x1040 + ((ch & 1) << 11) + ((mapping_row[r] & 14) << 7)	\
-	     + ((mapping_row[r] & 1) << 5) + (fg << 1) + u)
-#define INDENT(r, fg, u)						\
-	cmd (0x1050 + ((ch & 1) << 11) + ((mapping_row[r] & 14) << 7)	\
-	     + ((mapping_row[r] & 1) << 5) + ((fg / 4) << 1) + u)
-#define MIDROW(fg, u)	cmd (0x1120 + ((ch & 1) << 11) + (fg << 1) + u)
-#define SPECIAL_CHAR(n)	cmd (0x1130 + ((ch & 1) << 11) + n)
-#define CCODE(code, ch)	(code + ((ch & 1) << 11) + ((ch & 2) << 7))
-#define RESUME_CAPTION	cmd (CCODE (0x1420, ch))
-#define BACKSPACE	cmd (CCODE (0x1421, ch))
-#define DELETE_EOR	cmd (CCODE (0x1424, ch))
-#define ROLL_UP(rows)	cmd (CCODE (0x1425, ch) + rows - 2)
-#define FLASH_ON	cmd (CCODE (0x1428, ch))
-#define RESUME_DIRECT	cmd (CCODE (0x1429, ch))
-#define TEXT_RESTART	cmd (CCODE (0x142A, ch))
-#define RESUME_TEXT	cmd (CCODE (0x142B, ch))
-#define END_OF_CAPTION	cmd (CCODE (0x142F, ch))
-#define ERASE_DISPLAY	cmd (CCODE (0x142C, ch))
-#define CR		cmd (CCODE (0x142D, ch))
-#define ERASE_HIDDEN	cmd (CCODE (0x142E, ch))
-#define TAB(t)		cmd (CCODE (0x1720, ch) + t)
-#define TRANSP		(cmd (0x2000), cmd (0x172D + ((ch & 1) << 11)))
-#define BLACK(u)	(cmd (0x2000), cmd (0x172E + ((ch & 1) << 11) + u))
-
-static void
-PAUSE				(unsigned int		n_frames)
-{
-	while (n_frames-- > 0)
-		xevent (33333);
-}
-
-static void
-hello_world			(void)
-{
-	int ch = 0;
-	int i;
-
-	pgno = -1;
-
-	prints (" HELLO WORLD! ");
-	PAUSE (30);
-
-	ch = 4;
-	TEXT_RESTART;
-	prints ("Character set - Text 1");
-	CR; CR;
-	for (i = 32; i <= 127; i++) {
-		printc (i);
-		if ((i & 15) == 15)
-			CR;
-	}
-	MIDROW (italic, 0);
-	for (i = 32; i <= 127; i++) {
-		printc (i);
-		if ((i & 15) == 15)
-			CR;
-	}
-	MIDROW (white, underline);
-	for (i = 32; i <= 127; i++) {
-		printc (i);
-		if ((i & 15) == 15)
-			CR;
-	}
-	MIDROW (white, 0);
-	prints ("Special: ");
-	for (i = 0; i <= 15; i++) {
-		SPECIAL_CHAR (i);
-	}
-	CR;
-	prints ("DONE - Text 1 ");
-	PAUSE (50);
-
-	ch = 5;
-	TEXT_RESTART;
-	prints ("Styles - Text 2");
-	CR; CR;
-	MIDROW (white, 0); prints ("WHITE"); CR;
-	MIDROW (red, 0); prints ("RED"); CR;
-	MIDROW (green, 0); prints ("GREEN"); CR;
-	MIDROW (blue, 0); prints ("BLUE"); CR;
-	MIDROW (yellow, 0); prints ("YELLOW"); CR;
-	MIDROW (cyan, 0); prints ("CYAN"); CR;
-	MIDROW (magenta, 0); prints ("MAGENTA"); BLACK (0); CR;
-	BACKG (white, opaque); prints ("WHITE"); BACKG (black, opaque); CR;
-	BACKG (red, opaque); prints ("RED"); BACKG (black, opaque); CR;
-	BACKG (green, opaque); prints ("GREEN"); BACKG (black, opaque); CR;
-	BACKG (blue, opaque); prints ("BLUE"); BACKG (black, opaque); CR;
-	BACKG (yellow, opaque); prints ("YELLOW"); BACKG (black, opaque); CR;
-	BACKG (cyan, opaque); prints ("CYAN"); BACKG (black, opaque); CR;
-	BACKG (magenta, opaque); prints ("MAGENTA"); BACKG (black, opaque); CR;
-	TRANSP;
-	prints (" TRANSPARENT BACKGROUND ");
-	BACKG (black, opaque); CR;
-	MIDROW (white, 0); FLASH_ON;
-	prints (" Flashing Text  (if implemented) "); CR;
-	MIDROW (white, 0); prints ("DONE - Text 2 ");
-	PAUSE (50);
-
-	ch = 0;
-	ROLL_UP (2);
-	ERASE_DISPLAY;
-	prints (" ROLL-UP TEST "); CR; PAUSE (20);
-	prints (">> A young Jedi named Darth"); CR; PAUSE (20);
-	prints ("Vader, who was a pupil of"); CR; PAUSE (20);
-	prints ("mine until he turned to evil,"); CR; PAUSE (20);
-	prints ("helped the Empire hunt down"); CR; PAUSE (20);
-	prints ("and destroy the Jedi Knights."); CR; PAUSE (20);
-	prints ("He betrayed and murdered your"); CR; PAUSE (20);
-	prints ("father. Now the Jedi are all"); CR; PAUSE (20);
-	prints ("but extinct. Vader was seduced"); CR; PAUSE (20);
-	prints ("by the dark side of the Force."); CR; PAUSE (20);                        
-	prints (">> The Force?"); CR; PAUSE (20);
-	prints (">> Well, the Force is what gives"); CR; PAUSE (20);
-	prints ("a Jedi his power. It's an energy"); CR; PAUSE (20);
-	prints ("field created by all living"); CR; PAUSE (20);
-	prints ("things."); CR; PAUSE (20);
-	prints ("It surrounds us and penetrates"); CR; PAUSE (20);
-	prints ("us."); CR; PAUSE (20);
-	prints ("It binds the galaxy together."); CR; PAUSE (20);
-	CR; PAUSE (30);
-	prints (" DONE - Caption 1 ");
-	PAUSE (30);
-
-	ch = 1;
-	RESUME_DIRECT;
-	ERASE_DISPLAY;
-	MIDROW (yellow, 0);
-	INDENT (2, 10, 0); prints (" FOO "); CR;
-	INDENT (3, 10, 0); prints (" MIKE WAS HERE "); CR; PAUSE (20);
-	MIDROW (red, 0);
-	INDENT (6, 13, 0); prints (" AND NOW... "); CR;
-	INDENT (8, 13, 0); prints (" HE'S HERE "); CR; PAUSE (20);
-	PREAMBLE (12, cyan, 0);
-	prints ("01234567890123456789012345678901234567890123456789"); CR;
-	MIDROW (white, 0);
-	prints (" DONE - Caption 2 "); CR;
-	PAUSE (30);
-}
+static int			option_index;
 
 int
 main				 (int			argc,
@@ -651,34 +889,127 @@ main				 (int			argc,
 {
 	vbi_bool success;
 
-	if  (!init_window (argc, argv))
-		exit (EXIT_FAILURE);
+	init_helpers (argc, argv);
 
-	vbi = vbi_decoder_new ();
-	assert (NULL != vbi);
+	option_in_file_format = FILE_FORMAT_SLICED;
+	option_frame_rate = 1e9;
 
-	success = vbi_event_handler_add (vbi, VBI_EVENT_CAPTION,
-					 cc_handler, /* used_data */ NULL);
-	assert (success);
+	for (;;) {
+		int c;
 
-	if (isatty (STDIN_FILENO)) {
-		hello_world ();
-	} else {
-		struct stream *st;
+		c = getopt_long (argc, argv, short_options,
+				 long_options, &option_index);
+		if (-1 == c)
+			break;
 
-		st = read_stream_new (/* filename: stdin */ NULL,
-				      FILE_FORMAT_SLICED,
-				      /* ts_pid */ 0,
-				      decode_frame);
-		stream_loop (st);
-		stream_delete (st);
+		switch (c) {
+		case 0: /* getopt_long() flag */
+			break;
+
+		case 'c':
+			option_use_cc608_decoder = TRUE;
+			break;
+
+		case 'h':
+			usage (stdout);
+			exit (EXIT_SUCCESS);
+
+		case 'i':
+			assert (NULL != optarg);
+			option_in_file_name = optarg;
+			break;
+
+		case 'e':
+			option_use_cc608_event = TRUE;
+			break;
+
+		case 'r':
+			assert (NULL != optarg);
+			option_frame_rate = strtod (optarg, NULL);
+			break;
+
+		case 'P':
+			option_in_file_format = FILE_FORMAT_DVB_PES;
+			break;
+
+		case 'T':
+			option_in_ts_pid = parse_option_ts ();
+			option_in_file_format = FILE_FORMAT_DVB_TS;
+			break;
+
+		case 'V':
+			printf (PROGRAM_NAME " " VERSION "\n");
+			exit (EXIT_SUCCESS);
+
+		default:
+			usage (stderr);
+			exit (EXIT_FAILURE);
+		}
 	}
 
-	printf ("Done.\n");
+	init_window (argc, argv);
 
-	for (;;)
-		xevent (33333);
+	if (option_use_cc608_decoder) {
+		/* Note this is an experimental module, the interface
+		   and output may change. */
 
+		cd = _vbi_cc608_decoder_new ();
+		if (NULL == cd)
+			no_mem_exit ();
+
+		success = _vbi_cc608_decoder_add_event_handler
+			(cd, _VBI_EVENT_CC608,
+			 event_handler, /* user_data */ NULL);
+		if (!success)
+			no_mem_exit ();
+	} else {
+		unsigned int event_mask;
+
+		/* Teletext/CC/VPS/WSS decoder. */
+		vbi = vbi_decoder_new ();
+		if (NULL == vbi)
+			no_mem_exit ();
+
+		if (option_use_cc608_event) {
+			error_exit ("Not implemented yet.\n");
+			event_mask = _VBI_EVENT_CC608;
+		} else {
+			event_mask = VBI_EVENT_CAPTION;
+		}
+
+		success = vbi_event_handler_add (vbi, event_mask,
+						 event_handler,
+						 /* used_data */ NULL);
+		if (!success)
+			no_mem_exit ();
+	}
+
+	/* Switches. */
+	channel = VBI_CAPTION_CC1;
+	padding = TRUE;
+	show_border = FALSE;
+	smooth_rolling = TRUE;
+
+	rst = read_stream_new (option_in_file_name,
+			       option_in_file_format,
+			       option_in_ts_pid,
+			       decode_frame);
+
+	wait_until = 0;
+	frame_period = 1 / option_frame_rate;
+
+	stream_loop (rst);
+
+	stream_delete (rst);
+
+	error_msg (_("End of stream."));
+
+	for (;;) {
+		x_event ();
+		usleep (33333);
+	}
+
+	_vbi_cc608_decoder_delete (cd);
 	vbi_decoder_delete (vbi);
 
 	exit (EXIT_SUCCESS);
@@ -690,8 +1021,7 @@ int
 main				(int			argc,
 				 char **		argv)
 {
-	printf ("Could not find X11 or has been disabled "
-		"at configuration time\n");
+	printf ("Not compiled with X11 support.\n");
 	exit(EXIT_FAILURE);
 }
 
