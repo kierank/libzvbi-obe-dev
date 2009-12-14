@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: cc608_decoder.c,v 1.1 2009/03/23 01:30:07 mschimek Exp $ */
+/* $Id: cc608_decoder.c,v 1.2 2009/12/14 23:43:23 mschimek Exp $ */
 
 /* This code is experimental and not yet part of the library.
    Tests pending. */
@@ -34,6 +34,10 @@
 #include "format.h"
 #include "event-priv.h"
 #include "cc608_decoder.h"
+
+#ifndef CC608_DECODER_LOG_INPUT
+#  define CC608_DECODER_LOG_INPUT 0
+#endif
 
 enum field_num {
 	FIELD_1 = 0,
@@ -137,7 +141,7 @@ struct channel {
 	unsigned int		uppercase_predictor;
 
 	/** Current caption mode or VBI_CC608_MODE_UNKNOWN. */
-	vbi_cc608_mode		mode;
+	_vbi_cc608_mode		mode;
 
 	/**
 	 * The time when we last received data for this
@@ -220,7 +224,7 @@ color_map [8] = {
 	VBI_WHITE, VBI_GREEN, VBI_BLUE, VBI_CYAN,
 	VBI_RED, VBI_YELLOW, VBI_MAGENTA,
 
-	/* Note Mid-Row Codes interpret this value as "Italics"; PAC
+	/* Note Mid-Row Codes interpret this value as "Italics"; PACs
 	   as "White Italics"; Background Attributes as "Black". */
 	VBI_BLACK
 };
@@ -251,7 +255,7 @@ _vbi_cc608_dump			(FILE *			fp,
 	assert (NULL != fp);
 
 	fprintf (fp, "%02X%02X %02X%c%02X%c",
-		 c1, c2,
+		 c1 & 0xFF, c2 & 0xFF,
 		 c1 & 0x7F, vbi_unpar8 (c1) < 0 ? '*' : ' ',
 		 c2 & 0x7F, vbi_unpar8 (c2) < 0 ? '*' : ' ');
 
@@ -263,7 +267,10 @@ _vbi_cc608_dump			(FILE *			fp,
 		fputs (" null\n", fp);
 		return;
 	} else if (c1 < 0x10) {
-		fputs (" XDS\n", fp);
+		if (0x0F == c1)
+			fputs (" XDS packet end\n", fp);
+		else
+			fputs (" XDS packet start/continue\n", fp);
 		return;
 	} else if (c1 >= 0x20) {
 		unsigned int i = 0;
@@ -557,6 +564,18 @@ channel_num			(const _vbi_cc608_decoder *cd,
    47 CFR 15.119 (n) clarifies that Special Character "transparent
    space" is not a "displayable character". */
 
+/**
+ * @internal
+ * @param to_upper Convert the lower case Latin characters in the
+ *   standard character set to upper case.
+ * @param padding Add spaces around words for improved legibility
+ *   as defined in 47 CFR 15.119. If @c TRUE the resulting page will
+ *   be 34 columns wide, otherwise 32 columns. The height is always 15
+ *   rows.
+ * @param alpha Add an offset to the vbi_color of characters: +0 for
+ *   opaque, +8 for translucent, +16 for transparent characters. Intended
+ *   for formatting with an alpha color map.
+ */
 static void
 format_row			(struct vbi_char *	cp,
 				 unsigned int		max_columns,
@@ -933,16 +952,18 @@ _vbi_cc608_decoder_get_page	(_vbi_cc608_decoder *	cd,
 static void
 display_event			(_vbi_cc608_decoder *	cd,
 				 struct channel *	ch,
-				 vbi_cc608_page_flags	flags)
+				 _vbi_cc608_event_flags	flags)
 {
 	vbi_event ev;
+	struct _vbi_event_cc608_page cc608;
 
 	CLEAR (ev);
 
-	ev.type = VBI_EVENT_CC608;
-	ev.ev._cc608.channel = channel_num (cd, ch);
-	ev.ev._cc608.mode = ch->mode;
-	ev.ev._cc608.flags = flags;
+	ev.type = _VBI_EVENT_CC608;
+	ev.ev._cc608 = &cc608;
+	cc608.channel = channel_num (cd, ch);
+	cc608.mode = ch->mode;
+	cc608.flags = flags;
 
 	_vbi_event_handler_list_send (&cd->handlers, &ev);
 }
@@ -982,33 +1003,35 @@ stream_event			(_vbi_cc608_decoder *	cd,
 				 unsigned int		last_row)
 {
 	vbi_event ev;
+	struct _vbi_event_cc608_stream cc608_stream;
 	unsigned int row;
 	vbi_bool to_upper;
 
 	CLEAR (ev);
 
-	ev.type = VBI_EVENT_CC608_STREAM;
-	ev.ev._cc608_stream.capture_time = ch->timestamp_c0.sys;
-	ev.ev._cc608_stream.pts = ch->timestamp_c0.pts;
-	ev.ev._cc608_stream.channel = channel_num (cd, ch);
-	ev.ev._cc608_stream.mode = ch->mode;
+	ev.type = _VBI_EVENT_CC608_STREAM;
+	ev.ev._cc608_stream = &cc608_stream;
+	cc608_stream.capture_time = ch->timestamp_c0.sys;
+	cc608_stream.pts = ch->timestamp_c0.pts;
+	cc608_stream.channel = channel_num (cd, ch);
+	cc608_stream.mode = ch->mode;
 
 	to_upper = (ch->uppercase_predictor > 3);
 
 	for (row = first_row; row <= last_row; ++row) {
 		unsigned int end;
 
-		format_row (ev.ev._cc608_stream.text,
-			    N_ELEMENTS (ev.ev._cc608_stream.text),
+		format_row (cc608_stream.text,
+			    N_ELEMENTS (cc608_stream.text),
 			    ch, ch->displayed_buffer,
 			    row, to_upper,
 			    /* padding */ FALSE,
 			    /* alpha */ FALSE);
 
-		for (end = N_ELEMENTS (ev.ev._cc608_stream.text);
+		for (end = N_ELEMENTS (cc608_stream.text);
 		     end > 0; --end) {
 			if (VBI_TRANSPARENT_SPACE
-			    != ev.ev._cc608_stream.text[end - 1].opacity)
+			    != cc608_stream.text[end - 1].opacity)
 				break;
 		}
 
@@ -1035,7 +1058,7 @@ put_char			(_vbi_cc608_decoder *	cd,
 
 	/* 47 CFR Section 15.119 (f)(1), (f)(2), (f)(3). */
 	curr_buffer = ch->displayed_buffer
-		^ (VBI_CC608_MODE_POP_ON == ch->mode);
+		^ (_VBI_CC608_MODE_POP_ON == ch->mode);
 
 	row = ch->curr_row;
 	column = ch->curr_column;
@@ -1061,7 +1084,7 @@ put_char			(_vbi_cc608_decoder *	cd,
 	/* XXX This may not be a visible change, but such cases are
 	   rare and we'd probably need a function almost as complex as
 	   format_row() to find out. */
-	if (VBI_CC608_MODE_POP_ON != ch->mode) {
+	if (_VBI_CC608_MODE_POP_ON != ch->mode) {
 		cd->event_pending = ch;
 	}
 
@@ -1222,21 +1245,21 @@ end_of_caption			(_vbi_cc608_decoder *	cd,
 	curr_buffer = ch->displayed_buffer;
 
 	switch (ch->mode) {
-	case VBI_CC608_MODE_UNKNOWN:
-	case VBI_CC608_MODE_POP_ON:
+	case _VBI_CC608_MODE_UNKNOWN:
+	case _VBI_CC608_MODE_POP_ON:
 		break;
 
-	case VBI_CC608_MODE_ROLL_UP:
+	case _VBI_CC608_MODE_ROLL_UP:
 		row = ch->curr_row;
 		if (0 != (ch->dirty[curr_buffer] & (1 << row)))
 			stream_event (cd, ch, row, row);
 		break;
 
-	case VBI_CC608_MODE_PAINT_ON:
+	case _VBI_CC608_MODE_PAINT_ON:
 		stream_event_if_changed (cd, ch);
 		break;
 
-	case VBI_CC608_MODE_TEXT:
+	case _VBI_CC608_MODE_TEXT:
 		/* Not reached. (ch is a caption channel.) */
 		return;
 	}
@@ -1244,7 +1267,7 @@ end_of_caption			(_vbi_cc608_decoder *	cd,
 	ch->displayed_buffer = curr_buffer ^= 1;
 
 	/* 47 CFR Section 15.119 (f)(2). */
-	ch->mode = VBI_CC608_MODE_POP_ON;
+	ch->mode = _VBI_CC608_MODE_POP_ON;
 
 	if (0 != ch->dirty[curr_buffer]) {
 		ch->timestamp_c0 = cd->timestamp;
@@ -1253,7 +1276,7 @@ end_of_caption			(_vbi_cc608_decoder *	cd,
 			      FIRST_ROW,
 			      LAST_ROW);
 
-		display_event (cd, ch, 0);
+		display_event (cd, ch, /* flags */ 0);
 	}
 }
 
@@ -1272,10 +1295,10 @@ carriage_return			(_vbi_cc608_decoder *	cd,
 	row = ch->curr_row;
 
 	switch (ch->mode) {
-	case VBI_CC608_MODE_UNKNOWN:
+	case _VBI_CC608_MODE_UNKNOWN:
 		return;
 
-	case VBI_CC608_MODE_ROLL_UP:
+	case _VBI_CC608_MODE_ROLL_UP:
 		/* 47 CFR Section 15.119 (f)(1)(iii). */
 		ch->curr_column = FIRST_COLUMN;
 
@@ -1294,12 +1317,12 @@ carriage_return			(_vbi_cc608_decoder *	cd,
 				   ch->window_rows);
 		break;
 
-	case VBI_CC608_MODE_POP_ON:
-	case VBI_CC608_MODE_PAINT_ON:
+	case _VBI_CC608_MODE_POP_ON:
+	case _VBI_CC608_MODE_PAINT_ON:
 		/* 47 CFR 15.119 (f)(2)(i), (f)(3)(i): No effect. */
 		return;
 
-	case VBI_CC608_MODE_TEXT:
+	case _VBI_CC608_MODE_TEXT:
 		/* 47 CFR Section 15.119 (f)(1)(iii). */
 		ch->curr_column = FIRST_COLUMN;
 
@@ -1356,7 +1379,7 @@ carriage_return			(_vbi_cc608_decoder *	cd,
 
 	/* See the description of VBI_CC608_START_ROLLING and
 	   test/caption for the expected effect. */
-	display_event (cd, ch, VBI_CC608_START_ROLLING);
+	display_event (cd, ch, _VBI_CC608_START_ROLLING);
 }
 
 static void
@@ -1370,7 +1393,7 @@ erase_memory			(_vbi_cc608_decoder *	cd,
 		ch->dirty[buffer] = 0;
 
 		if (buffer == ch->displayed_buffer)
-			display_event (cd, ch, 0);
+			display_event (cd, ch, /* flags */ 0);
 	}
 }
 
@@ -1383,26 +1406,26 @@ erase_displayed_memory		(_vbi_cc608_decoder *	cd,
 	/* EDM Erase Displayed Memory -- 001 c10f  010 1100 */
 
 	switch (ch->mode) {
-	case VBI_CC608_MODE_UNKNOWN:
+	case _VBI_CC608_MODE_UNKNOWN:
 		/* We have not received EOC, RCL, RDC or RUx yet, but
 		   ch is valid. */
 		break;
 
-	case VBI_CC608_MODE_ROLL_UP:
+	case _VBI_CC608_MODE_ROLL_UP:
 		row = ch->curr_row;
 		if (0 != (ch->dirty[ch->displayed_buffer] & (1 << row)))
 			stream_event (cd, ch, row, row);
 		break;
 
-	case VBI_CC608_MODE_PAINT_ON:
+	case _VBI_CC608_MODE_PAINT_ON:
 		stream_event_if_changed (cd, ch);
 		break;
 
-	case VBI_CC608_MODE_POP_ON:
+	case _VBI_CC608_MODE_POP_ON:
 		/* Nothing to do. */
 		break;
 
-	case VBI_CC608_MODE_TEXT:
+	case _VBI_CC608_MODE_TEXT:
 		/* Not reached. (ch is a caption channel.) */
 		return;
 	}
@@ -1458,29 +1481,29 @@ resume_direct_captioning	(_vbi_cc608_decoder *	cd,
 	row = ch->curr_row;
 
 	switch (ch->mode) {
-	case VBI_CC608_MODE_ROLL_UP:
+	case _VBI_CC608_MODE_ROLL_UP:
 		if (0 != (ch->dirty[curr_buffer] & (1 << row)))
 			stream_event (cd, ch, row, row);
 
 		/* fall through */
 
-	case VBI_CC608_MODE_UNKNOWN:
-	case VBI_CC608_MODE_POP_ON:
+	case _VBI_CC608_MODE_UNKNOWN:
+	case _VBI_CC608_MODE_POP_ON:
 		/* No change since last stream_event(). */
 		memcpy (ch->buffer[2], ch->buffer[curr_buffer],
 			sizeof (ch->buffer[2]));
 		break;
 
-	case VBI_CC608_MODE_PAINT_ON:
+	case _VBI_CC608_MODE_PAINT_ON:
 		/* Mode continues. */
 		break;
 
-	case VBI_CC608_MODE_TEXT:
+	case _VBI_CC608_MODE_TEXT:
 		/* Not reached. (ch is a caption channel.) */
 		return;
 	}
 
-	ch->mode = VBI_CC608_MODE_PAINT_ON;
+	ch->mode = _VBI_CC608_MODE_PAINT_ON;
 }
 
 static void
@@ -1514,7 +1537,7 @@ resize_window			(_vbi_cc608_decoder *	cd,
 
 	ch->dirty[curr_buffer] &= -1 << (row1 - new_rows);
 
-	display_event (cd, ch, 0);
+	display_event (cd, ch, /* flags */ 0);
 }
 
 static void
@@ -1529,15 +1552,15 @@ roll_up_caption			(_vbi_cc608_decoder *	cd,
 	window_rows = (c2 & 7) - 3; /* 2, 3, 4 */
 
 	switch (ch->mode) {
-	case VBI_CC608_MODE_ROLL_UP:
+	case _VBI_CC608_MODE_ROLL_UP:
 		/* 47 CFR 15.119 (f)(1)(iv). */
 		/* May send a display event. */
 		resize_window (cd, ch, window_rows);
 
 		/* fall through */
 
-	case VBI_CC608_MODE_UNKNOWN:
-		ch->mode = VBI_CC608_MODE_ROLL_UP;
+	case _VBI_CC608_MODE_UNKNOWN:
+		ch->mode = _VBI_CC608_MODE_ROLL_UP;
 		ch->window_rows = window_rows;
 
 		/* 47 CFR 15.119 (f)(1)(ix): No cursor movements,
@@ -1545,13 +1568,13 @@ roll_up_caption			(_vbi_cc608_decoder *	cd,
 
 		break;
 
-	case VBI_CC608_MODE_PAINT_ON:
+	case _VBI_CC608_MODE_PAINT_ON:
 		stream_event_if_changed (cd, ch);
 
 		/* fall through */
 
-	case VBI_CC608_MODE_POP_ON:
-		ch->mode = VBI_CC608_MODE_ROLL_UP;
+	case _VBI_CC608_MODE_POP_ON:
+		ch->mode = _VBI_CC608_MODE_ROLL_UP;
 		ch->window_rows = window_rows;
 
 		/* 47 CFR 15.119 (f)(1)(ii). */
@@ -1565,7 +1588,7 @@ roll_up_caption			(_vbi_cc608_decoder *	cd,
 
 		break;
 
-	case VBI_CC608_MODE_TEXT:
+	case _VBI_CC608_MODE_TEXT:
 		/* Not reached. (ch is a caption channel.) */
 		return;
 	}
@@ -1588,7 +1611,7 @@ delete_to_end_of_row		(_vbi_cc608_decoder *	cd,
 	   row." */
 
 	curr_buffer = ch->displayed_buffer
-		^ (VBI_CC608_MODE_POP_ON == ch->mode);
+		^ (_VBI_CC608_MODE_POP_ON == ch->mode);
 
 	row = ch->curr_row;
 
@@ -1610,7 +1633,7 @@ delete_to_end_of_row		(_vbi_cc608_decoder *	cd,
 
 		ch->dirty[curr_buffer] &= ~((0 == c) << row);
 
-		display_event (cd, ch, 0);
+		display_event (cd, ch, /* flags */ 0);
 	}
 }
 
@@ -1633,7 +1656,7 @@ backspace			(_vbi_cc608_decoder *	cd,
 	ch->curr_column = --column;
 
 	curr_buffer = ch->displayed_buffer
-		^ (VBI_CC608_MODE_POP_ON == ch->mode);
+		^ (_VBI_CC608_MODE_POP_ON == ch->mode);
 
 	row = ch->curr_row;
 
@@ -1652,7 +1675,7 @@ backspace			(_vbi_cc608_decoder *	cd,
 
 		ch->dirty[curr_buffer] &= ~((0 == c) << row);
 
-		display_event (cd, ch, 0);
+		display_event (cd, ch, /* flags */ 0);
 	}
 }
 
@@ -1665,21 +1688,21 @@ resume_caption_loading		(_vbi_cc608_decoder *	cd,
 	/* RCL Resume Caption Loading -- 001 c10f  010 0000 */
 
 	switch (ch->mode) {
-	case VBI_CC608_MODE_UNKNOWN:
-	case VBI_CC608_MODE_POP_ON:
+	case _VBI_CC608_MODE_UNKNOWN:
+	case _VBI_CC608_MODE_POP_ON:
 		break;
 
-	case VBI_CC608_MODE_ROLL_UP:
+	case _VBI_CC608_MODE_ROLL_UP:
 		row = ch->curr_row;
 		if (0 != (ch->dirty[ch->displayed_buffer] & (1 << row)))
 			stream_event (cd, ch, row, row);
 		break;
 
-	case VBI_CC608_MODE_PAINT_ON:
+	case _VBI_CC608_MODE_PAINT_ON:
 		stream_event_if_changed (cd, ch);
 		break;
 
-	case VBI_CC608_MODE_TEXT:
+	case _VBI_CC608_MODE_TEXT:
 		/* Not reached. (ch is a caption channel.) */
 		return;
 	}
@@ -1687,7 +1710,7 @@ resume_caption_loading		(_vbi_cc608_decoder *	cd,
 	/* 47 CFR 15.119 (f)(1)(x): Does not erase memory.
 	   (f)(2)(iv): Cursor position remains unchanged. */
 
-	ch->mode = VBI_CC608_MODE_POP_ON;
+	ch->mode = _VBI_CC608_MODE_POP_ON;
 }
 
 /* Note curr_ch is invalid if UNKNOWN_CHANNEL == cd->cc.curr_ch_num. */
@@ -1700,7 +1723,7 @@ switch_channel			(_vbi_cc608_decoder *	cd,
 	struct channel *new_ch;
 
 	if (UNKNOWN_CHANNEL != cd->curr_ch_num[f]
-	    && VBI_CC608_MODE_UNKNOWN != curr_ch->mode) {
+	    && _VBI_CC608_MODE_UNKNOWN != curr_ch->mode) {
 		/* XXX Force a display update if we do not send events
 		   on every display change. */
 	}
@@ -1741,7 +1764,7 @@ misc_control_code		(_vbi_cc608_decoder *	cd,
 
 	case 1: /* BS Backspace -- 001 c10f  010 0001 */
 		if (UNKNOWN_CHANNEL == cd->curr_ch_num[f]
-		    || VBI_CC608_MODE_UNKNOWN == ch->mode)
+		    || _VBI_CC608_MODE_UNKNOWN == ch->mode)
 			break;
 		backspace (cd, ch);
 		break;
@@ -1752,7 +1775,7 @@ misc_control_code		(_vbi_cc608_decoder *	cd,
 
 	case 4: /* DER Delete To End Of Row -- 001 c10f  010 0100 */
 		if (UNKNOWN_CHANNEL == cd->curr_ch_num[f]
-		    || VBI_CC608_MODE_UNKNOWN == ch->mode)
+		    || _VBI_CC608_MODE_UNKNOWN == ch->mode)
 			break;
 		delete_to_end_of_row (cd, ch);
 		break;
@@ -1768,7 +1791,7 @@ misc_control_code		(_vbi_cc608_decoder *	cd,
 
 	case 8: /* FON Flash On -- 001 c10f  010 1000 */
 		if (UNKNOWN_CHANNEL == cd->curr_ch_num[f]
-		    || VBI_CC608_MODE_UNKNOWN == ch->mode)
+		    || _VBI_CC608_MODE_UNKNOWN == ch->mode)
 			break;
 
 		/* 47 CFR 15.119 (h)(1)(i): Spacing attribute. */
@@ -1895,7 +1918,7 @@ move_window			(_vbi_cc608_decoder *	cd,
 
 	memset (base + erase_begin, 0, erase_end - erase_begin);
 
-	display_event (cd, ch, 0);
+	display_event (cd, ch, /* flags */ 0);
 }
 
 static void
@@ -1913,10 +1936,10 @@ preamble_address_code		(_vbi_cc608_decoder *	cd,
 		return;
 
 	switch (ch->mode) {
-	case VBI_CC608_MODE_UNKNOWN:
+	case _VBI_CC608_MODE_UNKNOWN:
 		return;
 
-	case VBI_CC608_MODE_ROLL_UP:
+	case _VBI_CC608_MODE_ROLL_UP:
 		/* EIA 608-B Annex C.4. */
 		if (ch->window_rows > row + 1)
 			row = ch->window_rows - 1;
@@ -1929,12 +1952,12 @@ preamble_address_code		(_vbi_cc608_decoder *	cd,
 
 		break;
 
-	case VBI_CC608_MODE_PAINT_ON:
+	case _VBI_CC608_MODE_PAINT_ON:
 		stream_event_if_changed (cd, ch);
 
 		/* fall through */
 
-	case VBI_CC608_MODE_POP_ON:
+	case _VBI_CC608_MODE_POP_ON:
 		/* XXX 47 CFR 15.119 (f)(2)(i), (f)(3)(i): In Pop-on
 		   and paint-on mode "Preamble Address Codes can be
 		   used to move the cursor around the screen in random
@@ -1951,7 +1974,7 @@ preamble_address_code		(_vbi_cc608_decoder *	cd,
 
 		break;
 
-	case VBI_CC608_MODE_TEXT:
+	case _VBI_CC608_MODE_TEXT:
 		/* 47 CFR 15.119 (e)(1) and EIA 608-B Section 7.4:
 		   Does not change the cursor row. */
 		break;
@@ -1976,7 +1999,7 @@ control_code			(_vbi_cc608_decoder *	cd,
 	struct channel *ch;
 	unsigned int ch_num0;
 
-	if (0) {
+	if (CC608_DECODER_LOG_INPUT) {
 		fprintf (stdout, "%s:%u: %s c1=%02x c2=%02x f=%d\n",
 			 __FILE__, __LINE__, __FUNCTION__,
 			 c1, c2, f);
@@ -1984,7 +2007,7 @@ control_code			(_vbi_cc608_decoder *	cd,
 
 	/* b2: Caption / text,
 	   b1: field 1 / 2,
-	   b0: primary / secondary channel. */
+	   b0 (lsb): primary / secondary channel. */
 	ch_num0 = (((cd->curr_ch_num[f] - VBI_CAPTION_CC1) & 4)
 		   + f * 2
 		   + ((c1 >> 3) & 1));
@@ -2003,7 +2026,7 @@ control_code			(_vbi_cc608_decoder *	cd,
 	switch (c1 & 7) {
 	case 0:
 		if (UNKNOWN_CHANNEL == cd->curr_ch_num[f]
-		    || VBI_CC608_MODE_UNKNOWN == ch->mode)
+		    || _VBI_CC608_MODE_UNKNOWN == ch->mode)
 			break;
 
 		if (c2 < 0x30) {
@@ -2020,7 +2043,7 @@ control_code			(_vbi_cc608_decoder *	cd,
 
 	case 1:
 		if (UNKNOWN_CHANNEL == cd->curr_ch_num[f]
-		    || VBI_CC608_MODE_UNKNOWN == ch->mode)
+		    || _VBI_CC608_MODE_UNKNOWN == ch->mode)
 			break;
 
 		if (c2 < 0x30) {
@@ -2048,7 +2071,7 @@ control_code			(_vbi_cc608_decoder *	cd,
 	case 2:
 	case 3: /* Extended Character Set -- 001 c01x  01x xxxx */
 		if (UNKNOWN_CHANNEL == cd->curr_ch_num[f]
-		    || VBI_CC608_MODE_UNKNOWN == ch->mode)
+		    || _VBI_CC608_MODE_UNKNOWN == ch->mode)
 			break;
 
 		/* EIA 608-B Section 6.4.2. */
@@ -2073,7 +2096,7 @@ control_code			(_vbi_cc608_decoder *	cd,
 
 	case 7:	/* Extended control codes -- 001 c111  01x xxxx */
 		if (UNKNOWN_CHANNEL == cd->curr_ch_num[f]
-		    || VBI_CC608_MODE_UNKNOWN == ch->mode)
+		    || _VBI_CC608_MODE_UNKNOWN == ch->mode)
 			break;
 
 		ext_control_code (cd, ch, c2);
@@ -2087,14 +2110,14 @@ characters			(_vbi_cc608_decoder *	cd,
 				 struct channel *	ch,
 				 int			c)
 {
-	if (0) {
+	if (CC608_DECODER_LOG_INPUT) {
 		fprintf (stdout, "%s:%u: %s c=0x%02x='%c'\n",
 			 __FILE__, __LINE__, __FUNCTION__,
 			 c, _vbi_to_ascii (c));
 	}
 
 	if (0 == c) {
-		if (VBI_CC608_MODE_UNKNOWN == ch->mode)
+		if (_VBI_CC608_MODE_UNKNOWN == ch->mode)
 			return TRUE;
 
 		/* XXX After x NUL characters (presumably a caption
@@ -2107,7 +2130,7 @@ characters			(_vbi_cc608_decoder *	cd,
 	if (c < 0x20) {
 		/* Parity error or invalid data. */
 
-		if (c < 0 && VBI_CC608_MODE_UNKNOWN != ch->mode) {
+		if (c < 0 && _VBI_CC608_MODE_UNKNOWN != ch->mode) {
 			/* 47 CFR Section 15.119 (j)(1). */
 			put_char (cd, ch, 0x7F,
 				  /* displayable */ TRUE,
@@ -2117,7 +2140,7 @@ characters			(_vbi_cc608_decoder *	cd,
 		return FALSE;
 	}
 
-	if (VBI_CC608_MODE_UNKNOWN != ch->mode) {
+	if (_VBI_CC608_MODE_UNKNOWN != ch->mode) {
 		put_char (cd, ch, c,
 			  /* displayable */ TRUE,
 			  /* backspace */ FALSE);
@@ -2176,7 +2199,7 @@ _vbi_cc608_decoder_feed		(_vbi_cc608_decoder *	cd,
 
 	switch (line) {
 	case 21: /* NTSC */
-	case 22: /* PAL/SECAM */
+	case 22: /* PAL/SECAM? */
 		break;
 
 	case 284: /* NTSC */
@@ -2236,7 +2259,8 @@ _vbi_cc608_decoder_feed		(_vbi_cc608_decoder *	cd,
 		control_code (cd, c1, c2, f);
 
 		if (cd->event_pending) {
-			display_event (cd, cd->event_pending, 0);
+			display_event (cd, cd->event_pending,
+				       /* flags */ 0);
 			cd->event_pending = NULL;
 		}
 
@@ -2282,7 +2306,8 @@ _vbi_cc608_decoder_feed		(_vbi_cc608_decoder *	cd,
 			all_successful &= characters (cd, ch, c2);
 
 			if (cd->event_pending) {
-				display_event (cd, cd->event_pending, 0);
+				display_event (cd, cd->event_pending,
+					       /* flags */ 0);
 				cd->event_pending = NULL;
 			}
 		}
@@ -2392,8 +2417,8 @@ _vbi_cc608_decoder_add_event_handler
 				 vbi_event_handler	callback,
 				 void *			user_data)
 {
-	event_mask &= (VBI_EVENT_CC608 |
-		       VBI_EVENT_CC608_STREAM);
+	event_mask &= (_VBI_EVENT_CC608 |
+		       _VBI_EVENT_CC608_STREAM);
 
 	if (0 == event_mask) {
 		_vbi_event_handler_list_remove_by_callback (&cd->handlers,
@@ -2425,7 +2450,7 @@ _vbi_cc608_decoder_reset		(_vbi_cc608_decoder *	cd)
 
 	assert (NULL != cd);
 
-	if (0) {
+	if (CC608_DECODER_LOG_INPUT) {
 		fprintf (stderr, "%s:%u: %s\n",
 			 __FILE__, __LINE__, __FUNCTION__);
 
@@ -2437,7 +2462,7 @@ _vbi_cc608_decoder_reset		(_vbi_cc608_decoder *	cd)
 		ch = &cd->channel[ch_num];
 
 		if (ch_num <= 3) {
-			ch->mode = VBI_CC608_MODE_UNKNOWN;
+			ch->mode = _VBI_CC608_MODE_UNKNOWN;
 
 			/* Plausible for roll-up mode. We don't
 			   display text while the caption mode is
@@ -2448,7 +2473,7 @@ _vbi_cc608_decoder_reset		(_vbi_cc608_decoder *	cd)
 			ch->curr_column = FIRST_COLUMN;
 			ch->window_rows = 4;
 		} else {
-			ch->mode = VBI_CC608_MODE_TEXT; /* invariable */
+			ch->mode = _VBI_CC608_MODE_TEXT; /* invariable */
 
 			/* EIA 608-B Section 7.4: "When Text Mode has
 			   initially been selected and the specified
