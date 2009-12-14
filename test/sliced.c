@@ -19,7 +19,7 @@
  *  MA 02110-1301, USA.
  */
 
-/* $Id: sliced.c,v 1.18 2008/03/01 07:37:29 mschimek Exp $ */
+/* $Id: sliced.c,v 1.19 2009/12/14 23:43:46 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -1446,16 +1446,7 @@ capture_stream_sim_load_caption	(struct stream *	st,
 	if (0 == (st->interfaces & INTERFACE_SIM))
 		return FALSE;
 
-#if 2 == VBI_VERSION_MINOR
-	stream = stream; /* unused */
-	append = append;
-
-	return FALSE;
-#elif 3 == VBI_VERSION_MINOR
 	return vbi_capture_sim_load_caption (st->cap, stream, append);
-#else
-#  error VBI_VERSION_MINOR == ?
-#endif
 }
 
 vbi_bool
