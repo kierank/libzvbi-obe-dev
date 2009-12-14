@@ -8,16 +8,25 @@ noinst_PROGRAMS = x11font
 
 man_MANS = zvbi-ntsc-cc.1
 
-# This program works only with Linux DVB drivers.
+# These programs work only with Linux DVB drivers.
 if ENABLE_DVB
+
 bin_PROGRAMS += zvbi-atsc-cc
+
+noinst_PROGRAMS += zvbi-dvbsubs
+
 zvbi_atsc_cc_SOURCES = atsc-cc.c
 man_MANS += zvbi-atsc-cc.1
+
+zvbi_dvbsubs_SOURCES = dvbsubs.c dvbsubs.h
+
 endif
 
 EXTRA_DIST = \
 	$(man_MANS) \
 	atsc-cc.c \
+	dvbsubs.c \
+	dvbsubs.h \
 	zvbi-atsc-cc.1 \
 	README
 
