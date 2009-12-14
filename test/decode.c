@@ -20,7 +20,7 @@
  *  MA 02110-1301, USA.
  */
 
-/* $Id: decode.c,v 1.35 2009/03/23 01:30:25 mschimek Exp $ */
+/* $Id: decode.c,v 1.36 2009/12/14 23:43:52 mschimek Exp $ */
 
 /* For libzvbi version 0.2.x / 0.3.x. */
 
@@ -46,6 +46,7 @@
 #include "src/version.h"
 #if 2 == VBI_VERSION_MINOR
 #  include "src/bcd.h"
+#  include "src/cc608_decoder.h"
 #  include "src/conv.h"
 #  include "src/dvb_demux.h"
 #  include "src/hamm.h"
@@ -110,160 +111,6 @@ _vbi_pfc_block_dump		(const vbi_pfc_block *	pb,
 				 FILE *			fp,
 				 vbi_bool		binary);
 
-static void
-put_cc_char			(unsigned int		c1,
-				 unsigned int		c2)
-{
-	uint16_t ucs2_str[1];
-
-	/* All caption characters are representable
-	   in UTF-8, but not necessarily in ASCII. */
-	ucs2_str[0] = vbi_caption_unicode ((c1 * 256 + c2) & 0x777F,
-					    /* to_upper */ FALSE);
-
-	vbi_fputs_iconv_ucs2 (stdout,
-			       vbi_locale_codeset (),
-			       ucs2_str, 1,
-			       /* repl_char */ '?');
-}
-
-static void
-caption_command			(unsigned int		line,
-				 unsigned int		c1,
-				 unsigned int		c2)
-{
-	unsigned int ch;
-	unsigned int a7;
-	unsigned int f;
-	unsigned int b7;
-	unsigned int u;
-
-	printf ("CC line=%3u cmd 0x%02x 0x%02x ", line, c1, c2);
-
-	if (0 == c1) {
-		printf ("null\n");
-		return;
-	} else if (c2 < 0x20) {
-		printf ("invalid\n");
-		return;
-	}
-
-	/* Some common bit groups. */
-
-	ch = (c1 >> 3) & 1; /* channel */
-	a7 = c1 & 7;
-	f = c1 & 1; /* field */
-	b7 = (c2 >> 1) & 7;
-	u = c2 & 1; /* underline */
-
-	if (c2 >= 0x40) {
-		static const int row [16] = {
-			/* 0 */ 10,			/* 0x1040 */
-			/* 1 */ -1,			/* unassigned */
-			/* 2 */ 0, 1, 2, 3,		/* 0x1140 ... 0x1260 */
-			/* 6 */ 11, 12, 13, 14,		/* 0x1340 ... 0x1460 */
-			/* 10 */ 4, 5, 6, 7, 8, 9	/* 0x1540 ... 0x1760 */
-		};
-		unsigned int rrrr;
-
-		/* Preamble Address Codes -- 001 crrr  1ri bbbu */
-  
-		rrrr = a7 * 2 + ((c2 >> 5) & 1);
-
-		if (c2 & 0x10)
-			printf ("PAC ch=%u row=%d column=%u u=%u\n",
-				ch, row[rrrr], b7 * 4, u);
-		else
-			printf ("PAC ch=%u row=%d color=%u u=%u\n",
-				ch, row[rrrr], b7, u);
-		return;
-	}
-
-	/* Control codes -- 001 caaa  01x bbbu */
-
-	switch (a7) {
-	case 0:
-		if (c2 < 0x30) {
-			const char *mnemo [16] = {
-				"BWO", "BWS", "BGO", "BGS",
-				"BBO", "BBS", "BCO", "BCS",
-				"BRO", "BRS", "BYO", "BYS",
-				"BMO", "BMS", "BAO", "BAS"
-			};
-
-			printf ("%s ch=%u\n", mnemo[c2 & 0xF], ch);
-			return;
-		}
-
-		break;
-
-	case 1:
-		if (c2 < 0x30) {
-			printf ("mid-row ch=%u color=%u u=%u\n", ch, b7, u);
-		} else {
-			printf ("special character ch=%u 0x%02x%02x='",
-				ch, c1, c2);
-			put_cc_char (c1, c2);
-			puts ("'");
-		}
-
-		return;
-
-	case 2: /* first group */
-	case 3: /* second group */
-		printf ("extended character ch=%u 0x%02x%02x='", ch, c1, c2);
-		put_cc_char (c1, c2);
-		puts ("'");
-		return;
-
-	case 4: /* f=0 */
-	case 5: /* f=1 */
-		if (c2 < 0x30) {
-			const char *mnemo [16] = {
-				"RCL", "BS",  "AOF", "AON",
-				"DER", "RU2", "RU3", "RU4",
-				"FON", "RDC", "TR",  "RTD",
-				"EDM", "CR",  "ENM", "EOC"
-			};
-
-			printf ("%s ch=%u f=%u\n", mnemo[c2 & 0xF], ch, f);
-			return;
-		}
-
-		break;
-
-	case 6:
-		printf ("reserved\n");
-		return;
-
-	case 7:
-		switch (c2) {
-		case 0x21 ... 0x23:
-			printf ("TO%u ch=%u\n", c2 - 0x20, ch);
-			return;
-
-		case 0x2D:
-			printf ("BT ch=%u\n", ch);
-			return;
-
-		case 0x2E:
-			printf ("FA ch=%u\n", ch);
-			return;
-
-		case 0x2F:
-			printf ("FAU ch=%u\n", ch);
-			return;
-
-		default:
-			break;
-		}
-
-		break;
-	}
-
-	printf ("unknown\n");
-}
-
 static vbi_bool
 xds_cb				(vbi_xds_demux *	xd,
 				 const vbi_xds_packet *	xp,
@@ -290,48 +137,9 @@ caption				(const uint8_t		buffer[2],
 	if (option_decode_caption
 	    && (21 == line || 284 == line /* NTSC */
 		|| 22 == line /* PAL? */)) {
-		int c1;
-		int c2;
 
-		c1 = vbi_unpar8 (buffer[0]);
-		c2 = vbi_unpar8 (buffer[1]);
-
-		if ((c1 | c2) < 0) {
-			printf ("Parity error in CC line=%u "
-				" %s0x%02x %s0x%02x.\n",
-				line,
-				(c1 < 0) ? ">" : "", buffer[0] & 0xFF,
-				(c2 < 0) ? ">" : "", buffer[1] & 0xFF);
-		} else if (c1 >= 0x20) {
-			char text[2];
-
-			printf ("CC line=%3u text 0x%02x 0x%02x '",
-				line, c1, c2);
-
-			/* All caption characters are representable
-			   in UTF-8, but not necessarily in ASCII. */
-			text[0] = c1;
-			text[1] = c2; /* may be zero */
-
-			/* Error ignored. */
-			vbi_fputs_iconv (stdout,
-					  /* dst_codeset */
-					  vbi_locale_codeset (),
-					  /* src_codeset */ "EIA-608",
-					  text, 2,
-					  /* repl_char */ '?');
-
-			puts ("'");
-		} else if (0 == c1 || c1 >= 0x10) {
-			caption_command (line, c1, c2);
-		} else if (option_decode_xds) {
-			printf ("CC line=%3u cmd 0x%02x 0x%02x ",
-				line, c1, c2);
-			if (0x0F == c1)
-				puts ("XDS packet end");
-			else
-				puts ("XDS packet start/continue");
-		}
+		printf ("CC line=%3u ", line);
+		_vbi_cc608_dump (stdout, buffer[0], buffer[1]);
 	}
 }
 
