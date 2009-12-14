@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: cc608_decoder.h,v 1.1 2009/03/23 01:30:16 mschimek Exp $ */
+/* $Id: cc608_decoder.h,v 1.2 2009/12/14 23:43:26 mschimek Exp $ */
 
 /* This code is experimental and not yet part of the library. */
 
@@ -45,6 +45,36 @@ VBI_BEGIN_DECLS
 #define VBI_CAPTION_T2 6 /* second text service (F1) */
 #define VBI_CAPTION_T3 7 /* third text service (F2) */
 #define VBI_CAPTION_T4 8 /* fourth text service (F2) */
+
+/** @internal */
+typedef enum {
+	_VBI_CC608_MODE_UNKNOWN,
+	_VBI_CC608_MODE_ROLL_UP,
+	_VBI_CC608_MODE_POP_ON,
+	_VBI_CC608_MODE_PAINT_ON,
+	_VBI_CC608_MODE_TEXT
+} _vbi_cc608_mode;
+
+/** @internal */
+typedef enum {
+	_VBI_CC608_START_ROLLING = (1 << 0)
+} _vbi_cc608_event_flags;
+
+/** @internal */
+struct _vbi_event_cc608_page {
+	int				channel;
+	_vbi_cc608_mode			mode;
+	_vbi_cc608_event_flags		flags;
+};
+
+/** @internal */
+struct _vbi_event_cc608_stream {
+	double				capture_time;
+	int64_t				pts;
+	int				channel;
+	_vbi_cc608_mode			mode;
+	vbi_char			text[32];
+};
 
 typedef struct _vbi_cc608_decoder _vbi_cc608_decoder;
 
