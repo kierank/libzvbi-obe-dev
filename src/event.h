@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: event.h,v 1.15 2009/03/04 21:48:05 mschimek Exp $ */
+/* $Id: event.h,v 1.16 2009/12/14 23:43:29 mschimek Exp $ */
 
 #ifndef EVENT_H
 #define EVENT_H
@@ -713,6 +713,12 @@ typedef struct {
 	vbi_dst_state		dst_state;
 } vbi_local_time;
 
+/* Experimental CC608 decoder. */
+#define _VBI_EVENT_CC608 0x1000
+#define _VBI_EVENT_CC608_STREAM 0x2000
+struct _vbi_event_cc608_page;
+struct _vbi_event_cc608_stream;
+
 /**
  * @example examples/network.c
  * Network identification example.
@@ -748,6 +754,10 @@ typedef struct vbi_event {
 		vbi_program_info *	prog_info;
 		vbi_local_time *	local_time;
 		vbi_program_id *	prog_id;
+
+		/* Experimental. */
+		struct _vbi_event_cc608_page *		_cc608;
+		struct _vbi_event_cc608_stream *	_cc608_stream;
 	}			ev;
 } vbi_event;
 
