@@ -19,7 +19,7 @@
  *  Boston, MA  02110-1301  USA.
  */
 
-/* $Id: io-sim.c,v 1.17 2008/02/19 00:35:20 mschimek Exp $ */
+/* $Id: io-sim.c,v 1.18 2009/12/14 23:43:40 mschimek Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1538,13 +1538,13 @@ extend_buffer			(struct buffer *	b,
 
 static const char
 caption_default_test_stream [] =
-	"<erase-displayed ch=\"0\"/><roll-up rows=\"4\"/><pac row=\"14\"/>"
+	"<edm ch=\"0\"/><ru4/><pac row=\"15\"/>"
 	"LIBZVBI CAPTION SIMULATION CC1.<cr/>"
-	"<erase-displayed ch=\"1\"/><roll-up rows=\"4\"/><pac row=\"14\"/>"
+	"<edm ch=\"1\"/><ru4/><pac row=\"15\"/>"
 	"LIBZVBI CAPTION SIMULATION CC2.<cr/>"
-	"<erase-displayed ch=\"2\"/><roll-up rows=\"4\"/><pac row=\"14\"/>"
+	"<edm ch=\"2\"/><ru4/><pac row=\"15\"/>"
 	"LIBZVBI CAPTION SIMULATION CC3.<cr/>"
-	"<erase-displayed ch=\"3\"/><roll-up rows=\"4\"/><pac row=\"14\"/>"
+	"<edm ch=\"3\"/><ru4/><pac row=\"15\"/>"
 	"LIBZVBI CAPTION SIMULATION CC4.<cr/>"
 ;
 	/* TODO: regression test for repeated control code bug:
@@ -1552,17 +1552,20 @@ caption_default_test_stream [] =
 	   <zero field 2>
 	   <repeated control code field 1, to be ignored> */ 
 
-static unsigned int
-get_attr			(const char *		s,
+static vbi_bool
+get_attr			(unsigned int *		value,
+				 const char *		s,
 				 const char *		name,
 				 unsigned int		default_value,
 				 unsigned int		minimum,
 				 unsigned int		maximum)
 {
-	unsigned long value;
+	unsigned long u;
 	unsigned int len;
+	vbi_bool present;
 
-	value = default_value;
+	present = FALSE;
+	u = default_value;
 
 	len = strlen (name);
 
@@ -1587,9 +1590,8 @@ get_attr			(const char *		s,
 			break;
 
 		if (0 == delta) {
-			value = strtoul (s + 1,
-					 /* endp */ NULL,
-					 /* base */ 0);
+			present = TRUE;
+			u = strtoul (s + 1, NULL, 0);
 			break;
 		}
 
@@ -1597,21 +1599,20 @@ get_attr			(const char *		s,
 		while (0 != *s && '"' != *s);
 	}
 
-	value = SATURATE (value,
-			  (unsigned long) minimum,
-			  (unsigned long) maximum);
+	*value = SATURATE (u, (unsigned long) minimum,
+			   (unsigned long) maximum);
 
-	return (unsigned int) value;
+	return present;
 }
 
 static vbi_bool
 caption_append_zeroes		(vbi_capture_sim *	sim,
-				 unsigned int		channel,
+				 vbi_pgno		channel,
 				 unsigned int		n_bytes)
 {
 	struct buffer *b;
 
-	b = &sim->caption_buffers[(channel >> 1) & 1];
+	b = &sim->caption_buffers[((channel - 1) >> 1) & 1];
 
 	if (b->size + n_bytes > b->capacity) {
 		unsigned int new_capacity;
@@ -1635,8 +1636,6 @@ caption_append_command		(vbi_capture_sim *	sim,
 	static const _vbi_key_value_pair elements [] = {
 		{ "aof", 0x1422 },
 		{ "aon", 0x1423 },
-		{ "backgr", 0x1020 },
-		{ "backgr-transp", 0x172D },
 		{ "bao", 0x102E },
 		{ "bas", 0x102F },
 		{ "bbo", 0x1024 },
@@ -1657,39 +1656,26 @@ caption_append_command		(vbi_capture_sim *	sim,
 		{ "bys", 0x102B },
 		{ "cmd", 0x0001 },
 		{ "cr", 0x142D },
-		{ "delete-end-of-row", 0x1424 },
 		{ "der", 0x1424 },
 		{ "edm", 0x142C },
-		{ "end-of-caption", 0x142F },
 		{ "enm", 0x142E },
 		{ "eoc", 0x142F },
-		{ "erase-displayed", 0x142C },
-		{ "erase-non-displayed", 0x142E },
-		{ "extended2", 0x1200 },
-		{ "extended3", 0x1300 },
+		{ "ext2", 0x1200 },
+		{ "ext3", 0x1300 },
 		{ "fa", 0x172E },
 		{ "fau", 0x172F },
-		{ "flash-on", 0x1428 },
 		{ "fon", 0x1428 },
-		{ "foregr-black", 0x172E },
-		{ "indent", 0x1050 },
 		{ "mr", 0x1120 },
 		{ "pac", 0x1040 },
 		{ "pause", 0x0002 },
 		{ "rcl", 0x1420 },
 		{ "rdc", 0x1429 },
-		{ "resume-caption", 0x1420 },
-		{ "resume-direct", 0x1429 },
-		{ "resume-text", 0x142B },
-		{ "roll-up", 0x1425 },
 		{ "rtd", 0x142B },
 		{ "ru2", 0x1425 },
 		{ "ru3", 0x1426 },
 		{ "ru4", 0x1427 },
-		{ "special", 0x1130 },
+		{ "spec", 0x1130 },
 		{ "sync", 0x0003 },
-		{ "tab", 0x1720 },
-		{ "text-restart", 0x142A },
 		{ "to1", 0x1721 },
 		{ "to2", 0x1722 },
 		{ "to3", 0x1723 },
@@ -1705,114 +1691,105 @@ caption_append_command		(vbi_capture_sim *	sim,
 	int value;
 	unsigned int cmd;
 	unsigned int n_frames;
+	unsigned int u_value;
 	int n_padding_bytes;
-	unsigned int row;
 	unsigned int i;
 	vbi_bool parity;
 
 	if (!_vbi_keyword_lookup (&value, &s,
-				   elements,
-				   N_ELEMENTS (elements)))
+				  elements,
+				  N_ELEMENTS (elements)))
 		return TRUE;
 
-	*inout_ch = get_attr (s, "ch", *inout_ch, 0, 3);
+	get_attr (inout_ch, s, "ch", *inout_ch, 1, 4);
 
-	cmd = value | ((*inout_ch & 1) << 11);
+	cmd = value | (((*inout_ch - 1) & 1) << 11);
 
 	parity = TRUE;
 
 	switch (value) {
 	case 1: /* cmd */
-		cmd = get_attr (s, "code", 0, 0, 0xFFFF);
+		get_attr (&cmd, s, "code", 0, 0, 0xFFFF);
 		parity = FALSE;
 		break;
 
 	case 2: /* pause */
-		n_frames = get_attr (s, "frames", 60, 1, INT_MAX);
+		get_attr (&n_frames, s, "frames", 60, 1, INT_MAX);
 		if (n_frames > 120 * 60 * 30)
 			return TRUE;
 
-		return caption_append_zeroes (sim, *inout_ch, n_frames * 2);
+		return caption_append_zeroes
+			(sim, *inout_ch, n_frames * 2);
 
 	case 3: /* sync */
 		n_padding_bytes = sim->caption_buffers[0].size
 			- sim->caption_buffers[1].size;
 
-		if (0 == n_padding_bytes)
+		if (0 == n_padding_bytes) {
 			return TRUE;
-		else if (n_padding_bytes < 0)
-			return caption_append_zeroes (sim, 0, n_padding_bytes);
-		else
-			return caption_append_zeroes (sim, 2, n_padding_bytes);
+		} else if (n_padding_bytes < 0) {
+			return caption_append_zeroes
+				(sim, 0, n_padding_bytes);
+		} else {
+			return caption_append_zeroes
+				(sim, 2, n_padding_bytes);
+		}
 
-	case 0x1020: /* backgr */
-		cmd |= get_attr (s, "color", 0, 0, 7) << 1;
-		cmd |= get_attr (s, "t", 0, 0, 1); /* transparent */
+	case 0x1040: /* preamble address code */
+		if (get_attr (&u_value, s, "column", 1, 1, 32)) {
+			cmd |= 0x0010 | (((u_value - 1) / 4) << 1);
+		} else {
+			get_attr (&u_value, s, "color", 0, 0, 7);
+			cmd |= u_value << 1;
+		}
+		get_attr (&u_value, s, "row", 15, 1, 15);
+		cmd |= row_code[u_value - 1];
+		get_attr (&u_value, s, "u", 0, 0, 1);
+		cmd |= u_value;
 		break;
 
-	case 0x1040: /* pac (preamble address code) */
-		cmd |= row_code[get_attr (s, "row", 14, 0, 14)];
-		cmd |= get_attr (s, "color", 0, 0, 7) << 1;
-		cmd |= get_attr (s, "u", 0, 0, 1);
-		break;
-
-	case 0x1050: /* indent */
-		cmd |= row_code[get_attr (s, "row", 14, 0, 14)];
-		cmd |= (get_attr (s, "cols", 0, 0, 31) / 4) << 1;
-		cmd |= get_attr (s, "u", 0, 0, 1);
-		break;
-
-	case 0x1120: /* mr (midrow code) */
-		cmd |= get_attr (s, "color", 0, 0, 7) << 1;
-		cmd |= get_attr (s, "u", 0, 0, 1);
+	case 0x1120: /* midrow code */
+		get_attr (&u_value, s, "color", 0, 0, 7);
+		cmd |= u_value << 1;
+		get_attr (&u_value, s, "u", 0, 0, 1);
+		cmd |= u_value;
 		break;
 
 	case 0x1130: /* special character */
-		cmd |= get_attr (s, "code", 0, 0, 15);
+		get_attr (&u_value, s, "code", 0, 0, 15);
+		cmd |= u_value;
 		break;
 
 	case 0x1200: /* extended character set */
 	case 0x1300:
-		cmd |= get_attr (s, "code", 32, 32, 63);
+		get_attr (&u_value, s, "code", 32, 32, 63);
+		cmd |= u_value;
 		break;
 
-	case 0x1420: /* resume caption loading */
+	case 0x1420: /* rcl */
 	case 0x1421: /* bs */
 	case 0x1422: /* aof */
 	case 0x1423: /* aon */
-	case 0x1424: /* delete to end of row */
-	case 0x1428: /* flash-on */
-	case 0x1429: /* resume direct caption */
-	case 0x142A: /* text restart */
-	case 0x142B: /* resume text display */
-	case 0x142C: /* erase displayed memory */
+	case 0x1424: /* der */
+	case 0x1425: /* ru3 */
+	case 0x1426: /* ru4 */
+	case 0x1427: /* ru5 */
+	case 0x1428: /* fon */
+	case 0x1429: /* rdc */
+	case 0x142A: /* tr */
+	case 0x142B: /* rtd */
+	case 0x142C: /* edm */
 	case 0x142D: /* cr */
-	case 0x142E: /* erase non-displayed memory */
-	case 0x142F: /* end of caption */
+	case 0x142E: /* enm */
+	case 0x142F: /* eoc */
 		/* Field bit (EIA 608-B Sec. 8.4, 8.5). */
-		cmd |= ((*inout_ch & 2) << 7);
-
-	case 0x1425: /* roll_up */
-	case 0x1426:
-	case 0x1427:
-		row = get_attr (s, "rows", 2, 2, 4);
-		cmd += row - 2;
-		cmd |= (*inout_ch & 2) << 7; /* field bit */
-		break;
-
-	case 0x1720: /* tab */
-		cmd |= get_attr (s, "cols", 1, 1, 3);
-		break;
-
-	case 0x172E: /* foregr-black */
-		cmd |= get_attr (s, "u", 0, 0, 1); /* underlined */
-		break;
+		cmd |= ((*inout_ch - 1) & 2) << 7;
 
 	default:
 		break;
 	}
 
-	b = &sim->caption_buffers[(*inout_ch >> 1) & 1];
+	b = &sim->caption_buffers[((*inout_ch - 1) >> 1) & 1];
 	i = b->size;
 
 	if (i + 3 > b->capacity) {
@@ -1837,9 +1814,6 @@ caption_append_command		(vbi_capture_sim *	sim,
 	return TRUE;
 }
 
-#if 3 != VBI_VERSION_MINOR
-static
-#endif
 vbi_bool
 vbi_capture_sim_load_caption	(vbi_capture *		cap,
 				 const char *		stream,
@@ -1867,7 +1841,7 @@ vbi_capture_sim_load_caption	(vbi_capture *		cap,
 	if (NULL == stream)
 		return TRUE;
 
-	ch = 0;
+	ch = 1; /* CC1, T1 */
 
 	b = &sim->caption_buffers[0];
 
@@ -1895,6 +1869,12 @@ vbi_capture_sim_load_caption	(vbi_capture *		cap,
 			} else if (0 == strncmp (s, "gt;", 3)) {
 				s += 3;
 				c = '>';
+			} else if (0 == strncmp (s, "ts;", 3)) {
+				/* Transparent space. */
+				if (!caption_append_command
+				    (sim, &ch, "<spec code=\"9\"/>"))
+					return FALSE;
+				continue;
 			}
 		} else if ('<' == c) {
 			int delimiter;
@@ -1902,7 +1882,7 @@ vbi_capture_sim_load_caption	(vbi_capture *		cap,
 			if (!caption_append_command (sim, &ch, s))
 				return FALSE;
 
-			b = &sim->caption_buffers[(ch >> 1) & 1];
+			b = &sim->caption_buffers[((ch - 1) >> 1) & 1];
 
 			/* Skip until '>', except between quotes. */
 			delimiter = '>';
