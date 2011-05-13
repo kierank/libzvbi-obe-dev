@@ -1845,6 +1845,7 @@ cr_new_line			(struct caption_recorder *cr,
 				      cr->ucs_buffer,
 				      cr->ucs_buffer_length,
 				      /* repl_char */ '?');
+		fflush(fp);
 	}
 }
 

@@ -42,6 +42,7 @@ static const char rcsid [] =
 #include <assert.h>
 #include <sys/time.h>		/* timeval */
 #include <sys/types.h>		/* fd_set, uid_t */
+#include <sys/stat.h>		/* S_ISCHR */
 #include <sys/ioctl.h>		/* for (_)videodev.h */
 #include <pthread.h>
 
