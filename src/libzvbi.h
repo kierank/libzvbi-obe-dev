@@ -1007,6 +1007,8 @@ extern vbi_search_status vbi_search_next(vbi_search *search, vbi_page **pg, int 
 
 #define VBI_SLICED_TELETEXT_D_625       0x00008000
 
+#define VBI_SLICED_TELETEXT_INVERTED    0x00040000
+
 #define VBI_SLICED_VPS                  0x00000004
 
 #define VBI_SLICED_VPS_F2               0x00001000
@@ -1033,7 +1035,6 @@ extern vbi_search_status vbi_search_next(vbi_search *search, vbi_page **pg, int 
 #define VBI_SLICED_TELETEXT_BD_525	0x00000200
 
 #define VBI_SLICED_TELETEXT_D_525       0x00020000
-
 
 #define VBI_SLICED_WSS_CPR1204		0x00000800
 

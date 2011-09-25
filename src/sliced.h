@@ -290,6 +290,11 @@ extern "C" {
 #define VBI_SLICED_WSS_CPR1204		0x00000800
 
 /**
+ * Inverted teletext
+ */
+#define VBI_SLICED_TELETEXT_INVERTED    0x00040000
+
+/**
  * No actual data service. This symbol is used to request capturing
  * of all PAL/SECAM VBI data lines from the libzvbi driver interface,
  * as opposed to just those lines used to transmit the requested

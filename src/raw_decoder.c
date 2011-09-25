@@ -104,6 +104,15 @@ _vbi_service_table [] = {
 		0x00AAAAE5, 0xFFFF, 18, 6, 34 * 8, VBI_MODULATION_NRZ_LSB,
 		0,
 	}, {
+		VBI_SLICED_TELETEXT_INVERTED, /* UNTESTED */
+		"Inverted Teletext, 625",
+		VBI_VIDEOSTD_SET_625_50,
+		{ 6, 318 },
+		{ 22, 335 },
+		10300, 6937500, 6937500, /* 444 x FH */
+		0x00AAAA1B, 0xFFFF, 18, 6, 42 * 8, VBI_MODULATION_NRZ_LSB,
+		0,
+	}, {
 		VBI_SLICED_VPS, "Video Program System",
 		VBI_VIDEOSTD_SET_PAL_BG,
 		{ 16, 0 },
